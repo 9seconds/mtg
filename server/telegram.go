@@ -22,17 +22,18 @@ func dialToTelegram(dcIdx int16) (net.Conn, error) {
 		return nil, errors.New("Incorrect DC IDX")
 	}
 
-	conn, err := net.Dial("tcp", telegramDCIPs[dcIdx])
+	tcpAddr, _ := net.ResolveTCPAddr("tcp", telegramDCIPs[dcIdx])
+	conn, err := net.DialTCP("tcp", nil, tcpAddr)
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot dial")
 	}
 
-	// if err := conn.SetKeepAlive(true); err != nil {
-	// 	return nil, errors.Annotate(err, "Cannot establish keepalive connection")
-	// }
-	// if err := conn.SetKeepAlivePeriod(telegramKeepAlive); err != nil {
-	// 	return nil, errors.Annotate(err, "Cannot set keepalive timeout")
-	// }
+	if err := conn.SetKeepAlive(true); err != nil {
+		return nil, errors.Annotate(err, "Cannot establish keepalive connection")
+	}
+	if err := conn.SetKeepAlivePeriod(telegramKeepAlive); err != nil {
+		return nil, errors.Annotate(err, "Cannot set keepalive timeout")
+	}
 
 	return conn, nil
 }
