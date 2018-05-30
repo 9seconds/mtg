@@ -120,7 +120,7 @@ func main() {
 }
 
 func usage(msg string) {
-	io.WriteString(os.Stderr, msg+"\n")
+	io.WriteString(os.Stderr, msg+"\n") // nolint: errcheck
 	os.Exit(1)
 }
 
