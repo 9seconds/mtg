@@ -25,6 +25,10 @@ var (
 		Short('d').
 		Envar("MTG_DEBUG").
 		Bool()
+	verbose = app.Flag("verbose", "Run in verbose mode.").
+		Short('v').
+		Envar("MTG_VERBOSE").
+		Bool()
 	bindIP = app.Flag("bind-ip", "Which IP to bind to.").
 		Short('i').
 		Envar("MTG_IP").
@@ -69,6 +73,8 @@ func main() {
 	atom := zap.NewAtomicLevel()
 	if *debug {
 		atom.SetLevel(zapcore.DebugLevel)
+	} else if *verbose {
+		atom.SetLevel(zapcore.InfoLevel)
 	} else {
 		atom.SetLevel(zapcore.ErrorLevel)
 	}
