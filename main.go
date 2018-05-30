@@ -1,17 +1,21 @@
 package main
 
 import (
+	"encoding/hex"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
-	"regexp"
 	"strconv"
 	"strings"
 
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
+
+	"github.com/9seconds/mtg/server"
 )
 
 var (
@@ -43,7 +47,8 @@ var (
 func main() {
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
-	if matched, err := regexp.MatchString("[a-fA-F0-9]+", *secret); !matched || err != nil {
+	secretBytes, err := hex.DecodeString(*secret)
+	if err != nil {
 		usage("Secret has to be hexadecimal string.")
 	}
 
@@ -61,8 +66,23 @@ func main() {
 		*serverName = strings.TrimSpace(string(myIPBytes))
 	}
 
+	atom := zap.NewAtomicLevel()
+	if *debug {
+		atom.SetLevel(zapcore.DebugLevel)
+	} else {
+		atom.SetLevel(zapcore.ErrorLevel)
+	}
+	encoderCfg := zap.NewProductionEncoderConfig()
+	logger := zap.New(zapcore.NewCore(
+		zapcore.NewJSONEncoder(encoderCfg),
+		zapcore.Lock(os.Stderr),
+		atom,
+	)).Sugar()
+
 	printURLs()
-	serve()
+	if err := server.NewServer(*bindIP, int(*bindPort), secretBytes, logger).Serve(); err != nil {
+		logger.Fatal(err.Error())
+	}
 }
 
 func usage(msg string) {
@@ -87,8 +107,4 @@ func printURLs() {
 	tgURL.Host = "t.me"
 	tgURL.Path = "proxy"
 	fmt.Println(tgURL.String())
-}
-
-func serve() {
-
 }
