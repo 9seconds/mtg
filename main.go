@@ -1,5 +1,7 @@
 package main
 
+//go:generate scripts/generate_version.sh
+
 import (
 	"encoding/hex"
 	"fmt"
@@ -68,6 +70,7 @@ var (
 )
 
 func main() {
+	app.Version(version)
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
 	secretBytes, err := hex.DecodeString(*secret)
