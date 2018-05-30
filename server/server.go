@@ -97,7 +97,7 @@ func (s *Server) makeSocketID() string {
 	return uuid.NewV4().String()
 }
 
-func (s *Server) getClientStream(conn net.Conn, ctx context.Context, cancel context.CancelFunc, socketID string) (*CipherReadWriteCloser, int16, error) {
+func (s *Server) getClientStream(conn net.Conn, ctx context.Context, cancel context.CancelFunc, socketID string) (io.ReadWriteCloser, int16, error) {
 	frame, err := obfuscated2.ExtractFrame(conn)
 	if err != nil {
 		return nil, 0, errors.Annotate(err, "Cannot create client stream")
@@ -108,12 +108,14 @@ func (s *Server) getClientStream(conn net.Conn, ctx context.Context, cancel cont
 		return nil, 0, errors.Annotate(err, "Cannot create client stream")
 	}
 
-	wConn := newCipherReadWriteCloser(conn, obfs2)
+	wConn := newLogReadWriteCloser(conn, s.logger, socketID, "client")
+	wConn = newCipherReadWriteCloser(conn, obfs2)
+	wConn = newCtxReadWriteCloser(wConn, ctx, cancel)
 
 	return wConn, dc, nil
 }
 
-func (s *Server) getTelegramStream(dc int16, ctx context.Context, cancel context.CancelFunc, socketID string) (*CipherReadWriteCloser, error) {
+func (s *Server) getTelegramStream(dc int16, ctx context.Context, cancel context.CancelFunc, socketID string) (io.ReadWriteCloser, error) {
 	socket, err := dialToTelegram(dc)
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot dial")
@@ -124,7 +126,9 @@ func (s *Server) getTelegramStream(dc int16, ctx context.Context, cancel context
 		return nil, errors.Annotate(err, "Cannot write hadnshake frame")
 	}
 
-	wConn := newCipherReadWriteCloser(socket, obfs2)
+	wConn := newLogReadWriteCloser(socket, s.logger, socketID, "telegram")
+	wConn = newCipherReadWriteCloser(wConn, obfs2)
+	wConn = newCtxReadWriteCloser(wConn, ctx, cancel)
 
 	return wConn, nil
 }
