@@ -17,13 +17,14 @@ var telegramDCIPs = [5]string{
 
 const telegramKeepAlive = 30 * time.Second
 
-func dialToTelegram(dcIdx int16) (net.Conn, error) {
+func dialToTelegram(dcIdx int16, timeout time.Duration) (net.Conn, error) {
 	if dcIdx < 0 || dcIdx >= 5 {
 		return nil, errors.New("Incorrect DC IDX")
 	}
 
-	tcpAddr, _ := net.ResolveTCPAddr("tcp", telegramDCIPs[dcIdx])
-	conn, err := net.DialTCP("tcp", nil, tcpAddr)
+	dialer := net.Dialer{Timeout: timeout}
+	rawConn, err := dialer.Dial("tcp", telegramDCIPs[dcIdx])
+	conn := rawConn.(*net.TCPConn)
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot dial")
 	}

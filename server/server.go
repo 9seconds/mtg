@@ -6,6 +6,7 @@ import (
 	"net"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/9seconds/mtg/obfuscated2"
 	"github.com/juju/errors"
@@ -16,12 +17,14 @@ import (
 const bufferSize = 4096
 
 type Server struct {
-	ip     net.IP
-	port   int
-	secret []byte
-	logger *zap.SugaredLogger
-	lsock  net.Listener
-	ctx    context.Context
+	ip           net.IP
+	port         int
+	secret       []byte
+	logger       *zap.SugaredLogger
+	lsock        net.Listener
+	ctx          context.Context
+	readTimeout  time.Duration
+	writeTimeout time.Duration
 }
 
 func (s *Server) Serve() error {
@@ -98,7 +101,8 @@ func (s *Server) makeSocketID() string {
 }
 
 func (s *Server) getClientStream(conn net.Conn, ctx context.Context, cancel context.CancelFunc, socketID string) (io.ReadWriteCloser, int16, error) {
-	frame, err := obfuscated2.ExtractFrame(conn)
+	wConn := newTimeoutReadWriteCloser(conn, s.readTimeout, s.writeTimeout)
+	frame, err := obfuscated2.ExtractFrame(wConn)
 	if err != nil {
 		return nil, 0, errors.Annotate(err, "Cannot create client stream")
 	}
@@ -108,7 +112,7 @@ func (s *Server) getClientStream(conn net.Conn, ctx context.Context, cancel cont
 		return nil, 0, errors.Annotate(err, "Cannot create client stream")
 	}
 
-	wConn := newLogReadWriteCloser(conn, s.logger, socketID, "client")
+	wConn = newLogReadWriteCloser(wConn, s.logger, socketID, "client")
 	wConn = newCipherReadWriteCloser(conn, obfs2)
 	wConn = newCtxReadWriteCloser(wConn, ctx, cancel)
 
@@ -116,17 +120,18 @@ func (s *Server) getClientStream(conn net.Conn, ctx context.Context, cancel cont
 }
 
 func (s *Server) getTelegramStream(dc int16, ctx context.Context, cancel context.CancelFunc, socketID string) (io.ReadWriteCloser, error) {
-	socket, err := dialToTelegram(dc)
+	socket, err := dialToTelegram(dc, s.readTimeout)
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot dial")
 	}
+	wConn := newTimeoutReadWriteCloser(socket, s.readTimeout, s.writeTimeout)
 
 	obfs2, frame := obfuscated2.MakeTelegramObfuscated2Frame()
 	if n, err := socket.Write(frame); err != nil || n != len(frame) {
 		return nil, errors.Annotate(err, "Cannot write hadnshake frame")
 	}
 
-	wConn := newLogReadWriteCloser(socket, s.logger, socketID, "telegram")
+	wConn = newLogReadWriteCloser(socket, s.logger, socketID, "telegram")
 	wConn = newCipherReadWriteCloser(wConn, obfs2)
 	wConn = newCtxReadWriteCloser(wConn, ctx, cancel)
 
@@ -138,15 +143,17 @@ func (s *Server) pipe(wait *sync.WaitGroup, reader io.Reader, writer io.Writer) 
 
 	buf := make([]byte, bufferSize)
 	io.CopyBuffer(writer, reader, buf)
-
 }
 
-func NewServer(ip net.IP, port int, secret []byte, logger *zap.SugaredLogger) *Server {
+func NewServer(ip net.IP, port int, secret []byte, logger *zap.SugaredLogger,
+	readTimeout, writeTimeout time.Duration) *Server {
 	return &Server{
-		ip:     ip,
-		port:   port,
-		secret: secret,
-		ctx:    context.Background(),
-		logger: logger,
+		ip:           ip,
+		port:         port,
+		secret:       secret,
+		ctx:          context.Background(),
+		logger:       logger,
+		readTimeout:  readTimeout,
+		writeTimeout: writeTimeout,
 	}
 }

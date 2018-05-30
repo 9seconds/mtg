@@ -39,6 +39,16 @@ var (
 			Envar("MTG_PORT").
 			Default("3128").
 			Uint16()
+	readTimeout = app.Flag("read-timeout", "Socket read timeout").
+			Short('r').
+			Envar("MTG_READ_TIMEOUT").
+			Default("30s").
+			Duration()
+	writeTimeout = app.Flag("write-timeout", "Socket write timeout").
+			Short('w').
+			Envar("MTG_WRITE_TIMEOUT").
+			Default("30s").
+			Duration()
 	serverName = app.Flag("server-name",
 		"Which server name to use. Default is IP address resolved by ipify.").
 		Short('s').
@@ -86,7 +96,9 @@ func main() {
 	)).Sugar()
 
 	printURLs()
-	if err := server.NewServer(*bindIP, int(*bindPort), secretBytes, logger).Serve(); err != nil {
+	srv := server.NewServer(*bindIP, int(*bindPort), secretBytes, logger,
+		*readTimeout, *writeTimeout)
+	if err := srv.Serve(); err != nil {
 		logger.Fatal(err.Error())
 	}
 }
