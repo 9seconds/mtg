@@ -2,7 +2,7 @@ package server
 
 import (
 	"context"
-	"fmt"
+	"io"
 	"net"
 	"strconv"
 	"sync"
@@ -12,6 +12,8 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"go.uber.org/zap"
 )
+
+const bufferSize = 4096
 
 type Server struct {
 	ip     net.IP
@@ -79,42 +81,8 @@ func (s *Server) accept(conn net.Conn) {
 
 	wait := &sync.WaitGroup{}
 	wait.Add(2)
-	go func() {
-		defer wait.Done()
-		buf := make([]byte, 128)
-
-		for {
-			fmt.Println("client loop")
-			n, err := clientConn.Read(buf)
-			if err != nil {
-				fmt.Println("client read error", err)
-				return
-			}
-			_, err = tgConn.Write(buf[:n])
-			if err != nil {
-				fmt.Println("tgConn write error", err)
-				return
-			}
-		}
-	}()
-	go func() {
-		defer wait.Done()
-		buf := make([]byte, 128)
-
-		for {
-			fmt.Println("tg loop")
-			n, err := tgConn.Read(buf)
-			if err != nil {
-				fmt.Println("tgConn read error", err)
-				return
-			}
-			_, err = clientConn.Write(buf[:n])
-			if err != nil {
-				fmt.Println("client write error", err)
-				return
-			}
-		}
-	}()
+	go s.pipe(wait, clientConn, tgConn)
+	go s.pipe(wait, tgConn, clientConn)
 	<-ctx.Done()
 	wait.Wait()
 
@@ -143,12 +111,6 @@ func (s *Server) getClientStream(conn net.Conn, ctx context.Context, cancel cont
 	wConn := newCipherReadWriteCloser(conn, obfs2)
 
 	return wConn, dc, nil
-
-	// cipherConn := newCipherReadWriteCloser(conn, obfs2)
-	// ctxConn := newCtxReadWriteCloser(cipherConn, ctx, cancel)
-	// // logConn := newLogReadWriteCloser(ctxConn, s.logger, socketID, "client")
-
-	// return ctxConn, dc, nil
 }
 
 func (s *Server) getTelegramStream(dc int16, ctx context.Context, cancel context.CancelFunc, socketID string) (*CipherReadWriteCloser, error) {
@@ -165,12 +127,14 @@ func (s *Server) getTelegramStream(dc int16, ctx context.Context, cancel context
 	wConn := newCipherReadWriteCloser(socket, obfs2)
 
 	return wConn, nil
+}
 
-	// 	cipherConn := newCipherReadWriteCloser(socket, obfs2)
-	// 	ctxConn := newCtxReadWriteCloser(cipherConn, ctx, cancel)
-	// 	logConn := newLogReadWriteCloser(ctxConn, s.logger, socketID, "telegram")
+func (s *Server) pipe(wait *sync.WaitGroup, reader io.Reader, writer io.Writer) {
+	defer wait.Done()
 
-	// 	return logConn, nil
+	buf := make([]byte, bufferSize)
+	io.CopyBuffer(writer, reader, buf)
+
 }
 
 func NewServer(ip net.IP, port int, secret []byte, logger *zap.SugaredLogger) *Server {
