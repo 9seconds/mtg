@@ -38,12 +38,22 @@ var (
 			Envar("MTG_PORT").
 			Default("3128").
 			Uint16()
-	readTimeout = app.Flag("read-timeout", "Socket read timeout").
+	statsIP = app.Flag("stats-ip", "Which IP bind stats server to").
+		Short('t').
+		Envar("MTG_STATS_IP").
+		Default("127.0.0.1").
+		IP()
+	statsPort = app.Flag("stats-port", "Which port bind stats to.").
+			Short('q').
+			Envar("MTG_STATS_PORT").
+			Default("3129").
+			Uint16()
+	readTimeout = app.Flag("read-timeout", "Socket read timeout.").
 			Short('r').
 			Envar("MTG_READ_TIMEOUT").
 			Default("30s").
 			Duration()
-	writeTimeout = app.Flag("write-timeout", "Socket write timeout").
+	writeTimeout = app.Flag("write-timeout", "Socket write timeout.").
 			Short('w').
 			Envar("MTG_WRITE_TIMEOUT").
 			Default("30s").
@@ -95,8 +105,12 @@ func main() {
 	)).Sugar()
 
 	printURLs()
+
+	stat := proxy.NewStats()
+	go stat.Serve(*statsIP, *statsPort)
+
 	srv := proxy.NewServer(*bindIP, int(*bindPort), secretBytes, logger,
-		*readTimeout, *writeTimeout)
+		*readTimeout, *writeTimeout, stat)
 	if err := srv.Serve(); err != nil {
 		logger.Fatal(err.Error())
 	}

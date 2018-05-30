@@ -25,6 +25,7 @@ type Server struct {
 	ctx          context.Context
 	readTimeout  time.Duration
 	writeTimeout time.Duration
+	stats        *Stats
 }
 
 func (s *Server) Serve() error {
@@ -50,6 +51,8 @@ func (s *Server) Addr() string {
 
 func (s *Server) accept(conn net.Conn) {
 	defer conn.Close()
+	defer s.stats.closeConnection()
+	s.stats.newConnection()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	socketID := s.makeSocketID()
@@ -102,6 +105,7 @@ func (s *Server) makeSocketID() string {
 
 func (s *Server) getClientStream(conn net.Conn, ctx context.Context, cancel context.CancelFunc, socketID string) (io.ReadWriteCloser, int16, error) {
 	wConn := newTimeoutReadWriteCloser(conn, s.readTimeout, s.writeTimeout)
+	wConn = newTrafficReadWriteCloser(wConn, s.stats.addIncomingTraffic, s.stats.addOutgoingTraffic)
 	frame, err := obfuscated2.ExtractFrame(wConn)
 	if err != nil {
 		return nil, 0, errors.Annotate(err, "Cannot create client stream")
@@ -113,7 +117,7 @@ func (s *Server) getClientStream(conn net.Conn, ctx context.Context, cancel cont
 	}
 
 	wConn = newLogReadWriteCloser(wConn, s.logger, socketID, "client")
-	wConn = newCipherReadWriteCloser(conn, obfs2)
+	wConn = newCipherReadWriteCloser(wConn, obfs2)
 	wConn = newCtxReadWriteCloser(wConn, ctx, cancel)
 
 	return wConn, dc, nil
@@ -125,13 +129,14 @@ func (s *Server) getTelegramStream(dc int16, ctx context.Context, cancel context
 		return nil, errors.Annotate(err, "Cannot dial")
 	}
 	wConn := newTimeoutReadWriteCloser(socket, s.readTimeout, s.writeTimeout)
+	wConn = newTrafficReadWriteCloser(wConn, s.stats.addIncomingTraffic, s.stats.addOutgoingTraffic)
 
 	obfs2, frame := obfuscated2.MakeTelegramObfuscated2Frame()
 	if n, err := socket.Write(frame); err != nil || n != len(frame) {
 		return nil, errors.Annotate(err, "Cannot write hadnshake frame")
 	}
 
-	wConn = newLogReadWriteCloser(socket, s.logger, socketID, "telegram")
+	wConn = newLogReadWriteCloser(wConn, s.logger, socketID, "telegram")
 	wConn = newCipherReadWriteCloser(wConn, obfs2)
 	wConn = newCtxReadWriteCloser(wConn, ctx, cancel)
 
@@ -140,13 +145,11 @@ func (s *Server) getTelegramStream(dc int16, ctx context.Context, cancel context
 
 func (s *Server) pipe(wait *sync.WaitGroup, reader io.Reader, writer io.Writer) {
 	defer wait.Done()
-
-	buf := make([]byte, bufferSize)
-	io.CopyBuffer(writer, reader, buf)
+	io.Copy(writer, reader)
 }
 
 func NewServer(ip net.IP, port int, secret []byte, logger *zap.SugaredLogger,
-	readTimeout, writeTimeout time.Duration) *Server {
+	readTimeout, writeTimeout time.Duration, stat *Stats) *Server {
 	return &Server{
 		ip:           ip,
 		port:         port,
@@ -155,5 +158,6 @@ func NewServer(ip net.IP, port int, secret []byte, logger *zap.SugaredLogger,
 		logger:       logger,
 		readTimeout:  readTimeout,
 		writeTimeout: writeTimeout,
+		stats:        stat,
 	}
 }
