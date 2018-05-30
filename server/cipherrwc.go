@@ -23,27 +23,26 @@ func (c *CipherReadWriteCloser) Read(p []byte) (n int, err error) {
 }
 
 func (c *CipherReadWriteCloser) Write(p []byte) (n int, err error) {
-	c.rest.Write(c.crypt.Encrypt(p))
-	newP := c.rest.Bytes()[:len(p)]
-	n, err = c.conn.Write(newP)
-	c.rest = bytes.NewBuffer(c.rest.Bytes()[n:])
+	encrypted := c.crypt.Encrypt(p)
+
+	curN := 0
+	for len(encrypted) > 0 {
+		curN, err = c.conn.Write(encrypted)
+		n += curN
+		if err != nil {
+			return
+		}
+		encrypted = encrypted[n:]
+	}
+
 	return
 }
 
 func (c *CipherReadWriteCloser) Close() error {
-	var err1 error
-	if c.rest.Len() > 0 {
-		_, err1 = c.conn.Write(c.rest.Bytes())
-	}
-	err2 := c.conn.Close()
-
-	if err2 != nil {
-		return err2
-	}
-	return err1
+	return c.conn.Close()
 }
 
-func newCipherReadWriteCloser(conn io.ReadWriteCloser, crypt Cipher) io.ReadWriteCloser {
+func newCipherReadWriteCloser(conn io.ReadWriteCloser, crypt Cipher) *CipherReadWriteCloser {
 	return &CipherReadWriteCloser{
 		conn:  conn,
 		crypt: crypt,

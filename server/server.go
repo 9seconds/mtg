@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"io"
 	"net"
 	"strconv"
 	"sync"
@@ -56,65 +55,66 @@ func (s *Server) accept(conn net.Conn) {
 		"socketid", socketID,
 	)
 
-	clientCipher, dc := s.getClientStream(conn, ctx, cancel, socketID)
-	// if err != nil {
-	// 	s.logger.Warnw("Cannot initialize client connection",
-	// 		"secret", s.secret,
-	// 		"addr", conn.RemoteAddr().String(),
-	// 		"socketid", socketID,
-	// 		"error", err,
-	// 	)
-	// 	return
-	// }
+	clientConn, dc, err := s.getClientStream(conn, ctx, cancel, socketID)
+	if err != nil {
+		s.logger.Warnw("Cannot initialize client connection",
+			"secret", s.secret,
+			"addr", conn.RemoteAddr().String(),
+			"socketid", socketID,
+			"error", err,
+		)
+		return
+	}
+	defer clientConn.Close()
 
-	tgConn, tgCipher := s.getTelegramStream(dc, ctx, cancel, socketID)
-	// if err != nil {
-	// 	s.logger.Warnw("Cannot initialize Telegram connection",
-	// 		"socketid", socketID,
-	// 		"error", err,
-	// 	)
-	// 	return
-	// }
+	tgConn, err := s.getTelegramStream(dc, ctx, cancel, socketID)
+	if err != nil {
+		s.logger.Warnw("Cannot initialize Telegram connection",
+			"socketid", socketID,
+			"error", err,
+		)
+		return
+	}
 	defer tgConn.Close()
 
 	wait := &sync.WaitGroup{}
 	wait.Add(2)
 	go func() {
+		defer wait.Done()
 		buf := make([]byte, 128)
+
 		for {
-			n, err := conn.Read(buf)
+			fmt.Println("client loop")
+			n, err := clientConn.Read(buf)
 			if err != nil {
+				fmt.Println("client read error", err)
 				return
 			}
-			decrypted := clientCipher.Decrypt(buf[:n])
-			encrypted := tgCipher.Encrypt(decrypted)
-			tgConn.Write(encrypted)
+			_, err = tgConn.Write(buf[:n])
+			if err != nil {
+				fmt.Println("tgConn write error", err)
+				return
+			}
 		}
 	}()
 	go func() {
+		defer wait.Done()
 		buf := make([]byte, 128)
+
 		for {
+			fmt.Println("tg loop")
 			n, err := tgConn.Read(buf)
 			if err != nil {
+				fmt.Println("tgConn read error", err)
 				return
 			}
-			decrypted := tgCipher.Decrypt(buf[:n])
-			encrypted := clientCipher.Encrypt(decrypted)
-			conn.Write(encrypted)
+			_, err = clientConn.Write(buf[:n])
+			if err != nil {
+				fmt.Println("client write error", err)
+				return
+			}
 		}
 	}()
-	// go func() {
-	// 	buf := make([]byte, 128)
-	// 	for {
-	// 		n, err := conn.
-	// 	}
-	// 	defer wait.Done()
-	// 	io.Copy(tgConn, clientConn)
-	// }()
-	// go func() {
-	// 	defer wait.Done()
-	// 	io.Copy(clientConn, tgConn)
-	// }()
 	<-ctx.Done()
 	wait.Wait()
 
@@ -129,20 +129,20 @@ func (s *Server) makeSocketID() string {
 	return uuid.NewV4().String()
 }
 
-func (s *Server) getClientStream(conn net.Conn, ctx context.Context, cancel context.CancelFunc, socketID string) (Cipher, int16) {
+func (s *Server) getClientStream(conn net.Conn, ctx context.Context, cancel context.CancelFunc, socketID string) (*CipherReadWriteCloser, int16, error) {
 	frame, err := obfuscated2.ExtractFrame(conn)
 	if err != nil {
-		fmt.Println(err)
-		// return nil, 0, errors.Annotate(err, "Cannot create client stream")
+		return nil, 0, errors.Annotate(err, "Cannot create client stream")
 	}
 
 	obfs2, dc, err := obfuscated2.ParseObfuscated2ClientFrame(s.secret, frame)
 	if err != nil {
-		fmt.Println(err)
-		// return nil, 0, errors.Annotate(err, "Cannot create client stream")
+		return nil, 0, errors.Annotate(err, "Cannot create client stream")
 	}
 
-	return obfs2, dc
+	wConn := newCipherReadWriteCloser(conn, obfs2)
+
+	return wConn, dc, nil
 
 	// cipherConn := newCipherReadWriteCloser(conn, obfs2)
 	// ctxConn := newCtxReadWriteCloser(cipherConn, ctx, cancel)
@@ -151,20 +151,20 @@ func (s *Server) getClientStream(conn net.Conn, ctx context.Context, cancel cont
 	// return ctxConn, dc, nil
 }
 
-func (s *Server) getTelegramStream(dc int16, ctx context.Context, cancel context.CancelFunc, socketID string) (io.ReadWriteCloser, Cipher) {
+func (s *Server) getTelegramStream(dc int16, ctx context.Context, cancel context.CancelFunc, socketID string) (*CipherReadWriteCloser, error) {
 	socket, err := dialToTelegram(dc)
 	if err != nil {
-		fmt.Println(err)
-		// return nil, errors.Annotate(err, "Cannot dial")
+		return nil, errors.Annotate(err, "Cannot dial")
 	}
 
 	obfs2, frame := obfuscated2.MakeTelegramObfuscated2Frame()
 	if n, err := socket.Write(frame); err != nil || n != len(frame) {
-		fmt.Println(err)
-		// return nil, errors.Annotate(err, "Cannot write hadnshake frame")
+		return nil, errors.Annotate(err, "Cannot write hadnshake frame")
 	}
 
-	return socket, obfs2
+	wConn := newCipherReadWriteCloser(socket, obfs2)
+
+	return wConn, nil
 
 	// 	cipherConn := newCipherReadWriteCloser(socket, obfs2)
 	// 	ctxConn := newCtxReadWriteCloser(cipherConn, ctx, cancel)
