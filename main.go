@@ -11,11 +11,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/9seconds/mtg/proxy"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
-
-	"github.com/9seconds/mtg/server"
 )
 
 var (
@@ -96,7 +95,7 @@ func main() {
 	)).Sugar()
 
 	printURLs()
-	srv := server.NewServer(*bindIP, int(*bindPort), secretBytes, logger,
+	srv := proxy.NewServer(*bindIP, int(*bindPort), secretBytes, logger,
 		*readTimeout, *writeTimeout)
 	if err := srv.Serve(); err != nil {
 		logger.Fatal(err.Error())
