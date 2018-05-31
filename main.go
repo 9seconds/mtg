@@ -67,6 +67,10 @@ var (
 		Short('s').
 		Envar("MTG_SERVER").
 		String()
+	preferIPv6 = app.Flag("prefer-ipv6", "Use IPv6").
+			Short('6').
+			Envar("MTG_USE_IPV6").
+			Bool()
 
 	secret = app.Arg("secret", "Secret of this proxy.").String()
 )
@@ -117,7 +121,7 @@ func main() {
 	go stat.Serve(*statsIP, *statsPort)
 
 	srv := proxy.NewServer(*bindIP, int(*bindPort), secretBytes, logger,
-		*readTimeout, *writeTimeout, stat)
+		*readTimeout, *writeTimeout, *preferIPv6, stat)
 	if err := srv.Serve(); err != nil {
 		logger.Fatal(err.Error())
 	}

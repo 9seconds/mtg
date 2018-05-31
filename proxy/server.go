@@ -26,6 +26,7 @@ type Server struct {
 	readTimeout  time.Duration
 	writeTimeout time.Duration
 	stats        *Stats
+	ipv6         bool
 }
 
 func (s *Server) Serve() error {
@@ -124,7 +125,7 @@ func (s *Server) getClientStream(conn net.Conn, ctx context.Context, cancel cont
 }
 
 func (s *Server) getTelegramStream(dc int16, ctx context.Context, cancel context.CancelFunc, socketID string) (io.ReadWriteCloser, error) {
-	socket, err := dialToTelegram(dc, s.readTimeout)
+	socket, err := dialToTelegram(s.ipv6, dc, s.readTimeout)
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot dial")
 	}
@@ -149,7 +150,7 @@ func (s *Server) pipe(wait *sync.WaitGroup, reader io.Reader, writer io.Writer) 
 }
 
 func NewServer(ip net.IP, port int, secret []byte, logger *zap.SugaredLogger,
-	readTimeout, writeTimeout time.Duration, stat *Stats) *Server {
+	readTimeout, writeTimeout time.Duration, ipv6 bool, stat *Stats) *Server {
 	return &Server{
 		ip:           ip,
 		port:         port,
@@ -159,5 +160,6 @@ func NewServer(ip net.IP, port int, secret []byte, logger *zap.SugaredLogger,
 		readTimeout:  readTimeout,
 		writeTimeout: writeTimeout,
 		stats:        stat,
+		ipv6:         ipv6,
 	}
 }
