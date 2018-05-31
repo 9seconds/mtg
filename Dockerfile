@@ -34,4 +34,4 @@ ENV MTG_IP=0.0.0.0 \
 EXPOSE 3128 3129
 
 COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-COPY --from=0 /go/src/github.com/9seconds/mtg /usr/local/bin/mtg
+COPY --from=0 /go/src/github.com/9seconds/mtg/mtg /usr/local/bin/mtg

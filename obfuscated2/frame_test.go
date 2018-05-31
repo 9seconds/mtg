@@ -34,7 +34,7 @@ func TestFrameMagic(t *testing.T) {
 }
 
 func TestFrameDC(t *testing.T) {
-	assert.Equal(t, int16(771), makeFrame().DC())
+	assert.Equal(t, int16(770), makeFrame().DC())
 }
 
 func TestFrameValid(t *testing.T) {
@@ -43,6 +43,11 @@ func TestFrameValid(t *testing.T) {
 
 	frame[8+32+16+2] = byte(3)
 	assert.False(t, frame.Valid())
+}
+
+func TestFrameDoubleInvert(t *testing.T) {
+	frame := makeFrame()
+	assert.Equal(t, frame, frame.Invert().Invert())
 }
 
 func TestFrameInvert(t *testing.T) {
