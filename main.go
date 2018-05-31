@@ -4,6 +4,7 @@ package main
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -119,11 +120,23 @@ func main() {
 
 	stat := proxy.NewStats(*serverName, *portToShow, *secret)
 	go stat.Serve(*statsIP, *statsPort)
+	printURLs(stat.URLs)
 
 	srv := proxy.NewServer(*bindIP, int(*bindPort), secretBytes, logger,
 		*readTimeout, *writeTimeout, *preferIPv6, stat)
 	if err := srv.Serve(); err != nil {
 		logger.Fatal(err.Error())
+	}
+}
+
+func printURLs(data interface{}) {
+	encoder := json.NewEncoder(os.Stdout)
+	encoder.SetEscapeHTML(false)
+	encoder.SetIndent("", "  ")
+
+	err := encoder.Encode(data)
+	if err != nil {
+		panic(err)
 	}
 }
 
