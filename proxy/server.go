@@ -51,10 +51,16 @@ func (s *Server) Addr() string {
 }
 
 func (s *Server) accept(conn net.Conn) {
-	defer conn.Close()
-	defer s.stats.closeConnection()
-	s.stats.newConnection()
+	defer func() {
+		s.stats.closeConnection()
+		conn.Close()
 
+		if r := recover(); r != nil {
+			s.logger.Errorw("Crash of accept handler", "error", r)
+		}
+	}()
+
+	s.stats.newConnection()
 	ctx, cancel := context.WithCancel(context.Background())
 	socketID := s.makeSocketID()
 
