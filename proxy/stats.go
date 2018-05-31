@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net"
 	"net/http"
+	"net/url"
 	"strconv"
 	"sync/atomic"
 	"time"
@@ -23,6 +24,12 @@ type Stats struct {
 		Incoming uint64 `json:"incoming"`
 		Outgoing uint64 `json:"outgoing"`
 	} `json:"traffic"`
+	URLs struct {
+		TG        string `json:"tg_url"`
+		TMe       string `json:"tme_url"`
+		TGQRCode  string `json:"tg_qrcode"`
+		TMeQRCode string `json:"tme_qrcode"`
+	} `json:"urls"`
 	Uptime statsUptime `json:"uptime"`
 }
 
@@ -46,13 +53,71 @@ func (s *Stats) addOutgoingTraffic(n int) {
 func (s *Stats) Serve(host net.IP, port uint16) {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(s)
+
+		encoder := json.NewEncoder(w)
+		encoder.SetEscapeHTML(false)
+		encoder.SetIndent("", "  ")
+		encoder.Encode(s)
 	})
 
 	addr := net.JoinHostPort(host.String(), strconv.Itoa(int(port)))
 	http.ListenAndServe(addr, nil)
 }
 
-func NewStats() *Stats {
-	return &Stats{Uptime: statsUptime(time.Now())}
+func NewStats(serverName string, port uint16, secret string) *Stats {
+	urlQuery := makeURLQuery(serverName, port, secret)
+
+	stat := &Stats{Uptime: statsUptime(time.Now())}
+	stat.URLs.TG = makeTGURL(urlQuery)
+	stat.URLs.TMe = makeTMeURL(urlQuery)
+	stat.URLs.TGQRCode = makeQRCodeURL(stat.URLs.TG)
+	stat.URLs.TMeQRCode = makeQRCodeURL(stat.URLs.TMe)
+
+	return stat
+}
+
+func makeURLQuery(serverName string, port uint16, secret string) url.Values {
+	values := url.Values{}
+	values.Set("server", serverName)
+	values.Set("port", strconv.Itoa(int(port)))
+	values.Set("secret", secret)
+
+	return values
+}
+
+func makeTGURL(values url.Values) string {
+	tgURL := url.URL{
+		Scheme:   "tg",
+		Host:     "proxy",
+		RawQuery: values.Encode(),
+	}
+
+	return tgURL.String()
+}
+
+func makeTMeURL(values url.Values) string {
+	tMeURL := url.URL{
+		Scheme:   "https",
+		Host:     "t.me",
+		Path:     "proxy",
+		RawQuery: values.Encode(),
+	}
+
+	return tMeURL.String()
+}
+
+func makeQRCodeURL(data string) string {
+	QRURL := url.URL{
+		Scheme: "https",
+		Host:   "api.qrserver.com",
+		Path:   "v1/create-qr-code",
+	}
+
+	values := url.Values{}
+	values.Set("qzone", "4")
+	values.Set("format", "svg")
+	values.Set("data", data)
+	QRURL.RawQuery = values.Encode()
+
+	return QRURL.String()
 }

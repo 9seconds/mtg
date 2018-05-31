@@ -4,13 +4,10 @@ package main
 
 import (
 	"encoding/hex"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/9seconds/mtg/proxy"
@@ -40,6 +37,11 @@ var (
 			Envar("MTG_PORT").
 			Default("3128").
 			Uint16()
+	portToShow = app.Flag("show-bind-port",
+		"Which port to show in URL. Default is the value of bind-port").
+		Short('a').
+		Envar("MTG_SHOW_PORT").
+		Uint16()
 	statsIP = app.Flag("stats-ip", "Which IP bind stats server to").
 		Short('t').
 		Envar("MTG_STATS_IP").
@@ -78,6 +80,10 @@ func main() {
 		usage("Secret has to be hexadecimal string.")
 	}
 
+	if *portToShow == 0 {
+		*portToShow = *bindPort
+	}
+
 	if *serverName == "" {
 		resp, err := http.Get("https://api.ipify.org")
 		if err != nil || resp.StatusCode != http.StatusOK {
@@ -107,9 +113,7 @@ func main() {
 		atom,
 	)).Sugar()
 
-	printURLs()
-
-	stat := proxy.NewStats()
+	stat := proxy.NewStats(*serverName, *portToShow, *secret)
 	go stat.Serve(*statsIP, *statsPort)
 
 	srv := proxy.NewServer(*bindIP, int(*bindPort), secretBytes, logger,
@@ -120,25 +124,6 @@ func main() {
 }
 
 func usage(msg string) {
-	io.WriteString(os.Stderr, msg+"\n") // nolint: errcheck
+	io.WriteString(os.Stderr, msg+"\n")
 	os.Exit(1)
-}
-
-func printURLs() {
-	values := url.Values{}
-	values.Set("server", *serverName)
-	values.Set("port", strconv.Itoa(int(*bindPort)))
-	values.Set("secret", *secret)
-
-	tgURL := url.URL{
-		Scheme:   "tg",
-		Host:     "proxy",
-		RawQuery: values.Encode(),
-	}
-	fmt.Println(tgURL.String())
-
-	tgURL.Scheme = "https"
-	tgURL.Host = "t.me"
-	tgURL.Path = "proxy"
-	fmt.Println(tgURL.String())
 }
