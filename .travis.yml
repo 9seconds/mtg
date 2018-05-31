@@ -1,0 +1,18 @@
+---
+
+language: go
+sudo: false
+dist: trusty
+
+go:
+  - "1.9.x"
+  - "1.10.x"
+  - master
+
+script:
+  - make lint
+  - make test
+
+cache:
+  directories:
+    - vendor

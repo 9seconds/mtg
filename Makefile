@@ -50,11 +50,11 @@ crosscompile-dir:
 	@rm -rf "$(CC_DIR)" && mkdir -p "$(CC_DIR)"
 
 .PHONY: test
-test: vendor install-cli
+test: vendor install-cli version.go
 	@go test -v ./...
 
 .PHONY: lint
-lint: vendor install-cli
+lint: vendor install-cli version.go
 	@$(GOMETALINTER) --deadline=2m ./...
 
 .PHONY: clean
