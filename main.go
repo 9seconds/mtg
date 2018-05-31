@@ -73,7 +73,7 @@ var (
 			Envar("MTG_USE_IPV6").
 			Bool()
 
-	secret = app.Arg("secret", "Secret of this proxy.").String()
+	secret = app.Arg("secret", "Secret of this proxy.").Required().String()
 )
 
 func main() {
