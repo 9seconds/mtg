@@ -9,7 +9,6 @@ import (
 	"github.com/juju/errors"
 )
 
-// https://blog.susanka.eu/how-telegram-obfuscates-its-mtproto-traffic/
 // [frameOffsetFirst:frameOffsetKey:frameOffsetIV:frameOffsetMagic:frameOffsetDC:frameOffsetEnd]
 const (
 	frameLenKey   = 32
@@ -30,23 +29,34 @@ const (
 
 var tgMagicBytes = []byte{tgMagicByte, tgMagicByte, tgMagicByte, tgMagicByte}
 
+// Frame represents handshake frame. Telegram sends 64 bytes of obfuscated2
+// initialization data first.
+// https://blog.susanka.eu/how-telegram-obfuscates-its-mtproto-traffic/
 type Frame []byte
 
+// Key returns AES encryption key.
 func (f Frame) Key() []byte {
 	return f[frameOffsetFirst:frameOffsetKey]
 }
 
+// IV returns AES encryption initialization vector
 func (f Frame) IV() []byte {
 	return f[frameOffsetKey:frameOffsetIV]
 }
 
+// Magic returns magic bytes from last 8 bytes of frame. Telegram checks
+// for values there. If after decryption magic is not as expected,
+// connection considered as failed.
 func (f Frame) Magic() []byte {
 	return f[frameOffsetIV:frameOffsetMagic]
 }
 
+// DC returns number of datacenter IP client wants to use.
 func (f Frame) DC() (n int16) {
 	buf := bytes.NewReader(f[frameOffsetMagic:frameOffsetDC])
-	binary.Read(buf, binary.LittleEndian, &n)
+	if err := binary.Read(buf, binary.LittleEndian, &n); err != nil {
+		n = 1
+	}
 
 	if n < 0 {
 		n = -n
@@ -57,10 +67,13 @@ func (f Frame) DC() (n int16) {
 	return n - 1
 }
 
+// Valid checks that *decrypted* frame is valid. Only magic bytes are checked.
 func (f Frame) Valid() bool {
 	return bytes.Equal(f.Magic(), tgMagicBytes)
 }
 
+// Invert inverts frame for extracting encryption keys. Pkease check that link:
+// https://blog.susanka.eu/how-telegram-obfuscates-its-mtproto-traffic/
 func (f Frame) Invert() Frame {
 	reversed := make(Frame, FrameLen)
 	copy(reversed, f)
@@ -72,6 +85,7 @@ func (f Frame) Invert() Frame {
 	return reversed
 }
 
+// ExtractFrame extracts exact obfuscated2 handshake frame from given reader.
 func ExtractFrame(conn io.Reader) (Frame, error) {
 	buf := &bytes.Buffer{}
 	if _, err := io.CopyN(buf, conn, FrameLen); err != nil {

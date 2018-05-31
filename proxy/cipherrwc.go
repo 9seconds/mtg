@@ -5,39 +5,44 @@ import (
 	"io"
 )
 
+// Cipher is an interface to anything which can encrypt and decrypt
 type Cipher interface {
 	Encrypt([]byte) []byte
 	Decrypt([]byte) []byte
 }
 
+// CipherReadWriteCloser wraps connection for transparent encryption
 type CipherReadWriteCloser struct {
 	crypt Cipher
 	conn  io.ReadWriteCloser
 	rest  *bytes.Buffer
 }
 
+// Read reads from connection
 func (c *CipherReadWriteCloser) Read(p []byte) (n int, err error) {
 	n, err = c.conn.Read(p)
 	copy(p, c.crypt.Decrypt(p[:n]))
 	return
 }
 
-func (c *CipherReadWriteCloser) Write(p []byte) (n int, err error) {
+// Write writes into connection.
+func (c *CipherReadWriteCloser) Write(p []byte) (int, error) {
 	encrypted := c.crypt.Encrypt(p)
+	allWritten := 0
 
-	curN := 0
 	for len(encrypted) > 0 {
-		curN, err = c.conn.Write(encrypted)
-		n += curN
+		n, err := c.conn.Write(encrypted)
+		allWritten += n
 		if err != nil {
-			return
+			return allWritten, err
 		}
 		encrypted = encrypted[n:]
 	}
 
-	return
+	return allWritten, nil
 }
 
+// Close closes underlying connection.
 func (c *CipherReadWriteCloser) Close() error {
 	return c.conn.Close()
 }

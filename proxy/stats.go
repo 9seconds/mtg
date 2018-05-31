@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"encoding/json"
+	"fmt"
 	"net"
 	"net/http"
 	"net/url"
@@ -17,6 +18,7 @@ func (s statsUptime) MarshalJSON() ([]byte, error) {
 	return []byte(strconv.Itoa(uptime)), nil
 }
 
+// Stats is a datastructure for statistics on work of this proxy.
 type Stats struct {
 	AllConnections    uint64 `json:"all_connections"`
 	ActiveConnections uint32 `json:"active_connections"`
@@ -50,20 +52,22 @@ func (s *Stats) addOutgoingTraffic(n int) {
 	atomic.AddUint64(&s.Traffic.Outgoing, uint64(n))
 }
 
-func (s *Stats) Serve(host net.IP, port uint16) {
+// Serve runs statistics HTTP server.
+func (s *Stats) Serve(host fmt.Stringer, port uint16) {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
 		encoder := json.NewEncoder(w)
 		encoder.SetEscapeHTML(false)
 		encoder.SetIndent("", "  ")
-		encoder.Encode(s)
+		encoder.Encode(s) // nolint: errcheck, gas
 	})
 
 	addr := net.JoinHostPort(host.String(), strconv.Itoa(int(port)))
-	http.ListenAndServe(addr, nil)
+	http.ListenAndServe(addr, nil) // nolint: errcheck, gas
 }
 
+// NewStats returns new instance of statistics datastructure.
 func NewStats(serverName string, port uint16, secret string) *Stats {
 	urlQuery := makeURLQuery(serverName, port, secret)
 

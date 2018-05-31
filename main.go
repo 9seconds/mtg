@@ -95,7 +95,7 @@ func main() {
 			usage("Cannot get local IP address.")
 		}
 		myIPBytes, err := ioutil.ReadAll(resp.Body)
-		resp.Body.Close()
+		resp.Body.Close() // nolint: errcheck
 
 		if err != nil {
 			usage("Cannot get local IP address.")
@@ -141,6 +141,6 @@ func printURLs(data interface{}) {
 }
 
 func usage(msg string) {
-	io.WriteString(os.Stderr, msg+"\n")
+	io.WriteString(os.Stderr, msg+"\n") // nolint: errcheck
 	os.Exit(1)
 }

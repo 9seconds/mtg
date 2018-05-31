@@ -14,14 +14,12 @@ import (
 	"go.uber.org/zap"
 )
 
-const bufferSize = 4096
-
+// Server is an insgtance of MTPROTO proxy.
 type Server struct {
 	ip           net.IP
 	port         int
 	secret       []byte
 	logger       *zap.SugaredLogger
-	lsock        net.Listener
 	ctx          context.Context
 	readTimeout  time.Duration
 	writeTimeout time.Duration
@@ -29,8 +27,10 @@ type Server struct {
 	ipv6         bool
 }
 
+// Serve does MTPROTO proxying.
 func (s *Server) Serve() error {
-	lsock, err := net.Listen("tcp", s.Addr())
+	addr := net.JoinHostPort(s.ip.String(), strconv.Itoa(s.port))
+	lsock, err := net.Listen("tcp", addr)
 	if err != nil {
 		return errors.Annotate(err, "Cannot create listen socket")
 	}
@@ -42,18 +42,12 @@ func (s *Server) Serve() error {
 			go s.accept(conn)
 		}
 	}
-
-	return nil
-}
-
-func (s *Server) Addr() string {
-	return net.JoinHostPort(s.ip.String(), strconv.Itoa(s.port))
 }
 
 func (s *Server) accept(conn net.Conn) {
 	defer func() {
 		s.stats.closeConnection()
-		conn.Close()
+		conn.Close() // nolint: errcheck
 
 		if r := recover(); r != nil {
 			s.logger.Errorw("Crash of accept handler", "error", r)
@@ -70,7 +64,7 @@ func (s *Server) accept(conn net.Conn) {
 		"socketid", socketID,
 	)
 
-	clientConn, dc, err := s.getClientStream(conn, ctx, cancel, socketID)
+	clientConn, dc, err := s.getClientStream(ctx, cancel, conn, socketID)
 	if err != nil {
 		s.logger.Warnw("Cannot initialize client connection",
 			"secret", s.secret,
@@ -80,9 +74,9 @@ func (s *Server) accept(conn net.Conn) {
 		)
 		return
 	}
-	defer clientConn.Close()
+	defer clientConn.Close() // nolint: errcheck
 
-	tgConn, err := s.getTelegramStream(dc, ctx, cancel, socketID)
+	tgConn, err := s.getTelegramStream(ctx, cancel, dc, socketID)
 	if err != nil {
 		s.logger.Warnw("Cannot initialize Telegram connection",
 			"socketid", socketID,
@@ -90,12 +84,18 @@ func (s *Server) accept(conn net.Conn) {
 		)
 		return
 	}
-	defer tgConn.Close()
+	defer tgConn.Close() // nolint: errcheck
 
 	wait := &sync.WaitGroup{}
 	wait.Add(2)
-	go s.pipe(wait, clientConn, tgConn)
-	go s.pipe(wait, tgConn, clientConn)
+	go func() {
+		defer wait.Done()
+		io.Copy(clientConn, tgConn) // nolint: errcheck
+	}()
+	go func() {
+		defer wait.Done()
+		io.Copy(tgConn, clientConn) // nolint: errcheck
+	}()
 	<-ctx.Done()
 	wait.Wait()
 
@@ -110,7 +110,7 @@ func (s *Server) makeSocketID() string {
 	return uuid.NewV4().String()
 }
 
-func (s *Server) getClientStream(conn net.Conn, ctx context.Context, cancel context.CancelFunc, socketID string) (io.ReadWriteCloser, int16, error) {
+func (s *Server) getClientStream(ctx context.Context, cancel context.CancelFunc, conn net.Conn, socketID string) (io.ReadWriteCloser, int16, error) {
 	wConn := newTimeoutReadWriteCloser(conn, s.readTimeout, s.writeTimeout)
 	wConn = newTrafficReadWriteCloser(wConn, s.stats.addIncomingTraffic, s.stats.addOutgoingTraffic)
 	frame, err := obfuscated2.ExtractFrame(wConn)
@@ -125,12 +125,12 @@ func (s *Server) getClientStream(conn net.Conn, ctx context.Context, cancel cont
 
 	wConn = newLogReadWriteCloser(wConn, s.logger, socketID, "client")
 	wConn = newCipherReadWriteCloser(wConn, obfs2)
-	wConn = newCtxReadWriteCloser(wConn, ctx, cancel)
+	wConn = newCtxReadWriteCloser(ctx, cancel, wConn)
 
 	return wConn, dc, nil
 }
 
-func (s *Server) getTelegramStream(dc int16, ctx context.Context, cancel context.CancelFunc, socketID string) (io.ReadWriteCloser, error) {
+func (s *Server) getTelegramStream(ctx context.Context, cancel context.CancelFunc, dc int16, socketID string) (io.ReadWriteCloser, error) {
 	socket, err := dialToTelegram(s.ipv6, dc, s.readTimeout)
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot dial")
@@ -145,16 +145,12 @@ func (s *Server) getTelegramStream(dc int16, ctx context.Context, cancel context
 
 	wConn = newLogReadWriteCloser(wConn, s.logger, socketID, "telegram")
 	wConn = newCipherReadWriteCloser(wConn, obfs2)
-	wConn = newCtxReadWriteCloser(wConn, ctx, cancel)
+	wConn = newCtxReadWriteCloser(ctx, cancel, wConn)
 
 	return wConn, nil
 }
 
-func (s *Server) pipe(wait *sync.WaitGroup, reader io.Reader, writer io.Writer) {
-	defer wait.Done()
-	io.Copy(writer, reader)
-}
-
+// NewServer creates new instance of MTPROTO proxy.
 func NewServer(ip net.IP, port int, secret []byte, logger *zap.SugaredLogger,
 	readTimeout, writeTimeout time.Duration, ipv6 bool, stat *Stats) *Server {
 	return &Server{

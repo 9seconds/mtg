@@ -7,12 +7,15 @@ import (
 	"github.com/juju/errors"
 )
 
+// CtxReadWriteCloser wraps underlying connection and does management of the
+// context and its cancel function.
 type CtxReadWriteCloser struct {
 	ctx    context.Context
 	conn   io.ReadWriteCloser
 	cancel context.CancelFunc
 }
 
+// Read reads from connection
 func (c *CtxReadWriteCloser) Read(p []byte) (int, error) {
 	select {
 	case <-c.ctx.Done():
@@ -26,6 +29,7 @@ func (c *CtxReadWriteCloser) Read(p []byte) (int, error) {
 	}
 }
 
+// Write writes into connection.
 func (c *CtxReadWriteCloser) Write(p []byte) (int, error) {
 	select {
 	case <-c.ctx.Done():
@@ -39,11 +43,12 @@ func (c *CtxReadWriteCloser) Write(p []byte) (int, error) {
 	}
 }
 
+// Close closes underlying connection.
 func (c *CtxReadWriteCloser) Close() error {
 	return c.conn.Close()
 }
 
-func newCtxReadWriteCloser(conn io.ReadWriteCloser, ctx context.Context, cancel context.CancelFunc) io.ReadWriteCloser {
+func newCtxReadWriteCloser(ctx context.Context, cancel context.CancelFunc, conn io.ReadWriteCloser) io.ReadWriteCloser {
 	return &CtxReadWriteCloser{
 		conn:   conn,
 		ctx:    ctx,

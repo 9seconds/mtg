@@ -2,7 +2,6 @@ package obfuscated2
 
 import (
 	"crypto/sha256"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

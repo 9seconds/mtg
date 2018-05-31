@@ -7,19 +7,24 @@ import (
 	"github.com/juju/errors"
 )
 
+// TelegramAddress presents a pair of v4 and v6 addresses. This pairization
+// is required because we want to use DC indexes.
 type TelegramAddress struct {
 	v4 string
 	v6 string
 }
 
+// IPv4 returns v4 address.
 func (t *TelegramAddress) IPv4() string {
 	return net.JoinHostPort(t.v4, telegramPort)
 }
 
+// IPv6 returns v4 address.
 func (t *TelegramAddress) IPv6() string {
 	return net.JoinHostPort(t.v6, telegramPort)
 }
 
+// TelegramAddresses is a list of all known Telegram addresses for DC indexes.
 var TelegramAddresses = []TelegramAddress{
 	TelegramAddress{v4: "149.154.175.50", v6: "2001:b28:f23d:f001::a"},
 	TelegramAddress{v4: "149.154.167.51", v6: "2001:67c:04e8:f002::a"},
