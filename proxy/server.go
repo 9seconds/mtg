@@ -113,7 +113,7 @@ func (s *Server) makeSocketID() string {
 
 func (s *Server) getClientStream(ctx context.Context, cancel context.CancelFunc, conn net.Conn, socketID string) (io.ReadWriteCloser, int16, error) {
 	wConn := wrappers.NewTimeoutRWC(conn, s.readTimeout, s.writeTimeout)
-	wConn = newTrafficReadWriteCloser(wConn, s.stats.addIncomingTraffic, s.stats.addOutgoingTraffic)
+	wConn = wrappers.NewTrafficRWC(wConn, s.stats.addIncomingTraffic, s.stats.addOutgoingTraffic)
 	frame, err := obfuscated2.ExtractFrame(wConn)
 	if err != nil {
 		return nil, 0, errors.Annotate(err, "Cannot create client stream")
@@ -137,7 +137,7 @@ func (s *Server) getTelegramStream(ctx context.Context, cancel context.CancelFun
 		return nil, errors.Annotate(err, "Cannot dial")
 	}
 	wConn := wrappers.NewTimeoutRWC(socket, s.readTimeout, s.writeTimeout)
-	wConn = newTrafficReadWriteCloser(wConn, s.stats.addIncomingTraffic, s.stats.addOutgoingTraffic)
+	wConn = wrappers.NewTrafficRWC(wConn, s.stats.addIncomingTraffic, s.stats.addOutgoingTraffic)
 
 	obfs2, frame := obfuscated2.MakeTelegramObfuscated2Frame()
 	if n, err := socket.Write(frame); err != nil || n != len(frame) {
