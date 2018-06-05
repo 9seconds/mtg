@@ -126,7 +126,7 @@ func (s *Server) getClientStream(ctx context.Context, cancel context.CancelFunc,
 
 	wConn = newLogReadWriteCloser(wConn, s.logger, socketID, "client")
 	wConn = wrappers.NewStreamCipherRWC(wConn, obfs2.Encryptor, obfs2.Decryptor)
-	wConn = newCtxReadWriteCloser(ctx, cancel, wConn)
+	wConn = wrappers.NewCtxRWC(ctx, cancel, wConn)
 
 	return wConn, dc, nil
 }
@@ -146,7 +146,7 @@ func (s *Server) getTelegramStream(ctx context.Context, cancel context.CancelFun
 
 	wConn = newLogReadWriteCloser(wConn, s.logger, socketID, "telegram")
 	wConn = wrappers.NewStreamCipherRWC(wConn, obfs2.Encryptor, obfs2.Decryptor)
-	wConn = newCtxReadWriteCloser(ctx, cancel, wConn)
+	wConn = wrappers.NewCtxRWC(ctx, cancel, wConn)
 
 	return wConn, nil
 }

@@ -1,4 +1,4 @@
-package proxy
+package wrappers
 
 import (
 	"context"
@@ -48,7 +48,7 @@ func (c *CtxReadWriteCloser) Close() error {
 	return c.conn.Close()
 }
 
-func newCtxReadWriteCloser(ctx context.Context, cancel context.CancelFunc, conn io.ReadWriteCloser) io.ReadWriteCloser {
+func NewCtxRWC(ctx context.Context, cancel context.CancelFunc, conn io.ReadWriteCloser) io.ReadWriteCloser {
 	return &CtxReadWriteCloser{
 		conn:   conn,
 		ctx:    ctx,
