@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/9seconds/mtg/obfuscated2"
+	"github.com/9seconds/mtg/wrappers"
 	"github.com/juju/errors"
 	uuid "github.com/satori/go.uuid"
 	"go.uber.org/zap"
@@ -124,7 +125,7 @@ func (s *Server) getClientStream(ctx context.Context, cancel context.CancelFunc,
 	}
 
 	wConn = newLogReadWriteCloser(wConn, s.logger, socketID, "client")
-	wConn = newCipherReadWriteCloser(wConn, obfs2)
+	wConn = wrappers.NewStreamCipherRWC(wConn, obfs2.Encryptor, obfs2.Decryptor)
 	wConn = newCtxReadWriteCloser(ctx, cancel, wConn)
 
 	return wConn, dc, nil
@@ -144,7 +145,7 @@ func (s *Server) getTelegramStream(ctx context.Context, cancel context.CancelFun
 	}
 
 	wConn = newLogReadWriteCloser(wConn, s.logger, socketID, "telegram")
-	wConn = newCipherReadWriteCloser(wConn, obfs2)
+	wConn = wrappers.NewStreamCipherRWC(wConn, obfs2.Encryptor, obfs2.Decryptor)
 	wConn = newCtxReadWriteCloser(ctx, cancel, wConn)
 
 	return wConn, nil

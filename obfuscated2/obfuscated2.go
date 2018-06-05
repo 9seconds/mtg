@@ -11,22 +11,8 @@ import (
 // Obfuscated2 contains AES CTR encryption and decryption streams
 // for telegram connection.
 type Obfuscated2 struct {
-	decryptor cipher.Stream
-	encryptor cipher.Stream
-}
-
-// Encrypt encrypts given data.
-func (o *Obfuscated2) Encrypt(data []byte) []byte {
-	buf := make([]byte, len(data))
-	o.encryptor.XORKeyStream(buf, data)
-	return buf
-}
-
-// Decrypt decrypts given data.
-func (o *Obfuscated2) Decrypt(data []byte) []byte {
-	buf := make([]byte, len(data))
-	o.decryptor.XORKeyStream(buf, data)
-	return buf
+	Decryptor cipher.Stream
+	Encryptor cipher.Stream
 }
 
 // ParseObfuscated2ClientFrame parses client frame. Please check this link for
@@ -54,8 +40,8 @@ func ParseObfuscated2ClientFrame(secret, data []byte) (*Obfuscated2, int16, erro
 	}
 
 	obfs := &Obfuscated2{
-		decryptor: decryptor,
-		encryptor: encryptor,
+		Decryptor: decryptor,
+		Encryptor: encryptor,
 	}
 
 	return obfs, decryptedFrame.DC(), nil
@@ -77,8 +63,8 @@ func MakeTelegramObfuscated2Frame() (*Obfuscated2, Frame) {
 	copy(frame, copyFrame)
 
 	obfs := &Obfuscated2{
-		decryptor: decryptor,
-		encryptor: encryptor,
+		Decryptor: decryptor,
+		Encryptor: encryptor,
 	}
 
 	return obfs, frame
