@@ -1,7 +1,6 @@
 package wrappers
 
 import (
-	"bytes"
 	"crypto/cipher"
 	"io"
 )
@@ -10,7 +9,6 @@ type StreamCipherReadWriteCloser struct {
 	encryptor cipher.Stream
 	decryptor cipher.Stream
 	conn      io.ReadWriteCloser
-	rest      *bytes.Buffer
 }
 
 // Read reads from connection
@@ -48,6 +46,5 @@ func NewStreamCipherRWC(conn io.ReadWriteCloser, encryptor, decryptor cipher.Str
 		conn:      conn,
 		encryptor: encryptor,
 		decryptor: decryptor,
-		rest:      &bytes.Buffer{},
 	}
 }
