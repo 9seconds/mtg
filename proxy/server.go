@@ -124,7 +124,7 @@ func (s *Server) getClientStream(ctx context.Context, cancel context.CancelFunc,
 		return nil, 0, errors.Annotate(err, "Cannot create client stream")
 	}
 
-	wConn = newLogReadWriteCloser(wConn, s.logger, socketID, "client")
+	wConn = wrappers.NewLogRWC(wConn, s.logger, socketID, "client")
 	wConn = wrappers.NewStreamCipherRWC(wConn, obfs2.Encryptor, obfs2.Decryptor)
 	wConn = wrappers.NewCtxRWC(ctx, cancel, wConn)
 
@@ -144,7 +144,7 @@ func (s *Server) getTelegramStream(ctx context.Context, cancel context.CancelFun
 		return nil, errors.Annotate(err, "Cannot write hadnshake frame")
 	}
 
-	wConn = newLogReadWriteCloser(wConn, s.logger, socketID, "telegram")
+	wConn = wrappers.NewLogRWC(wConn, s.logger, socketID, "telegram")
 	wConn = wrappers.NewStreamCipherRWC(wConn, obfs2.Encryptor, obfs2.Decryptor)
 	wConn = wrappers.NewCtxRWC(ctx, cancel, wConn)
 

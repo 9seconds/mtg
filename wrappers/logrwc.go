@@ -1,4 +1,4 @@
-package proxy
+package wrappers
 
 import (
 	"io"
@@ -36,7 +36,7 @@ func (l *LogReadWriteCloser) Close() error {
 	return err
 }
 
-func newLogReadWriteCloser(conn io.ReadWriteCloser, logger *zap.SugaredLogger, sockid string, name string) io.ReadWriteCloser {
+func NewLogRWC(conn io.ReadWriteCloser, logger *zap.SugaredLogger, sockid string, name string) io.ReadWriteCloser {
 	return &LogReadWriteCloser{
 		conn:   conn,
 		logger: logger,
