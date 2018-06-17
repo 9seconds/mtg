@@ -4,34 +4,27 @@ import (
 	"context"
 	"io"
 	"net"
-	"strconv"
 	"sync"
-	"time"
 
-	"github.com/9seconds/mtg/obfuscated2"
-	"github.com/9seconds/mtg/wrappers"
 	"github.com/juju/errors"
 	uuid "github.com/satori/go.uuid"
 	"go.uber.org/zap"
+
+	"github.com/9seconds/mtg/config"
+	"github.com/9seconds/mtg/obfuscated2"
+	"github.com/9seconds/mtg/wrappers"
 )
 
 // Server is an insgtance of MTPROTO proxy.
 type Server struct {
-	ip           net.IP
-	port         int
-	secret       []byte
-	logger       *zap.SugaredLogger
-	ctx          context.Context
-	readTimeout  time.Duration
-	writeTimeout time.Duration
-	stats        *Stats
-	ipv6         bool
+	conf   *config.Config
+	logger *zap.SugaredLogger
+	stats  *Stats
 }
 
 // Serve does MTPROTO proxying.
 func (s *Server) Serve() error {
-	addr := net.JoinHostPort(s.ip.String(), strconv.Itoa(s.port))
-	lsock, err := net.Listen("tcp", addr)
+	lsock, err := net.Listen("tcp", s.conf.BindAddr())
 	if err != nil {
 		return errors.Annotate(err, "Cannot create listen socket")
 	}
@@ -57,10 +50,9 @@ func (s *Server) accept(conn net.Conn) {
 
 	s.stats.newConnection()
 	ctx, cancel := context.WithCancel(context.Background())
-	socketID := s.makeSocketID()
+	socketID := uuid.NewV4().String()
 
 	s.logger.Debugw("Client connected",
-		"secret", s.secret,
 		"addr", conn.RemoteAddr().String(),
 		"socketid", socketID,
 	)
@@ -68,7 +60,6 @@ func (s *Server) accept(conn net.Conn) {
 	clientConn, dc, err := s.getClientStream(ctx, cancel, conn, socketID)
 	if err != nil {
 		s.logger.Warnw("Cannot initialize client connection",
-			"secret", s.secret,
 			"addr", conn.RemoteAddr().String(),
 			"socketid", socketID,
 			"error", err,
@@ -101,25 +92,20 @@ func (s *Server) accept(conn net.Conn) {
 	wait.Wait()
 
 	s.logger.Debugw("Client disconnected",
-		"secret", s.secret,
 		"addr", conn.RemoteAddr().String(),
 		"socketid", socketID,
 	)
 }
 
-func (s *Server) makeSocketID() string {
-	return uuid.NewV4().String()
-}
-
 func (s *Server) getClientStream(ctx context.Context, cancel context.CancelFunc, conn net.Conn, socketID string) (io.ReadWriteCloser, int16, error) {
-	wConn := wrappers.NewTimeoutRWC(conn, s.readTimeout, s.writeTimeout)
+	wConn := wrappers.NewTimeoutRWC(conn, s.conf.TimeoutRead, s.conf.TimeoutWrite)
 	wConn = wrappers.NewTrafficRWC(wConn, s.stats.addIncomingTraffic, s.stats.addOutgoingTraffic)
 	frame, err := obfuscated2.ExtractFrame(wConn)
 	if err != nil {
 		return nil, 0, errors.Annotate(err, "Cannot create client stream")
 	}
 
-	obfs2, dc, err := obfuscated2.ParseObfuscated2ClientFrame(s.secret, frame)
+	obfs2, dc, err := obfuscated2.ParseObfuscated2ClientFrame(s.conf.Secret, frame)
 	if err != nil {
 		return nil, 0, errors.Annotate(err, "Cannot create client stream")
 	}
@@ -132,11 +118,11 @@ func (s *Server) getClientStream(ctx context.Context, cancel context.CancelFunc,
 }
 
 func (s *Server) getTelegramStream(ctx context.Context, cancel context.CancelFunc, dc int16, socketID string) (io.ReadWriteCloser, error) {
-	socket, err := dialToTelegram(s.ipv6, dc, s.readTimeout)
+	socket, err := dialToTelegram(dc, s.conf.TimeoutRead)
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot dial")
 	}
-	wConn := wrappers.NewTimeoutRWC(socket, s.readTimeout, s.writeTimeout)
+	wConn := wrappers.NewTimeoutRWC(socket, s.conf.TimeoutRead, s.conf.TimeoutWrite)
 	wConn = wrappers.NewTrafficRWC(wConn, s.stats.addIncomingTraffic, s.stats.addOutgoingTraffic)
 
 	obfs2, frame := obfuscated2.MakeTelegramObfuscated2Frame()
@@ -152,17 +138,10 @@ func (s *Server) getTelegramStream(ctx context.Context, cancel context.CancelFun
 }
 
 // NewServer creates new instance of MTPROTO proxy.
-func NewServer(ip net.IP, port int, secret []byte, logger *zap.SugaredLogger,
-	readTimeout, writeTimeout time.Duration, ipv6 bool, stat *Stats) *Server {
+func NewServer(conf *config.Config, logger *zap.SugaredLogger, stat *Stats) *Server {
 	return &Server{
-		ip:           ip,
-		port:         port,
-		secret:       secret,
-		ctx:          context.Background(),
-		logger:       logger,
-		readTimeout:  readTimeout,
-		writeTimeout: writeTimeout,
-		stats:        stat,
-		ipv6:         ipv6,
+		conf:   conf,
+		logger: logger,
+		stats:  stat,
 	}
 }

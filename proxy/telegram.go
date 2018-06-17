@@ -37,12 +37,12 @@ const telegramPort = "443"
 
 const telegramKeepAlive = 30 * time.Second
 
-func dialToTelegram(ipv6 bool, dcIdx int16, timeout time.Duration) (net.Conn, error) {
+func dialToTelegram(dcIdx int16, timeout time.Duration) (net.Conn, error) {
 	if dcIdx < 0 || dcIdx >= 5 {
 		return nil, errors.New("Incorrect DC IDX")
 	}
 
-	conn, err := doDial(ipv6, dcIdx, timeout)
+	conn, err := doDial(dcIdx, timeout)
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot dial")
 	}
@@ -57,14 +57,12 @@ func dialToTelegram(ipv6 bool, dcIdx int16, timeout time.Duration) (net.Conn, er
 	return conn, nil
 }
 
-func doDial(ipv6 bool, dcIdx int16, timeout time.Duration) (*net.TCPConn, error) {
+func doDial(dcIdx int16, timeout time.Duration) (*net.TCPConn, error) {
 	dialer := net.Dialer{Timeout: timeout}
 	addr := TelegramAddresses[dcIdx]
 
-	if ipv6 {
-		if conn, err := dialer.Dial("tcp", addr.IPv6()); err == nil {
-			return conn.(*net.TCPConn), nil
-		}
+	if conn, err := dialer.Dial("tcp", addr.IPv6()); err == nil {
+		return conn.(*net.TCPConn), nil
 	}
 
 	conn, err := dialer.Dial("tcp", addr.IPv4())
