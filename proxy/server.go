@@ -12,6 +12,7 @@ import (
 
 	"github.com/9seconds/mtg/config"
 	"github.com/9seconds/mtg/obfuscated2"
+	"github.com/9seconds/mtg/telegram"
 	"github.com/9seconds/mtg/wrappers"
 )
 
@@ -20,6 +21,7 @@ type Server struct {
 	conf   *config.Config
 	logger *zap.SugaredLogger
 	stats  *Stats
+	tg     telegram.Telegram
 }
 
 // Serve does MTPROTO proxying.
@@ -118,23 +120,21 @@ func (s *Server) getClientStream(ctx context.Context, cancel context.CancelFunc,
 }
 
 func (s *Server) getTelegramStream(ctx context.Context, cancel context.CancelFunc, dc int16, socketID string) (io.ReadWriteCloser, error) {
-	socket, err := dialToTelegram(dc, s.conf.TimeoutRead)
+	conn, err := s.tg.Dial(dc)
 	if err != nil {
-		return nil, errors.Annotate(err, "Cannot dial")
-	}
-	wConn := wrappers.NewTimeoutRWC(socket, s.conf.TimeoutRead, s.conf.TimeoutWrite)
-	wConn = wrappers.NewTrafficRWC(wConn, s.stats.addIncomingTraffic, s.stats.addOutgoingTraffic)
-
-	obfs2, frame := obfuscated2.MakeTelegramObfuscated2Frame()
-	if n, err := socket.Write(frame); err != nil || n != len(frame) {
-		return nil, errors.Annotate(err, "Cannot write hadnshake frame")
+		return nil, errors.Annotate(err, "Cannot connect to Telegram")
 	}
 
-	wConn = wrappers.NewLogRWC(wConn, s.logger, socketID, "telegram")
-	wConn = wrappers.NewStreamCipherRWC(wConn, obfs2.Encryptor, obfs2.Decryptor)
-	wConn = wrappers.NewCtxRWC(ctx, cancel, wConn)
+	conn = wrappers.NewTrafficRWC(conn, s.stats.addIncomingTraffic, s.stats.addOutgoingTraffic)
+	conn, err = s.tg.Init(conn)
+	if err != nil {
+		return nil, errors.Annotate(err, "Cannot handshake Telegram")
+	}
 
-	return wConn, nil
+	conn = wrappers.NewLogRWC(conn, s.logger, socketID, "telegram")
+	conn = wrappers.NewCtxRWC(ctx, cancel, conn)
+
+	return conn, nil
 }
 
 // NewServer creates new instance of MTPROTO proxy.
@@ -143,5 +143,6 @@ func NewServer(conf *config.Config, logger *zap.SugaredLogger, stat *Stats) *Ser
 		conf:   conf,
 		logger: logger,
 		stats:  stat,
+		tg:     telegram.NewDirectTelegram(conf),
 	}
 }

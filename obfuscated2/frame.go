@@ -58,13 +58,7 @@ func (f Frame) DC() (n int16) {
 		n = 1
 	}
 
-	if n < 0 {
-		n = -n
-	} else if n == 0 {
-		n = 1
-	}
-
-	return n - 1
+	return
 }
 
 // Valid checks that *decrypted* frame is valid. Only magic bytes are checked.
