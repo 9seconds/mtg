@@ -25,7 +25,8 @@ func TestObfs2TelegramDecryptEncryptDecrypt(t *testing.T) {
 	data := []byte{1, 2, 3}
 	encrypted := make([]byte, 3)
 	encryptor.XORKeyStream(encrypted, data)
-	decrypted := obfs2.Decrypt(encrypted)
+	decrypted := make([]byte, 3)
+	obfs2.Decryptor.XORKeyStream(decrypted, encrypted)
 
 	assert.Equal(t, data, decrypted)
 }
@@ -67,10 +68,12 @@ func TestObfs2Full(t *testing.T) {
 	tgEncryptedMessage := make([]byte, len(message))
 	tgEncryptor.XORKeyStream(tgEncryptedMessage, message)
 
-	tgEncDecryptedMessage := tgObfs.Decrypt(tgEncryptedMessage)
+	tgEncDecryptedMessage := make([]byte, len(tgEncryptedMessage))
+	tgObfs.Decryptor.XORKeyStream(tgEncDecryptedMessage, tgEncryptedMessage)
 	assert.Equal(t, message, tgEncDecryptedMessage)
 
-	clientEncryptedMessage := clientObfs.Encrypt(tgEncDecryptedMessage)
+	clientEncryptedMessage := make([]byte, len(tgEncDecryptedMessage))
+	clientObfs.Encryptor.XORKeyStream(clientEncryptedMessage, tgEncDecryptedMessage)
 	finalMessage := make([]byte, len(clientEncryptedMessage))
 	clientDecryptor.XORKeyStream(finalMessage, clientEncryptedMessage)
 

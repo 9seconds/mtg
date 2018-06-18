@@ -14,7 +14,7 @@ func getURLs(addr net.IP, port uint16, secret []byte) (urls URLs) {
 	values.Set("secret", hex.EncodeToString(secret))
 
 	urls.TG = makeTGURL(values)
-	urls.TMe = makeTGURL(values)
+	urls.TMe = makeTMeURL(values)
 	urls.TGQRCode = makeQRCodeURL(urls.TG)
 	urls.TMeQRCode = makeQRCodeURL(urls.TG)
 
