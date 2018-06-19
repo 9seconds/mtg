@@ -1,7 +1,7 @@
 ROOT_DIR     := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 IMAGE_NAME   := mtg
 APP_NAME     := $(IMAGE_NAME)
-GOMETALINTER := gometalinter.v2
+GOMETALINTER := gometalinter
 
 VENDOR_FILES := $(shell find "$(ROOT_DIR)/vendor" 2>/dev/null || echo -n "vendor")
 CC_BINARIES  := $(shell bash -c "echo -n $(APP_NAME)-{linux,windows,darwin,freebsd,openbsd}-{386,amd64} $(APP_NAME)-linux-{arm,arm64}")
@@ -76,5 +76,5 @@ install-dep:
 
 .PHONY: install-lint
 install-lint:
-	@go get gopkg.in/alecthomas/gometalinter.v2 && \
+	@go get github.com/alecthomas/gometalinter && \
 		$(GOMETALINTER) --install >/dev/null

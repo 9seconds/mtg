@@ -10,6 +10,7 @@ RUN set -x \
     curl \
     git \
     make \
+    upx \
   && update-ca-certificates
 
 ADD . /go/src/github.com/9seconds/mtg
@@ -17,7 +18,8 @@ ADD . /go/src/github.com/9seconds/mtg
 RUN set -x \
   && cd /go/src/github.com/9seconds/mtg \
   && make clean \
-  && make -j 4 static
+  && make -j 4 static \
+  && upx --ultra-brute -qq ./mtg
 
 
 ###############################################################################
@@ -29,8 +31,7 @@ ENTRYPOINT ["/usr/local/bin/mtg"]
 ENV MTG_IP=0.0.0.0 \
     MTG_PORT=3128 \
     MTG_STATS_IP=0.0.0.0 \
-    MTG_STATS_PORT=3129 \
-    MTG_USE_IPV6=true
+    MTG_STATS_PORT=3129
 EXPOSE 3128 3129
 
 COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt

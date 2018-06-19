@@ -11,31 +11,15 @@ import (
 // Obfuscated2 contains AES CTR encryption and decryption streams
 // for telegram connection.
 type Obfuscated2 struct {
-	decryptor cipher.Stream
-	encryptor cipher.Stream
-}
-
-// Encrypt encrypts given data.
-func (o *Obfuscated2) Encrypt(data []byte) []byte {
-	buf := make([]byte, len(data))
-	o.encryptor.XORKeyStream(buf, data)
-	return buf
-}
-
-// Decrypt decrypts given data.
-func (o *Obfuscated2) Decrypt(data []byte) []byte {
-	buf := make([]byte, len(data))
-	o.decryptor.XORKeyStream(buf, data)
-	return buf
+	Decryptor cipher.Stream
+	Encryptor cipher.Stream
 }
 
 // ParseObfuscated2ClientFrame parses client frame. Please check this link for
 // details: http://telegra.ph/telegram-blocks-wtf-05-26
 //
 // Beware, link above is in russian.
-func ParseObfuscated2ClientFrame(secret, data []byte) (*Obfuscated2, int16, error) {
-	frame := Frame(data)
-
+func ParseObfuscated2ClientFrame(secret []byte, frame Frame) (*Obfuscated2, int16, error) {
 	decHasher := sha256.New()
 	decHasher.Write(frame.Key()) // nolint: errcheck
 	decHasher.Write(secret)      // nolint: errcheck
@@ -54,8 +38,8 @@ func ParseObfuscated2ClientFrame(secret, data []byte) (*Obfuscated2, int16, erro
 	}
 
 	obfs := &Obfuscated2{
-		decryptor: decryptor,
-		encryptor: encryptor,
+		Decryptor: decryptor,
+		Encryptor: encryptor,
 	}
 
 	return obfs, decryptedFrame.DC(), nil
@@ -77,8 +61,8 @@ func MakeTelegramObfuscated2Frame() (*Obfuscated2, Frame) {
 	copy(frame, copyFrame)
 
 	obfs := &Obfuscated2{
-		decryptor: decryptor,
-		encryptor: encryptor,
+		Decryptor: decryptor,
+		Encryptor: encryptor,
 	}
 
 	return obfs, frame

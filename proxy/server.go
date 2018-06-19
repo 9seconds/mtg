@@ -4,33 +4,30 @@ import (
 	"context"
 	"io"
 	"net"
-	"strconv"
 	"sync"
-	"time"
 
-	"github.com/9seconds/mtg/obfuscated2"
 	"github.com/juju/errors"
 	uuid "github.com/satori/go.uuid"
 	"go.uber.org/zap"
+
+	"github.com/9seconds/mtg/client"
+	"github.com/9seconds/mtg/config"
+	"github.com/9seconds/mtg/telegram"
+	"github.com/9seconds/mtg/wrappers"
 )
 
 // Server is an insgtance of MTPROTO proxy.
 type Server struct {
-	ip           net.IP
-	port         int
-	secret       []byte
-	logger       *zap.SugaredLogger
-	ctx          context.Context
-	readTimeout  time.Duration
-	writeTimeout time.Duration
-	stats        *Stats
-	ipv6         bool
+	conf       *config.Config
+	logger     *zap.SugaredLogger
+	stats      *Stats
+	tg         telegram.Telegram
+	clientInit client.Init
 }
 
 // Serve does MTPROTO proxying.
 func (s *Server) Serve() error {
-	addr := net.JoinHostPort(s.ip.String(), strconv.Itoa(s.port))
-	lsock, err := net.Listen("tcp", addr)
+	lsock, err := net.Listen("tcp", s.conf.BindAddr())
 	if err != nil {
 		return errors.Annotate(err, "Cannot create listen socket")
 	}
@@ -56,18 +53,16 @@ func (s *Server) accept(conn net.Conn) {
 
 	s.stats.newConnection()
 	ctx, cancel := context.WithCancel(context.Background())
-	socketID := s.makeSocketID()
+	socketID := uuid.NewV4().String()
 
 	s.logger.Debugw("Client connected",
-		"secret", s.secret,
 		"addr", conn.RemoteAddr().String(),
 		"socketid", socketID,
 	)
 
-	clientConn, dc, err := s.getClientStream(ctx, cancel, conn, socketID)
+	dc, clientConn, err := s.getClientStream(ctx, cancel, conn, socketID)
 	if err != nil {
 		s.logger.Warnw("Cannot initialize client connection",
-			"secret", s.secret,
 			"addr", conn.RemoteAddr().String(),
 			"socketid", socketID,
 			"error", err,
@@ -100,68 +95,49 @@ func (s *Server) accept(conn net.Conn) {
 	wait.Wait()
 
 	s.logger.Debugw("Client disconnected",
-		"secret", s.secret,
 		"addr", conn.RemoteAddr().String(),
 		"socketid", socketID,
 	)
 }
 
-func (s *Server) makeSocketID() string {
-	return uuid.NewV4().String()
-}
-
-func (s *Server) getClientStream(ctx context.Context, cancel context.CancelFunc, conn net.Conn, socketID string) (io.ReadWriteCloser, int16, error) {
-	wConn := newTimeoutReadWriteCloser(conn, s.readTimeout, s.writeTimeout)
-	wConn = newTrafficReadWriteCloser(wConn, s.stats.addIncomingTraffic, s.stats.addOutgoingTraffic)
-	frame, err := obfuscated2.ExtractFrame(wConn)
+func (s *Server) getClientStream(ctx context.Context, cancel context.CancelFunc, conn net.Conn, socketID string) (int16, io.ReadWriteCloser, error) {
+	dc, socket, err := s.clientInit(conn, s.conf)
 	if err != nil {
-		return nil, 0, errors.Annotate(err, "Cannot create client stream")
+		return 0, nil, errors.Annotate(err, "Cannot init client connection")
 	}
 
-	obfs2, dc, err := obfuscated2.ParseObfuscated2ClientFrame(s.secret, frame)
-	if err != nil {
-		return nil, 0, errors.Annotate(err, "Cannot create client stream")
-	}
+	socket = wrappers.NewTrafficRWC(socket, s.stats.addIncomingTraffic, s.stats.addOutgoingTraffic)
+	socket = wrappers.NewLogRWC(socket, s.logger, socketID, "client")
+	socket = wrappers.NewCtxRWC(ctx, cancel, socket)
 
-	wConn = newLogReadWriteCloser(wConn, s.logger, socketID, "client")
-	wConn = newCipherReadWriteCloser(wConn, obfs2)
-	wConn = newCtxReadWriteCloser(ctx, cancel, wConn)
-
-	return wConn, dc, nil
+	return dc, socket, nil
 }
 
 func (s *Server) getTelegramStream(ctx context.Context, cancel context.CancelFunc, dc int16, socketID string) (io.ReadWriteCloser, error) {
-	socket, err := dialToTelegram(s.ipv6, dc, s.readTimeout)
+	conn, err := s.tg.Dial(dc)
 	if err != nil {
-		return nil, errors.Annotate(err, "Cannot dial")
-	}
-	wConn := newTimeoutReadWriteCloser(socket, s.readTimeout, s.writeTimeout)
-	wConn = newTrafficReadWriteCloser(wConn, s.stats.addIncomingTraffic, s.stats.addOutgoingTraffic)
-
-	obfs2, frame := obfuscated2.MakeTelegramObfuscated2Frame()
-	if n, err := socket.Write(frame); err != nil || n != len(frame) {
-		return nil, errors.Annotate(err, "Cannot write hadnshake frame")
+		return nil, errors.Annotate(err, "Cannot connect to Telegram")
 	}
 
-	wConn = newLogReadWriteCloser(wConn, s.logger, socketID, "telegram")
-	wConn = newCipherReadWriteCloser(wConn, obfs2)
-	wConn = newCtxReadWriteCloser(ctx, cancel, wConn)
+	conn = wrappers.NewTrafficRWC(conn, s.stats.addIncomingTraffic, s.stats.addOutgoingTraffic)
+	conn, err = s.tg.Init(conn)
+	if err != nil {
+		return nil, errors.Annotate(err, "Cannot handshake Telegram")
+	}
 
-	return wConn, nil
+	conn = wrappers.NewLogRWC(conn, s.logger, socketID, "telegram")
+	conn = wrappers.NewCtxRWC(ctx, cancel, conn)
+
+	return conn, nil
 }
 
 // NewServer creates new instance of MTPROTO proxy.
-func NewServer(ip net.IP, port int, secret []byte, logger *zap.SugaredLogger,
-	readTimeout, writeTimeout time.Duration, ipv6 bool, stat *Stats) *Server {
+func NewServer(conf *config.Config, logger *zap.SugaredLogger, stat *Stats) *Server {
 	return &Server{
-		ip:           ip,
-		port:         port,
-		secret:       secret,
-		ctx:          context.Background(),
-		logger:       logger,
-		readTimeout:  readTimeout,
-		writeTimeout: writeTimeout,
-		stats:        stat,
-		ipv6:         ipv6,
+		conf:       conf,
+		logger:     logger,
+		stats:      stat,
+		tg:         telegram.NewDirectTelegram(conf),
+		clientInit: client.DirectInit,
 	}
 }

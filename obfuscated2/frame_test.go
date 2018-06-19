@@ -34,7 +34,7 @@ func TestFrameMagic(t *testing.T) {
 }
 
 func TestFrameDC(t *testing.T) {
-	assert.Equal(t, int16(770), makeFrame().DC())
+	assert.Equal(t, int16(771), makeFrame().DC())
 }
 
 func TestFrameValid(t *testing.T) {

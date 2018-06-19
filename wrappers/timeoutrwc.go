@@ -1,4 +1,4 @@
-package proxy
+package wrappers
 
 import (
 	"io"
@@ -31,7 +31,9 @@ func (t *TimeoutReadWriteCloser) Close() error {
 	return t.conn.Close()
 }
 
-func newTimeoutReadWriteCloser(conn net.Conn, readTimeout, writeTimeout time.Duration) io.ReadWriteCloser {
+// NewTimeoutRWC returns wrapper over net.Conn which sets deadlines for
+// every wrapped Read/Write.
+func NewTimeoutRWC(conn net.Conn, readTimeout, writeTimeout time.Duration) io.ReadWriteCloser {
 	return &TimeoutReadWriteCloser{
 		conn:         conn,
 		readTimeout:  readTimeout,

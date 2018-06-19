@@ -1,4 +1,4 @@
-package proxy
+package wrappers
 
 import "io"
 
@@ -29,7 +29,8 @@ func (t *TrafficReadWriteCloser) Close() error {
 	return t.conn.Close()
 }
 
-func newTrafficReadWriteCloser(conn io.ReadWriteCloser, readCallback, writeCallback func(int)) io.ReadWriteCloser {
+// NewTrafficRWC wraps ReadWriteCloser to have read/write callbacks.
+func NewTrafficRWC(conn io.ReadWriteCloser, readCallback, writeCallback func(int)) io.ReadWriteCloser {
 	return &TrafficReadWriteCloser{
 		conn:          conn,
 		readCallback:  readCallback,
