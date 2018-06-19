@@ -31,6 +31,8 @@ func (t *TimeoutReadWriteCloser) Close() error {
 	return t.conn.Close()
 }
 
+// NewTimeoutRWC returns wrapper over net.Conn which sets deadlines for
+// every wrapped Read/Write.
 func NewTimeoutRWC(conn net.Conn, readTimeout, writeTimeout time.Duration) io.ReadWriteCloser {
 	return &TimeoutReadWriteCloser{
 		conn:         conn,

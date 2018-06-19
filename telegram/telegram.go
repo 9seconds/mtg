@@ -7,6 +7,9 @@ import (
 	"github.com/juju/errors"
 )
 
+// Telegram defines an interface to connect to Telegram. This
+// encapsulates logic of working with middleproxies or direct
+// connections.
 type Telegram interface {
 	Dial(int16) (io.ReadWriteCloser, error)
 	Init(io.ReadWriteCloser) (io.ReadWriteCloser, error)

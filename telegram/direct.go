@@ -50,6 +50,8 @@ func (t *directTelegram) Init(conn io.ReadWriteCloser) (io.ReadWriteCloser, erro
 	return wrappers.NewStreamCipherRWC(conn, obfs2.Encryptor, obfs2.Decryptor), nil
 }
 
+// NewDirectTelegram returns Telegram instance which connects directly
+// to Telegram bypassing middleproxies.
 func NewDirectTelegram(conf *config.Config) Telegram {
 	return &directTelegram{baseTelegram{
 		dialer:      newDialer(conf),

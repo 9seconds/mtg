@@ -36,6 +36,7 @@ func (l *LogReadWriteCloser) Close() error {
 	return err
 }
 
+// NewLogRWC wraps ReadWriteCloser with logger calls.
 func NewLogRWC(conn io.ReadWriteCloser, logger *zap.SugaredLogger, sockid string, name string) io.ReadWriteCloser {
 	return &LogReadWriteCloser{
 		conn:   conn,

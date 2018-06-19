@@ -5,6 +5,8 @@ import (
 	"io"
 )
 
+// StreamCipherReadWriteCloser is a ReadWriteCloser which ciphers
+// incoming and outgoing data with givem cipher.Stream instances.
 type StreamCipherReadWriteCloser struct {
 	encryptor cipher.Stream
 	decryptor cipher.Stream
@@ -41,6 +43,8 @@ func (c *StreamCipherReadWriteCloser) Close() error {
 	return c.conn.Close()
 }
 
+// NewStreamCipherRWC returns wrapper which transparently
+// encrypts/decrypts traffic with obfuscated2 protocol.
 func NewStreamCipherRWC(conn io.ReadWriteCloser, encryptor, decryptor cipher.Stream) io.ReadWriteCloser {
 	return &StreamCipherReadWriteCloser{
 		conn:      conn,

@@ -48,6 +48,8 @@ func (c *CtxReadWriteCloser) Close() error {
 	return c.conn.Close()
 }
 
+// NewCtxRWC returns ReadWriteCloser which respects given context,
+// cancellation etc.
 func NewCtxRWC(ctx context.Context, cancel context.CancelFunc, conn io.ReadWriteCloser) io.ReadWriteCloser {
 	return &CtxReadWriteCloser{
 		conn:   conn,

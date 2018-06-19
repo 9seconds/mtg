@@ -11,6 +11,7 @@ import (
 	"github.com/9seconds/mtg/wrappers"
 )
 
+// DirectInit initializes client to access Telegram bypassing middleproxies.
 func DirectInit(conn net.Conn, conf *config.Config) (int16, io.ReadWriteCloser, error) {
 	socket := wrappers.NewTimeoutRWC(conn, conf.TimeoutRead, conf.TimeoutWrite)
 	frame, err := obfuscated2.ExtractFrame(socket)
