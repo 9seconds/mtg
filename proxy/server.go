@@ -10,18 +10,19 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"go.uber.org/zap"
 
+	"github.com/9seconds/mtg/client"
 	"github.com/9seconds/mtg/config"
-	"github.com/9seconds/mtg/obfuscated2"
 	"github.com/9seconds/mtg/telegram"
 	"github.com/9seconds/mtg/wrappers"
 )
 
 // Server is an insgtance of MTPROTO proxy.
 type Server struct {
-	conf   *config.Config
-	logger *zap.SugaredLogger
-	stats  *Stats
-	tg     telegram.Telegram
+	conf       *config.Config
+	logger     *zap.SugaredLogger
+	stats      *Stats
+	tg         telegram.Telegram
+	clientInit client.Init
 }
 
 // Serve does MTPROTO proxying.
@@ -59,7 +60,7 @@ func (s *Server) accept(conn net.Conn) {
 		"socketid", socketID,
 	)
 
-	clientConn, dc, err := s.getClientStream(ctx, cancel, conn, socketID)
+	dc, clientConn, err := s.getClientStream(ctx, cancel, conn, socketID)
 	if err != nil {
 		s.logger.Warnw("Cannot initialize client connection",
 			"addr", conn.RemoteAddr().String(),
@@ -99,24 +100,17 @@ func (s *Server) accept(conn net.Conn) {
 	)
 }
 
-func (s *Server) getClientStream(ctx context.Context, cancel context.CancelFunc, conn net.Conn, socketID string) (io.ReadWriteCloser, int16, error) {
-	wConn := wrappers.NewTimeoutRWC(conn, s.conf.TimeoutRead, s.conf.TimeoutWrite)
-	wConn = wrappers.NewTrafficRWC(wConn, s.stats.addIncomingTraffic, s.stats.addOutgoingTraffic)
-	frame, err := obfuscated2.ExtractFrame(wConn)
+func (s *Server) getClientStream(ctx context.Context, cancel context.CancelFunc, conn net.Conn, socketID string) (int16, io.ReadWriteCloser, error) {
+	dc, socket, err := s.clientInit(conn, s.conf)
 	if err != nil {
-		return nil, 0, errors.Annotate(err, "Cannot create client stream")
+		return 0, nil, errors.Annotate(err, "Cannot init client connection")
 	}
 
-	obfs2, dc, err := obfuscated2.ParseObfuscated2ClientFrame(s.conf.Secret, frame)
-	if err != nil {
-		return nil, 0, errors.Annotate(err, "Cannot create client stream")
-	}
+	socket = wrappers.NewTrafficRWC(socket, s.stats.addIncomingTraffic, s.stats.addOutgoingTraffic)
+	socket = wrappers.NewLogRWC(socket, s.logger, socketID, "client")
+	socket = wrappers.NewCtxRWC(ctx, cancel, socket)
 
-	wConn = wrappers.NewLogRWC(wConn, s.logger, socketID, "client")
-	wConn = wrappers.NewStreamCipherRWC(wConn, obfs2.Encryptor, obfs2.Decryptor)
-	wConn = wrappers.NewCtxRWC(ctx, cancel, wConn)
-
-	return wConn, dc, nil
+	return dc, socket, nil
 }
 
 func (s *Server) getTelegramStream(ctx context.Context, cancel context.CancelFunc, dc int16, socketID string) (io.ReadWriteCloser, error) {
@@ -140,9 +134,10 @@ func (s *Server) getTelegramStream(ctx context.Context, cancel context.CancelFun
 // NewServer creates new instance of MTPROTO proxy.
 func NewServer(conf *config.Config, logger *zap.SugaredLogger, stat *Stats) *Server {
 	return &Server{
-		conf:   conf,
-		logger: logger,
-		stats:  stat,
-		tg:     telegram.NewDirectTelegram(conf),
+		conf:       conf,
+		logger:     logger,
+		stats:      stat,
+		tg:         telegram.NewDirectTelegram(conf),
+		clientInit: client.DirectInit,
 	}
 }

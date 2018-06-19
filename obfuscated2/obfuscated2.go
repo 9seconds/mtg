@@ -19,9 +19,7 @@ type Obfuscated2 struct {
 // details: http://telegra.ph/telegram-blocks-wtf-05-26
 //
 // Beware, link above is in russian.
-func ParseObfuscated2ClientFrame(secret, data []byte) (*Obfuscated2, int16, error) {
-	frame := Frame(data)
-
+func ParseObfuscated2ClientFrame(secret []byte, frame Frame) (*Obfuscated2, int16, error) {
 	decHasher := sha256.New()
 	decHasher.Write(frame.Key()) // nolint: errcheck
 	decHasher.Write(secret)      // nolint: errcheck
