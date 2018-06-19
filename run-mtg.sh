@@ -15,6 +15,7 @@ STAT_PORT=3129
 # docker pull "$IMAGE_NAME"
 docker ps --filter "Name=$CONTAINER_NAME" -aq | xargs -r docker rm -fv
 docker run \
+    -d \
     --name "$CONTAINER_NAME" \
     --sysctl 'net.ipv4.ip_local_port_range=10000 65000' \
     --sysctl net.ipv4.tcp_congestion_control=bbr \

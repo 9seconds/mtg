@@ -96,3 +96,5 @@ $ docker run --name mtg --restart=unless-stopped -p 444:3128 -p 3129:3129 -d nin
 You will have this tool up and running on port 444. Now curl
 `localhost:3129` to get `tg://` links or do `docker logs mtg`. Also,
 port 3129 will show you some statistics if you are interested in.
+
+Also, you can use [run-mtg.sh](https://github.com/9seconds/mtg/blob/master/run-mtg.sh) script

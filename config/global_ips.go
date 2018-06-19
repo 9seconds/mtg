@@ -24,14 +24,15 @@ func fetchIP(url string) (net.IP, error) {
 	}
 	defer resp.Body.Close() // nolint: errcheck
 
-	respData, err := ioutil.ReadAll(resp.Body)
+	respDataBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
+	respData := strings.TrimSpace(string(respDataBytes))
 
-	ip := net.ParseIP(strings.TrimSpace(string(respData)))
+	ip := net.ParseIP(respData)
 	if ip == nil {
-		return nil, errors.Errorf("ifconfig.co returns incorrect IP %s", resp)
+		return nil, errors.Errorf("ifconfig.co returns incorrect IP %s", respData)
 	}
 
 	return ip, nil
