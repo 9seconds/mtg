@@ -29,8 +29,7 @@ ENTRYPOINT ["/usr/local/bin/mtg"]
 ENV MTG_IP=0.0.0.0 \
     MTG_PORT=3128 \
     MTG_STATS_IP=0.0.0.0 \
-    MTG_STATS_PORT=3129 \
-    MTG_USE_IPV6=true
+    MTG_STATS_PORT=3129
 EXPOSE 3128 3129
 
 COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt

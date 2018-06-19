@@ -76,5 +76,5 @@ install-dep:
 
 .PHONY: install-lint
 install-lint:
-	@go get gopkg.in/alecthomas/gometalinter.v2 && \
+	@go get github.com/alecthomas/gometalinter && \
 		$(GOMETALINTER) --install >/dev/null
