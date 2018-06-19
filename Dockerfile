@@ -10,6 +10,7 @@ RUN set -x \
     curl \
     git \
     make \
+    upx \
   && update-ca-certificates
 
 ADD . /go/src/github.com/9seconds/mtg
@@ -17,7 +18,8 @@ ADD . /go/src/github.com/9seconds/mtg
 RUN set -x \
   && cd /go/src/github.com/9seconds/mtg \
   && make clean \
-  && make -j 4 static
+  && make -j 4 static \
+  && upx --ultra-brute -qq ./mtg
 
 
 ###############################################################################
