@@ -12,7 +12,7 @@ STAT_PORT=3129
   chmod 0400 "$SECRET_PATH"
 )
 
-# docker pull "$IMAGE_NAME"
+docker pull "$IMAGE_NAME"
 docker ps --filter "Name=$CONTAINER_NAME" -aq | xargs -r docker rm -fv
 docker run \
     -d \

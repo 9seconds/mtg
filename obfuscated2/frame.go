@@ -68,29 +68,35 @@ func (f Frame) Valid() bool {
 
 // Invert inverts frame for extracting encryption keys. Pkease check that link:
 // https://blog.susanka.eu/how-telegram-obfuscates-its-mtproto-traffic/
-func (f Frame) Invert() Frame {
-	reversed := make(Frame, FrameLen)
-	copy(reversed, f)
+func (f Frame) Invert() *Frame {
+	reversed := MakeFrame()
+	copy(*reversed, f)
 
 	for i := 0; i < frameLenKey+frameLenIV; i++ {
-		reversed[frameOffsetFirst+i] = f[frameOffsetIV-1-i]
+		(*reversed)[frameOffsetFirst+i] = f[frameOffsetIV-1-i]
 	}
 
 	return reversed
 }
 
 // ExtractFrame extracts exact obfuscated2 handshake frame from given reader.
-func ExtractFrame(conn io.Reader) (Frame, error) {
-	buf := &bytes.Buffer{}
+func ExtractFrame(conn io.Reader) (*Frame, error) {
+	frame := MakeFrame()
+	buf := bytes.NewBuffer(*frame)
+	buf.Reset()
+
 	if _, err := io.CopyN(buf, conn, FrameLen); err != nil {
+		ReturnFrame(frame)
 		return nil, errors.Annotate(err, "Cannot extract obfuscated header")
 	}
+	copy(*frame, buf.Bytes())
 
-	return Frame(buf.Bytes()), nil
+	return frame, nil
 }
 
-func generateFrame() Frame {
-	data := make(Frame, FrameLen)
+func generateFrame() *Frame {
+	frame := MakeFrame()
+	data := *frame
 
 	for {
 		if _, err := rand.Read(data); err != nil {
@@ -112,6 +118,6 @@ func generateFrame() Frame {
 
 		copy(data.Magic(), tgMagicBytes)
 
-		return data
+		return frame
 	}
 }

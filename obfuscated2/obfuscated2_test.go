@@ -12,7 +12,7 @@ func TestObfs2TelegramFrameDecrypt(t *testing.T) {
 	decryptor := makeStreamCipher(frame.Key(), frame.IV())
 
 	decrypted := make(Frame, FrameLen)
-	decryptor.XORKeyStream(decrypted, frame)
+	decryptor.XORKeyStream(decrypted, *frame)
 
 	assert.True(t, decrypted.Valid())
 }
@@ -42,8 +42,8 @@ func TestObfs2Full(t *testing.T) {
 
 	encryptor := makeStreamCipher(clientKey, clientFrame.IV())
 	encrypted := make(Frame, FrameLen)
-	encryptor.XORKeyStream(encrypted, clientFrame)
-	copy(encrypted[:56], clientFrame[:56])
+	encryptor.XORKeyStream(encrypted, *clientFrame)
+	copy(encrypted[:56], (*clientFrame)[:56])
 
 	invertedClientFrame := clientFrame.Invert()
 	clientHasher = sha256.New()
@@ -52,13 +52,13 @@ func TestObfs2Full(t *testing.T) {
 	invertedClientKey := clientHasher.Sum(nil)
 	clientDecryptor := makeStreamCipher(invertedClientKey, invertedClientFrame.IV())
 
-	clientObfs, _, err := ParseObfuscated2ClientFrame(secret, encrypted)
+	clientObfs, _, err := ParseObfuscated2ClientFrame(secret, &encrypted)
 	assert.Nil(t, err)
 
 	tgObfs, tgFrame := MakeTelegramObfuscated2Frame()
 	tgDecryptor := makeStreamCipher(tgFrame.Key(), tgFrame.IV())
 	decrypted := make(Frame, FrameLen)
-	tgDecryptor.XORKeyStream(decrypted, tgFrame)
+	tgDecryptor.XORKeyStream(decrypted, *tgFrame)
 	assert.True(t, decrypted.Valid())
 
 	tgInvertedFrame := tgFrame.Invert()
