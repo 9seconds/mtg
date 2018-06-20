@@ -5,7 +5,9 @@ package main
 import (
 	"encoding/json"
 	"io"
+	"math/rand"
 	"os"
+	"time"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -80,6 +82,8 @@ var (
 )
 
 func main() {
+	rand.Seed(time.Now().UTC().UnixNano())
+
 	app.Version(version)
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
