@@ -87,6 +87,9 @@ func NewConfig(debug, verbose bool, // nolint: gocyclo
 	statsIP net.IP, statsPort uint16,
 	timeoutRead, timeoutWrite time.Duration,
 	secret string) (*Config, error) {
+	if len(secret) != 32 {
+		return nil, errors.New("Telegram demands secret of length 32")
+	}
 	secretBytes, err := hex.DecodeString(secret)
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot create config")
