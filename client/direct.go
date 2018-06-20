@@ -18,6 +18,7 @@ func DirectInit(conn net.Conn, conf *config.Config) (int16, io.ReadWriteCloser, 
 	if err != nil {
 		return 0, nil, errors.Annotate(err, "Cannot extract frame")
 	}
+	defer obfuscated2.ReturnFrame(frame)
 
 	obfs2, dc, err := obfuscated2.ParseObfuscated2ClientFrame(conf.Secret, frame)
 	if err != nil {
