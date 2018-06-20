@@ -83,14 +83,10 @@ func (s *Server) accept(conn net.Conn) {
 
 	wait := &sync.WaitGroup{}
 	wait.Add(2)
-	go func() {
-		defer wait.Done()
-		io.Copy(clientConn, tgConn) // nolint: errcheck
-	}()
-	go func() {
-		defer wait.Done()
-		io.Copy(tgConn, clientConn) // nolint: errcheck
-	}()
+
+	go s.pipe(clientConn, tgConn, wait)
+	go s.pipe(tgConn, clientConn, wait)
+
 	<-ctx.Done()
 	wait.Wait()
 
@@ -129,6 +125,15 @@ func (s *Server) getTelegramStream(ctx context.Context, cancel context.CancelFun
 	conn = wrappers.NewCtxRWC(ctx, cancel, conn)
 
 	return conn, nil
+}
+
+func (s *Server) pipe(dst io.Writer, src io.Reader, wait *sync.WaitGroup) {
+	defer wait.Done()
+
+	buf := copyPool.Get().(*[]byte)
+	defer copyPool.Put(buf)
+
+	io.CopyBuffer(dst, src, *buf) // nolint: errcheck
 }
 
 // NewServer creates new instance of MTPROTO proxy.
