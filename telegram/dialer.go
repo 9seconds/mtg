@@ -45,8 +45,8 @@ func (t *tgDialer) dialRWC(addr string) (io.ReadWriteCloser, error) {
 	return wrappers.NewTimeoutRWC(conn, t.conf.TimeoutRead, t.conf.TimeoutWrite), nil
 }
 
-func newDialer(conf *config.Config) *tgDialer {
-	return &tgDialer{
+func newDialer(conf *config.Config) tgDialer {
+	return tgDialer{
 		Dialer: net.Dialer{Timeout: conf.TimeoutRead},
 		conf:   conf,
 	}

@@ -12,6 +12,7 @@ import (
 
 	"github.com/9seconds/mtg/client"
 	"github.com/9seconds/mtg/config"
+	"github.com/9seconds/mtg/mtproto"
 	"github.com/9seconds/mtg/telegram"
 	"github.com/9seconds/mtg/wrappers"
 )
@@ -60,7 +61,7 @@ func (s *Server) accept(conn net.Conn) {
 		"socketid", socketID,
 	)
 
-	dc, clientConn, err := s.getClientStream(ctx, cancel, conn, socketID)
+	connOpts, clientConn, err := s.getClientStream(ctx, cancel, conn, socketID)
 	if err != nil {
 		s.logger.Warnw("Cannot initialize client connection",
 			"addr", conn.RemoteAddr().String(),
@@ -71,7 +72,7 @@ func (s *Server) accept(conn net.Conn) {
 	}
 	defer clientConn.Close() // nolint: errcheck
 
-	tgConn, err := s.getTelegramStream(ctx, cancel, dc, socketID)
+	tgConn, err := s.getTelegramStream(ctx, cancel, connOpts, socketID)
 	if err != nil {
 		s.logger.Warnw("Cannot initialize Telegram connection",
 			"socketid", socketID,
@@ -96,27 +97,27 @@ func (s *Server) accept(conn net.Conn) {
 	)
 }
 
-func (s *Server) getClientStream(ctx context.Context, cancel context.CancelFunc, conn net.Conn, socketID string) (int16, io.ReadWriteCloser, error) {
-	dc, socket, err := s.clientInit(conn, s.conf)
+func (s *Server) getClientStream(ctx context.Context, cancel context.CancelFunc, conn net.Conn, socketID string) (*mtproto.ConnectionOpts, io.ReadWriteCloser, error) {
+	connOpts, socket, err := s.clientInit(conn, s.conf)
 	if err != nil {
-		return 0, nil, errors.Annotate(err, "Cannot init client connection")
+		return nil, nil, errors.Annotate(err, "Cannot init client connection")
 	}
 
 	socket = wrappers.NewTrafficRWC(socket, s.stats.addIncomingTraffic, s.stats.addOutgoingTraffic)
 	socket = wrappers.NewLogRWC(socket, s.logger, socketID, "client")
 	socket = wrappers.NewCtxRWC(ctx, cancel, socket)
 
-	return dc, socket, nil
+	return connOpts, socket, nil
 }
 
-func (s *Server) getTelegramStream(ctx context.Context, cancel context.CancelFunc, dc int16, socketID string) (io.ReadWriteCloser, error) {
-	conn, err := s.tg.Dial(dc)
+func (s *Server) getTelegramStream(ctx context.Context, cancel context.CancelFunc, connOpts *mtproto.ConnectionOpts, socketID string) (io.ReadWriteCloser, error) {
+	conn, err := s.tg.Dial(connOpts)
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot connect to Telegram")
 	}
 
 	conn = wrappers.NewTrafficRWC(conn, s.stats.addIncomingTraffic, s.stats.addOutgoingTraffic)
-	conn, err = s.tg.Init(conn)
+	conn, err = s.tg.Init(connOpts, conn)
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot handshake Telegram")
 	}
