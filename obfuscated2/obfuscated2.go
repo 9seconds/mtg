@@ -6,6 +6,8 @@ import (
 	"crypto/sha256"
 
 	"github.com/juju/errors"
+
+	"github.com/9seconds/mtg/mtproto"
 )
 
 // Obfuscated2 contains AES CTR encryption and decryption streams
@@ -19,7 +21,7 @@ type Obfuscated2 struct {
 // details: http://telegra.ph/telegram-blocks-wtf-05-26
 //
 // Beware, link above is in russian.
-func ParseObfuscated2ClientFrame(secret []byte, frame *Frame) (*Obfuscated2, int16, error) {
+func ParseObfuscated2ClientFrame(secret []byte, frame *Frame) (*Obfuscated2, *mtproto.ConnectionOpts, error) {
 	decHasher := sha256.New()
 	decHasher.Write(frame.Key()) // nolint: errcheck
 	decHasher.Write(secret)      // nolint: errcheck
@@ -34,23 +36,28 @@ func ParseObfuscated2ClientFrame(secret []byte, frame *Frame) (*Obfuscated2, int
 	decryptedFrame := MakeFrame()
 	defer ReturnFrame(decryptedFrame)
 	decryptor.XORKeyStream(*decryptedFrame, *frame)
-	if !decryptedFrame.Valid() {
-		return nil, 0, errors.New("Unknown protocol")
+	connType, err := decryptedFrame.ConnectionType()
+	if err != nil {
+		return nil, nil, errors.Annotate(err, "Unknown protocol")
 	}
 
 	obfs := &Obfuscated2{
 		Decryptor: decryptor,
 		Encryptor: encryptor,
 	}
+	connOpts := &mtproto.ConnectionOpts{
+		DC:             decryptedFrame.DC(),
+		ConnectionType: connType,
+	}
 
-	return obfs, decryptedFrame.DC(), nil
+	return obfs, connOpts, nil
 }
 
 // MakeTelegramObfuscated2Frame creates new handshake frame to send to
 // Telegram.
 // https://blog.susanka.eu/how-telegram-obfuscates-its-mtproto-traffic/
-func MakeTelegramObfuscated2Frame() (*Obfuscated2, *Frame) {
-	frame := generateFrame()
+func MakeTelegramObfuscated2Frame(opts *mtproto.ConnectionOpts) (*Obfuscated2, *Frame) {
+	frame := generateFrame(opts.ConnectionType)
 
 	encryptor := makeStreamCipher(frame.Key(), frame.IV())
 	decryptorFrame := frame.Invert()

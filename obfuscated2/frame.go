@@ -7,6 +7,8 @@ import (
 	"io"
 
 	"github.com/juju/errors"
+
+	"github.com/9seconds/mtg/mtproto"
 )
 
 // [frameOffsetFirst:frameOffsetKey:frameOffsetIV:frameOffsetMagic:frameOffsetDC:frameOffsetEnd]
@@ -22,12 +24,8 @@ const (
 	frameOffsetMagic = frameOffsetIV + frameLenMagic
 	frameOffsetDC    = frameOffsetMagic + frameLenDC
 
-	tgMagicByte = byte(239)
-
 	FrameLen = 64
 )
-
-var tgMagicBytes = []byte{tgMagicByte, tgMagicByte, tgMagicByte, tgMagicByte}
 
 // Frame represents handshake frame. Telegram sends 64 bytes of obfuscated2
 // initialization data first.
@@ -61,9 +59,9 @@ func (f Frame) DC() (n int16) {
 	return
 }
 
-// Valid checks that *decrypted* frame is valid. Only magic bytes are checked.
-func (f Frame) Valid() bool {
-	return bytes.Equal(f.Magic(), tgMagicBytes)
+// ConnectionType identifies connection type of the handshake frame.
+func (f Frame) ConnectionType() (mtproto.ConnectionType, error) {
+	return mtproto.ConnectionTagFromHandshake(f.Magic())
 }
 
 // Invert inverts frame for extracting encryption keys. Pkease check that link:
@@ -94,7 +92,7 @@ func ExtractFrame(conn io.Reader) (*Frame, error) {
 	return frame, nil
 }
 
-func generateFrame() *Frame {
+func generateFrame(connectionType mtproto.ConnectionType) *Frame {
 	frame := MakeFrame()
 	data := *frame
 
@@ -116,7 +114,9 @@ func generateFrame() *Frame {
 			continue
 		}
 
-		copy(data.Magic(), tgMagicBytes)
+		// error has to be checked before calling this function
+		tag, _ := connectionType.Tag() // nolint: errcheck
+		copy(data.Magic(), tag)
 
 		return frame
 	}

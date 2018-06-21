@@ -5,24 +5,26 @@ import (
 	"math/rand"
 
 	"github.com/juju/errors"
+
+	"github.com/9seconds/mtg/mtproto"
 )
 
 // Telegram defines an interface to connect to Telegram. This
 // encapsulates logic of working with middleproxies or direct
 // connections.
 type Telegram interface {
-	Dial(int16) (io.ReadWriteCloser, error)
-	Init(io.ReadWriteCloser) (io.ReadWriteCloser, error)
+	Dial(*mtproto.ConnectionOpts) (io.ReadWriteCloser, error)
+	Init(*mtproto.ConnectionOpts, io.ReadWriteCloser) (io.ReadWriteCloser, error)
 }
 
 type baseTelegram struct {
-	dialer *tgDialer
+	dialer tgDialer
 
 	v4Addresses map[int16][]string
 	v6Addresses map[int16][]string
 }
 
-func (b *baseTelegram) Dial(dcIdx int16) (io.ReadWriteCloser, error) {
+func (b *baseTelegram) dial(dcIdx int16) (io.ReadWriteCloser, error) {
 	addrs := make([]string, 2)
 	if addr, ok := b.v6Addresses[dcIdx]; ok && len(addr) > 0 {
 		addrs = append(addrs, addr[rand.Intn(len(addr))])

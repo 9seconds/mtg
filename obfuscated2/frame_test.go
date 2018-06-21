@@ -2,9 +2,12 @@ package obfuscated2
 
 import (
 	"bytes"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/9seconds/mtg/mtproto"
 )
 
 func TestFrameKey(t *testing.T) {
@@ -28,7 +31,7 @@ func TestFrameIV(t *testing.T) {
 func TestFrameMagic(t *testing.T) {
 	toCompare := make([]byte, 4)
 	for i := 0; i < 4; i++ {
-		toCompare[i] = tgMagicByte
+		toCompare[i] = 0xee
 	}
 
 	assert.Equal(t, toCompare, makeFrame().Magic())
@@ -40,10 +43,13 @@ func TestFrameDC(t *testing.T) {
 
 func TestFrameValid(t *testing.T) {
 	frame := makeFrame()
-	assert.True(t, frame.Valid())
+	connType, err := frame.ConnectionType()
+	assert.Nil(t, err)
+	assert.Equal(t, connType, mtproto.ConnectionTypeIntermediate)
 
 	frame[8+32+16+2] = byte(3)
-	assert.False(t, frame.Valid())
+	_, err = frame.ConnectionType()
+	assert.NotNil(t, err)
 }
 
 func TestFrameDoubleInvert(t *testing.T) {
@@ -66,7 +72,18 @@ func TestFrameInvert(t *testing.T) {
 }
 
 func TestFrameGenerateValid(t *testing.T) {
-	assert.True(t, generateFrame().Valid())
+	validTests := []mtproto.ConnectionType{
+		mtproto.ConnectionTypeIntermediate,
+		mtproto.ConnectionTypeAbridged,
+	}
+	for _, test := range validTests {
+		t.Run(strconv.Itoa(int(test)), func(tt *testing.T) {
+			frame := generateFrame(test)
+			conType, err := frame.ConnectionType()
+			assert.Nil(t, err)
+			assert.Equal(t, conType, test)
+		})
+	}
 }
 
 func makeFrame() Frame {
@@ -79,7 +96,7 @@ func makeFrame() Frame {
 		f[i] = byte(2)
 	}
 	for i := (8 + 32 + 16); i < (8 + 32 + 16 + 4); i++ {
-		f[i] = tgMagicByte
+		f[i] = 0xee
 	}
 	for i := (8 + 32 + 16 + 4); i < (8 + 32 + 16 + 4 + 2); i++ {
 		f[i] = byte(3)

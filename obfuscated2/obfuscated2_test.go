@@ -5,20 +5,31 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/9seconds/mtg/mtproto"
 )
 
 func TestObfs2TelegramFrameDecrypt(t *testing.T) {
-	_, frame := MakeTelegramObfuscated2Frame()
+	connOpts := &mtproto.ConnectionOpts{
+		DC:             1,
+		ConnectionType: mtproto.ConnectionTypeIntermediate,
+	}
+	_, frame := MakeTelegramObfuscated2Frame(connOpts)
 	decryptor := makeStreamCipher(frame.Key(), frame.IV())
 
 	decrypted := make(Frame, FrameLen)
 	decryptor.XORKeyStream(decrypted, *frame)
 
-	assert.True(t, decrypted.Valid())
+	_, err := decrypted.ConnectionType()
+	assert.Nil(t, err)
 }
 
 func TestObfs2TelegramDecryptEncryptDecrypt(t *testing.T) {
-	obfs2, frame := MakeTelegramObfuscated2Frame()
+	connOpts := &mtproto.ConnectionOpts{
+		DC:             1,
+		ConnectionType: mtproto.ConnectionTypeIntermediate,
+	}
+	obfs2, frame := MakeTelegramObfuscated2Frame(connOpts)
 	inverted := frame.Invert()
 	encryptor := makeStreamCipher(inverted.Key(), inverted.IV())
 
@@ -34,7 +45,7 @@ func TestObfs2TelegramDecryptEncryptDecrypt(t *testing.T) {
 func TestObfs2Full(t *testing.T) {
 	secret := []byte{1, 2, 3, 4, 5}
 
-	clientFrame := generateFrame()
+	clientFrame := generateFrame(mtproto.ConnectionTypeIntermediate)
 	clientHasher := sha256.New()
 	clientHasher.Write(clientFrame.Key())
 	clientHasher.Write(secret)
@@ -55,11 +66,16 @@ func TestObfs2Full(t *testing.T) {
 	clientObfs, _, err := ParseObfuscated2ClientFrame(secret, &encrypted)
 	assert.Nil(t, err)
 
-	tgObfs, tgFrame := MakeTelegramObfuscated2Frame()
+	connOpts := &mtproto.ConnectionOpts{
+		DC:             1,
+		ConnectionType: mtproto.ConnectionTypeIntermediate,
+	}
+	tgObfs, tgFrame := MakeTelegramObfuscated2Frame(connOpts)
 	tgDecryptor := makeStreamCipher(tgFrame.Key(), tgFrame.IV())
 	decrypted := make(Frame, FrameLen)
 	tgDecryptor.XORKeyStream(decrypted, *tgFrame)
-	assert.True(t, decrypted.Valid())
+	_, err = decrypted.ConnectionType()
+	assert.Nil(t, err)
 
 	tgInvertedFrame := tgFrame.Invert()
 	tgEncryptor := makeStreamCipher(tgInvertedFrame.Key(), tgInvertedFrame.IV())
