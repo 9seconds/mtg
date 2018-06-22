@@ -7,6 +7,7 @@ import (
 	"io"
 	"math/rand"
 	"os"
+	"syscall"
 	"time"
 
 	"go.uber.org/zap"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/9seconds/mtg/config"
 	"github.com/9seconds/mtg/proxy"
+	"github.com/juju/errors"
 )
 
 var (
@@ -81,11 +83,19 @@ var (
 	secret = app.Arg("secret", "Secret of this proxy.").Required().String()
 )
 
-func main() {
+func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
-
 	app.Version(version)
+
+}
+
+func main() {
 	kingpin.MustParse(app.Parse(os.Args[1:]))
+
+	err := setRLimit()
+	if err != nil {
+		usage(err.Error())
+	}
 
 	conf, err := config.NewConfig(*debug, *verbose,
 		*bindIP, *bindPort,
@@ -123,6 +133,23 @@ func main() {
 	if err := srv.Serve(); err != nil {
 		logger.Fatal(err.Error())
 	}
+}
+
+func setRLimit() (err error) {
+	rLimit := syscall.Rlimit{}
+	err = syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
+	if err != nil {
+		err = errors.Annotate(err, "Cannot get rlimit")
+		return
+	}
+	rLimit.Cur = rLimit.Max
+
+	err = syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit)
+	if err != nil {
+		err = errors.Annotate(err, "Cannot set rlimit")
+	}
+
+	return
 }
 
 func printURLs(data interface{}) {
