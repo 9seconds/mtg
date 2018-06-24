@@ -76,7 +76,7 @@ $ openssl rand -hex 16
 or
 
 ```console
-$ head -c 512 | sha1sum | cut -f 1 -d ' '
+$ head -c 512 /dev/urandom | md5sum | cut -f 1 -d ' '
 ```
 
 Now run the tool:
@@ -90,10 +90,10 @@ This tool will listen on port 3128 by default with the given secret.
 # One-line runner
 
 ```
-$ docker run --name mtg --restart=unless-stopped -p 444:3128 -p 3129:3129 -d nineseconds/mtg -a 444 $(openssl rand -hex 16)
+$ docker run --name mtg --restart=unless-stopped -p 3128:3128 -p 3129:3129 -d nineseconds/mtg $(openssl rand -hex 16)
 ```
 
-You will have this tool up and running on port 444. Now curl
+You will have this tool up and running on port 3128. Now curl
 `localhost:3129` to get `tg://` links or do `docker logs mtg`. Also,
 port 3129 will show you some statistics if you are interested in.
 
