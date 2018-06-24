@@ -10,6 +10,15 @@ import (
 	"github.com/juju/errors"
 )
 
+// Buffer sizes define internal socket buffer sizes.
+const (
+	BufferWriteSize = 32 * 1024
+	BufferReadSize  = 32 * 1024
+	BufferSizeCopy  = 32 * 1024
+
+	keepAlivePeriod = 20 * time.Second
+)
+
 // Config represents common configuration of mtg.
 type Config struct {
 	Debug   bool
@@ -19,9 +28,6 @@ type Config struct {
 	PublicIPv4Port uint16
 	PublicIPv6Port uint16
 	StatsPort      uint16
-
-	TimeoutRead  time.Duration
-	TimeoutWrite time.Duration
 
 	BindIP     net.IP
 	PublicIPv4 net.IP
@@ -85,7 +91,6 @@ func NewConfig(debug, verbose bool, // nolint: gocyclo
 	publicIPv4 net.IP, PublicIPv4Port uint16,
 	publicIPv6 net.IP, publicIPv6Port uint16,
 	statsIP net.IP, statsPort uint16,
-	timeoutRead, timeoutWrite time.Duration,
 	secret string) (*Config, error) {
 	if len(secret) != 32 {
 		return nil, errors.New("Telegram demands secret of length 32")
@@ -136,10 +141,31 @@ func NewConfig(debug, verbose bool, // nolint: gocyclo
 		PublicIPv6Port: publicIPv6Port,
 		StatsIP:        statsIP,
 		StatsPort:      statsPort,
-		TimeoutRead:    timeoutRead,
-		TimeoutWrite:   timeoutWrite,
 		Secret:         secretBytes,
 	}
 
 	return conf, nil
+}
+
+// SetSocketOptions makes socket keepalive, sets buffer sizes
+func SetSocketOptions(conn net.Conn) error {
+	socket := conn.(*net.TCPConn)
+
+	if err := socket.SetReadBuffer(BufferReadSize); err != nil {
+		return errors.Annotate(err, "Cannot set read buffer size")
+	}
+	if err := socket.SetWriteBuffer(BufferWriteSize); err != nil {
+		return errors.Annotate(err, "Cannot set write buffer size")
+	}
+	if err := socket.SetKeepAlive(true); err != nil {
+		return errors.Annotate(err, "Cannot make socket keepalive")
+	}
+	if err := socket.SetKeepAlivePeriod(keepAlivePeriod); err != nil {
+		return errors.Annotate(err, "Cannot set keepalive period")
+	}
+	if err := socket.SetNoDelay(true); err != nil {
+		return errors.Annotate(err, "Cannot activate nodelay for the socket")
+	}
+
+	return nil
 }

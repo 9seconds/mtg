@@ -69,17 +69,6 @@ var (
 			Default("3129").
 			Uint16()
 
-	readTimeout = app.Flag("read-timeout", "Socket read timeout.").
-			Short('r').
-			Envar("MTG_READ_TIMEOUT").
-			Default("30s").
-			Duration()
-	writeTimeout = app.Flag("write-timeout", "Socket write timeout.").
-			Short('w').
-			Envar("MTG_WRITE_TIMEOUT").
-			Default("30s").
-			Duration()
-
 	secret = app.Arg("secret", "Secret of this proxy.").Required().String()
 )
 
@@ -102,7 +91,6 @@ func main() {
 		*publicIPv4, *publicIPv4Port,
 		*publicIPv6, *publicIPv6Port,
 		*statsIP, *statsPort,
-		*readTimeout, *writeTimeout,
 		*secret,
 	)
 	if err != nil {
