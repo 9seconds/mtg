@@ -2,6 +2,7 @@ package telegram
 
 import (
 	"io"
+	"net"
 
 	"github.com/juju/errors"
 
@@ -58,7 +59,7 @@ func (t *directTelegram) Init(connOpts *mtproto.ConnectionOpts, conn io.ReadWrit
 // to Telegram bypassing middleproxies.
 func NewDirectTelegram(conf *config.Config) Telegram {
 	return &directTelegram{baseTelegram{
-		dialer:      newDialer(conf),
+		dialer:      tgDialer{net.Dialer{Timeout: telegramDialTimeout}},
 		v4Addresses: directV4Addresses,
 		v6Addresses: directV6Addresses,
 	}}

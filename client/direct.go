@@ -3,6 +3,7 @@ package client
 import (
 	"io"
 	"net"
+	"time"
 
 	"github.com/juju/errors"
 
@@ -12,10 +13,19 @@ import (
 	"github.com/9seconds/mtg/wrappers"
 )
 
+const (
+	handshakeTimeout = 10 * time.Second
+)
+
 // DirectInit initializes client to access Telegram bypassing middleproxies.
 func DirectInit(conn net.Conn, conf *config.Config) (*mtproto.ConnectionOpts, io.ReadWriteCloser, error) {
-	socket := wrappers.NewTimeoutRWC(conn, conf.TimeoutRead, conf.TimeoutWrite)
-	frame, err := obfuscated2.ExtractFrame(socket)
+	if err := config.SetSocketOptions(conn); err != nil {
+		return nil, nil, errors.Annotate(err, "Cannot set socket options")
+	}
+
+	conn.SetReadDeadline(time.Now().Add(handshakeTimeout)) // nolint: errcheck
+	frame, err := obfuscated2.ExtractFrame(conn)
+	conn.SetReadDeadline(time.Time{}) // nolint: errcheck
 	if err != nil {
 		return nil, nil, errors.Annotate(err, "Cannot extract frame")
 	}
@@ -26,7 +36,7 @@ func DirectInit(conn net.Conn, conf *config.Config) (*mtproto.ConnectionOpts, io
 		return nil, nil, errors.Annotate(err, "Cannot parse obfuscated frame")
 	}
 
-	socket = wrappers.NewStreamCipherRWC(socket, obfs2.Encryptor, obfs2.Decryptor)
+	socket := wrappers.NewStreamCipherRWC(conn, obfs2.Encryptor, obfs2.Decryptor)
 
 	return connOpts, socket, nil
 }
