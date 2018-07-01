@@ -35,6 +35,7 @@ func DirectInit(conn net.Conn, conf *config.Config) (*mtproto.ConnectionOpts, io
 	if err != nil {
 		return nil, nil, errors.Annotate(err, "Cannot parse obfuscated frame")
 	}
+	connOpts.ConnectionProto = mtproto.ConnectionProtocolAny
 
 	socket := wrappers.NewStreamCipherRWC(conn, obfs2.Encryptor, obfs2.Decryptor)
 

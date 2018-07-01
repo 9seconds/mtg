@@ -47,7 +47,7 @@ func (t *middleTelegramCaller) Dial(connOpts *mtproto.ConnectionOpts) (io.ReadWr
 	t.dialerMutex.RLock()
 	defer t.dialerMutex.RUnlock()
 
-	return t.baseTelegram.dial(dc)
+	return t.baseTelegram.dial(dc, connOpts.ConnectionProto)
 }
 
 func (t *middleTelegramCaller) autoUpdate() {

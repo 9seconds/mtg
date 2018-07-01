@@ -14,7 +14,7 @@ type middleTelegram struct {
 	middleTelegramCaller
 }
 
-func NewMiddleTelegram(conf *config.Config, logger *zap.SugaredLogger) Telegram {
+func NewMiddleTelegram(conf *config.Config, logger *zap.SugaredLogger) *middleTelegram {
 	tg := &middleTelegram{
 		middleTelegramCaller: middleTelegramCaller{
 			baseTelegram: baseTelegram{

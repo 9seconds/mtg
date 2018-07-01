@@ -24,13 +24,18 @@ type baseTelegram struct {
 	v6Addresses map[int16][]string
 }
 
-func (b *baseTelegram) dial(dcIdx int16) (io.ReadWriteCloser, error) {
+func (b *baseTelegram) dial(dcIdx int16, proto mtproto.ConnectionProtocol) (io.ReadWriteCloser, error) {
 	addrs := make([]string, 2)
-	if addr, ok := b.v6Addresses[dcIdx]; ok && len(addr) > 0 {
-		addrs = append(addrs, addr[rand.Intn(len(addr))])
+
+	if proto&mtproto.ConnectionProtocolIPv6 != 0 {
+		if addr, ok := b.v6Addresses[dcIdx]; ok && len(addr) > 0 {
+			addrs = append(addrs, addr[rand.Intn(len(addr))])
+		}
 	}
-	if addr, ok := b.v4Addresses[dcIdx]; ok && len(addr) > 0 {
-		addrs = append(addrs, addr[rand.Intn(len(addr))])
+	if proto&mtproto.ConnectionProtocolIPv4 != 0 {
+		if addr, ok := b.v4Addresses[dcIdx]; ok && len(addr) > 0 {
+			addrs = append(addrs, addr[rand.Intn(len(addr))])
+		}
 	}
 
 	for _, addr := range addrs {

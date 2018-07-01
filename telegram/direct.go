@@ -41,7 +41,7 @@ func (t *directTelegram) Dial(connOpts *mtproto.ConnectionOpts) (io.ReadWriteClo
 		dc = 1
 	}
 
-	return t.baseTelegram.dial(dc - 1)
+	return t.baseTelegram.dial(dc-1, connOpts.ConnectionProto)
 }
 
 func (t *directTelegram) Init(connOpts *mtproto.ConnectionOpts, conn io.ReadWriteCloser) (io.ReadWriteCloser, error) {

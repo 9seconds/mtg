@@ -10,11 +10,14 @@ import (
 // by the user.
 type ConnectionType uint8
 
+type ConnectionProtocol uint8
+
 // ConnectionOpts presents an options, metadata on connection requested
 // by the user on handshake.
 type ConnectionOpts struct {
-	DC             int16
-	ConnectionType ConnectionType
+	DC              int16
+	ConnectionType  ConnectionType
+	ConnectionProto ConnectionProtocol
 }
 
 // Different connection types which user requests from Telegram.
@@ -22,6 +25,12 @@ const (
 	ConnectionTypeUnknown ConnectionType = iota
 	ConnectionTypeAbridged
 	ConnectionTypeIntermediate
+)
+
+const (
+	ConnectionProtocolIPv4 ConnectionProtocol = 1
+	ConnectionProtocolIPv6                    = ConnectionProtocolIPv4 << 1
+	ConnectionProtocolAny                     = ConnectionProtocolIPv4 | ConnectionProtocolIPv6
 )
 
 // Connection tags for mtproto handshakes.

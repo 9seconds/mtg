@@ -16,7 +16,6 @@ import (
 
 	"github.com/9seconds/mtg/config"
 	"github.com/9seconds/mtg/proxy"
-	"github.com/9seconds/mtg/telegram"
 	"github.com/juju/errors"
 )
 
