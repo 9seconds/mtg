@@ -66,57 +66,55 @@ func (f Frame) ConnectionType() (mtproto.ConnectionType, error) {
 
 // Invert inverts frame for extracting encryption keys. Pkease check that link:
 // https://blog.susanka.eu/how-telegram-obfuscates-its-mtproto-traffic/
-func (f Frame) Invert() *Frame {
-	reversed := MakeFrame()
-	copy(*reversed, f)
+func (f Frame) Invert() Frame {
+	reversed := make(Frame, FrameLen)
+	copy(reversed, f)
 
 	for i := 0; i < frameLenKey+frameLenIV; i++ {
-		(*reversed)[frameOffsetFirst+i] = f[frameOffsetIV-1-i]
+		reversed[frameOffsetFirst+i] = f[frameOffsetIV-1-i]
 	}
 
 	return reversed
 }
 
 // ExtractFrame extracts exact obfuscated2 handshake frame from given reader.
-func ExtractFrame(conn io.Reader) (*Frame, error) {
-	frame := MakeFrame()
-	buf := bytes.NewBuffer(*frame)
+func ExtractFrame(conn io.Reader) (Frame, error) {
+	frame := make(Frame, FrameLen)
+	buf := bytes.NewBuffer(frame)
 	buf.Reset()
 
 	if _, err := io.CopyN(buf, conn, FrameLen); err != nil {
-		ReturnFrame(frame)
 		return nil, errors.Annotate(err, "Cannot extract obfuscated header")
 	}
-	copy(*frame, buf.Bytes())
+	copy(frame, buf.Bytes())
 
 	return frame, nil
 }
 
-func generateFrame(connectionType mtproto.ConnectionType) *Frame {
-	frame := MakeFrame()
-	data := *frame
+func generateFrame(connectionType mtproto.ConnectionType) Frame {
+	frame := make(Frame, FrameLen)
 
 	for {
-		if _, err := rand.Read(data); err != nil {
+		if _, err := rand.Read(frame); err != nil {
 			continue
 		}
-		if data[0] == 0xef {
+		if frame[0] == 0xef {
 			continue
 		}
 
-		val := (uint32(data[3]) << 24) | (uint32(data[2]) << 16) | (uint32(data[1]) << 8) | uint32(data[0])
+		val := (uint32(frame[3]) << 24) | (uint32(frame[2]) << 16) | (uint32(frame[1]) << 8) | uint32(frame[0])
 		if val == 0x44414548 || val == 0x54534f50 || val == 0x20544547 || val == 0x4954504f || val == 0xeeeeeeee {
 			continue
 		}
 
-		val = (uint32(data[7]) << 24) | (uint32(data[6]) << 16) | (uint32(data[5]) << 8) | uint32(data[4])
+		val = (uint32(frame[7]) << 24) | (uint32(frame[6]) << 16) | (uint32(frame[5]) << 8) | uint32(frame[4])
 		if val == 0x00000000 {
 			continue
 		}
 
 		// error has to be checked before calling this function
 		tag, _ := connectionType.Tag() // nolint: errcheck
-		copy(data.Magic(), tag)
+		copy(frame.Magic(), tag)
 
 		return frame
 	}

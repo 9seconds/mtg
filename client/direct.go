@@ -29,7 +29,6 @@ func DirectInit(conn net.Conn, conf *config.Config) (*mtproto.ConnectionOpts, io
 	if err != nil {
 		return nil, nil, errors.Annotate(err, "Cannot extract frame")
 	}
-	defer obfuscated2.ReturnFrame(frame)
 
 	obfs2, connOpts, err := obfuscated2.ParseObfuscated2ClientFrame(conf.Secret, frame)
 	if err != nil {

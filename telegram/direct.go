@@ -46,9 +46,8 @@ func (t *directTelegram) Dial(connOpts *mtproto.ConnectionOpts) (io.ReadWriteClo
 
 func (t *directTelegram) Init(connOpts *mtproto.ConnectionOpts, conn io.ReadWriteCloser) (io.ReadWriteCloser, error) {
 	obfs2, frame := obfuscated2.MakeTelegramObfuscated2Frame(connOpts)
-	defer obfuscated2.ReturnFrame(frame)
 
-	if n, err := conn.Write(*frame); err != nil || n != len(*frame) {
+	if n, err := conn.Write(frame); err != nil || n != obfuscated2.FrameLen {
 		return nil, errors.Annotate(err, "Cannot write hadnshake frame")
 	}
 
