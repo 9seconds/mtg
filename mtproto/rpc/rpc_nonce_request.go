@@ -10,8 +10,6 @@ import (
 )
 
 const (
-	RPCNonceSeqNo = -2
-
 	rpcNonceLength            = 16
 	rpcNonceKeySelectorLength = 4
 	rpcNonceCryptoTSLength    = 4
@@ -33,7 +31,7 @@ type RPCNonceRequest struct {
 	Nonce       [rpcNonceLength]byte
 }
 
-func (r *RPCNonceRequest) Bytes() []byte {
+func (r *RPCNonceRequest) Bytes() *bytes.Buffer {
 	buf := &bytes.Buffer{}
 	buf.Grow(rpcNonceRequestLength)
 
@@ -43,7 +41,7 @@ func (r *RPCNonceRequest) Bytes() []byte {
 	buf.Write(r.CryptoTS[:])
 	buf.Write(r.Nonce[:])
 
-	return buf.Bytes()
+	return buf
 }
 
 func NewRPCNonceRequest(proxySecret []byte) (*RPCNonceRequest, error) {
