@@ -16,6 +16,9 @@ const (
 	BufferReadSize  = 32 * 1024
 	BufferSizeCopy  = 32 * 1024
 
+	TimeoutRead  = time.Minute
+	TimeoutWrite = time.Minute
+
 	keepAlivePeriod = 20 * time.Second
 )
 

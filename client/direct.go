@@ -13,9 +13,7 @@ import (
 	"github.com/9seconds/mtg/wrappers"
 )
 
-const (
-	handshakeTimeout = 10 * time.Second
-)
+const handshakeTimeout = 10 * time.Second
 
 // DirectInit initializes client to access Telegram bypassing middleproxies.
 func DirectInit(conn net.Conn, conf *config.Config) (*mtproto.ConnectionOpts, io.ReadWriteCloser, error) {
@@ -36,7 +34,8 @@ func DirectInit(conn net.Conn, conf *config.Config) (*mtproto.ConnectionOpts, io
 	}
 	connOpts.ConnectionProto = mtproto.ConnectionProtocolAny
 
-	socket := wrappers.NewStreamCipherRWC(conn, obfs2.Encryptor, obfs2.Decryptor)
+	socket := wrappers.NewTimeoutRWC(conn)
+	socket = wrappers.NewStreamCipherRWC(socket, obfs2.Encryptor, obfs2.Decryptor)
 
 	return connOpts, socket, nil
 }

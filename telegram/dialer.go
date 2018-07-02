@@ -8,11 +8,10 @@ import (
 	"github.com/juju/errors"
 
 	"github.com/9seconds/mtg/config"
+	"github.com/9seconds/mtg/wrappers"
 )
 
-const (
-	telegramDialTimeout = 10 * time.Second
-)
+const telegramDialTimeout = 10 * time.Second
 
 type tgDialer struct {
 	net.Dialer
@@ -36,5 +35,5 @@ func (t *tgDialer) dialRWC(addr string) (io.ReadWriteCloser, error) {
 		return nil, err
 	}
 
-	return conn, nil
+	return wrappers.NewTimeoutRWC(conn), nil
 }
