@@ -1,4 +1,4 @@
-package bufferpool
+package mtproto
 
 import (
 	"bytes"
@@ -9,14 +9,14 @@ const bufferPoolSize = 4 * 1024
 
 var bufferPool sync.Pool
 
-func Get() *bytes.Buffer {
+func GetBuffer() *bytes.Buffer {
 	buf := bufferPool.Get().(*bytes.Buffer)
 	buf.Reset()
 
 	return buf
 }
 
-func Return(buf *bytes.Buffer) {
+func ReturnBuffer(buf *bytes.Buffer) {
 	bufferPool.Put(buf)
 }
 

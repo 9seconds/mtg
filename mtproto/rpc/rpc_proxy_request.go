@@ -6,9 +6,9 @@ import (
 	"encoding/binary"
 	"net"
 
-	"github.com/9seconds/mtg/mtproto"
-	"github.com/9seconds/mtg/mtproto/bufferpool"
 	"github.com/juju/errors"
+
+	"github.com/9seconds/mtg/mtproto"
 )
 
 const (
@@ -33,7 +33,7 @@ type RPCProxyRequest struct {
 }
 
 func (r *RPCProxyRequest) Bytes() *bytes.Buffer {
-	buf := bufferpool.Get()
+	buf := mtproto.GetBuffer()
 
 	flags := r.Flags
 	if r.Extras.QuickAck {
