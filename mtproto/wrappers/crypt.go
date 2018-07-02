@@ -7,7 +7,6 @@ import (
 	"crypto/md5"
 	"crypto/sha1"
 	"encoding/binary"
-	"io"
 	"net"
 
 	"github.com/9seconds/mtg/mtproto/rpc"
@@ -23,14 +22,17 @@ const (
 
 var emptyIP = [4]byte{0x00, 0x00, 0x00, 0x00}
 
-func NewMiddleProxyCipherRWC(conn io.ReadWriteCloser, req *rpc.RPCNonceRequest, resp *rpc.RPCNonceResponse, client *net.TCPAddr, remote *net.TCPAddr, secret []byte) io.ReadWriteCloser {
+func NewMiddleProxyCipherRWC(conn wrappers.ReadWriteCloserWithAddr, req *rpc.RPCNonceRequest,
+	resp *rpc.RPCNonceResponse, client *net.TCPAddr, remote *net.TCPAddr,
+	secret []byte) wrappers.ReadWriteCloserWithAddr {
 	encryptor := newCBCCipher(CipherPurposeClient, req, resp, client, remote, secret)
 	decryptor := newCBCCipher(CipherPurposeServer, req, resp, client, remote, secret)
 
 	return wrappers.NewBlockCipherRWC(conn, encryptor, decryptor)
 }
 
-func newCBCCipher(purpose CipherPurpose, req *rpc.RPCNonceRequest, resp *rpc.RPCNonceResponse, client *net.TCPAddr, remote *net.TCPAddr, secret []byte) cipher.BlockMode {
+func newCBCCipher(purpose CipherPurpose, req *rpc.RPCNonceRequest, resp *rpc.RPCNonceResponse,
+	client *net.TCPAddr, remote *net.TCPAddr, secret []byte) cipher.BlockMode {
 	message := bytes.Buffer{}
 	message.Write(resp.Nonce[:])
 	message.Write(req.Nonce[:])

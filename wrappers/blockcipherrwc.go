@@ -4,20 +4,20 @@ import (
 	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
-	"io"
+	"net"
 
 	"github.com/juju/errors"
 )
 
-type BlockCipherReadWriteCloser struct {
+type BlockCipherReadWriteCloserWithAddr struct {
 	buf *bytes.Buffer
 
-	conn      io.ReadWriteCloser
+	conn      ReadWriteCloserWithAddr
 	encryptor cipher.BlockMode
 	decryptor cipher.BlockMode
 }
 
-func (c *BlockCipherReadWriteCloser) Read(p []byte) (int, error) {
+func (c *BlockCipherReadWriteCloserWithAddr) Read(p []byte) (int, error) {
 	if c.buf.Len() > 0 {
 		return c.flush(p)
 	}
@@ -34,7 +34,7 @@ func (c *BlockCipherReadWriteCloser) Read(p []byte) (int, error) {
 	return c.flush(p)
 }
 
-func (c *BlockCipherReadWriteCloser) Write(p []byte) (int, error) {
+func (c *BlockCipherReadWriteCloserWithAddr) Write(p []byte) (int, error) {
 	if len(p)%aes.BlockSize > 0 {
 		return 0, errors.Errorf("Incorrect block size %d", len(p))
 	}
@@ -50,12 +50,16 @@ func (c *BlockCipherReadWriteCloser) Write(p []byte) (int, error) {
 	return c.conn.Write(encrypted)
 }
 
-func (c *BlockCipherReadWriteCloser) Close() error {
+func (c *BlockCipherReadWriteCloserWithAddr) Close() error {
 	defer putBuffer(c.buf)
 	return c.conn.Close()
 }
 
-func (c *BlockCipherReadWriteCloser) flush(p []byte) (int, error) {
+func (c *BlockCipherReadWriteCloserWithAddr) Addr() *net.TCPAddr {
+	return c.conn.Addr()
+}
+
+func (c *BlockCipherReadWriteCloserWithAddr) flush(p []byte) (int, error) {
 	sizeToRead := len(p)
 	if c.buf.Len() < sizeToRead {
 		sizeToRead = c.buf.Len()
@@ -76,8 +80,8 @@ func (c *BlockCipherReadWriteCloser) flush(p []byte) (int, error) {
 	return sizeToRead, nil
 }
 
-func NewBlockCipherRWC(conn io.ReadWriteCloser, encryptor, decryptor cipher.BlockMode) io.ReadWriteCloser {
-	return &BlockCipherReadWriteCloser{
+func NewBlockCipherRWC(conn ReadWriteCloserWithAddr, encryptor, decryptor cipher.BlockMode) ReadWriteCloserWithAddr {
+	return &BlockCipherReadWriteCloserWithAddr{
 		buf:       getBuffer(),
 		conn:      conn,
 		encryptor: encryptor,

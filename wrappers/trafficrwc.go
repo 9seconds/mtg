@@ -1,37 +1,41 @@
 package wrappers
 
-import "io"
+import "net"
 
 // TrafficReadWriteCloser counts an amount of ingress/egress traffic by
 // calling given callbacks.
-type TrafficReadWriteCloser struct {
-	conn          io.ReadWriteCloser
+type TrafficReadWriteCloserWithAddr struct {
+	conn          ReadWriteCloserWithAddr
 	readCallback  func(int)
 	writeCallback func(int)
 }
 
 // Read reads from connection
-func (t *TrafficReadWriteCloser) Read(p []byte) (n int, err error) {
+func (t *TrafficReadWriteCloserWithAddr) Read(p []byte) (n int, err error) {
 	n, err = t.conn.Read(p)
 	t.readCallback(n)
 	return
 }
 
 // Write writes into connection.
-func (t *TrafficReadWriteCloser) Write(p []byte) (n int, err error) {
+func (t *TrafficReadWriteCloserWithAddr) Write(p []byte) (n int, err error) {
 	n, err = t.conn.Write(p)
 	t.writeCallback(n)
 	return
 }
 
 // Close closes underlying connection.
-func (t *TrafficReadWriteCloser) Close() error {
+func (t *TrafficReadWriteCloserWithAddr) Close() error {
 	return t.conn.Close()
 }
 
+func (t *TrafficReadWriteCloserWithAddr) Addr() *net.TCPAddr {
+	return t.conn.Addr()
+}
+
 // NewTrafficRWC wraps ReadWriteCloser to have read/write callbacks.
-func NewTrafficRWC(conn io.ReadWriteCloser, readCallback, writeCallback func(int)) io.ReadWriteCloser {
-	return &TrafficReadWriteCloser{
+func NewTrafficRWC(conn ReadWriteCloserWithAddr, readCallback, writeCallback func(int)) ReadWriteCloserWithAddr {
+	return &TrafficReadWriteCloserWithAddr{
 		conn:          conn,
 		readCallback:  readCallback,
 		writeCallback: writeCallback,

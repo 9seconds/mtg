@@ -6,8 +6,11 @@ import (
 	"encoding/binary"
 	"hash/crc32"
 	"io"
+	"net"
 
 	"github.com/juju/errors"
+
+	"github.com/9seconds/mtg/wrappers"
 )
 
 // Frame: { MessageLength(4) | SequenceNumber(4) | Message(???) | CRC32(4) [| padding(4), ...] }
@@ -19,7 +22,7 @@ const (
 var frameRWCPadding = [4]byte{0x04, 0x00, 0x00, 0x00}
 
 type FrameRWC struct {
-	conn io.ReadWriteCloser
+	conn wrappers.ReadWriteCloserWithAddr
 
 	readSeqNo  int32
 	writeSeqNo int32
@@ -102,6 +105,10 @@ func (f *FrameRWC) Close() error {
 	return f.conn.Close()
 }
 
+func (f *FrameRWC) Addr() *net.TCPAddr {
+	return f.conn.Addr()
+}
+
 func (f *FrameRWC) flush(p []byte) (int, error) {
 	sizeToRead := len(p)
 	if f.readBuf.Len() < sizeToRead {
@@ -119,7 +126,7 @@ func (f *FrameRWC) flush(p []byte) (int, error) {
 	return sizeToRead, nil
 }
 
-func NewFrameRWC(conn io.ReadWriteCloser, seqNo int32) io.ReadWriteCloser {
+func NewFrameRWC(conn wrappers.ReadWriteCloserWithAddr, seqNo int32) wrappers.ReadWriteCloserWithAddr {
 	return &FrameRWC{
 		conn:       conn,
 		readSeqNo:  seqNo,

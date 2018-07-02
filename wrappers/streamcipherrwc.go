@@ -2,26 +2,26 @@ package wrappers
 
 import (
 	"crypto/cipher"
-	"io"
+	"net"
 )
 
 // StreamCipherReadWriteCloser is a ReadWriteCloser which ciphers
 // incoming and outgoing data with givem cipher.Stream instances.
-type StreamCipherReadWriteCloser struct {
+type StreamCipherReadWriteCloserWithAddr struct {
 	encryptor cipher.Stream
 	decryptor cipher.Stream
-	conn      io.ReadWriteCloser
+	conn      ReadWriteCloserWithAddr
 }
 
 // Read reads from connection
-func (c *StreamCipherReadWriteCloser) Read(p []byte) (n int, err error) {
+func (c *StreamCipherReadWriteCloserWithAddr) Read(p []byte) (n int, err error) {
 	n, err = c.conn.Read(p)
 	c.decryptor.XORKeyStream(p, p[:n])
 	return
 }
 
 // Write writes into connection.
-func (c *StreamCipherReadWriteCloser) Write(p []byte) (int, error) {
+func (c *StreamCipherReadWriteCloserWithAddr) Write(p []byte) (int, error) {
 	// This is to decrease an amount of allocations. Unfortunately, escape
 	// analysis in (at least Golang 1.10) is absolutely not perfect. For
 	// example, it understands that we want to have a slice locally, right?
@@ -39,14 +39,18 @@ func (c *StreamCipherReadWriteCloser) Write(p []byte) (int, error) {
 }
 
 // Close closes underlying connection.
-func (c *StreamCipherReadWriteCloser) Close() error {
+func (c *StreamCipherReadWriteCloserWithAddr) Close() error {
 	return c.conn.Close()
+}
+
+func (c *StreamCipherReadWriteCloserWithAddr) Addr() *net.TCPAddr {
+	return c.conn.Addr()
 }
 
 // NewStreamCipherRWC returns wrapper which transparently
 // encrypts/decrypts traffic with obfuscated2 protocol.
-func NewStreamCipherRWC(conn io.ReadWriteCloser, encryptor, decryptor cipher.Stream) io.ReadWriteCloser {
-	return &StreamCipherReadWriteCloser{
+func NewStreamCipherRWC(conn ReadWriteCloserWithAddr, encryptor, decryptor cipher.Stream) ReadWriteCloserWithAddr {
+	return &StreamCipherReadWriteCloserWithAddr{
 		conn:      conn,
 		encryptor: encryptor,
 		decryptor: decryptor,

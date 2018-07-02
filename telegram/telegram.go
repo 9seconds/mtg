@@ -1,20 +1,20 @@
 package telegram
 
 import (
-	"io"
 	"math/rand"
 
 	"github.com/juju/errors"
 
 	"github.com/9seconds/mtg/mtproto"
+	"github.com/9seconds/mtg/wrappers"
 )
 
 // Telegram defines an interface to connect to Telegram. This
 // encapsulates logic of working with middleproxies or direct
 // connections.
 type Telegram interface {
-	Dial(*mtproto.ConnectionOpts) (io.ReadWriteCloser, error)
-	Init(*mtproto.ConnectionOpts, io.ReadWriteCloser) (io.ReadWriteCloser, error)
+	Dial(*mtproto.ConnectionOpts) (wrappers.ReadWriteCloserWithAddr, error)
+	Init(*mtproto.ConnectionOpts, wrappers.ReadWriteCloserWithAddr) (wrappers.ReadWriteCloserWithAddr, error)
 }
 
 type baseTelegram struct {
@@ -24,7 +24,7 @@ type baseTelegram struct {
 	v6Addresses map[int16][]string
 }
 
-func (b *baseTelegram) dial(dcIdx int16, proto mtproto.ConnectionProtocol) (io.ReadWriteCloser, error) {
+func (b *baseTelegram) dial(dcIdx int16, proto mtproto.ConnectionProtocol) (wrappers.ReadWriteCloserWithAddr, error) {
 	addrs := make([]string, 2)
 
 	if proto&mtproto.ConnectionProtocolIPv6 != 0 {

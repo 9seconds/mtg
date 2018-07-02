@@ -2,7 +2,6 @@ package telegram
 
 import (
 	"bufio"
-	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -16,6 +15,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/9seconds/mtg/mtproto"
+	"github.com/9seconds/mtg/wrappers"
 )
 
 const (
@@ -39,7 +39,7 @@ type middleTelegramCaller struct {
 	httpClient  *http.Client
 }
 
-func (t *middleTelegramCaller) Dial(connOpts *mtproto.ConnectionOpts) (io.ReadWriteCloser, error) {
+func (t *middleTelegramCaller) Dial(connOpts *mtproto.ConnectionOpts) (wrappers.ReadWriteCloserWithAddr, error) {
 	dc := connOpts.DC
 	if dc == 0 {
 		dc = 1

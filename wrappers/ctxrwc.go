@@ -2,21 +2,21 @@ package wrappers
 
 import (
 	"context"
-	"io"
+	"net"
 
 	"github.com/juju/errors"
 )
 
 // CtxReadWriteCloser wraps underlying connection and does management of the
 // context and its cancel function.
-type CtxReadWriteCloser struct {
+type CtxReadWriteCloserWithAddr struct {
 	ctx    context.Context
-	conn   io.ReadWriteCloser
+	conn   ReadWriteCloserWithAddr
 	cancel context.CancelFunc
 }
 
 // Read reads from connection
-func (c *CtxReadWriteCloser) Read(p []byte) (int, error) {
+func (c *CtxReadWriteCloserWithAddr) Read(p []byte) (int, error) {
 	select {
 	case <-c.ctx.Done():
 		return 0, errors.Annotate(c.ctx.Err(), "Read is failed because of closed context")
@@ -30,7 +30,7 @@ func (c *CtxReadWriteCloser) Read(p []byte) (int, error) {
 }
 
 // Write writes into connection.
-func (c *CtxReadWriteCloser) Write(p []byte) (int, error) {
+func (c *CtxReadWriteCloserWithAddr) Write(p []byte) (int, error) {
 	select {
 	case <-c.ctx.Done():
 		return 0, errors.Annotate(c.ctx.Err(), "Write is failed because of closed context")
@@ -44,14 +44,18 @@ func (c *CtxReadWriteCloser) Write(p []byte) (int, error) {
 }
 
 // Close closes underlying connection.
-func (c *CtxReadWriteCloser) Close() error {
+func (c *CtxReadWriteCloserWithAddr) Close() error {
 	return c.conn.Close()
+}
+
+func (c *CtxReadWriteCloserWithAddr) Addr() *net.TCPAddr {
+	return c.conn.Addr()
 }
 
 // NewCtxRWC returns ReadWriteCloser which respects given context,
 // cancellation etc.
-func NewCtxRWC(ctx context.Context, cancel context.CancelFunc, conn io.ReadWriteCloser) io.ReadWriteCloser {
-	return &CtxReadWriteCloser{
+func NewCtxRWC(ctx context.Context, cancel context.CancelFunc, conn ReadWriteCloserWithAddr) ReadWriteCloserWithAddr {
+	return &CtxReadWriteCloserWithAddr{
 		conn:   conn,
 		ctx:    ctx,
 		cancel: cancel,

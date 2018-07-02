@@ -1,7 +1,6 @@
 package telegram
 
 import (
-	"io"
 	"net"
 
 	"github.com/juju/errors"
@@ -33,7 +32,7 @@ type directTelegram struct {
 	baseTelegram
 }
 
-func (t *directTelegram) Dial(connOpts *mtproto.ConnectionOpts) (io.ReadWriteCloser, error) {
+func (t *directTelegram) Dial(connOpts *mtproto.ConnectionOpts) (wrappers.ReadWriteCloserWithAddr, error) {
 	dc := connOpts.DC
 	if dc < 0 {
 		dc = -dc
@@ -44,7 +43,7 @@ func (t *directTelegram) Dial(connOpts *mtproto.ConnectionOpts) (io.ReadWriteClo
 	return t.baseTelegram.dial(dc-1, connOpts.ConnectionProto)
 }
 
-func (t *directTelegram) Init(connOpts *mtproto.ConnectionOpts, conn io.ReadWriteCloser) (io.ReadWriteCloser, error) {
+func (t *directTelegram) Init(connOpts *mtproto.ConnectionOpts, conn wrappers.ReadWriteCloserWithAddr) (wrappers.ReadWriteCloserWithAddr, error) {
 	obfs2, frame := obfuscated2.MakeTelegramObfuscated2Frame(connOpts)
 
 	if n, err := conn.Write(frame); err != nil || n != obfuscated2.FrameLen {

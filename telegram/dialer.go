@@ -1,7 +1,6 @@
 package telegram
 
 import (
-	"io"
 	"net"
 	"time"
 
@@ -29,7 +28,7 @@ func (t *tgDialer) dial(addr string) (net.Conn, error) {
 	return conn, nil
 }
 
-func (t *tgDialer) dialRWC(addr string) (io.ReadWriteCloser, error) {
+func (t *tgDialer) dialRWC(addr string) (wrappers.ReadWriteCloserWithAddr, error) {
 	conn, err := t.dial(addr)
 	if err != nil {
 		return nil, err

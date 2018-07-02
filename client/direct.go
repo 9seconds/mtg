@@ -1,7 +1,6 @@
 package client
 
 import (
-	"io"
 	"net"
 	"time"
 
@@ -16,7 +15,7 @@ import (
 const handshakeTimeout = 10 * time.Second
 
 // DirectInit initializes client to access Telegram bypassing middleproxies.
-func DirectInit(conn net.Conn, conf *config.Config) (*mtproto.ConnectionOpts, io.ReadWriteCloser, error) {
+func DirectInit(conn net.Conn, conf *config.Config) (*mtproto.ConnectionOpts, wrappers.ReadWriteCloserWithAddr, error) {
 	if err := config.SetSocketOptions(conn); err != nil {
 		return nil, nil, errors.Annotate(err, "Cannot set socket options")
 	}
