@@ -23,8 +23,8 @@ const (
 var emptyIP = [4]byte{0x00, 0x00, 0x00, 0x00}
 
 func NewMiddleProxyCipherRWC(conn wrappers.ReadWriteCloserWithAddr, req *rpc.RPCNonceRequest,
-	resp *rpc.RPCNonceResponse, client *net.TCPAddr, remote *net.TCPAddr,
-	secret []byte) wrappers.ReadWriteCloserWithAddr {
+	resp *rpc.RPCNonceResponse, client *net.TCPAddr, secret []byte) wrappers.ReadWriteCloserWithAddr {
+	remote := conn.Addr()
 	encryptor := newCBCCipher(CipherPurposeClient, req, resp, client, remote, secret)
 	decryptor := newCBCCipher(CipherPurposeServer, req, resp, client, remote, secret)
 
