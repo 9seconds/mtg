@@ -15,7 +15,7 @@ type RPCNonceResponse struct {
 	Crypto  [rpcNonceCryptoAESLength]byte
 }
 
-func (r *RPCNonceResponse) Bytes() *bytes.Buffer {
+func (r *RPCNonceResponse) Bytes() []byte {
 	buf := &bytes.Buffer{}
 	buf.Grow(rpcNonceResponseLength)
 
@@ -25,7 +25,7 @@ func (r *RPCNonceResponse) Bytes() *bytes.Buffer {
 	buf.Write(r.CryptoTS[:])
 	buf.Write(r.Nonce[:])
 
-	return buf
+	return buf.Bytes()
 }
 
 func (r *RPCNonceResponse) Valid(req *RPCNonceRequest) error {

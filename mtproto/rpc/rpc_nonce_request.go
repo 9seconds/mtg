@@ -31,7 +31,7 @@ type RPCNonceRequest struct {
 	Nonce       [rpcNonceLength]byte
 }
 
-func (r *RPCNonceRequest) Bytes() *bytes.Buffer {
+func (r *RPCNonceRequest) Bytes() []byte {
 	buf := &bytes.Buffer{}
 	buf.Grow(rpcNonceRequestLength)
 
@@ -41,7 +41,7 @@ func (r *RPCNonceRequest) Bytes() *bytes.Buffer {
 	buf.Write(r.CryptoTS[:])
 	buf.Write(r.Nonce[:])
 
-	return buf
+	return buf.Bytes()
 }
 
 func NewRPCNonceRequest(proxySecret []byte) (*RPCNonceRequest, error) {

@@ -15,7 +15,7 @@ type RPCHandshakeResponse struct {
 	PeerPID   [rpcHandshakePeerPIDLength]byte
 }
 
-func (r *RPCHandshakeResponse) Bytes() *bytes.Buffer {
+func (r *RPCHandshakeResponse) Bytes() []byte {
 	buf := &bytes.Buffer{}
 	buf.Grow(rpcHandshakeResponseLength)
 
@@ -24,7 +24,7 @@ func (r *RPCHandshakeResponse) Bytes() *bytes.Buffer {
 	buf.Write(r.SenderPID[:])
 	buf.Write(r.PeerPID[:])
 
-	return buf
+	return buf.Bytes()
 }
 
 func (r *RPCHandshakeResponse) Valid(req *RPCHandshakeRequest) error {

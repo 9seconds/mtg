@@ -32,8 +32,8 @@ type RPCProxyRequest struct {
 	Extras       *mtproto.Extras
 }
 
-func (r *RPCProxyRequest) Bytes() *bytes.Buffer {
-	buf := mtproto.GetBuffer()
+func (r *RPCProxyRequest) Bytes() []byte {
+	buf := &bytes.Buffer{}
 
 	flags := r.Flags
 	if r.Extras.QuickAck {
@@ -62,7 +62,7 @@ func (r *RPCProxyRequest) Bytes() *bytes.Buffer {
 		buf.Write(messageBytes)
 	}
 
-	return buf
+	return buf.Bytes()
 }
 
 func NewRPCProxyRequest(connectionType mtproto.ConnectionType, local, remote *net.TCPAddr, adTag []byte, extras *mtproto.Extras) (*RPCProxyRequest, error) {

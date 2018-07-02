@@ -8,8 +8,6 @@ import (
 	"io"
 
 	"github.com/juju/errors"
-
-	"github.com/9seconds/mtg/mtproto"
 )
 
 // Frame: { MessageLength(4) | SequenceNumber(4) | Message(???) | CRC32(4) [| padding(4), ...] }
@@ -21,35 +19,35 @@ const (
 var frameRWCPadding = [4]byte{0x04, 0x00, 0x00, 0x00}
 
 type FrameRWC struct {
-	conn mtproto.BytesRWC
+	conn io.ReadWriteCloser
 
 	readSeqNo  int32
 	writeSeqNo int32
 	readBuf    *bytes.Buffer
 }
 
-func (f *FrameRWC) Write(buf *bytes.Buffer) (int, error) {
-	writeBuf := mtproto.GetBuffer()
-	defer mtproto.ReturnBuffer(writeBuf)
+func (f *FrameRWC) Write(buf []byte) (int, error) {
+	writeBuf := &bytes.Buffer{}
 
 	// 4 - len bytes
 	// 4 - seq bytes
 	// . - message
 	// 4 - crc32
-	messageLength := 4 + 4 + buf.Len() + 4
+	messageLength := 4 + 4 + len(buf) + 4
 	paddingLength := (aes.BlockSize - messageLength%aes.BlockSize) % aes.BlockSize
 	writeBuf.Grow(messageLength + paddingLength)
 
 	binary.Write(writeBuf, binary.LittleEndian, uint32(messageLength))
 	binary.Write(writeBuf, binary.LittleEndian, f.writeSeqNo)
-	writeBuf.Write(buf.Bytes())
+	writeBuf.Write(buf)
 	f.writeSeqNo++
 
 	checksum := crc32.ChecksumIEEE(writeBuf.Bytes())
 	binary.Write(writeBuf, binary.LittleEndian, checksum)
 	writeBuf.Write(bytes.Repeat(frameRWCPadding[:], paddingLength/4))
 
-	return f.conn.Write(writeBuf)
+	_, err := f.conn.Write(writeBuf.Bytes())
+	return len(buf), err
 }
 
 func (f *FrameRWC) Read(p []byte) (int, error) {
@@ -57,9 +55,7 @@ func (f *FrameRWC) Read(p []byte) (int, error) {
 		return f.flush(p)
 	}
 
-	buf := mtproto.GetBuffer()
-	defer mtproto.ReturnBuffer(buf)
-
+	buf := &bytes.Buffer{}
 	for {
 		buf.Reset()
 		if _, err := io.CopyN(buf, f.conn, 4); err != nil {
@@ -103,7 +99,6 @@ func (f *FrameRWC) Read(p []byte) (int, error) {
 }
 
 func (f *FrameRWC) Close() error {
-	defer mtproto.ReturnBuffer(f.readBuf)
 	return f.conn.Close()
 }
 
@@ -118,21 +113,17 @@ func (f *FrameRWC) flush(p []byte) (int, error) {
 	if sizeToRead == f.readBuf.Len() {
 		f.readBuf.Reset()
 	} else {
-		newBuf := mtproto.GetBuffer()
-		newBuf.Write(data[sizeToRead:])
-
-		mtproto.ReturnBuffer(f.readBuf)
-		f.readBuf = newBuf
+		f.readBuf = bytes.NewBuffer(data[sizeToRead:])
 	}
 
 	return sizeToRead, nil
 }
 
-func NewFrameRWC(conn mtproto.BytesRWC, seqNo int32) mtproto.BytesRWC {
+func NewFrameRWC(conn io.ReadWriteCloser, seqNo int32) io.ReadWriteCloser {
 	return &FrameRWC{
 		conn:       conn,
 		readSeqNo:  seqNo,
 		writeSeqNo: seqNo,
-		readBuf:    mtproto.GetBuffer(),
+		readBuf:    &bytes.Buffer{},
 	}
 }

@@ -25,7 +25,7 @@ var (
 type RPCHandshakeRequest struct {
 }
 
-func (r *RPCHandshakeRequest) Bytes() *bytes.Buffer {
+func (r *RPCHandshakeRequest) Bytes() []byte {
 	buf := &bytes.Buffer{}
 	buf.Grow(rpcHandshakeRequestLength)
 
@@ -34,7 +34,7 @@ func (r *RPCHandshakeRequest) Bytes() *bytes.Buffer {
 	buf.Write(rpcHandshakeSenderPID[:])
 	buf.Write(rpcHandshakePeerPID[:])
 
-	return buf
+	return buf.Bytes()
 }
 
 func init() {
