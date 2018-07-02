@@ -8,13 +8,15 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/9seconds/mtg/config"
+	"github.com/9seconds/mtg/mtproto"
+	"github.com/9seconds/mtg/wrappers"
 )
 
 type middleTelegram struct {
 	middleTelegramCaller
 }
 
-func NewMiddleTelegram(conf *config.Config, logger *zap.SugaredLogger) *middleTelegram {
+func NewMiddleTelegram(conf *config.Config, logger *zap.SugaredLogger) Telegram {
 	tg := &middleTelegram{
 		middleTelegramCaller: middleTelegramCaller{
 			baseTelegram: baseTelegram{
@@ -34,4 +36,8 @@ func NewMiddleTelegram(conf *config.Config, logger *zap.SugaredLogger) *middleTe
 	go tg.autoUpdate()
 
 	return tg
+}
+
+func (t *middleTelegram) Init(connOpts *mtproto.ConnectionOpts, conn wrappers.ReadWriteCloserWithAddr) (wrappers.ReadWriteCloserWithAddr, error) {
+	return nil, nil
 }

@@ -28,8 +28,8 @@ type RPCProxyRequest struct {
 	RemoteIPPort [rpcProxyRequestIPPortLength]byte
 	LocalIPPort  [rpcProxyRequestIPPortLength]byte
 	ADTag        []byte
+	Extras       Extras
 	Message      *bytes.Buffer
-	Extras       *mtproto.Extras
 }
 
 func (r *RPCProxyRequest) Bytes() []byte {
@@ -65,7 +65,7 @@ func (r *RPCProxyRequest) Bytes() []byte {
 	return buf.Bytes()
 }
 
-func NewRPCProxyRequest(connectionType mtproto.ConnectionType, local, remote *net.TCPAddr, adTag []byte, extras *mtproto.Extras) (*RPCProxyRequest, error) {
+func NewRPCProxyRequest(connectionType mtproto.ConnectionType, local, remote *net.TCPAddr, adTag []byte, extras Extras) (*RPCProxyRequest, error) {
 	flags := RPCProxyRequestFlagsHasAdTag | RPCProxyRequestFlagsMagic | RPCProxyRequestFlagsExtMode2
 
 	switch connectionType {
