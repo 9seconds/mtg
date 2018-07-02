@@ -29,6 +29,7 @@ func (c *BlockCipherReadWriteCloser) Read(p []byte) (int, error) {
 		}
 		c.buf.Write(p[:n])
 	}
+	c.decryptor.CryptBlocks(c.buf.Bytes(), c.buf.Bytes())
 
 	return c.flush(p)
 }
@@ -59,16 +60,17 @@ func (c *BlockCipherReadWriteCloser) flush(p []byte) (int, error) {
 	if c.buf.Len() < sizeToRead {
 		sizeToRead = c.buf.Len()
 	}
-	sizeToRead = aes.BlockSize * (sizeToRead / aes.BlockSize)
 
-	c.decryptor.CryptBlocks(p, c.buf.Bytes()[:sizeToRead])
+	data := c.buf.Bytes()
+	copy(p, data[:sizeToRead])
 	if sizeToRead == c.buf.Len() {
 		c.buf.Reset()
 	} else {
-		leftover := c.buf.Bytes()[sizeToRead:]
+		newBuf := getBuffer()
+		newBuf.Write(data[sizeToRead:])
+
 		putBuffer(c.buf)
-		c.buf = getBuffer()
-		c.buf.Write(leftover)
+		c.buf = newBuf
 	}
 
 	return sizeToRead, nil
