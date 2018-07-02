@@ -1,11 +1,6 @@
 package rpc
 
-import (
-	"bytes"
-	"encoding/binary"
-
-	"github.com/9seconds/mtg/mtproto"
-)
+import "encoding/binary"
 
 type RPCProxyRequestFlags uint32
 
@@ -26,26 +21,4 @@ func (r RPCProxyRequestFlags) Bytes() []byte {
 	binary.LittleEndian.PutUint32(converted, uint32(r))
 
 	return converted
-}
-
-func NewRPCRproxyRequestFlags(connectionType mtproto.ConnectionType, quickAck bool, message []byte) RPCProxyRequestFlags {
-	flags := RPCProxyRequestFlagsHasAdTag
-	flags |= RPCProxyRequestFlagsMagic
-	flags |= RPCProxyRequestFlagsExtMode2
-
-	switch connectionType {
-	case mtproto.ConnectionTypeAbridged:
-		flags |= RPCProxyRequestFlagsAbdridged
-	case mtproto.ConnectionTypeIntermediate:
-		flags |= RPCProxyRequestFlagsIntermediate
-	}
-
-	if quickAck {
-		flags |= RPCProxyRequestFlagsQuickAck
-	}
-	if bytes.HasPrefix(message, rpcProxyRequestFlagsEncryptedPrefix[:]) {
-		flags |= RPCProxyRequestFlagsEncrypted
-	}
-
-	return flags
 }
