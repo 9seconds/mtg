@@ -8,8 +8,7 @@ const (
 	rpcHandshakeSenderPIDLength = 12
 	rpcHandshakePeerPIDLength   = rpcHandshakeSenderPIDLength
 
-	rpcHandshakeRequestLength = rpcHandshakeTagLength + rpcHandshakeFlagsLength +
-		rpcHandshakeSenderPIDLength + rpcHandshakePeerPIDLength
+	rpcHandshakeRequestLength = rpcHandshakeTagLength + rpcHandshakeFlagsLength + rpcHandshakeSenderPIDLength + rpcHandshakePeerPIDLength
 )
 
 var (
@@ -18,8 +17,6 @@ var (
 
 	rpcHandshakeTag   = [rpcHandshakeTagLength]byte{0xf5, 0xee, 0x82, 0x76}
 	rpcHandshakeFlags = [rpcHandshakeFlagsLength]byte{0x00, 0x00, 0x00, 0x00}
-
-	rpcHandshakeBuffer *bytes.Buffer
 )
 
 type RPCHandshakeRequest struct {

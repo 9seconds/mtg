@@ -1,11 +1,13 @@
 package telegram
 
 import (
+	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"sync"
 
+	"github.com/juju/errors"
 	"go.uber.org/zap"
 
 	"github.com/9seconds/mtg/config"
@@ -13,7 +15,6 @@ import (
 	"github.com/9seconds/mtg/mtproto/rpc"
 	mtwrappers "github.com/9seconds/mtg/mtproto/wrappers"
 	"github.com/9seconds/mtg/wrappers"
-	"github.com/juju/errors"
 )
 
 type middleTelegram struct {
@@ -70,7 +71,7 @@ func (t *middleTelegram) Init(connOpts *mtproto.ConnectionOpts, conn wrappers.Re
 	return nil, nil
 }
 
-func (t *middleTelegram) sendRPCNonceRequest(conn wrappers.ReadWriteCloserWithAddr) (*rpc.RPCNonceRequest, error) {
+func (t *middleTelegram) sendRPCNonceRequest(conn io.Writer) (*rpc.RPCNonceRequest, error) {
 	rpcNonceReq, err := rpc.NewRPCNonceRequest(t.proxySecret)
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot create RPC nonce request")
@@ -82,7 +83,7 @@ func (t *middleTelegram) sendRPCNonceRequest(conn wrappers.ReadWriteCloserWithAd
 	return rpcNonceReq, nil
 }
 
-func (t *middleTelegram) receiveRPCNonceResponse(conn wrappers.ReadWriteCloserWithAddr, req *rpc.RPCNonceRequest) (*rpc.RPCNonceResponse, error) {
+func (t *middleTelegram) receiveRPCNonceResponse(conn io.Reader, req *rpc.RPCNonceRequest) (*rpc.RPCNonceResponse, error) {
 	ans, err := ioutil.ReadAll(conn)
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot read RPC nonce response")
@@ -98,7 +99,7 @@ func (t *middleTelegram) receiveRPCNonceResponse(conn wrappers.ReadWriteCloserWi
 	return rpcNonceResp, nil
 }
 
-func (t *middleTelegram) sendRPCHandshakeRequest(conn wrappers.ReadWriteCloserWithAddr) (*rpc.RPCHandshakeRequest, error) {
+func (t *middleTelegram) sendRPCHandshakeRequest(conn io.Writer) (*rpc.RPCHandshakeRequest, error) {
 	req := rpc.NewRPCHandshakeRequest()
 	if _, err := conn.Write(req.Bytes()); err != nil {
 		return nil, errors.Annotate(err, "Cannot send RPC handshake request")
@@ -107,7 +108,7 @@ func (t *middleTelegram) sendRPCHandshakeRequest(conn wrappers.ReadWriteCloserWi
 	return req, nil
 }
 
-func (t *middleTelegram) receiveRPCHandshakeResponse(conn wrappers.ReadWriteCloserWithAddr, req *rpc.RPCHandshakeRequest) (*rpc.RPCHandshakeResponse, error) {
+func (t *middleTelegram) receiveRPCHandshakeResponse(conn io.Reader, req *rpc.RPCHandshakeRequest) (*rpc.RPCHandshakeResponse, error) {
 	ans, err := ioutil.ReadAll(conn)
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot read RPC handshake response")

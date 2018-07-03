@@ -16,8 +16,7 @@ const (
 	rpcNonceTagLength         = 4
 	rpcNonceCryptoAESLength   = 4
 
-	rpcNonceRequestLength = rpcNonceTagLength + rpcNonceKeySelectorLength +
-		rpcNonceCryptoAESLength + rpcNonceCryptoTSLength + rpcNonceLength
+	rpcNonceRequestLength = rpcNonceTagLength + rpcNonceKeySelectorLength + rpcNonceCryptoAESLength + rpcNonceCryptoTSLength + rpcNonceLength
 )
 
 var (
