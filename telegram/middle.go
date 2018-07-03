@@ -2,7 +2,6 @@ package telegram
 
 import (
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"sync"
@@ -84,11 +83,13 @@ func (t *middleTelegram) sendRPCNonceRequest(conn io.Writer) (*rpc.RPCNonceReque
 }
 
 func (t *middleTelegram) receiveRPCNonceResponse(conn io.Reader, req *rpc.RPCNonceRequest) (*rpc.RPCNonceResponse, error) {
-	ans, err := ioutil.ReadAll(conn)
+	var ans [128]byte
+
+	n, err := conn.Read(ans[:])
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot read RPC nonce response")
 	}
-	rpcNonceResp, err := rpc.NewRPCNonceResponse(ans)
+	rpcNonceResp, err := rpc.NewRPCNonceResponse(ans[:n])
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot initialize RPC nonce response")
 	}
@@ -109,11 +110,13 @@ func (t *middleTelegram) sendRPCHandshakeRequest(conn io.Writer) (*rpc.RPCHandsh
 }
 
 func (t *middleTelegram) receiveRPCHandshakeResponse(conn io.Reader, req *rpc.RPCHandshakeRequest) (*rpc.RPCHandshakeResponse, error) {
-	ans, err := ioutil.ReadAll(conn)
+	var ans [128]byte
+
+	n, err := conn.Read(ans[:])
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot read RPC handshake response")
 	}
-	rpcHandshakeResp, err := rpc.NewRPCHandshakeResponse(ans)
+	rpcHandshakeResp, err := rpc.NewRPCHandshakeResponse(ans[:n])
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot initialize RPC handshake response")
 	}
