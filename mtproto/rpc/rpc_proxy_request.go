@@ -29,10 +29,9 @@ type RPCProxyRequest struct {
 	LocalIPPort  [rpcProxyRequestIPPortLength]byte
 	ADTag        []byte
 	Extras       Extras
-	Message      *bytes.Buffer
 }
 
-func (r *RPCProxyRequest) Bytes() []byte {
+func (r *RPCProxyRequest) Bytes(message []byte) []byte {
 	buf := &bytes.Buffer{}
 
 	flags := r.Flags
@@ -40,8 +39,7 @@ func (r *RPCProxyRequest) Bytes() []byte {
 		flags |= RPCProxyRequestFlagsQuickAck
 	}
 
-	messageBytes := r.Message.Bytes()
-	if bytes.HasPrefix(messageBytes, rpcProxyRequestFlagsEncryptedPrefix[:]) {
+	if bytes.HasPrefix(message, rpcProxyRequestFlagsEncryptedPrefix[:]) {
 		flags |= RPCProxyRequestFlagsEncrypted
 	}
 
@@ -58,9 +56,7 @@ func (r *RPCProxyRequest) Bytes() []byte {
 	for i := 0; i < (buf.Len() % 4); i++ {
 		buf.WriteByte(0x00)
 	}
-	if r.Message != nil {
-		buf.Write(messageBytes)
-	}
+	buf.Write(message)
 
 	return buf.Bytes()
 }

@@ -22,11 +22,11 @@ const (
 var frameRWCPadding = [4]byte{0x04, 0x00, 0x00, 0x00}
 
 type FrameRWC struct {
-	conn wrappers.ReadWriteCloserWithAddr
+	wrappers.BufferedReader
 
+	conn       wrappers.ReadWriteCloserWithAddr
 	readSeqNo  int32
 	writeSeqNo int32
-	readBuf    *bytes.Buffer
 }
 
 func (f *FrameRWC) Write(buf []byte) (int, error) {
@@ -54,51 +54,49 @@ func (f *FrameRWC) Write(buf []byte) (int, error) {
 }
 
 func (f *FrameRWC) Read(p []byte) (int, error) {
-	if f.readBuf.Len() > 0 {
-		return f.flush(p)
-	}
+	return f.BufferedRead(p, func() error {
+		buf := &bytes.Buffer{}
+		for {
+			buf.Reset()
+			if _, err := io.CopyN(buf, f.conn, 4); err != nil {
+				return errors.Annotate(err, "Cannot read frame padding")
+			}
+			if !bytes.Equal(buf.Bytes(), frameRWCPadding[:]) {
+				break
+			}
+		}
 
-	buf := &bytes.Buffer{}
-	for {
+		messageLength := binary.LittleEndian.Uint32(buf.Bytes())
+		if messageLength%4 != 0 || messageLength < frameRWCMinMessageLength || messageLength > frameRWCMaxMessageLength {
+			return errors.Errorf("Incorrect frame message length %d", messageLength)
+		}
+		sum := crc32.NewIEEE()
+		sum.Write(buf.Bytes())
+
 		buf.Reset()
-		if _, err := io.CopyN(buf, f.conn, 4); err != nil {
-			return 0, errors.Annotate(err, "Cannot read frame padding")
+		buf.Grow(int(messageLength) - 4) // -4 because we already read the first number
+		if _, err := io.CopyN(buf, f.conn, int64(messageLength)-4); err != nil {
+			return errors.Annotate(err, "Cannot read the message frame")
 		}
-		if !bytes.Equal(buf.Bytes(), frameRWCPadding[:]) {
-			break
+		sum.Write(buf.Bytes())
+
+		var seqNo int32
+		binary.Read(buf, binary.LittleEndian, seqNo)
+		if seqNo != f.readSeqNo {
+			return errors.Errorf("Unexpected sequence number %d (wait for %d)", seqNo, f.readSeqNo)
 		}
-	}
+		f.readSeqNo++
 
-	messageLength := binary.LittleEndian.Uint32(buf.Bytes())
-	if messageLength%4 != 0 || messageLength < frameRWCMinMessageLength || messageLength > frameRWCMaxMessageLength {
-		return 0, errors.Errorf("Incorrect frame message length %d", messageLength)
-	}
-	sum := crc32.NewIEEE()
-	sum.Write(buf.Bytes())
+		data := buf.Bytes()[:int(messageLength)-4-4-4]
+		checksum := binary.LittleEndian.Uint32(buf.Bytes()[int(messageLength)-4-4-4:])
+		if checksum != sum.Sum32() {
+			return errors.Errorf("CRC32 checksum mismatch. Wait for %d, got %d", sum.Sum32(), checksum)
 
-	buf.Reset()
-	buf.Grow(int(messageLength) - 4) // -4 because we already read the first number
-	if _, err := io.CopyN(buf, f.conn, int64(messageLength)-4); err != nil {
-		return 0, errors.Annotate(err, "Cannot read the message frame")
-	}
-	sum.Write(buf.Bytes())
+		}
+		f.Buffer.Write(data)
 
-	var seqNo int32
-	binary.Read(buf, binary.LittleEndian, seqNo)
-	if seqNo != f.readSeqNo {
-		return 0, errors.Errorf("Unexpected sequence number %d (wait for %d)", seqNo, f.readSeqNo)
-	}
-	f.readSeqNo++
-
-	data := buf.Bytes()[:int(messageLength)-4-4-4]
-	checksum := binary.LittleEndian.Uint32(buf.Bytes()[int(messageLength)-4-4-4:])
-	if checksum != sum.Sum32() {
-		return 0, errors.Errorf("CRC32 checksum mismatch. Wait for %d, got %d", sum.Sum32(), checksum)
-
-	}
-	f.readBuf.Write(data)
-
-	return f.flush(p)
+		return nil
+	})
 }
 
 func (f *FrameRWC) Close() error {
@@ -109,28 +107,11 @@ func (f *FrameRWC) Addr() *net.TCPAddr {
 	return f.conn.Addr()
 }
 
-func (f *FrameRWC) flush(p []byte) (int, error) {
-	sizeToRead := len(p)
-	if f.readBuf.Len() < sizeToRead {
-		sizeToRead = f.readBuf.Len()
-	}
-
-	data := f.readBuf.Bytes()
-	copy(p, data[:sizeToRead])
-	if sizeToRead == f.readBuf.Len() {
-		f.readBuf.Reset()
-	} else {
-		f.readBuf = bytes.NewBuffer(data[sizeToRead:])
-	}
-
-	return sizeToRead, nil
-}
-
 func NewFrameRWC(conn wrappers.ReadWriteCloserWithAddr, seqNo int32) wrappers.ReadWriteCloserWithAddr {
 	return &FrameRWC{
-		conn:       conn,
-		readSeqNo:  seqNo,
-		writeSeqNo: seqNo,
-		readBuf:    &bytes.Buffer{},
+		BufferedReader: wrappers.NewBufferedReader(),
+		conn:           conn,
+		readSeqNo:      seqNo,
+		writeSeqNo:     seqNo,
 	}
 }
