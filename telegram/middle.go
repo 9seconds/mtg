@@ -54,9 +54,9 @@ func (t *middleTelegram) Init(connOpts *mtproto.ConnectionOpts, conn wrappers.Re
 		return nil, err
 	}
 
-	secureConn := mtwrappers.NewFrameRWC(conn, rpc.RPCHandshakeSeqNo)
-	secureConn = mtwrappers.NewMiddleProxyCipherRWC(secureConn, rpcNonceReq,
+	secureConn := mtwrappers.NewMiddleProxyCipherRWC(conn, rpcNonceReq,
 		rpcNonceResp, connOpts.ClientAddr, t.proxySecret)
+	secureConn = mtwrappers.NewFrameRWC(secureConn, rpc.RPCHandshakeSeqNo)
 
 	rpcHandshakeReq, err := t.sendRPCHandshakeRequest(secureConn)
 	if err != nil {

@@ -25,14 +25,17 @@ var emptyIP = [4]byte{0x00, 0x00, 0x00, 0x00}
 func NewMiddleProxyCipherRWC(conn wrappers.ReadWriteCloserWithAddr, req *rpc.RPCNonceRequest,
 	resp *rpc.RPCNonceResponse, client *net.TCPAddr, secret []byte) wrappers.ReadWriteCloserWithAddr {
 	remote := conn.Addr()
-	encryptor, _ := newCBCCipher(CipherPurposeClient, req, resp, client, remote, secret)
-	_, decryptor := newCBCCipher(CipherPurposeServer, req, resp, client, remote, secret)
+	encKey, encIV := makeKeys(CipherPurposeClient, req, resp, client, remote, secret)
+	decKey, decIV := makeKeys(CipherPurposeServer, req, resp, client, remote, secret)
 
-	return wrappers.NewBlockCipherRWC(conn, encryptor, decryptor)
+	enc, _ := makeEncrypterDecrypter(encKey, encIV)
+	_, dec := makeEncrypterDecrypter(decKey, decIV)
+
+	return wrappers.NewBlockCipherRWC(conn, enc, dec)
 }
 
-func newCBCCipher(purpose CipherPurpose, req *rpc.RPCNonceRequest, resp *rpc.RPCNonceResponse,
-	client *net.TCPAddr, remote *net.TCPAddr, secret []byte) (cipher.BlockMode, cipher.BlockMode) {
+func makeKeys(purpose CipherPurpose, req *rpc.RPCNonceRequest, resp *rpc.RPCNonceResponse,
+	client *net.TCPAddr, remote *net.TCPAddr, secret []byte) ([]byte, []byte) {
 	message := bytes.Buffer{}
 	message.Write(resp.Nonce[:])
 	message.Write(req.Nonce[:])
@@ -71,22 +74,23 @@ func newCBCCipher(purpose CipherPurpose, req *rpc.RPCNonceRequest, resp *rpc.RPC
 	}
 	message.Write(req.Nonce[:])
 
-	return makeCipher(message.Bytes())
+	data := message.Bytes()
+	md5sum := md5.Sum(data[1:])
+	sha1sum := sha1.Sum(data)
+
+	key := append(md5sum[:12], sha1sum[:]...)
+	iv := md5.Sum(data[2:])
+
+	return key, iv[:]
 }
 
-func makeCipher(message []byte) (cipher.BlockMode, cipher.BlockMode) {
-	md5sum := md5.Sum(message[1:])
-	sha1sum := sha1.Sum(message)
-
-	key := append(md5sum[12:], sha1sum[:]...)
-	iv := md5.Sum(message[2:])
-
+func makeEncrypterDecrypter(key, iv []byte) (cipher.BlockMode, cipher.BlockMode) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		panic("Cannot create cipher from the given key")
+		panic(err)
 	}
 
-	return cipher.NewCBCEncrypter(block, iv[:]), cipher.NewCBCDecrypter(block, iv[:])
+	return cipher.NewCBCEncrypter(block, iv), cipher.NewCBCDecrypter(block, iv)
 }
 
 func reverseBytes(data []byte) []byte {
