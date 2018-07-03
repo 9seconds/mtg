@@ -25,14 +25,14 @@ var emptyIP = [4]byte{0x00, 0x00, 0x00, 0x00}
 func NewMiddleProxyCipherRWC(conn wrappers.ReadWriteCloserWithAddr, req *rpc.RPCNonceRequest,
 	resp *rpc.RPCNonceResponse, client *net.TCPAddr, secret []byte) wrappers.ReadWriteCloserWithAddr {
 	remote := conn.Addr()
-	encryptor := newCBCCipher(CipherPurposeClient, req, resp, client, remote, secret)
-	decryptor := newCBCCipher(CipherPurposeServer, req, resp, client, remote, secret)
+	encryptor, _ := newCBCCipher(CipherPurposeClient, req, resp, client, remote, secret)
+	_, decryptor := newCBCCipher(CipherPurposeServer, req, resp, client, remote, secret)
 
 	return wrappers.NewBlockCipherRWC(conn, encryptor, decryptor)
 }
 
 func newCBCCipher(purpose CipherPurpose, req *rpc.RPCNonceRequest, resp *rpc.RPCNonceResponse,
-	client *net.TCPAddr, remote *net.TCPAddr, secret []byte) cipher.BlockMode {
+	client *net.TCPAddr, remote *net.TCPAddr, secret []byte) (cipher.BlockMode, cipher.BlockMode) {
 	message := bytes.Buffer{}
 	message.Write(resp.Nonce[:])
 	message.Write(req.Nonce[:])
@@ -74,7 +74,7 @@ func newCBCCipher(purpose CipherPurpose, req *rpc.RPCNonceRequest, resp *rpc.RPC
 	return makeCipher(message.Bytes())
 }
 
-func makeCipher(message []byte) cipher.BlockMode {
+func makeCipher(message []byte) (cipher.BlockMode, cipher.BlockMode) {
 	md5sum := md5.Sum(message[1:])
 	sha1sum := sha1.Sum(message)
 
@@ -86,7 +86,7 @@ func makeCipher(message []byte) cipher.BlockMode {
 		panic("Cannot create cipher from the given key")
 	}
 
-	return cipher.NewCBCEncrypter(block, iv[:])
+	return cipher.NewCBCEncrypter(block, iv[:]), cipher.NewCBCDecrypter(block, iv[:])
 }
 
 func reverseBytes(data []byte) []byte {
