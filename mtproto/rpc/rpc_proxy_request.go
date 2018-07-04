@@ -25,17 +25,17 @@ var (
 type RPCProxyRequest struct {
 	Flags        RPCProxyRequestFlags
 	ConnectionID [rpcProxyRequestConnectionIDLength]byte
-	RemoteIPPort [rpcProxyRequestIPPortLength]byte
-	LocalIPPort  [rpcProxyRequestIPPortLength]byte
+	OurIPPort    [rpcProxyRequestIPPortLength]byte
+	ClientIPPort [rpcProxyRequestIPPortLength]byte
 	ADTag        []byte
-	Extras       Extras
+	Options      *mtproto.ConnectionOpts
 }
 
 func (r *RPCProxyRequest) Bytes(message []byte) []byte {
 	buf := &bytes.Buffer{}
 
 	flags := r.Flags
-	if r.Extras.QuickAck {
+	if r.Options.QuickAck {
 		flags |= RPCProxyRequestFlagsQuickAck
 	}
 
@@ -46,25 +46,22 @@ func (r *RPCProxyRequest) Bytes(message []byte) []byte {
 	buf.Write(rpcProxyRequestTag)
 	buf.Write(flags.Bytes())
 	buf.Write(r.ConnectionID[:])
-	buf.Write(r.RemoteIPPort[:])
-	buf.Write(r.LocalIPPort[:])
+	buf.Write(r.ClientIPPort[:])
+	buf.Write(r.OurIPPort[:])
 	buf.Write(rpcProxyRequestExtraSize)
 	buf.Write(rpcProxyRequestProxyTag)
 	buf.WriteByte(byte(len(r.ADTag)))
 	buf.Write(r.ADTag)
-
-	for i := 0; i < (buf.Len() % 4); i++ {
-		buf.WriteByte(0x00)
-	}
+	buf.Write(bytes.Repeat([]byte{0x00}, buf.Len()%4))
 	buf.Write(message)
 
 	return buf.Bytes()
 }
 
-func NewRPCProxyRequest(connectionType mtproto.ConnectionType, local, remote *net.TCPAddr, adTag []byte, extras Extras) (*RPCProxyRequest, error) {
+func NewRPCProxyRequest(clientAddr, ownAddr *net.TCPAddr, opts *mtproto.ConnectionOpts, adTag []byte) (*RPCProxyRequest, error) {
 	flags := RPCProxyRequestFlagsHasAdTag | RPCProxyRequestFlagsMagic | RPCProxyRequestFlagsExtMode2
 
-	switch connectionType {
+	switch opts.ConnectionType {
 	case mtproto.ConnectionTypeAbridged:
 		flags |= RPCProxyRequestFlagsAbdridged
 	case mtproto.ConnectionTypeIntermediate:
@@ -72,9 +69,9 @@ func NewRPCProxyRequest(connectionType mtproto.ConnectionType, local, remote *ne
 	}
 
 	request := RPCProxyRequest{
-		Flags:  flags,
-		ADTag:  adTag,
-		Extras: extras,
+		Flags:   flags,
+		ADTag:   adTag,
+		Options: opts,
 	}
 
 	if _, err := rand.Read(request.ConnectionID[:]); err != nil {
@@ -82,13 +79,13 @@ func NewRPCProxyRequest(connectionType mtproto.ConnectionType, local, remote *ne
 	}
 
 	port := make([]byte, 4)
-	copy(request.LocalIPPort[:], local.IP.To16())
-	binary.LittleEndian.PutUint32(port, uint32(local.Port))
-	copy(request.LocalIPPort[16:], port)
+	copy(request.ClientIPPort[:16], clientAddr.IP.To16())
+	binary.LittleEndian.PutUint32(port, uint32(clientAddr.Port))
+	copy(request.ClientIPPort[16:], port)
 
-	copy(request.RemoteIPPort[:], remote.IP.To16())
-	binary.LittleEndian.PutUint32(port, uint32(remote.Port))
-	copy(request.RemoteIPPort[16:], port)
+	copy(request.OurIPPort[:16], ownAddr.IP.To16())
+	binary.LittleEndian.PutUint32(port, uint32(ownAddr.Port))
+	copy(request.OurIPPort[16:], port)
 
 	return &request, nil
 }
