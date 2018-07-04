@@ -13,12 +13,6 @@ import (
 	"github.com/9seconds/mtg/wrappers"
 )
 
-var (
-	rpcCloseExtTag  = [4]byte{0xa2, 0x34, 0xb6, 0x5e}
-	rpcProxyAnsTag  = [4]byte{0x0d, 0xda, 0x03, 0x44}
-	rpcSimpleAckTag = [4]byte{0x9b, 0x40, 0xac, 0x3b}
-)
-
 type ProxyRequestReadWriteCloserWithAddr struct {
 	wrappers.BufferedReader
 
@@ -35,36 +29,51 @@ func (p *ProxyRequestReadWriteCloserWithAddr) Read(buf []byte) (int, error) {
 			return errors.Annotate(err, "Cannot read RPC tag")
 		}
 
-		if bytes.Equal(ansBuf.Bytes(), rpcCloseExtTag[:]) {
-			return errors.New("Connection has been closed remotely")
-		} else if bytes.Equal(ansBuf.Bytes(), rpcProxyAnsTag[:]) {
-			if _, err := io.CopyN(ioutil.Discard, p.conn, 8+4); err != nil {
-				return errors.Annotate(err, "Cannot skip flags and connid")
-			}
-			for {
-				n, err := p.conn.Read(buf)
-				if err != nil {
-					return errors.Annotate(err, "Cannot read proxy answer")
-				}
-				if n == 0 {
-					break
-				}
-				p.Buffer.Write(buf[:n])
-			}
-			return nil
-		} else if bytes.Equal(ansBuf.Bytes(), rpcSimpleAckTag[:]) {
-			if _, err := io.CopyN(ioutil.Discard, p.conn, 8); err != nil {
-				return errors.Annotate(err, "Cannot skip connid")
-			}
-			if _, err := io.CopyN(p.Buffer, p.conn, 4); err != nil {
-				return errors.Annotate(err, "Cannot read simple ack")
-			}
-			p.req.Options.SimpleAck = true
-			return nil
+		if bytes.Equal(ansBuf.Bytes(), rpc.RPCTagCloseExt) {
+			return p.readCloseExt()
+		} else if bytes.Equal(ansBuf.Bytes(), rpc.RPCTagProxyAns) {
+			return p.readProxyAns(buf)
+		} else if bytes.Equal(ansBuf.Bytes(), rpc.RPCTagSimpleAck) {
+			return p.readSimpleAck()
 		}
 
 		return nil
 	})
+}
+
+func (p *ProxyRequestReadWriteCloserWithAddr) readCloseExt() error {
+	return errors.New("Connection has been closed remotely")
+}
+
+func (p *ProxyRequestReadWriteCloserWithAddr) readProxyAns(buf []byte) error {
+	if _, err := io.CopyN(ioutil.Discard, p.conn, 8+4); err != nil {
+		return errors.Annotate(err, "Cannot skip flags and connid")
+	}
+
+	for {
+		n, err := p.conn.Read(buf)
+		if err != nil {
+			return errors.Annotate(err, "Cannot read proxy answer")
+		}
+		if n == 0 {
+			break
+		}
+		p.Buffer.Write(buf[:n])
+	}
+
+	return nil
+}
+
+func (p *ProxyRequestReadWriteCloserWithAddr) readSimpleAck() error {
+	if _, err := io.CopyN(ioutil.Discard, p.conn, 8); err != nil {
+		return errors.Annotate(err, "Cannot skip connid")
+	}
+	if _, err := io.CopyN(p.Buffer, p.conn, 4); err != nil {
+		return errors.Annotate(err, "Cannot read simple ack")
+	}
+	p.req.Options.SimpleAck = true
+
+	return nil
 }
 
 func (p *ProxyRequestReadWriteCloserWithAddr) Write(raw []byte) (int, error) {

@@ -4,3 +4,9 @@ const (
 	RPCNonceSeqNo     = -2
 	RPCHandshakeSeqNo = -1
 )
+
+var (
+	RPCTagCloseExt  = []byte{0xa2, 0x34, 0xb6, 0x5e}
+	RPCTagProxyAns  = []byte{0x0d, 0xda, 0x03, 0x44}
+	RPCTagSimpleAck = []byte{0x9b, 0x40, 0xac, 0x3b}
+)
