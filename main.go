@@ -72,6 +72,7 @@ var (
 			Uint16()
 
 	secret = app.Arg("secret", "Secret of this proxy.").Required().String()
+	adtag  = app.Arg("adtag", "ADTag of the proxy.").String()
 )
 
 func init() {
@@ -93,7 +94,7 @@ func main() {
 		*publicIPv4, *publicIPv4Port,
 		*publicIPv6, *publicIPv6Port,
 		*statsIP, *statsPort,
-		*secret,
+		*secret, *adtag,
 	)
 	if err != nil {
 		usage(err.Error())

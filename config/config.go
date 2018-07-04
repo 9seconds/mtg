@@ -38,6 +38,7 @@ type Config struct {
 	StatsIP    net.IP
 
 	Secret []byte
+	AdTag  []byte
 }
 
 // URLs contains links to the proxy (tg://, t.me) and their QR codes.
@@ -89,13 +90,21 @@ func NewConfig(debug, verbose bool, // nolint: gocyclo
 	publicIPv4 net.IP, PublicIPv4Port uint16,
 	publicIPv6 net.IP, publicIPv6Port uint16,
 	statsIP net.IP, statsPort uint16,
-	secret string) (*Config, error) {
+	secret, adtag string) (*Config, error) {
 	if len(secret) != 32 {
 		return nil, errors.New("Telegram demands secret of length 32")
 	}
 	secretBytes, err := hex.DecodeString(secret)
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot create config")
+	}
+
+	var adTagBytes []byte
+	if len(adtag) != 0 {
+		adTagBytes, err = hex.DecodeString(adtag)
+		if err != nil {
+			return nil, errors.Annotate(err, "Cannot create config")
+		}
 	}
 
 	if publicIPv4 == nil {
@@ -138,6 +147,7 @@ func NewConfig(debug, verbose bool, // nolint: gocyclo
 		StatsIP:        statsIP,
 		StatsPort:      statsPort,
 		Secret:         secretBytes,
+		AdTag:          adTagBytes,
 	}
 
 	return conf, nil
