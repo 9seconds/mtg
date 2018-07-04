@@ -22,11 +22,12 @@ const (
 
 var emptyIP = [4]byte{0x00, 0x00, 0x00, 0x00}
 
-func NewMiddleProxyCipherRWC(conn wrappers.ReadWriteCloserWithAddr, req *rpc.RPCNonceRequest,
-	resp *rpc.RPCNonceResponse, client *net.TCPAddr, secret []byte) wrappers.ReadWriteCloserWithAddr {
-	remote := conn.Addr()
-	encKey, encIV := makeKeys(CipherPurposeClient, req, resp, client, remote, secret)
-	decKey, decIV := makeKeys(CipherPurposeServer, req, resp, client, remote, secret)
+func NewMiddleProxyCipherRWC(conn wrappers.ReadWriteCloserWithAddr, req *rpc.RPCNonceRequest, resp *rpc.RPCNonceResponse, secret []byte) wrappers.ReadWriteCloserWithAddr {
+	localAddr := conn.LocalAddr()
+	remoteAddr := conn.RemoteAddr()
+
+	encKey, encIV := makeKeys(CipherPurposeClient, req, resp, localAddr, remoteAddr, secret)
+	decKey, decIV := makeKeys(CipherPurposeServer, req, resp, localAddr, remoteAddr, secret)
 
 	enc, _ := makeEncrypterDecrypter(encKey, encIV)
 	_, dec := makeEncrypterDecrypter(decKey, decIV)

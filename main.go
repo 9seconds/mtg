@@ -4,6 +4,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"math/rand"
 	"os"
@@ -15,7 +16,8 @@ import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/9seconds/mtg/config"
-	"github.com/9seconds/mtg/proxy"
+	"github.com/9seconds/mtg/mtproto"
+	"github.com/9seconds/mtg/telegram"
 	"github.com/juju/errors"
 )
 
@@ -112,15 +114,29 @@ func main() {
 		atom,
 	)).Sugar()
 
-	stat := proxy.NewStats(conf)
-	go stat.Serve()
-
-	srv := proxy.NewServer(conf, logger, stat)
-	printURLs(conf.GetURLs())
-
-	if err := srv.Serve(); err != nil {
-		logger.Fatal(err.Error())
+	tg := telegram.NewMiddleTelegram(conf, logger)
+	connOpts := &mtproto.ConnectionOpts{
+		DC:              int16(1),
+		ConnectionType:  mtproto.ConnectionTypeAbridged,
+		ConnectionProto: mtproto.ConnectionProtocolIPv4,
 	}
+
+	sock, err := tg.Dial(connOpts)
+	if err != nil {
+		panic(err)
+	}
+	_, err = tg.Init(connOpts, sock)
+	fmt.Println(err)
+
+	// stat := proxy.NewStats(conf)
+	// go stat.Serve()
+
+	// srv := proxy.NewServer(conf, logger, stat)
+	// printURLs(conf.GetURLs())
+
+	// if err := srv.Serve(); err != nil {
+	// 	logger.Fatal(err.Error())
+	// }
 }
 
 func setRLimit() (err error) {

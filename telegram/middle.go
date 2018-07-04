@@ -1,6 +1,7 @@
 package telegram
 
 import (
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -24,7 +25,10 @@ func NewMiddleTelegram(conf *config.Config, logger *zap.SugaredLogger) Telegram 
 	tg := &middleTelegram{
 		middleTelegramCaller: middleTelegramCaller{
 			baseTelegram: baseTelegram{
-				dialer: tgDialer{net.Dialer{Timeout: telegramDialTimeout}},
+				dialer: tgDialer{
+					Dialer: net.Dialer{Timeout: telegramDialTimeout},
+					conf:   conf,
+				},
 			},
 			logger: logger,
 			httpClient: &http.Client{
@@ -54,8 +58,7 @@ func (t *middleTelegram) Init(connOpts *mtproto.ConnectionOpts, conn wrappers.Re
 		return nil, err
 	}
 
-	secureConn := mtwrappers.NewMiddleProxyCipherRWC(conn, rpcNonceReq,
-		rpcNonceResp, connOpts.ClientAddr, t.proxySecret)
+	secureConn := mtwrappers.NewMiddleProxyCipherRWC(conn, rpcNonceReq, rpcNonceResp, t.proxySecret)
 	secureConn = mtwrappers.NewFrameRWC(secureConn, rpc.RPCHandshakeSeqNo)
 
 	rpcHandshakeReq, err := t.sendRPCHandshakeRequest(secureConn)
@@ -123,6 +126,7 @@ func (t *middleTelegram) receiveRPCHandshakeResponse(conn io.Reader, req *rpc.RP
 	if err = rpcHandshakeResp.Valid(req); err != nil {
 		return nil, errors.Annotate(err, "Invalid RPC handshake response")
 	}
+	fmt.Println("VICTORY")
 
 	return rpcHandshakeResp, nil
 }

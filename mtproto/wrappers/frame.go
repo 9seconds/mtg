@@ -112,8 +112,12 @@ func (f *FrameRWC) Close() error {
 	return f.conn.Close()
 }
 
-func (f *FrameRWC) Addr() *net.TCPAddr {
-	return f.conn.Addr()
+func (f *FrameRWC) LocalAddr() *net.TCPAddr {
+	return f.conn.LocalAddr()
+}
+
+func (f *FrameRWC) RemoteAddr() *net.TCPAddr {
+	return f.conn.RemoteAddr()
 }
 
 func NewFrameRWC(conn wrappers.ReadWriteCloserWithAddr, seqNo int32) wrappers.ReadWriteCloserWithAddr {

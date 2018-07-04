@@ -8,7 +8,9 @@ import (
 )
 
 type TimeoutReadWriteCloserWithAddr struct {
-	conn net.Conn
+	conn       net.Conn
+	publicIPv4 net.IP
+	publicIPv6 net.IP
 }
 
 func (t *TimeoutReadWriteCloserWithAddr) Read(p []byte) (int, error) {
@@ -25,10 +27,29 @@ func (t *TimeoutReadWriteCloserWithAddr) Close() error {
 	return t.conn.Close()
 }
 
-func (t *TimeoutReadWriteCloserWithAddr) Addr() *net.TCPAddr {
+func (t *TimeoutReadWriteCloserWithAddr) RemoteAddr() *net.TCPAddr {
 	return t.conn.RemoteAddr().(*net.TCPAddr)
 }
 
-func NewTimeoutRWC(conn net.Conn) ReadWriteCloserWithAddr {
-	return &TimeoutReadWriteCloserWithAddr{conn}
+func (t *TimeoutReadWriteCloserWithAddr) LocalAddr() *net.TCPAddr {
+	addr := t.conn.LocalAddr().(*net.TCPAddr)
+	newAddr := *addr
+
+	if t.RemoteAddr().IP.To4() != nil {
+		if t.publicIPv4 != nil {
+			newAddr.IP = t.publicIPv4
+		}
+	} else if t.publicIPv6 != nil {
+		newAddr.IP = t.publicIPv6
+	}
+
+	return &newAddr
+}
+
+func NewTimeoutRWC(conn net.Conn, ipv4, ipv6 net.IP) ReadWriteCloserWithAddr {
+	return &TimeoutReadWriteCloserWithAddr{
+		conn:       conn,
+		publicIPv4: ipv4,
+		publicIPv6: ipv6,
+	}
 }

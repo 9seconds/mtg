@@ -8,5 +8,6 @@ import (
 type ReadWriteCloserWithAddr interface {
 	io.ReadWriteCloser
 
-	Addr() *net.TCPAddr
+	LocalAddr() *net.TCPAddr
+	RemoteAddr() *net.TCPAddr
 }

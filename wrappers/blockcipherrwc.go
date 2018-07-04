@@ -25,6 +25,7 @@ func (c *BlockCipherReadWriteCloserWithAddr) Read(p []byte) (int, error) {
 				return errors.Annotate(err, "Cannot read from socket")
 			}
 			c.Buffer.Write(p[:n])
+			bufferLength = c.Buffer.Len()
 		}
 		c.decryptor.CryptBlocks(c.Buffer.Bytes(), c.Buffer.Bytes())
 
@@ -47,8 +48,12 @@ func (c *BlockCipherReadWriteCloserWithAddr) Close() error {
 	return c.conn.Close()
 }
 
-func (c *BlockCipherReadWriteCloserWithAddr) Addr() *net.TCPAddr {
-	return c.conn.Addr()
+func (c *BlockCipherReadWriteCloserWithAddr) LocalAddr() *net.TCPAddr {
+	return c.conn.LocalAddr()
+}
+
+func (c *BlockCipherReadWriteCloserWithAddr) RemoteAddr() *net.TCPAddr {
+	return c.conn.RemoteAddr()
 }
 
 func NewBlockCipherRWC(conn ReadWriteCloserWithAddr, encryptor, decryptor cipher.BlockMode) ReadWriteCloserWithAddr {

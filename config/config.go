@@ -59,16 +59,6 @@ func (c *Config) BindAddr() string {
 	return getAddr(c.BindIP, c.BindPort)
 }
 
-// IPv4Addr returns connection string to ipv6 for mtproto proxy.
-func (c *Config) IPv4Addr() string {
-	return getAddr(c.PublicIPv4, c.PublicIPv4Port)
-}
-
-// IPv6Addr returns connection string to ipv6 for mtproto proxy.
-func (c *Config) IPv6Addr() string {
-	return getAddr(c.PublicIPv6, c.PublicIPv6Port)
-}
-
 // StatAddr returns connection string to the stats API.
 func (c *Config) StatAddr() string {
 	return getAddr(c.StatsIP, c.StatsPort)
@@ -76,10 +66,15 @@ func (c *Config) StatAddr() string {
 
 // GetURLs returns configured IPURLs instance with links to this server.
 func (c *Config) GetURLs() IPURLs {
-	return IPURLs{
-		IPv4: getURLs(c.PublicIPv4, c.PublicIPv4Port, c.Secret),
-		IPv6: getURLs(c.PublicIPv6, c.PublicIPv6Port, c.Secret),
+	urls := IPURLs{}
+	if c.PublicIPv4 != nil {
+		urls.IPv4 = getURLs(c.PublicIPv4, c.PublicIPv4Port, c.Secret)
 	}
+	if c.PublicIPv6 != nil {
+		urls.IPv6 = getURLs(c.PublicIPv6, c.PublicIPv6Port, c.Secret)
+	}
+
+	return urls
 }
 
 func getAddr(host fmt.Stringer, port uint16) string {
@@ -106,11 +101,10 @@ func NewConfig(debug, verbose bool, // nolint: gocyclo
 	if publicIPv4 == nil {
 		publicIPv4, err = getGlobalIPv4()
 		if err != nil {
-			return nil, errors.Errorf("Cannot get public IP")
+			publicIPv4 = nil
+		} else if publicIPv4.To4() == nil {
+			return nil, errors.Errorf("IP %s is not IPv4", publicIPv4.String())
 		}
-	}
-	if publicIPv4.To4() == nil {
-		return nil, errors.Errorf("IP %s is not IPv4", publicIPv4.String())
 	}
 	if PublicIPv4Port == 0 {
 		PublicIPv4Port = bindPort
@@ -119,11 +113,10 @@ func NewConfig(debug, verbose bool, // nolint: gocyclo
 	if publicIPv6 == nil {
 		publicIPv6, err = getGlobalIPv6()
 		if err != nil {
-			publicIPv6 = publicIPv4
+			publicIPv6 = nil
+		} else if publicIPv6.To4() != nil {
+			return nil, errors.Errorf("IP %s is not IPv6", publicIPv6.String())
 		}
-	}
-	if publicIPv6.To16() == nil {
-		return nil, errors.Errorf("IP %s is not IPv6", publicIPv6.String())
 	}
 	if publicIPv6Port == 0 {
 		publicIPv6Port = bindPort

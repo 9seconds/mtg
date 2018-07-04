@@ -57,7 +57,10 @@ func (t *directTelegram) Init(connOpts *mtproto.ConnectionOpts, conn wrappers.Re
 // to Telegram bypassing middleproxies.
 func NewDirectTelegram(conf *config.Config) Telegram {
 	return &directTelegram{baseTelegram{
-		dialer:      tgDialer{net.Dialer{Timeout: telegramDialTimeout}},
+		dialer: tgDialer{
+			Dialer: net.Dialer{Timeout: telegramDialTimeout},
+			conf:   conf,
+		},
 		v4Addresses: directV4Addresses,
 		v6Addresses: directV6Addresses,
 	}}

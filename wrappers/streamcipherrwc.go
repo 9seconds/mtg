@@ -43,8 +43,12 @@ func (c *StreamCipherReadWriteCloserWithAddr) Close() error {
 	return c.conn.Close()
 }
 
-func (c *StreamCipherReadWriteCloserWithAddr) Addr() *net.TCPAddr {
-	return c.conn.Addr()
+func (c *StreamCipherReadWriteCloserWithAddr) LocalAddr() *net.TCPAddr {
+	return c.conn.LocalAddr()
+}
+
+func (c *StreamCipherReadWriteCloserWithAddr) RemoteAddr() *net.TCPAddr {
+	return c.conn.RemoteAddr()
 }
 
 // NewStreamCipherRWC returns wrapper which transparently

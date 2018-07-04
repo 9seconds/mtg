@@ -29,8 +29,12 @@ func (t *TrafficReadWriteCloserWithAddr) Close() error {
 	return t.conn.Close()
 }
 
-func (t *TrafficReadWriteCloserWithAddr) Addr() *net.TCPAddr {
-	return t.conn.Addr()
+func (t *TrafficReadWriteCloserWithAddr) LocalAddr() *net.TCPAddr {
+	return t.conn.LocalAddr()
+}
+
+func (t *TrafficReadWriteCloserWithAddr) RemoteAddr() *net.TCPAddr {
+	return t.conn.RemoteAddr()
 }
 
 // NewTrafficRWC wraps ReadWriteCloser to have read/write callbacks.

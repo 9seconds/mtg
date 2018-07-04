@@ -48,8 +48,12 @@ func (c *CtxReadWriteCloserWithAddr) Close() error {
 	return c.conn.Close()
 }
 
-func (c *CtxReadWriteCloserWithAddr) Addr() *net.TCPAddr {
-	return c.conn.Addr()
+func (c *CtxReadWriteCloserWithAddr) LocalAddr() *net.TCPAddr {
+	return c.conn.LocalAddr()
+}
+
+func (c *CtxReadWriteCloserWithAddr) RemoteAddr() *net.TCPAddr {
+	return c.conn.RemoteAddr()
 }
 
 // NewCtxRWC returns ReadWriteCloser which respects given context,

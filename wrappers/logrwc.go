@@ -36,8 +36,12 @@ func (l *LogReadWriteCloserWithAddr) Close() error {
 	return err
 }
 
-func (l *LogReadWriteCloserWithAddr) Addr() *net.TCPAddr {
-	return l.conn.Addr()
+func (l *LogReadWriteCloserWithAddr) LocalAddr() *net.TCPAddr {
+	return l.conn.LocalAddr()
+}
+
+func (l *LogReadWriteCloserWithAddr) RemoteAddr() *net.TCPAddr {
+	return l.conn.RemoteAddr()
 }
 
 // NewLogRWC wraps ReadWriteCloser with logger calls.

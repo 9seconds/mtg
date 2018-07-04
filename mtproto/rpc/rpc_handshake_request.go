@@ -1,6 +1,8 @@
 package rpc
 
-import "bytes"
+import (
+	"bytes"
+)
 
 const (
 	rpcHandshakeTagLength       = 4

@@ -14,6 +14,8 @@ const telegramDialTimeout = 10 * time.Second
 
 type tgDialer struct {
 	net.Dialer
+
+	conf *config.Config
 }
 
 func (t *tgDialer) dial(addr string) (net.Conn, error) {
@@ -34,5 +36,5 @@ func (t *tgDialer) dialRWC(addr string) (wrappers.ReadWriteCloserWithAddr, error
 		return nil, err
 	}
 
-	return wrappers.NewTimeoutRWC(conn), nil
+	return wrappers.NewTimeoutRWC(conn, t.conf.PublicIPv4, t.conf.PublicIPv6), nil
 }
