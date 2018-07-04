@@ -32,6 +32,7 @@ func DirectInit(conn net.Conn, conf *config.Config) (*mtproto.ConnectionOpts, wr
 		return nil, nil, errors.Annotate(err, "Cannot parse obfuscated frame")
 	}
 	connOpts.ConnectionProto = mtproto.ConnectionProtocolAny
+	connOpts.ClientAddr = conn.RemoteAddr().(*net.TCPAddr)
 
 	socket := wrappers.NewTimeoutRWC(conn, conf.PublicIPv4, conf.PublicIPv6)
 	socket = wrappers.NewStreamCipherRWC(socket, obfs2.Encryptor, obfs2.Decryptor)

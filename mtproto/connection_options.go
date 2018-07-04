@@ -2,6 +2,7 @@ package mtproto
 
 import (
 	"bytes"
+	"net"
 
 	"github.com/juju/errors"
 )
@@ -20,6 +21,7 @@ type ConnectionOpts struct {
 	ConnectionProto ConnectionProtocol
 	QuickAck        bool
 	SimpleAck       bool
+	ClientAddr      *net.TCPAddr
 }
 
 // Different connection types which user requests from Telegram.
