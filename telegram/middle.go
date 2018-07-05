@@ -1,7 +1,6 @@
 package telegram
 
 import (
-	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -131,7 +130,6 @@ func (t *middleTelegram) receiveRPCHandshakeResponse(conn io.Reader, req *rpc.Ha
 	if err = rpcHandshakeResp.Valid(req); err != nil {
 		return nil, errors.Annotate(err, "Invalid RPC handshake response")
 	}
-	fmt.Println("VICTORY")
 
 	return rpcHandshakeResp, nil
 }

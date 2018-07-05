@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/aes"
 	"encoding/binary"
+	"fmt"
 	"hash/crc32"
 	"io"
 	"io/ioutil"
@@ -20,7 +21,7 @@ const (
 	frameRWCMaxMessageLength = 16777216
 )
 
-var frameRWCPadding = [4]byte{0x04, 0x00, 0x00, 0x00}
+var frameRWCPadding = []byte{0x04, 0x00, 0x00, 0x00}
 
 type FrameRWC struct {
 	wrappers.BufferedReader
@@ -48,7 +49,7 @@ func (f *FrameRWC) Write(buf []byte) (int, error) {
 
 	checksum := crc32.ChecksumIEEE(writeBuf.Bytes())
 	binary.Write(writeBuf, binary.LittleEndian, checksum)
-	writeBuf.Write(bytes.Repeat(frameRWCPadding[:], paddingLength/4))
+	writeBuf.Write(bytes.Repeat(frameRWCPadding, paddingLength/4))
 
 	_, err := f.conn.Write(writeBuf.Bytes())
 	return len(buf), err

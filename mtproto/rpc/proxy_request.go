@@ -34,14 +34,14 @@ func (r *ProxyRequest) Bytes(message []byte) []byte {
 
 	buf.Write(TagProxyRequest)
 	buf.Write(flags.Bytes())
-	buf.Write(r.ConnectionID[:])
-	buf.Write(r.ClientIPPort[:])
-	buf.Write(r.OurIPPort[:])
+	buf.Write(r.ConnectionID)
+	buf.Write(r.ClientIPPort)
+	buf.Write(r.OurIPPort)
 	buf.Write(ProxyRequestExtraSize)
 	buf.Write(ProxyRequestProxyTag)
 	buf.WriteByte(byte(len(r.ADTag)))
 	buf.Write(r.ADTag)
-	buf.Write(bytes.Repeat([]byte{0x00}, buf.Len()%4))
+	buf.Write(make([]byte, (4-buf.Len()%4)%4))
 	buf.Write(message)
 
 	return buf.Bytes()
