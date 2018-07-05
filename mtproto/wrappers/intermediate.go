@@ -23,18 +23,21 @@ type IntermediateReadWriteCloserWithAddr struct {
 
 func (i *IntermediateReadWriteCloserWithAddr) Read(p []byte) (int, error) {
 	return i.BufferedRead(p, func() error {
-		var length uint32
-		if err := binary.Read(i.conn, binary.LittleEndian, &length); err != nil {
+		buf := &bytes.Buffer{}
+		buf.Grow(4)
+
+		if _, err := io.CopyN(buf, i.conn, 4); err != nil {
 			return errors.Annotate(err, "Cannot read message length")
 		}
+		length := binary.LittleEndian.Uint32(buf.Bytes())
+		buf.Reset()
+		buf.Grow(int(length))
 
 		if length > intermediateQuickAckLength {
 			i.opts.QuickAck = true
 			length -= intermediateQuickAckLength
 		}
 
-		buf := &bytes.Buffer{}
-		buf.Grow(int(length))
 		if _, err := io.CopyN(buf, i.conn, int64(length)); err != nil {
 			return errors.Annotate(err, "Cannot read the message")
 		}

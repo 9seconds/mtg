@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/aes"
 	"encoding/binary"
-	"fmt"
 	"hash/crc32"
 	"io"
 	"io/ioutil"

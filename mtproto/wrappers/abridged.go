@@ -2,7 +2,6 @@ package wrappers
 
 import (
 	"bytes"
-	"encoding/binary"
 	"io"
 	"net"
 
@@ -29,10 +28,14 @@ type AbridgedReadWriteCloserWithAddr struct {
 
 func (a *AbridgedReadWriteCloserWithAddr) Read(p []byte) (int, error) {
 	return a.BufferedRead(p, func() error {
-		var msgLength uint8
-		if err := binary.Read(a.conn, binary.LittleEndian, &msgLength); err != nil {
+		buf := &bytes.Buffer{}
+		buf.Grow(3)
+
+		if _, err := io.CopyN(buf, a.conn, 1); err != nil {
 			return errors.Annotate(err, "Cannot read message length")
 		}
+		msgLength := uint8(buf.Bytes()[0])
+		buf.Reset()
 
 		a.opts.QuickAck = false
 		if msgLength >= abridgedQuickAckLength {
@@ -42,11 +45,8 @@ func (a *AbridgedReadWriteCloserWithAddr) Read(p []byte) (int, error) {
 
 		msgLength32 := uint32(msgLength)
 		if msgLength == abridgedSmallPacketLength {
-			buf := &bytes.Buffer{}
-			buf.Grow(3)
-
 			if _, err := io.CopyN(buf, a.conn, 3); err != nil {
-				return errors.Annotate(err, "Cannot read correct message length")
+				return errors.Annotate(err, "Cannot read the correct message length")
 			}
 			number := uint24{}
 			copy(number[:], buf.Bytes())
