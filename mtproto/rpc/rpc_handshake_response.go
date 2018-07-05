@@ -6,18 +6,15 @@ import (
 	"github.com/juju/errors"
 )
 
-const rpcHandshakeResponseLength = rpcHandshakeRequestLength
-
 type RPCHandshakeResponse struct {
-	Type      [rpcHandshakeTagLength]byte
-	Flags     [rpcHandshakeFlagsLength]byte
-	SenderPID [rpcHandshakeSenderPIDLength]byte
-	PeerPID   [rpcHandshakePeerPIDLength]byte
+	Type      []byte
+	Flags     []byte
+	SenderPID []byte
+	PeerPID   []byte
 }
 
 func (r *RPCHandshakeResponse) Bytes() []byte {
 	buf := &bytes.Buffer{}
-	buf.Grow(rpcHandshakeResponseLength)
 
 	buf.Write(r.Type[:])
 	buf.Write(r.Flags[:])
@@ -28,10 +25,10 @@ func (r *RPCHandshakeResponse) Bytes() []byte {
 }
 
 func (r *RPCHandshakeResponse) Valid(req *RPCHandshakeRequest) error {
-	if r.Type != rpcHandshakeTag {
+	if !bytes.Equal(r.Type, RPCTagHandshake) {
 		return errors.New("Unexpected handshake tag")
 	}
-	if r.PeerPID != rpcHandshakeSenderPID {
+	if !bytes.Equal(r.PeerPID, RPCHandshakeSenderPID) {
 		return errors.New("Incorrect sender PID")
 	}
 
@@ -39,15 +36,14 @@ func (r *RPCHandshakeResponse) Valid(req *RPCHandshakeRequest) error {
 }
 
 func NewRPCHandshakeResponse(data []byte) (*RPCHandshakeResponse, error) {
-	if len(data) != rpcHandshakeResponseLength {
+	if len(data) != 32 {
 		return nil, errors.New("Incorrect handshake response length")
 	}
 
-	resp := RPCHandshakeResponse{}
-	copy(resp.Type[:], data[:4])
-	copy(resp.Flags[:], data[4:8])
-	copy(resp.SenderPID[:], data[8:20])
-	copy(resp.PeerPID[:], data[20:])
-
-	return &resp, nil
+	return &RPCHandshakeResponse{
+		Type:      data[:4],
+		Flags:     data[4:8],
+		SenderPID: data[8:20],
+		PeerPID:   data[20:],
+	}, nil
 }
