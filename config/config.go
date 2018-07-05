@@ -18,8 +18,6 @@ const (
 
 	TimeoutRead  = time.Minute
 	TimeoutWrite = time.Minute
-
-	keepAlivePeriod = 20 * time.Second
 )
 
 // Config represents common configuration of mtg.
@@ -162,12 +160,6 @@ func SetSocketOptions(conn net.Conn) error {
 	}
 	if err := socket.SetWriteBuffer(BufferWriteSize); err != nil {
 		return errors.Annotate(err, "Cannot set write buffer size")
-	}
-	if err := socket.SetKeepAlive(true); err != nil {
-		return errors.Annotate(err, "Cannot make socket keepalive")
-	}
-	if err := socket.SetKeepAlivePeriod(keepAlivePeriod); err != nil {
-		return errors.Annotate(err, "Cannot set keepalive period")
 	}
 	if err := socket.SetNoDelay(true); err != nil {
 		return errors.Annotate(err, "Cannot activate nodelay for the socket")
