@@ -66,7 +66,7 @@ func (f *FrameRWC) Read(p []byte) (int, error) {
 			if _, err := io.CopyN(writer, f.conn, 4); err != nil {
 				return errors.Annotate(err, "Cannot read frame padding")
 			}
-			if !bytes.Equal(buf.Bytes(), frameRWCPadding[:]) {
+			if !bytes.Equal(buf.Bytes(), frameRWCPadding) {
 				break
 			}
 		}

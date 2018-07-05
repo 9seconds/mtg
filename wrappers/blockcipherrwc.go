@@ -1,6 +1,7 @@
 package wrappers
 
 import (
+	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
 	"net"
@@ -18,16 +19,16 @@ type BlockCipherReadWriteCloserWithAddr struct {
 
 func (c *BlockCipherReadWriteCloserWithAddr) Read(p []byte) (int, error) {
 	return c.BufferedRead(p, func() error {
-		bufferLength := c.Buffer.Len()
-		for bufferLength%aes.BlockSize != 0 || bufferLength == 0 {
+		buf := &bytes.Buffer{}
+		for buf.Len()%aes.BlockSize != 0 || buf.Len() == 0 {
 			n, err := c.conn.Read(p)
 			if err != nil {
 				return errors.Annotate(err, "Cannot read from socket")
 			}
-			c.Buffer.Write(p[:n])
-			bufferLength = c.Buffer.Len()
+			buf.Write(p[:n])
 		}
-		c.decryptor.CryptBlocks(c.Buffer.Bytes(), c.Buffer.Bytes())
+		c.decryptor.CryptBlocks(buf.Bytes(), buf.Bytes())
+		c.Buffer.Write(buf.Bytes())
 
 		return nil
 	})

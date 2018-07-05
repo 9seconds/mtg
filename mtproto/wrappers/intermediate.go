@@ -23,6 +23,9 @@ type IntermediateReadWriteCloserWithAddr struct {
 
 func (i *IntermediateReadWriteCloserWithAddr) Read(p []byte) (int, error) {
 	return i.BufferedRead(p, func() error {
+		i.opts.QuickAck = false
+		i.opts.SimpleAck = false
+
 		buf := &bytes.Buffer{}
 		buf.Grow(4)
 

@@ -29,15 +29,16 @@ func (p *ProxyRequestReadWriteCloserWithAddr) Read(buf []byte) (int, error) {
 			return errors.Annotate(err, "Cannot read RPC tag")
 		}
 
-		if bytes.Equal(ansBuf.Bytes(), rpc.TagCloseExt) {
+		switch {
+		case bytes.Equal(ansBuf.Bytes(), rpc.TagCloseExt):
 			return p.readCloseExt()
-		} else if bytes.Equal(ansBuf.Bytes(), rpc.TagProxyAns) {
+		case bytes.Equal(ansBuf.Bytes(), rpc.TagProxyAns):
 			return p.readProxyAns(buf)
-		} else if bytes.Equal(ansBuf.Bytes(), rpc.TagSimpleAck) {
+		case bytes.Equal(ansBuf.Bytes(), rpc.TagSimpleAck):
 			return p.readSimpleAck()
 		}
 
-		return nil
+		return errors.Errorf("Unknown RPC answer %s", ansBuf.Bytes())
 	})
 }
 
@@ -80,8 +81,6 @@ func (p *ProxyRequestReadWriteCloserWithAddr) Write(raw []byte) (int, error) {
 	if _, err := p.conn.Write(p.req.Bytes(raw)); err != nil {
 		return 0, err
 	}
-	p.req.Options.SimpleAck = false
-	p.req.Options.QuickAck = false
 
 	return len(raw), nil
 }

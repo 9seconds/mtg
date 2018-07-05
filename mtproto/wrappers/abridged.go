@@ -28,6 +28,9 @@ type AbridgedReadWriteCloserWithAddr struct {
 
 func (a *AbridgedReadWriteCloserWithAddr) Read(p []byte) (int, error) {
 	return a.BufferedRead(p, func() error {
+		a.opts.QuickAck = false
+		a.opts.SimpleAck = false
+
 		buf := &bytes.Buffer{}
 		buf.Grow(3)
 
@@ -37,7 +40,6 @@ func (a *AbridgedReadWriteCloserWithAddr) Read(p []byte) (int, error) {
 		msgLength := uint8(buf.Bytes()[0])
 		buf.Reset()
 
-		a.opts.QuickAck = false
 		if msgLength >= abridgedQuickAckLength {
 			a.opts.QuickAck = true
 			msgLength -= 0x80
@@ -78,13 +80,11 @@ func (a *AbridgedReadWriteCloserWithAddr) Write(p []byte) (int, error) {
 
 	case packetLength < abridgedLargePacketLength:
 		length24 := toUint24(uint32(packetLength))
-
 		buf := &bytes.Buffer{}
 		buf.Grow(1 + 3 + len(p))
 		buf.WriteByte(byte(abridgedSmallPacketLength))
 		buf.Write(length24[:])
 		buf.Write(p)
-
 		return a.conn.Write(buf.Bytes())
 
 	default:
