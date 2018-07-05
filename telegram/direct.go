@@ -4,6 +4,7 @@ import (
 	"net"
 
 	"github.com/juju/errors"
+	"go.uber.org/zap"
 
 	"github.com/9seconds/mtg/config"
 	"github.com/9seconds/mtg/mtproto"
@@ -55,7 +56,7 @@ func (t *directTelegram) Init(connOpts *mtproto.ConnectionOpts, conn wrappers.Re
 
 // NewDirectTelegram returns Telegram instance which connects directly
 // to Telegram bypassing middleproxies.
-func NewDirectTelegram(conf *config.Config) Telegram {
+func NewDirectTelegram(conf *config.Config, _ *zap.SugaredLogger) Telegram {
 	return &directTelegram{baseTelegram{
 		dialer: tgDialer{
 			Dialer: net.Dialer{Timeout: telegramDialTimeout},

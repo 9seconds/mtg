@@ -139,11 +139,19 @@ func (s *Server) pipe(dst io.Writer, src io.Reader, wait *sync.WaitGroup) {
 
 // NewServer creates new instance of MTPROTO proxy.
 func NewServer(conf *config.Config, logger *zap.SugaredLogger, stat *Stats) *Server {
+	clientInit := client.DirectInit
+	tg := telegram.NewDirectTelegram
+
+	if len(conf.AdTag) > 0 {
+		clientInit = client.MiddleInit
+		tg = telegram.NewMiddleTelegram
+	}
+
 	return &Server{
 		conf:       conf,
 		logger:     logger,
 		stats:      stat,
-		tg:         telegram.NewDirectTelegram(conf),
-		clientInit: client.DirectInit,
+		tg:         tg(conf, logger),
+		clientInit: clientInit,
 	}
 }
