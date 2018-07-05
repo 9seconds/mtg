@@ -17,7 +17,7 @@ type ProxyRequestReadWriteCloserWithAddr struct {
 	wrappers.BufferedReader
 
 	conn wrappers.ReadWriteCloserWithAddr
-	req  *rpc.RPCProxyRequest
+	req  *rpc.ProxyRequest
 }
 
 func (p *ProxyRequestReadWriteCloserWithAddr) Read(buf []byte) (int, error) {
@@ -29,11 +29,11 @@ func (p *ProxyRequestReadWriteCloserWithAddr) Read(buf []byte) (int, error) {
 			return errors.Annotate(err, "Cannot read RPC tag")
 		}
 
-		if bytes.Equal(ansBuf.Bytes(), rpc.RPCTagCloseExt) {
+		if bytes.Equal(ansBuf.Bytes(), rpc.TagCloseExt) {
 			return p.readCloseExt()
-		} else if bytes.Equal(ansBuf.Bytes(), rpc.RPCTagProxyAns) {
+		} else if bytes.Equal(ansBuf.Bytes(), rpc.TagProxyAns) {
 			return p.readProxyAns(buf)
-		} else if bytes.Equal(ansBuf.Bytes(), rpc.RPCTagSimpleAck) {
+		} else if bytes.Equal(ansBuf.Bytes(), rpc.TagSimpleAck) {
 			return p.readSimpleAck()
 		}
 
@@ -99,7 +99,7 @@ func (p *ProxyRequestReadWriteCloserWithAddr) RemoteAddr() *net.TCPAddr {
 }
 
 func NewProxyRequestRWC(conn wrappers.ReadWriteCloserWithAddr, connOpts *mtproto.ConnectionOpts, adTag []byte) (wrappers.ReadWriteCloserWithAddr, error) {
-	req, err := rpc.NewRPCProxyRequest(connOpts.ClientAddr, conn.LocalAddr(), connOpts, adTag)
+	req, err := rpc.NewProxyRequest(connOpts.ClientAddr, conn.LocalAddr(), connOpts, adTag)
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot create new RPC proxy request")
 	}

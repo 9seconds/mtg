@@ -11,8 +11,8 @@ import (
 	"github.com/9seconds/mtg/mtproto"
 )
 
-type RPCProxyRequest struct {
-	Flags        RPCProxyRequestFlags
+type ProxyRequest struct {
+	Flags        proxyRequestFlags
 	ConnectionID []byte
 	OurIPPort    []byte
 	ClientIPPort []byte
@@ -20,25 +20,25 @@ type RPCProxyRequest struct {
 	Options      *mtproto.ConnectionOpts
 }
 
-func (r *RPCProxyRequest) Bytes(message []byte) []byte {
+func (r *ProxyRequest) Bytes(message []byte) []byte {
 	buf := &bytes.Buffer{}
 
 	flags := r.Flags
 	if r.Options.QuickAck {
-		flags |= RPCProxyRequestFlagsQuickAck
+		flags |= proxyRequestFlagsQuickAck
 	}
 
-	if bytes.HasPrefix(message, rpcProxyRequestFlagsEncryptedPrefix[:]) {
-		flags |= RPCProxyRequestFlagsEncrypted
+	if bytes.HasPrefix(message, proxyRequestFlagsEncryptedPrefix[:]) {
+		flags |= proxyRequestFlagsEncrypted
 	}
 
-	buf.Write(RPCTagProxyRequest)
+	buf.Write(TagProxyRequest)
 	buf.Write(flags.Bytes())
 	buf.Write(r.ConnectionID[:])
 	buf.Write(r.ClientIPPort[:])
 	buf.Write(r.OurIPPort[:])
-	buf.Write(RPCProxyRequestExtraSize)
-	buf.Write(RPCProxyRequestProxyTag)
+	buf.Write(ProxyRequestExtraSize)
+	buf.Write(ProxyRequestProxyTag)
 	buf.WriteByte(byte(len(r.ADTag)))
 	buf.Write(r.ADTag)
 	buf.Write(bytes.Repeat([]byte{0x00}, buf.Len()%4))
@@ -47,17 +47,17 @@ func (r *RPCProxyRequest) Bytes(message []byte) []byte {
 	return buf.Bytes()
 }
 
-func NewRPCProxyRequest(clientAddr, ownAddr *net.TCPAddr, opts *mtproto.ConnectionOpts, adTag []byte) (*RPCProxyRequest, error) {
-	flags := RPCProxyRequestFlagsHasAdTag | RPCProxyRequestFlagsMagic | RPCProxyRequestFlagsExtMode2
+func NewProxyRequest(clientAddr, ownAddr *net.TCPAddr, opts *mtproto.ConnectionOpts, adTag []byte) (*ProxyRequest, error) {
+	flags := proxyRequestFlagsHasAdTag | proxyRequestFlagsMagic | proxyRequestFlagsExtMode2
 
 	switch opts.ConnectionType {
 	case mtproto.ConnectionTypeAbridged:
-		flags |= RPCProxyRequestFlagsAbdridged
+		flags |= proxyRequestFlagsAbdridged
 	case mtproto.ConnectionTypeIntermediate:
-		flags |= RPCProxyRequestFlagsIntermediate
+		flags |= proxyRequestFlagsIntermediate
 	}
 
-	request := RPCProxyRequest{
+	request := &ProxyRequest{
 		Flags:        flags,
 		ADTag:        adTag,
 		Options:      opts,
@@ -79,5 +79,5 @@ func NewRPCProxyRequest(clientAddr, ownAddr *net.TCPAddr, opts *mtproto.Connecti
 	binary.LittleEndian.PutUint32(port[:], uint32(ownAddr.Port))
 	copy(request.OurIPPort[16:], port[:])
 
-	return &request, nil
+	return request, nil
 }
