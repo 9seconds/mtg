@@ -27,8 +27,11 @@ func TestMakeKeys(t *testing.T) {
 	copy(req.Nonce[:], []byte{24, 49, 53, 111, 198, 10, 235, 180, 230, 112, 92, 78, 1, 201, 106, 105})
 	binary.LittleEndian.PutUint32(req.CryptoTS[:], 1528396015)
 
-	resp := &rpc.NonceResponse{}
-	copy(resp.Nonce[:], []byte{247, 40, 210, 56, 65, 12, 101, 170, 216, 155, 14, 253, 250, 238, 219, 226})
+	resp := &rpc.NonceResponse{
+		NonceRequest: rpc.NonceRequest{
+			Nonce: []byte{247, 40, 210, 56, 65, 12, 101, 170, 216, 155, 14, 253, 250, 238, 219, 226},
+		},
+	}
 
 	cltAddr := &net.TCPAddr{
 		IP:   net.ParseIP("80.211.29.34"),
