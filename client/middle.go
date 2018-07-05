@@ -21,5 +21,10 @@ func MiddleInit(conn net.Conn, conf *config.Config) (*mtproto.ConnectionOpts, wr
 		newConn = mtwrappers.NewIntermediateRWC(newConn, opts)
 	}
 
+	opts.ConnectionProto = mtproto.ConnectionProtocolIPv4
+	if conn.LocalAddr().(*net.TCPAddr).IP.To4() == nil {
+		opts.ConnectionProto = mtproto.ConnectionProtocolIPv6
+	}
+
 	return opts, newConn, nil
 }
