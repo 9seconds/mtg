@@ -20,7 +20,7 @@ import (
 type middleTelegram struct {
 	middleTelegramCaller
 
-	adtag []byte
+	conf *config.Config
 }
 
 func NewMiddleTelegram(conf *config.Config, logger *zap.SugaredLogger) Telegram {
@@ -38,7 +38,7 @@ func NewMiddleTelegram(conf *config.Config, logger *zap.SugaredLogger) Telegram 
 			},
 			dialerMutex: &sync.RWMutex{},
 		},
-		adtag: conf.AdTag,
+		conf: conf,
 	}
 
 	if err := tg.update(); err != nil {
@@ -73,7 +73,7 @@ func (t *middleTelegram) Init(connOpts *mtproto.ConnectionOpts, conn wrappers.Re
 		return nil, err
 	}
 
-	return mtwrappers.NewProxyRequestRWC(secureConn, connOpts, t.adtag)
+	return mtwrappers.NewProxyRequestRWC(secureConn, connOpts, t.conf.AdTag)
 }
 
 func (t *middleTelegram) sendRPCNonceRequest(conn io.Writer) (*rpc.RPCNonceRequest, error) {

@@ -17,20 +17,14 @@ func (b *BufferedReader) BufferedRead(p []byte, callback func() error) (int, err
 }
 
 func (b *BufferedReader) flush(p []byte) (int, error) {
-	sizeToRead := len(p)
-	if b.Buffer.Len() < sizeToRead {
-		sizeToRead = b.Buffer.Len()
-	}
-
-	data := b.Buffer.Bytes()
-	copy(p, data[:sizeToRead])
-	if sizeToRead == b.Buffer.Len() {
+	if b.Buffer.Len() < len(p) {
+		sizeToReturn := b.Buffer.Len()
+		copy(p, b.Buffer.Bytes())
 		b.Buffer.Reset()
-	} else {
-		b.Buffer = bytes.NewBuffer(data[sizeToRead:])
+		return sizeToReturn, nil
 	}
 
-	return sizeToRead, nil
+	return b.Buffer.Read(p)
 }
 
 func NewBufferedReader() BufferedReader {
