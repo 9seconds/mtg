@@ -20,14 +20,14 @@ const (
 	abridgedLargePacketLength = 16777216 // 256 ^ 3
 )
 
-type AbridgedReadWriteCloserAddr struct {
+type AbridgedReadWriteCloserWithAddr struct {
 	wrappers.BufferedReader
 
 	conn wrappers.ReadWriteCloserWithAddr
 	opts *mtproto.ConnectionOpts
 }
 
-func (a *AbridgedReadWriteCloserAddr) Read(p []byte) (int, error) {
+func (a *AbridgedReadWriteCloserWithAddr) Read(p []byte) (int, error) {
 	return a.BufferedRead(p, func() error {
 		var msgLength uint8
 		if err := binary.Read(a.conn, binary.LittleEndian, &msgLength); err != nil {
@@ -62,7 +62,7 @@ func (a *AbridgedReadWriteCloserAddr) Read(p []byte) (int, error) {
 	})
 }
 
-func (a *AbridgedReadWriteCloserAddr) Write(p []byte) (int, error) {
+func (a *AbridgedReadWriteCloserWithAddr) Write(p []byte) (int, error) {
 	if len(p)%4 != 0 {
 		return 0, errors.Errorf("Incorrect packet length %d", len(p))
 	}
@@ -92,15 +92,15 @@ func (a *AbridgedReadWriteCloserAddr) Write(p []byte) (int, error) {
 	}
 }
 
-func (a *AbridgedReadWriteCloserAddr) Close() error {
+func (a *AbridgedReadWriteCloserWithAddr) Close() error {
 	return a.conn.Close()
 }
 
-func (a *AbridgedReadWriteCloserAddr) LocalAddr() *net.TCPAddr {
+func (a *AbridgedReadWriteCloserWithAddr) LocalAddr() *net.TCPAddr {
 	return a.conn.LocalAddr()
 }
 
-func (a *AbridgedReadWriteCloserAddr) RemoteAddr() *net.TCPAddr {
+func (a *AbridgedReadWriteCloserWithAddr) RemoteAddr() *net.TCPAddr {
 	return a.conn.RemoteAddr()
 }
 
@@ -113,8 +113,9 @@ func fromUint24(number uint24) uint32 {
 }
 
 func NewAbridgedRWC(conn wrappers.ReadWriteCloserWithAddr, connOpts *mtproto.ConnectionOpts) wrappers.ReadWriteCloserWithAddr {
-	return &AbridgedReadWriteCloserAddr{
-		conn: conn,
-		opts: connOpts,
+	return &AbridgedReadWriteCloserWithAddr{
+		BufferedReader: wrappers.NewBufferedReader(),
+		conn:           conn,
+		opts:           connOpts,
 	}
 }

@@ -105,7 +105,8 @@ func NewProxyRequestRWC(conn wrappers.ReadWriteCloserWithAddr, connOpts *mtproto
 	}
 
 	return &ProxyRequestReadWriteCloserWithAddr{
-		conn: conn,
-		req:  req,
+		BufferedReader: wrappers.NewBufferedReader(),
+		conn:           conn,
+		req:            req,
 	}, nil
 }
