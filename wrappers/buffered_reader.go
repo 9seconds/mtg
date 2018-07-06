@@ -1,10 +1,18 @@
 package wrappers
 
-import "bytes"
+import (
+	"bytes"
+
+	"github.com/juju/errors"
+)
 
 type BufferedReader struct {
 	Buffer *bytes.Buffer
 }
+
+var (
+	BufferedReaderContinue = errors.New("Please continue reading")
+)
 
 func (b *BufferedReader) BufferedRead(p []byte, callback func() error) (int, error) {
 	if b.Buffer.Len() > 0 {
@@ -17,7 +25,7 @@ func (b *BufferedReader) BufferedRead(p []byte, callback func() error) (int, err
 }
 
 func (b *BufferedReader) flush(p []byte) (int, error) {
-	if b.Buffer.Len() < len(p) {
+	if b.Buffer.Len() <= len(p) {
 		sizeToReturn := b.Buffer.Len()
 		copy(p, b.Buffer.Bytes())
 		b.Buffer.Reset()

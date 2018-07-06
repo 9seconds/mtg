@@ -37,6 +37,10 @@ func (t *TrafficReadWriteCloserWithAddr) RemoteAddr() *net.TCPAddr {
 	return t.conn.RemoteAddr()
 }
 
+func (t *TrafficReadWriteCloserWithAddr) SocketID() string {
+	return t.conn.SocketID()
+}
+
 // NewTrafficRWC wraps ReadWriteCloser to have read/write callbacks.
 func NewTrafficRWC(conn ReadWriteCloserWithAddr, readCallback, writeCallback func(int)) ReadWriteCloserWithAddr {
 	return &TrafficReadWriteCloserWithAddr{

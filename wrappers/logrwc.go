@@ -18,14 +18,14 @@ type LogReadWriteCloserWithAddr struct {
 // Read reads from connection
 func (l *LogReadWriteCloserWithAddr) Read(p []byte) (n int, err error) {
 	n, err = l.conn.Read(p)
-	l.logger.Debugw("Finish reading", "name", l.name, "socketid", l.sockid, "nbytes", n, "error", err)
+	l.logger.Debugw("Finish reading", "name", l.name, "socketid", l.sockid, "nbytes", n, "error", err, "localAddr", l.LocalAddr())
 	return
 }
 
 // Write writes into connection.
 func (l *LogReadWriteCloserWithAddr) Write(p []byte) (n int, err error) {
 	n, err = l.conn.Write(p)
-	l.logger.Debugw("Finish writing", "name", l.name, "socketid", l.sockid, "nbytes", n, "error", err)
+	l.logger.Debugw("Finish writing", "name", l.name, "socketid", l.sockid, "nbytes", n, "error", err, "localAddr", l.LocalAddr())
 	return
 }
 
@@ -42,6 +42,10 @@ func (l *LogReadWriteCloserWithAddr) LocalAddr() *net.TCPAddr {
 
 func (l *LogReadWriteCloserWithAddr) RemoteAddr() *net.TCPAddr {
 	return l.conn.RemoteAddr()
+}
+
+func (l *LogReadWriteCloserWithAddr) SocketID() string {
+	return l.sockid
 }
 
 // NewLogRWC wraps ReadWriteCloser with logger calls.

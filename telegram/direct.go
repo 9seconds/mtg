@@ -33,7 +33,7 @@ type directTelegram struct {
 	baseTelegram
 }
 
-func (t *directTelegram) Dial(connOpts *mtproto.ConnectionOpts) (wrappers.ReadWriteCloserWithAddr, error) {
+func (t *directTelegram) Dial(sock string, connOpts *mtproto.ConnectionOpts) (wrappers.ReadWriteCloserWithAddr, error) {
 	dc := connOpts.DC
 	if dc < 0 {
 		dc = -dc
@@ -41,7 +41,7 @@ func (t *directTelegram) Dial(connOpts *mtproto.ConnectionOpts) (wrappers.ReadWr
 		dc = 1
 	}
 
-	return t.baseTelegram.dial(dc-1, connOpts.ConnectionProto)
+	return t.baseTelegram.dial(dc-1, sock, connOpts.ConnectionProto)
 }
 
 func (t *directTelegram) Init(connOpts *mtproto.ConnectionOpts, conn wrappers.ReadWriteCloserWithAddr) (wrappers.ReadWriteCloserWithAddr, error) {

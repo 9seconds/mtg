@@ -51,6 +51,10 @@ func (c *StreamCipherReadWriteCloserWithAddr) RemoteAddr() *net.TCPAddr {
 	return c.conn.RemoteAddr()
 }
 
+func (c *StreamCipherReadWriteCloserWithAddr) SocketID() string {
+	return c.conn.SocketID()
+}
+
 // NewStreamCipherRWC returns wrapper which transparently
 // encrypts/decrypts traffic with obfuscated2 protocol.
 func NewStreamCipherRWC(conn ReadWriteCloserWithAddr, encryptor, decryptor cipher.Stream) ReadWriteCloserWithAddr {

@@ -9,4 +9,4 @@ import (
 )
 
 // Init has to initialize client connection based on given config.
-type Init func(net.Conn, *config.Config) (wrappers.ReadWriteCloserWithAddr, *mtproto.ConnectionOpts, error)
+type Init func(net.Conn, string, *config.Config) (wrappers.ReadWriteCloserWithAddr, *mtproto.ConnectionOpts, error)

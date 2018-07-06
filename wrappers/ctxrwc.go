@@ -56,6 +56,10 @@ func (c *CtxReadWriteCloserWithAddr) RemoteAddr() *net.TCPAddr {
 	return c.conn.RemoteAddr()
 }
 
+func (c *CtxReadWriteCloserWithAddr) SocketID() string {
+	return c.conn.SocketID()
+}
+
 // NewCtxRWC returns ReadWriteCloser which respects given context,
 // cancellation etc.
 func NewCtxRWC(ctx context.Context, cancel context.CancelFunc, conn ReadWriteCloserWithAddr) ReadWriteCloserWithAddr {

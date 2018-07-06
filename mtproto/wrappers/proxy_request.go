@@ -10,6 +10,7 @@ import (
 
 	"github.com/9seconds/mtg/mtproto"
 	"github.com/9seconds/mtg/mtproto/rpc"
+	"github.com/9seconds/mtg/utils"
 	"github.com/9seconds/mtg/wrappers"
 )
 
@@ -29,7 +30,7 @@ func (p *ProxyRequestReadWriteCloserWithAddr) Read(buf []byte) (int, error) {
 
 		switch {
 		case bytes.Equal(ans, rpc.TagProxyAns):
-			return p.readProxyAns(buf)
+			return p.readProxyAns()
 		case bytes.Equal(ans, rpc.TagSimpleAck):
 			return p.readSimpleAck()
 		case bytes.Equal(ans, rpc.TagCloseExt):
@@ -44,21 +45,16 @@ func (p *ProxyRequestReadWriteCloserWithAddr) readCloseExt() error {
 	return errors.New("Connection has been closed remotely")
 }
 
-func (p *ProxyRequestReadWriteCloserWithAddr) readProxyAns(buf []byte) (err error) {
+func (p *ProxyRequestReadWriteCloserWithAddr) readProxyAns() (err error) {
 	if _, err = io.CopyN(ioutil.Discard, p.conn, 8+4); err != nil {
 		return errors.Annotate(err, "Cannot skip flags and connid")
 	}
 
-	n := len(buf)
-	preBuffer := &bytes.Buffer{}
-	for n == len(buf) {
-		n, err = p.conn.Read(buf)
-		if err != nil {
-			return errors.Annotate(err, "Cannot read proxy answer")
-		}
-		preBuffer.Write(buf[:n])
+	buf, err := utils.ReadCurrentData(p.conn)
+	if err != nil {
+		return errors.Annotate(err, "Cannot read proxy answer")
 	}
-	p.Buffer.Write(preBuffer.Bytes())
+	p.Buffer.Write(buf)
 
 	return nil
 }
@@ -95,6 +91,10 @@ func (p *ProxyRequestReadWriteCloserWithAddr) LocalAddr() *net.TCPAddr {
 
 func (p *ProxyRequestReadWriteCloserWithAddr) RemoteAddr() *net.TCPAddr {
 	return p.conn.RemoteAddr()
+}
+
+func (p *ProxyRequestReadWriteCloserWithAddr) SocketID() string {
+	return p.conn.SocketID()
 }
 
 func NewProxyRequestRWC(conn wrappers.ReadWriteCloserWithAddr, connOpts *mtproto.ConnectionOpts, adTag []byte) (wrappers.ReadWriteCloserWithAddr, error) {

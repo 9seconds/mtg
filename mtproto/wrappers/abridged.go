@@ -31,15 +31,18 @@ func (a *AbridgedReadWriteCloserWithAddr) Read(p []byte) (int, error) {
 		buf := &bytes.Buffer{}
 		buf.Grow(3)
 
+		q := make([]byte, 1)
+
 		if _, err := io.CopyN(buf, a.conn, 1); err != nil {
 			return errors.Annotate(err, "Cannot read message length")
 		}
 		msgLength := uint8(buf.Bytes()[0])
+		q[0] = msgLength
 		buf.Reset()
 
 		if msgLength >= abridgedQuickAckLength {
 			a.opts.ReadHacks.QuickAck = true
-			msgLength -= 0x80
+			msgLength -= abridgedQuickAckLength
 		}
 
 		msgLength32 := uint32(msgLength)
@@ -49,6 +52,7 @@ func (a *AbridgedReadWriteCloserWithAddr) Read(p []byte) (int, error) {
 			}
 			number := uint24{}
 			copy(number[:], buf.Bytes())
+			q = append(q, buf.Bytes()...)
 			msgLength32 = fromUint24(number)
 		}
 		msgLength32 *= 4
@@ -59,6 +63,7 @@ func (a *AbridgedReadWriteCloserWithAddr) Read(p []byte) (int, error) {
 		if _, err := io.CopyN(buf, a.conn, int64(msgLength32)); err != nil {
 			return errors.Annotate(err, "Cannot read message")
 		}
+		q = append(q, buf.Bytes()...)
 		a.Buffer.Write(buf.Bytes())
 
 		return nil
@@ -87,10 +92,9 @@ func (a *AbridgedReadWriteCloserWithAddr) Write(p []byte) (int, error) {
 		buf.Write(length24[:])
 		buf.Write(p)
 		return a.conn.Write(buf.Bytes())
-
-	default:
-		return 0, errors.Errorf("Packet is too big %d", len(p))
 	}
+
+	return 0, errors.Errorf("Packet is too big %d", len(p))
 }
 
 func (a *AbridgedReadWriteCloserWithAddr) Close() error {
@@ -103,6 +107,10 @@ func (a *AbridgedReadWriteCloserWithAddr) LocalAddr() *net.TCPAddr {
 
 func (a *AbridgedReadWriteCloserWithAddr) RemoteAddr() *net.TCPAddr {
 	return a.conn.RemoteAddr()
+}
+
+func (a *AbridgedReadWriteCloserWithAddr) SocketID() string {
+	return a.conn.SocketID()
 }
 
 func toUint24(number uint32) uint24 {

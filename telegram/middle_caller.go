@@ -39,7 +39,7 @@ type middleTelegramCaller struct {
 	httpClient  *http.Client
 }
 
-func (t *middleTelegramCaller) Dial(connOpts *mtproto.ConnectionOpts) (wrappers.ReadWriteCloserWithAddr, error) {
+func (t *middleTelegramCaller) Dial(sock string, connOpts *mtproto.ConnectionOpts) (wrappers.ReadWriteCloserWithAddr, error) {
 	dc := connOpts.DC
 	if dc == 0 {
 		dc = 1
@@ -47,7 +47,7 @@ func (t *middleTelegramCaller) Dial(connOpts *mtproto.ConnectionOpts) (wrappers.
 	t.dialerMutex.RLock()
 	defer t.dialerMutex.RUnlock()
 
-	return t.baseTelegram.dial(dc, connOpts.ConnectionProto)
+	return t.baseTelegram.dial(dc, sock, connOpts.ConnectionProto)
 }
 
 func (t *middleTelegramCaller) autoUpdate() {

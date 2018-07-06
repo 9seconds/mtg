@@ -9,6 +9,7 @@ import (
 
 type TimeoutReadWriteCloserWithAddr struct {
 	conn       net.Conn
+	sock       string
 	publicIPv4 net.IP
 	publicIPv6 net.IP
 }
@@ -46,10 +47,15 @@ func (t *TimeoutReadWriteCloserWithAddr) LocalAddr() *net.TCPAddr {
 	return &newAddr
 }
 
-func NewTimeoutRWC(conn net.Conn, ipv4, ipv6 net.IP) ReadWriteCloserWithAddr {
+func (t *TimeoutReadWriteCloserWithAddr) SocketID() string {
+	return t.sock
+}
+
+func NewTimeoutRWC(conn net.Conn, sock string, ipv4, ipv6 net.IP) ReadWriteCloserWithAddr {
 	return &TimeoutReadWriteCloserWithAddr{
 		conn:       conn,
 		publicIPv4: ipv4,
 		publicIPv6: ipv6,
+		sock:       sock,
 	}
 }

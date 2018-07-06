@@ -120,6 +120,10 @@ func (f *FrameRWC) RemoteAddr() *net.TCPAddr {
 	return f.conn.RemoteAddr()
 }
 
+func (f *FrameRWC) SocketID() string {
+	return f.conn.SocketID()
+}
+
 func NewFrameRWC(conn wrappers.ReadWriteCloserWithAddr, seqNo int32) wrappers.ReadWriteCloserWithAddr {
 	return &FrameRWC{
 		BufferedReader: wrappers.NewBufferedReader(),

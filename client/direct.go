@@ -15,7 +15,7 @@ import (
 const handshakeTimeout = 10 * time.Second
 
 // DirectInit initializes client to access Telegram bypassing middleproxies.
-func DirectInit(conn net.Conn, conf *config.Config) (wrappers.ReadWriteCloserWithAddr, *mtproto.ConnectionOpts, error) {
+func DirectInit(conn net.Conn, socketID string, conf *config.Config) (wrappers.ReadWriteCloserWithAddr, *mtproto.ConnectionOpts, error) {
 	if err := config.SetSocketOptions(conn); err != nil {
 		return nil, nil, errors.Annotate(err, "Cannot set socket options")
 	}
@@ -34,7 +34,7 @@ func DirectInit(conn net.Conn, conf *config.Config) (wrappers.ReadWriteCloserWit
 	connOpts.ConnectionProto = mtproto.ConnectionProtocolAny
 	connOpts.ClientAddr = conn.RemoteAddr().(*net.TCPAddr)
 
-	socket := wrappers.NewTimeoutRWC(conn, conf.PublicIPv4, conf.PublicIPv6)
+	socket := wrappers.NewTimeoutRWC(conn, socketID, conf.PublicIPv4, conf.PublicIPv6)
 	socket = wrappers.NewStreamCipherRWC(socket, obfs2.Encryptor, obfs2.Decryptor)
 
 	return socket, connOpts, nil

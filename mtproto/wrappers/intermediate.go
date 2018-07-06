@@ -77,6 +77,10 @@ func (i *IntermediateReadWriteCloserWithAddr) RemoteAddr() *net.TCPAddr {
 	return i.conn.RemoteAddr()
 }
 
+func (i *IntermediateReadWriteCloserWithAddr) SocketID() string {
+	return i.conn.SocketID()
+}
+
 func NewIntermediateRWC(conn wrappers.ReadWriteCloserWithAddr, connOpts *mtproto.ConnectionOpts) wrappers.ReadWriteCloserWithAddr {
 	return &IntermediateReadWriteCloserWithAddr{
 		BufferedReader: wrappers.NewBufferedReader(),

@@ -14,6 +14,7 @@ import (
 	"github.com/9seconds/mtg/config"
 	"github.com/9seconds/mtg/mtproto"
 	"github.com/9seconds/mtg/telegram"
+	"github.com/9seconds/mtg/utils"
 	"github.com/9seconds/mtg/wrappers"
 )
 
@@ -122,7 +123,7 @@ func (s *Server) accept(conn net.Conn) {
 }
 
 func (s *Server) getClientStream(ctx context.Context, cancel context.CancelFunc, conn net.Conn, socketID string) (*mtproto.ConnectionOpts, io.ReadWriteCloser, error) {
-	socket, connOpts, err := s.clientInit(conn, s.conf)
+	socket, connOpts, err := s.clientInit(conn, socketID, s.conf)
 	if err != nil {
 		return nil, nil, errors.Annotate(err, "Cannot init client connection")
 	}
@@ -135,7 +136,7 @@ func (s *Server) getClientStream(ctx context.Context, cancel context.CancelFunc,
 }
 
 func (s *Server) getTelegramStream(ctx context.Context, cancel context.CancelFunc, connOpts *mtproto.ConnectionOpts, socketID string) (io.ReadWriteCloser, error) {
-	conn, err := s.tg.Dial(connOpts)
+	conn, err := s.tg.Dial(socketID, connOpts)
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot connect to Telegram")
 	}
@@ -152,22 +153,15 @@ func (s *Server) getTelegramStream(ctx context.Context, cancel context.CancelFun
 	return conn, nil
 }
 
-func (s *Server) pump(src io.Reader, dst io.Writer, socketID, name string) (err error) {
-	copyBuf := make([]byte, 1024*1024*2)
-
-	n := config.BufferSizeCopy
-	for n == config.BufferSizeCopy {
-		n, err = src.Read(copyBuf)
-		if err != nil {
-			break
-		}
-		_, err = dst.Write(copyBuf[:n])
-		if err != nil {
-			break
-		}
+func (s *Server) pump(src io.Reader, dst io.Writer, socketID, name string) error {
+	buf, err := utils.ReadCurrentData(src)
+	if err != nil {
+		return errors.Annotate(err, "Cannot pump the socket")
 	}
 
-	return
+	_, err = dst.Write(buf)
+
+	return err
 }
 
 // NewServer creates new instance of MTPROTO proxy.

@@ -13,7 +13,7 @@ import (
 // encapsulates logic of working with middleproxies or direct
 // connections.
 type Telegram interface {
-	Dial(*mtproto.ConnectionOpts) (wrappers.ReadWriteCloserWithAddr, error)
+	Dial(string, *mtproto.ConnectionOpts) (wrappers.ReadWriteCloserWithAddr, error)
 	Init(*mtproto.ConnectionOpts, wrappers.ReadWriteCloserWithAddr) (wrappers.ReadWriteCloserWithAddr, error)
 }
 
@@ -24,7 +24,7 @@ type baseTelegram struct {
 	v6Addresses map[int16][]string
 }
 
-func (b *baseTelegram) dial(dcIdx int16, proto mtproto.ConnectionProtocol) (wrappers.ReadWriteCloserWithAddr, error) {
+func (b *baseTelegram) dial(dcIdx int16, sock string, proto mtproto.ConnectionProtocol) (wrappers.ReadWriteCloserWithAddr, error) {
 	addrs := make([]string, 2)
 
 	if proto&mtproto.ConnectionProtocolIPv6 != 0 {
@@ -39,7 +39,7 @@ func (b *baseTelegram) dial(dcIdx int16, proto mtproto.ConnectionProtocol) (wrap
 	}
 
 	for _, addr := range addrs {
-		if conn, err := b.dialer.dialRWC(addr); err == nil {
+		if conn, err := b.dialer.dialRWC(addr, sock); err == nil {
 			return conn, err
 		}
 	}

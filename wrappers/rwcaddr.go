@@ -10,4 +10,5 @@ type ReadWriteCloserWithAddr interface {
 
 	LocalAddr() *net.TCPAddr
 	RemoteAddr() *net.TCPAddr
+	SocketID() string
 }
