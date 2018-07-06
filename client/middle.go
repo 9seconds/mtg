@@ -9,8 +9,8 @@ import (
 	"github.com/9seconds/mtg/wrappers"
 )
 
-func MiddleInit(conn net.Conn, conf *config.Config) (*mtproto.ConnectionOpts, wrappers.ReadWriteCloserWithAddr, error) {
-	opts, newConn, err := DirectInit(conn, conf)
+func MiddleInit(conn net.Conn, conf *config.Config) (wrappers.ReadWriteCloserWithAddr, *mtproto.ConnectionOpts, error) {
+	newConn, opts, err := DirectInit(conn, conf)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -26,5 +26,5 @@ func MiddleInit(conn net.Conn, conf *config.Config) (*mtproto.ConnectionOpts, wr
 		opts.ConnectionProto = mtproto.ConnectionProtocolIPv6
 	}
 
-	return opts, newConn, nil
+	return newConn, opts, nil
 }

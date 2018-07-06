@@ -23,9 +23,6 @@ type IntermediateReadWriteCloserWithAddr struct {
 
 func (i *IntermediateReadWriteCloserWithAddr) Read(p []byte) (int, error) {
 	return i.BufferedRead(p, func() error {
-		i.opts.QuickAck = false
-		i.opts.SimpleAck = false
-
 		buf := &bytes.Buffer{}
 		buf.Grow(4)
 
@@ -37,7 +34,7 @@ func (i *IntermediateReadWriteCloserWithAddr) Read(p []byte) (int, error) {
 		buf.Grow(int(length))
 
 		if length > intermediateQuickAckLength {
-			i.opts.QuickAck = true
+			i.opts.ReadHacks.QuickAck = true
 			length -= intermediateQuickAckLength
 		}
 
@@ -58,7 +55,7 @@ func (i *IntermediateReadWriteCloserWithAddr) Read(p []byte) (int, error) {
 }
 
 func (i *IntermediateReadWriteCloserWithAddr) Write(p []byte) (int, error) {
-	if i.opts.SimpleAck {
+	if i.opts.WriteHacks.SimpleAck {
 		return i.conn.Write(p)
 	}
 

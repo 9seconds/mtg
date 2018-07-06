@@ -85,8 +85,32 @@ func (s *Server) accept(conn net.Conn) {
 	wait := &sync.WaitGroup{}
 	wait.Add(2)
 
-	go s.pipe(clientConn, tgConn, wait)
-	go s.pipe(tgConn, clientConn, wait)
+	go func() {
+		defer wait.Done()
+
+		for {
+			connOpts.ReadHacks.QuickAck = false
+			connOpts.ReadHacks.SimpleAck = false
+			if err := s.pump(clientConn, tgConn, socketID, "client"); err != nil {
+				s.logger.Infow("Client stream is aborted",
+					"socketid", socketID, "error", err)
+				return
+			}
+		}
+	}()
+	go func() {
+		defer wait.Done()
+
+		for {
+			connOpts.WriteHacks.QuickAck = false
+			connOpts.WriteHacks.SimpleAck = false
+			if err := s.pump(tgConn, clientConn, socketID, "telegram"); err != nil {
+				s.logger.Infow("Telegram stream is aborted",
+					"socketid", socketID, "error", err)
+				return
+			}
+		}
+	}()
 
 	<-ctx.Done()
 	wait.Wait()
@@ -98,7 +122,7 @@ func (s *Server) accept(conn net.Conn) {
 }
 
 func (s *Server) getClientStream(ctx context.Context, cancel context.CancelFunc, conn net.Conn, socketID string) (*mtproto.ConnectionOpts, io.ReadWriteCloser, error) {
-	connOpts, socket, err := s.clientInit(conn, s.conf)
+	socket, connOpts, err := s.clientInit(conn, s.conf)
 	if err != nil {
 		return nil, nil, errors.Annotate(err, "Cannot init client connection")
 	}
@@ -128,13 +152,22 @@ func (s *Server) getTelegramStream(ctx context.Context, cancel context.CancelFun
 	return conn, nil
 }
 
-func (s *Server) pipe(dst io.Writer, src io.Reader, wait *sync.WaitGroup) {
-	defer wait.Done()
+func (s *Server) pump(src io.Reader, dst io.Writer, socketID, name string) (err error) {
+	copyBuf := make([]byte, 1024*1024*2)
 
-	buf := copyPool.Get().(*[]byte)
-	defer copyPool.Put(buf)
+	n := config.BufferSizeCopy
+	for n == config.BufferSizeCopy {
+		n, err = src.Read(copyBuf)
+		if err != nil {
+			break
+		}
+		_, err = dst.Write(copyBuf[:n])
+		if err != nil {
+			break
+		}
+	}
 
-	io.CopyBuffer(dst, src, *buf) // nolint: errcheck
+	return
 }
 
 // NewServer creates new instance of MTPROTO proxy.

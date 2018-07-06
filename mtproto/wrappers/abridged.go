@@ -28,9 +28,6 @@ type AbridgedReadWriteCloserWithAddr struct {
 
 func (a *AbridgedReadWriteCloserWithAddr) Read(p []byte) (int, error) {
 	return a.BufferedRead(p, func() error {
-		a.opts.QuickAck = false
-		a.opts.SimpleAck = false
-
 		buf := &bytes.Buffer{}
 		buf.Grow(3)
 
@@ -41,7 +38,7 @@ func (a *AbridgedReadWriteCloserWithAddr) Read(p []byte) (int, error) {
 		buf.Reset()
 
 		if msgLength >= abridgedQuickAckLength {
-			a.opts.QuickAck = true
+			a.opts.ReadHacks.QuickAck = true
 			msgLength -= 0x80
 		}
 
@@ -56,9 +53,13 @@ func (a *AbridgedReadWriteCloserWithAddr) Read(p []byte) (int, error) {
 		}
 		msgLength32 *= 4
 
-		if _, err := io.CopyN(a.Buffer, a.conn, int64(msgLength32)); err != nil {
+		buf.Reset()
+		buf.Grow(int(msgLength32))
+
+		if _, err := io.CopyN(buf, a.conn, int64(msgLength32)); err != nil {
 			return errors.Annotate(err, "Cannot read message")
 		}
+		a.Buffer.Write(buf.Bytes())
 
 		return nil
 	})
@@ -68,7 +69,7 @@ func (a *AbridgedReadWriteCloserWithAddr) Write(p []byte) (int, error) {
 	if len(p)%4 != 0 {
 		return 0, errors.Errorf("Incorrect packet length %d", len(p))
 	}
-	if a.opts.SimpleAck {
+	if a.opts.WriteHacks.SimpleAck {
 		return a.conn.Write(reverseBytes(p))
 	}
 

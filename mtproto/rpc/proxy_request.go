@@ -24,7 +24,7 @@ func (r *ProxyRequest) Bytes(message []byte) []byte {
 	buf := &bytes.Buffer{}
 
 	flags := r.Flags
-	if r.Options.QuickAck {
+	if r.Options.ReadHacks.QuickAck {
 		flags |= proxyRequestFlagsQuickAck
 	}
 

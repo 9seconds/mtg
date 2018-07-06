@@ -22,23 +22,21 @@ type ProxyRequestReadWriteCloserWithAddr struct {
 
 func (p *ProxyRequestReadWriteCloserWithAddr) Read(buf []byte) (int, error) {
 	return p.BufferedRead(buf, func() error {
-		ansBuf := &bytes.Buffer{}
-		ansBuf.Grow(4)
-
-		if _, err := io.CopyN(ansBuf, p.conn, 4); err != nil {
+		ans := make([]byte, 4)
+		if _, err := io.ReadFull(p.conn, ans); err != nil {
 			return errors.Annotate(err, "Cannot read RPC tag")
 		}
 
 		switch {
-		case bytes.Equal(ansBuf.Bytes(), rpc.TagCloseExt):
-			return p.readCloseExt()
-		case bytes.Equal(ansBuf.Bytes(), rpc.TagProxyAns):
+		case bytes.Equal(ans, rpc.TagProxyAns):
 			return p.readProxyAns(buf)
-		case bytes.Equal(ansBuf.Bytes(), rpc.TagSimpleAck):
+		case bytes.Equal(ans, rpc.TagSimpleAck):
 			return p.readSimpleAck()
+		case bytes.Equal(ans, rpc.TagCloseExt):
+			return p.readCloseExt()
 		}
 
-		return errors.Errorf("Unknown RPC answer %s", ansBuf.Bytes())
+		return errors.Errorf("Unknown RPC answer %v", ans)
 	})
 }
 
@@ -46,21 +44,21 @@ func (p *ProxyRequestReadWriteCloserWithAddr) readCloseExt() error {
 	return errors.New("Connection has been closed remotely")
 }
 
-func (p *ProxyRequestReadWriteCloserWithAddr) readProxyAns(buf []byte) error {
-	if _, err := io.CopyN(ioutil.Discard, p.conn, 8+4); err != nil {
+func (p *ProxyRequestReadWriteCloserWithAddr) readProxyAns(buf []byte) (err error) {
+	if _, err = io.CopyN(ioutil.Discard, p.conn, 8+4); err != nil {
 		return errors.Annotate(err, "Cannot skip flags and connid")
 	}
 
-	for {
-		n, err := p.conn.Read(buf)
+	n := len(buf)
+	preBuffer := &bytes.Buffer{}
+	for n == len(buf) {
+		n, err = p.conn.Read(buf)
 		if err != nil {
 			return errors.Annotate(err, "Cannot read proxy answer")
 		}
-		if n == 0 {
-			break
-		}
-		p.Buffer.Write(buf[:n])
+		preBuffer.Write(buf[:n])
 	}
+	p.Buffer.Write(preBuffer.Bytes())
 
 	return nil
 }
@@ -69,10 +67,12 @@ func (p *ProxyRequestReadWriteCloserWithAddr) readSimpleAck() error {
 	if _, err := io.CopyN(ioutil.Discard, p.conn, 8); err != nil {
 		return errors.Annotate(err, "Cannot skip connid")
 	}
-	if _, err := io.CopyN(p.Buffer, p.conn, 4); err != nil {
+
+	ackData := make([]byte, 4)
+	if _, err := io.ReadFull(p.conn, ackData); err != nil {
 		return errors.Annotate(err, "Cannot read simple ack")
 	}
-	p.req.Options.SimpleAck = true
+	p.Buffer.Write(ackData)
 
 	return nil
 }
