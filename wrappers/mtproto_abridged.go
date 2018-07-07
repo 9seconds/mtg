@@ -12,9 +12,9 @@ import (
 )
 
 const (
-	abridgedSmallPacketLength = 0x7f
-	abridgedQuickAckLength    = 0x80
-	abridgedLargePacketLength = 16777216 // 256 ^ 3
+	mtprotoAbridgedSmallPacketLength = 0x7f
+	mtprotoAbridgedQuickAckLength    = 0x80
+	mtprotoAbridgedLargePacketLength = 16777216 // 256 ^ 3
 )
 
 type MTProtoAbridged struct {
@@ -46,13 +46,13 @@ func (m *MTProtoAbridged) Read() ([]byte, error) {
 		"counter", m.readCounter,
 	)
 
-	if msgLength >= abridgedQuickAckLength {
+	if msgLength >= mtprotoAbridgedQuickAckLength {
 		m.opts.ReadHacks.QuickAck = true
-		msgLength -= abridgedQuickAckLength
+		msgLength -= mtprotoAbridgedQuickAckLength
 	}
 
 	msgLength32 := uint32(msgLength)
-	if msgLength == abridgedSmallPacketLength {
+	if msgLength == mtprotoAbridgedSmallPacketLength {
 		if _, err := io.CopyN(buf, m.conn, 3); err != nil {
 			return nil, errors.Annotate(err, "Cannot read the correct message length")
 		}
@@ -96,19 +96,19 @@ func (m *MTProtoAbridged) Write(p []byte) (int, error) {
 
 	packetLength := len(p) / 4
 	switch {
-	case packetLength < abridgedSmallPacketLength:
+	case packetLength < mtprotoAbridgedSmallPacketLength:
 		newData := append([]byte{byte(packetLength)}, p...)
 
 		m.writeCounter++
 		return m.conn.Write(newData)
 
-	case packetLength < abridgedLargePacketLength:
+	case packetLength < mtprotoAbridgedLargePacketLength:
 		length24 := utils.ToUint24(uint32(packetLength))
 
 		buf := &bytes.Buffer{}
 		buf.Grow(1 + 3 + len(p))
 
-		buf.WriteByte(byte(abridgedSmallPacketLength))
+		buf.WriteByte(byte(mtprotoAbridgedSmallPacketLength))
 		buf.Write(length24[:])
 		buf.Write(p)
 
