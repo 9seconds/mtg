@@ -7,68 +7,68 @@ import (
 	"github.com/juju/errors"
 )
 
-type WrapCtx struct {
+type Ctx struct {
 	cancel context.CancelFunc
 	conn   WrapStreamReadWriteCloser
 	ctx    context.Context
 }
 
-func (w *WrapCtx) Read(p []byte) (int, error) {
+func (c *Ctx) Read(p []byte) (int, error) {
 	select {
-	case <-w.ctx.Done():
-		return 0, errors.Annotate(w.ctx.Err(), "Read is failed because of closed context")
+	case <-c.ctx.Done():
+		return 0, errors.Annotate(c.ctx.Err(), "Read is failed because of closed context")
 	default:
-		n, err := w.conn.Read(p)
+		n, err := c.conn.Read(p)
 		if err != nil {
-			w.cancel()
+			c.cancel()
 		}
 		return n, err
 	}
 }
 
-func (w *WrapCtx) Write(p []byte) (int, error) {
+func (c *Ctx) Write(p []byte) (int, error) {
 	select {
-	case <-w.ctx.Done():
-		return 0, errors.Annotate(w.ctx.Err(), "Write is failed because of closed context")
+	case <-c.ctx.Done():
+		return 0, errors.Annotate(c.ctx.Err(), "Write is failed because of closed context")
 	default:
-		n, err := w.conn.Write(p)
+		n, err := c.conn.Write(p)
 		if err != nil {
-			w.cancel()
+			c.cancel()
 		}
 		return n, err
 	}
 }
 
-func (w *WrapCtx) LogDebug(msg string, data ...interface{}) {
-	w.conn.LogDebug(msg, data...)
+func (c *Ctx) LogDebug(msg string, data ...interface{}) {
+	c.conn.LogDebug(msg, data...)
 }
 
-func (w *WrapCtx) LogInfo(msg string, data ...interface{}) {
-	w.conn.LogInfo(msg, data...)
+func (c *Ctx) LogInfo(msg string, data ...interface{}) {
+	c.conn.LogInfo(msg, data...)
 }
 
-func (w *WrapCtx) LogWarn(msg string, data ...interface{}) {
-	w.conn.LogWarn(msg, data...)
+func (c *Ctx) LogWarn(msg string, data ...interface{}) {
+	c.conn.LogWarn(msg, data...)
 }
 
-func (w *WrapCtx) LogError(msg string, data ...interface{}) {
-	w.conn.LogError(msg, data...)
+func (c *Ctx) LogError(msg string, data ...interface{}) {
+	c.conn.LogError(msg, data...)
 }
 
-func (w *WrapCtx) LocalAddr() *net.TCPAddr {
-	return w.conn.LocalAddr()
+func (c *Ctx) LocalAddr() *net.TCPAddr {
+	return c.conn.LocalAddr()
 }
 
-func (w *WrapCtx) RemoteAddr() *net.TCPAddr {
-	return w.conn.RemoteAddr()
+func (c *Ctx) RemoteAddr() *net.TCPAddr {
+	return c.conn.RemoteAddr()
 }
 
-func (w *WrapCtx) Close() error {
-	return w.conn.Close()
+func (c *Ctx) Close() error {
+	return c.conn.Close()
 }
 
 func NewCtx(ctx context.Context, cancel context.CancelFunc, conn WrapStreamReadWriteCloser) WrapStreamReadWriteCloser {
-	return &WrapCtx{
+	return &Ctx{
 		ctx:    ctx,
 		cancel: cancel,
 		conn:   conn,

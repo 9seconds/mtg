@@ -30,11 +30,14 @@ func (t *tgDialer) dial(addr string) (net.Conn, error) {
 	return conn, nil
 }
 
-func (t *tgDialer) dialRWC(addr, sock string) (wrappers.ReadWriteCloserWithAddr, error) {
+func (t *tgDialer) dialRWC(addr, connID string) (wrappers.WrapStreamReadWriteCloser, error) {
 	conn, err := t.dial(addr)
 	if err != nil {
 		return nil, err
 	}
 
-	return wrappers.NewTimeoutRWC(conn, sock, t.conf.PublicIPv4, t.conf.PublicIPv6), nil
+	tgConn := wrappers.NewConn(conn, connID, wrappers.ConnPurposeTelegram,
+		t.conf.PublicIPv4, t.conf.PublicIPv6)
+
+	return tgConn, nil
 }

@@ -30,8 +30,7 @@ const (
 	connTimeoutWrite = 5 * time.Minute
 )
 
-type WrapConn struct {
-	purpose    ConnPurpose
+type Conn struct {
 	connID     string
 	conn       net.Conn
 	logger     *zap.SugaredLogger
@@ -39,77 +38,80 @@ type WrapConn struct {
 	publicIPv6 net.IP
 }
 
-func (w *WrapConn) Write(p []byte) (int, error) {
-	w.conn.SetWriteDeadline(time.Now().Add(connTimeoutWrite))
-	n, err := w.conn.Write(p)
+func (c *Conn) Write(p []byte) (int, error) {
+	c.conn.SetWriteDeadline(time.Now().Add(connTimeoutWrite))
+	n, err := c.conn.Write(p)
 
-	w.logger.Debugw("Write to stream", "bytes", n, "error", err)
-
-	return n, err
-}
-
-func (w *WrapConn) Read(p []byte) (int, error) {
-	w.conn.SetReadDeadline(time.Now().Add(connTimeoutRead))
-	n, err := w.conn.Read(p)
-
-	w.logger.Debugw("Read from stream", "bytes", n, "error", err)
+	c.logger.Debugw("Write to stream", "bytes", n, "error", err)
 
 	return n, err
 }
 
-func (w *WrapConn) Close() error {
-	defer w.LogDebug("Closed connection")
-	return w.conn.Close()
+func (c *Conn) Read(p []byte) (int, error) {
+	c.conn.SetReadDeadline(time.Now().Add(connTimeoutRead))
+	n, err := c.conn.Read(p)
+
+	c.logger.Debugw("Read from stream", "bytes", n, "error", err)
+
+	return n, err
 }
 
-func (w *WrapConn) LocalAddr() *net.TCPAddr {
-	addr := w.conn.LocalAddr().(*net.TCPAddr)
+func (c *Conn) Close() error {
+	defer c.LogDebug("Closed connection")
+	return c.conn.Close()
+}
+
+func (c *Conn) LocalAddr() *net.TCPAddr {
+	addr := c.conn.LocalAddr().(*net.TCPAddr)
 	newAddr := *addr
 
-	if w.RemoteAddr().IP.To4() != nil {
-		if w.publicIPv4 != nil {
-			newAddr.IP = w.publicIPv4
+	if c.RemoteAddr().IP.To4() != nil {
+		if c.publicIPv4 != nil {
+			newAddr.IP = c.publicIPv4
 		}
-	} else if w.publicIPv6 != nil {
-		newAddr.IP = w.publicIPv6
+	} else if c.publicIPv6 != nil {
+		newAddr.IP = c.publicIPv6
 	}
 
 	return &newAddr
 }
 
-func (w *WrapConn) RemoteAddr() *net.TCPAddr {
-	return w.conn.RemoteAddr().(*net.TCPAddr)
+func (c *Conn) RemoteAddr() *net.TCPAddr {
+	return c.conn.RemoteAddr().(*net.TCPAddr)
 }
 
-func (w *WrapConn) LogDebug(msg string, data ...interface{}) {
-	w.logger.Debugw(msg, data...)
+func (c *Conn) LogDebug(msg string, data ...interface{}) {
+	c.logger.Debugw(msg, data...)
 }
 
-func (w *WrapConn) LogInfo(msg string, data ...interface{}) {
-	w.logger.Infow(msg, data...)
+func (c *Conn) LogInfo(msg string, data ...interface{}) {
+	c.logger.Infow(msg, data...)
 }
 
-func (w *WrapConn) LogWarn(msg string, data ...interface{}) {
-	w.logger.Warnw(msg, data...)
+func (c *Conn) LogWarn(msg string, data ...interface{}) {
+	c.logger.Warnw(msg, data...)
 }
 
-func (w *WrapConn) LogError(msg string, data ...interface{}) {
-	w.logger.Errorw(msg, data...)
+func (c *Conn) LogError(msg string, data ...interface{}) {
+	c.logger.Errorw(msg, data...)
 }
 
-func NewConn(connID string, purpose ConnPurpose, conn net.Conn, publicIPv4, publicIPv6 net.IP) WrapStreamReadWriteCloser {
+func NewConn(conn net.Conn, connID string, purpose ConnPurpose, publicIPv4, publicIPv6 net.IP) WrapStreamReadWriteCloser {
 	logger := zap.S().With(
 		"connection_id", connID,
 		"local_address", conn.LocalAddr(),
 		"remote_address", conn.RemoteAddr(),
+		"purpose", purpose,
 	)
 
-	return &WrapConn{
+	wrapper := Conn{
 		logger:     logger,
-		purpose:    purpose,
 		connID:     connID,
 		conn:       conn,
 		publicIPv4: publicIPv4,
 		publicIPv6: publicIPv6,
 	}
+	wrapper.logger = logger.With("faked_local_addr", wrapper.LocalAddr())
+
+	return &wrapper
 }

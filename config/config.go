@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 	"strconv"
-	"time"
 
 	"github.com/juju/errors"
 )
@@ -14,10 +13,6 @@ import (
 const (
 	BufferWriteSize = 32 * 1024
 	BufferReadSize  = 32 * 1024
-	BufferSizeCopy  = 32 * 1024
-
-	TimeoutRead  = time.Minute
-	TimeoutWrite = time.Minute
 )
 
 // Config represents common configuration of mtg.

@@ -35,11 +35,10 @@ type middleTelegramCaller struct {
 
 	proxySecret []byte
 	dialerMutex *sync.RWMutex
-	logger      *zap.SugaredLogger
 	httpClient  *http.Client
 }
 
-func (t *middleTelegramCaller) Dial(sock string, connOpts *mtproto.ConnectionOpts) (wrappers.ReadWriteCloserWithAddr, error) {
+func (t *middleTelegramCaller) Dial(connID string, connOpts *mtproto.ConnectionOpts) (wrappers.WrapStreamReadWriteCloser, error) {
 	dc := connOpts.DC
 	if dc == 0 {
 		dc = 1
@@ -47,13 +46,13 @@ func (t *middleTelegramCaller) Dial(sock string, connOpts *mtproto.ConnectionOpt
 	t.dialerMutex.RLock()
 	defer t.dialerMutex.RUnlock()
 
-	return t.baseTelegram.dial(dc, sock, connOpts.ConnectionProto)
+	return t.baseTelegram.dial(dc, connID, connOpts.ConnectionProto)
 }
 
 func (t *middleTelegramCaller) autoUpdate() {
 	for range time.Tick(middleTelegramAutoUpdateInterval) {
 		if err := t.update(); err != nil {
-			t.logger.Warnw("Cannot update from Telegram", "error", err)
+			zap.S().Warnw("Cannot update from Telegram", "error", err)
 		}
 	}
 }
@@ -80,7 +79,7 @@ func (t *middleTelegramCaller) update() error {
 	t.v6Addresses = v6Addresses
 	t.dialerMutex.Unlock()
 
-	t.logger.Infow("Telegram middle proxy data has been updated")
+	zap.S().Infow("Telegram middle proxy data has been updated")
 
 	return nil
 }

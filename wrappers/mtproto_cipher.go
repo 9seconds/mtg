@@ -32,7 +32,7 @@ func NewMiddleProxyCipher(conn WrapStreamReadWriteCloser, req *rpc.NonceRequest,
 	enc, _ := makeEncrypterDecrypter(encKey, encIV)
 	_, dec := makeEncrypterDecrypter(decKey, decIV)
 
-	return NewWrapBlockCipher(conn, enc, dec)
+	return NewBlockCipher(conn, enc, dec)
 }
 
 func deriveKeys(purpose CipherPurpose, req *rpc.NonceRequest, resp *rpc.NonceResponse, client *net.TCPAddr, remote *net.TCPAddr, secret []byte) ([]byte, []byte) {

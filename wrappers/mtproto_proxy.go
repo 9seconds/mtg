@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"net"
 
-	"github.com/9seconds/mtg/mtproto/rpc"
 	"github.com/juju/errors"
+
+	"github.com/9seconds/mtg/mtproto"
+	"github.com/9seconds/mtg/mtproto/rpc"
 )
 
 type MTProtoProxy struct {
@@ -127,9 +129,14 @@ func (m *MTProtoProxy) Close() error {
 	return m.conn.Close()
 }
 
-func NewMTProtoProxy(conn WrapPacketReadWriteCloser, req *rpc.ProxyRequest) WrapPacketReadWriteCloser {
+func NewMTProtoProxy(conn WrapPacketReadWriteCloser, connOpts *mtproto.ConnectionOpts, adTag []byte) (WrapPacketReadWriteCloser, error) {
+	req, err := rpc.NewProxyRequest(connOpts.ClientAddr, conn.LocalAddr(), connOpts, adTag)
+	if err != nil {
+		return nil, errors.Annotate(err, "Cannot create new RPC proxy request")
+	}
+
 	return &MTProtoProxy{
 		conn: conn,
 		req:  req,
-	}
+	}, nil
 }

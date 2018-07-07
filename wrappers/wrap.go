@@ -56,6 +56,11 @@ type WrapPacketReader interface {
 	Wrap
 }
 
+type WrapPacketWriter interface {
+	io.Writer
+	Wrap
+}
+
 type WrapPacketReadWriter interface {
 	io.Writer
 	WrapPacketReader

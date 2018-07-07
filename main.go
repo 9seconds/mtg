@@ -111,16 +111,21 @@ func main() {
 		zapcore.NewJSONEncoder(encoderCfg),
 		zapcore.Lock(os.Stderr),
 		atom,
-	)).Sugar()
+	))
+	zap.ReplaceGlobals(logger)
+	defer logger.Sync()
 
-	stat := proxy.NewStats(conf)
-	go stat.Serve()
+	var server *proxy.Proxy
+	if len(conf.AdTag) == 0 {
+		server = proxy.NewProxyDirect(conf)
+	} else {
+		server = proxy.NewProxyMiddle(conf)
+	}
 
-	srv := proxy.NewServer(conf, logger, stat)
 	printURLs(conf.GetURLs())
 
-	if err := srv.Serve(); err != nil {
-		logger.Fatal(err.Error())
+	if err := server.Serve(); err != nil {
+		zap.S().Fatalw("Server stopped", "error", err)
 	}
 }
 

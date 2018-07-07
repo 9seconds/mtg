@@ -1,30 +1,30 @@
 package client
 
 import (
+	"context"
 	"net"
 
 	"github.com/9seconds/mtg/config"
 	"github.com/9seconds/mtg/mtproto"
-	mtwrappers "github.com/9seconds/mtg/mtproto/wrappers"
 	"github.com/9seconds/mtg/wrappers"
 )
 
-func MiddleInit(conn net.Conn, socketID string, conf *config.Config) (wrappers.ReadWriteCloserWithAddr, *mtproto.ConnectionOpts, error) {
-	newConn, opts, err := DirectInit(conn, socketID, conf)
+func MiddleInit(ctx context.Context, cancel context.CancelFunc, socket net.Conn, connID string,
+	conf *config.Config) (wrappers.WrapPacketReadWriteCloser, *mtproto.ConnectionOpts, error) {
+	conn, opts, err := DirectInit(ctx, cancel, socket, connID, conf)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	if opts.ConnectionType == mtproto.ConnectionTypeAbridged {
-		newConn = mtwrappers.NewAbridgedRWC(newConn, opts)
-	} else {
-		newConn = mtwrappers.NewIntermediateRWC(newConn, opts)
+	newConn := wrappers.NewMTProtoAbridged(conn, opts)
+	if opts.ConnectionType != mtproto.ConnectionTypeAbridged {
+		newConn = wrappers.NewMTProtoIntermediate(conn, opts)
 	}
 
 	opts.ConnectionProto = mtproto.ConnectionProtocolIPv4
-	if conn.LocalAddr().(*net.TCPAddr).IP.To4() == nil {
+	if socket.LocalAddr().(*net.TCPAddr).IP.To4() == nil {
 		opts.ConnectionProto = mtproto.ConnectionProtocolIPv6
 	}
 
-	return newConn, opts, nil
+	return newConn, opts, err
 }

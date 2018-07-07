@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"net"
 	"time"
 
@@ -14,28 +15,29 @@ import (
 
 const handshakeTimeout = 10 * time.Second
 
-// DirectInit initializes client to access Telegram bypassing middleproxies.
-func DirectInit(conn net.Conn, socketID string, conf *config.Config) (wrappers.ReadWriteCloserWithAddr, *mtproto.ConnectionOpts, error) {
-	if err := config.SetSocketOptions(conn); err != nil {
+func DirectInit(ctx context.Context, cancel context.CancelFunc, socket net.Conn, connID string,
+	conf *config.Config) (wrappers.WrapStreamReadWriteCloser, *mtproto.ConnectionOpts, error) {
+	if err := config.SetSocketOptions(socket); err != nil {
 		return nil, nil, errors.Annotate(err, "Cannot set socket options")
 	}
 
-	conn.SetReadDeadline(time.Now().Add(handshakeTimeout)) // nolint: errcheck
-	frame, err := obfuscated2.ExtractFrame(conn)
-	conn.SetReadDeadline(time.Time{}) // nolint: errcheck
+	socket.SetReadDeadline(time.Now().Add(handshakeTimeout))
+	frame, err := obfuscated2.ExtractFrame(socket)
 	if err != nil {
 		return nil, nil, errors.Annotate(err, "Cannot extract frame")
 	}
+	socket.SetReadDeadline(time.Time{})
+	conn := wrappers.NewConn(socket, connID, wrappers.ConnPurposeClient, conf.PublicIPv4, conf.PublicIPv6)
 
 	obfs2, connOpts, err := obfuscated2.ParseObfuscated2ClientFrame(conf.Secret, frame)
 	if err != nil {
 		return nil, nil, errors.Annotate(err, "Cannot parse obfuscated frame")
 	}
 	connOpts.ConnectionProto = mtproto.ConnectionProtocolAny
-	connOpts.ClientAddr = conn.RemoteAddr().(*net.TCPAddr)
+	connOpts.ClientAddr = conn.RemoteAddr()
 
-	socket := wrappers.NewTimeoutRWC(conn, socketID, conf.PublicIPv4, conf.PublicIPv6)
-	socket = wrappers.NewStreamCipherRWC(socket, obfs2.Encryptor, obfs2.Decryptor)
+	conn = wrappers.NewCtx(ctx, cancel, conn)
+	conn = wrappers.NewStreamCipher(conn, obfs2.Encryptor, obfs2.Decryptor)
 
-	return socket, connOpts, nil
+	return conn, connOpts, nil
 }
