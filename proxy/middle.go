@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"context"
+	"io"
 	"net"
 	"sync"
 
@@ -20,25 +21,23 @@ func NewProxyMiddle(conf *config.Config) *Proxy {
 	return &Proxy{
 		conf: conf,
 		acceptCallback: func(ctx context.Context, cancel context.CancelFunc, clientSocket net.Conn,
-			connID string, wait *sync.WaitGroup, conf *config.Config) error {
+			connID string, wait *sync.WaitGroup, conf *config.Config) (io.Closer, io.Closer, error) {
 			client, opts, err := client.MiddleInit(ctx, cancel, clientSocket, connID, conf)
 			if err != nil {
-				return errors.Annotate(err, "Cannot initialize client connection")
+				return nil, nil, errors.Annotate(err, "Cannot initialize client connection")
 			}
-			defer client.Close()
 
 			server, err := middleTelegramStream(ctx, cancel, opts, connID, tg)
 			if err != nil {
-				return errors.Annotate(err, "Cannot initialize telegram connection")
+				return client, nil, errors.Annotate(err, "Cannot initialize telegram connection")
 			}
-			defer server.Close()
 
 			wait.Add(2)
 
 			go middlePipe(client, server, wait, &opts.ReadHacks)
 			go middlePipe(server, client, wait, &opts.WriteHacks)
 
-			return nil
+			return client, server, nil
 		},
 	}
 }

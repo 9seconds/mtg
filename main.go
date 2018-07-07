@@ -117,8 +117,10 @@ func main() {
 
 	var server *proxy.Proxy
 	if len(conf.AdTag) == 0 {
+		zap.S().Infow("Use direct connection to Telegram")
 		server = proxy.NewProxyDirect(conf)
 	} else {
+		zap.S().Infow("Use middle proxy connection to Telegram")
 		server = proxy.NewProxyMiddle(conf)
 	}
 

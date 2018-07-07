@@ -9,7 +9,6 @@ import (
 	"github.com/juju/errors"
 
 	"github.com/9seconds/mtg/mtproto"
-	"github.com/9seconds/mtg/utils"
 )
 
 // [frameOffsetFirst:frameOffsetKey:frameOffsetIV:frameOffsetMagic:frameOffsetDC:frameOffsetEnd]
@@ -68,7 +67,14 @@ func (f Frame) ConnectionType() (mtproto.ConnectionType, error) {
 // Invert inverts frame for extracting encryption keys. Pkease check that link:
 // https://blog.susanka.eu/how-telegram-obfuscates-its-mtproto-traffic/
 func (f Frame) Invert() Frame {
-	return Frame(utils.ReverseBytes([]byte(f)))
+	reversed := make(Frame, FrameLen)
+	copy(reversed, f)
+
+	for i := 0; i < frameLenKey+frameLenIV; i++ {
+		reversed[frameOffsetFirst+i] = f[frameOffsetIV-1-i]
+	}
+
+	return reversed
 }
 
 // ExtractFrame extracts exact obfuscated2 handshake frame from given reader.

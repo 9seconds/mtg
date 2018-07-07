@@ -36,8 +36,8 @@ func DirectInit(ctx context.Context, cancel context.CancelFunc, socket net.Conn,
 	connOpts.ConnectionProto = mtproto.ConnectionProtocolAny
 	connOpts.ClientAddr = conn.RemoteAddr()
 
-	conn = wrappers.NewCtx(ctx, cancel, conn)
 	conn = wrappers.NewStreamCipher(conn, obfs2.Encryptor, obfs2.Decryptor)
+	conn = wrappers.NewCtx(ctx, cancel, conn)
 
 	return conn, connOpts, nil
 }

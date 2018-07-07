@@ -21,25 +21,23 @@ func NewProxyDirect(conf *config.Config) *Proxy {
 	return &Proxy{
 		conf: conf,
 		acceptCallback: func(ctx context.Context, cancel context.CancelFunc, clientSocket net.Conn,
-			connID string, wait *sync.WaitGroup, conf *config.Config) error {
+			connID string, wait *sync.WaitGroup, conf *config.Config) (io.Closer, io.Closer, error) {
 			client, opts, err := client.DirectInit(ctx, cancel, clientSocket, connID, conf)
 			if err != nil {
-				return errors.Annotate(err, "Cannot initialize client connection")
+				return nil, nil, errors.Annotate(err, "Cannot initialize client connection")
 			}
-			defer client.Close()
 
 			server, err := directTelegramStream(ctx, cancel, opts, connID, tg)
 			if err != nil {
-				return errors.Annotate(err, "Cannot initialize telegram connection")
+				return client, nil, errors.Annotate(err, "Cannot initialize telegram connection")
 			}
-			defer server.Close()
 
 			wait.Add(2)
 
 			go directPipe(client, server, wait)
 			go directPipe(server, client, wait)
 
-			return nil
+			return client, server, nil
 		},
 	}
 }

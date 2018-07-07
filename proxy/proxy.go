@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"context"
+	"io"
 	"net"
 	"sync"
 
@@ -12,7 +13,7 @@ import (
 	"github.com/9seconds/mtg/config"
 )
 
-type proxyAcceptCallback func(context.Context, context.CancelFunc, net.Conn, string, *sync.WaitGroup, *config.Config) error
+type proxyAcceptCallback func(context.Context, context.CancelFunc, net.Conn, string, *sync.WaitGroup, *config.Config) (io.Closer, io.Closer, error)
 
 type Proxy struct {
 	conf           *config.Config
@@ -51,7 +52,16 @@ func (p *Proxy) accept(conn net.Conn) {
 	ctx, cancel := context.WithCancel(context.Background())
 	wait := &sync.WaitGroup{}
 
-	if err := p.acceptCallback(ctx, cancel, conn, connID, wait, p.conf); err != nil {
+	client, server, err := p.acceptCallback(ctx, cancel, conn, connID, wait, p.conf)
+	defer func() {
+		if client != nil {
+			client.Close()
+		}
+		if server != nil {
+			server.Close()
+		}
+	}()
+	if err != nil {
 		log.Errorw("Cannot initialize connection", "error", err)
 		cancel()
 	}
