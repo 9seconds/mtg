@@ -26,9 +26,9 @@ type MTProtoAbridged struct {
 }
 
 func (m *MTProtoAbridged) Read() ([]byte, error) {
-	m.LogDebug("Read abridged packet",
-		"simple_ack", m.opts.WriteHacks.SimpleAck,
-		"quick_ack", m.opts.WriteHacks.QuickAck,
+	m.LogDebug("Read packet",
+		"simple_ack", m.opts.ReadHacks.SimpleAck,
+		"quick_ack", m.opts.ReadHacks.QuickAck,
 		"counter", m.readCounter,
 	)
 
@@ -41,9 +41,11 @@ func (m *MTProtoAbridged) Read() ([]byte, error) {
 	msgLength := uint8(buf.Bytes()[0])
 	buf.Reset()
 
-	m.LogDebug("Abridged packet first byte",
+	m.LogDebug("Packet first byte",
 		"byte", msgLength,
 		"counter", m.readCounter,
+		"simple_ack", m.opts.ReadHacks.SimpleAck,
+		"quick_ack", m.opts.ReadHacks.QuickAck,
 	)
 
 	if msgLength >= mtprotoAbridgedQuickAckLength {
@@ -62,8 +64,10 @@ func (m *MTProtoAbridged) Read() ([]byte, error) {
 	}
 	msgLength32 *= 4
 
-	m.LogDebug("Abridged packet length",
+	m.LogDebug("Packet length",
 		"length", msgLength32,
+		"simple_ack", m.opts.ReadHacks.SimpleAck,
+		"quick_ack", m.opts.ReadHacks.QuickAck,
 		"counter", m.readCounter,
 	)
 
@@ -79,7 +83,7 @@ func (m *MTProtoAbridged) Read() ([]byte, error) {
 }
 
 func (m *MTProtoAbridged) Write(p []byte) (int, error) {
-	m.LogDebug("Write abridged packet",
+	m.LogDebug("Write packet",
 		"length", len(p),
 		"simple_ack", m.opts.WriteHacks.SimpleAck,
 		"quick_ack", m.opts.WriteHacks.QuickAck,
@@ -91,6 +95,7 @@ func (m *MTProtoAbridged) Write(p []byte) (int, error) {
 	}
 
 	if m.opts.WriteHacks.SimpleAck {
+		m.writeCounter++
 		return m.conn.Write(utils.ReverseBytes(p))
 	}
 
@@ -120,18 +125,22 @@ func (m *MTProtoAbridged) Write(p []byte) (int, error) {
 }
 
 func (m *MTProtoAbridged) LogDebug(msg string, data ...interface{}) {
+	data = append(data, []interface{}{"type", "abridged"})
 	m.conn.LogDebug(msg, data...)
 }
 
 func (m *MTProtoAbridged) LogInfo(msg string, data ...interface{}) {
+	data = append(data, []interface{}{"type", "abridged"})
 	m.conn.LogInfo(msg, data...)
 }
 
 func (m *MTProtoAbridged) LogWarn(msg string, data ...interface{}) {
+	data = append(data, []interface{}{"type", "abridged"})
 	m.conn.LogWarn(msg, data...)
 }
 
 func (m *MTProtoAbridged) LogError(msg string, data ...interface{}) {
+	data = append(data, []interface{}{"type", "abridged"})
 	m.conn.LogError(msg, data...)
 }
 
