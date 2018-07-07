@@ -2,7 +2,7 @@ package utils
 
 import "io"
 
-const readCurrentDataBufferSize = 1024 + 1
+const readCurrentDataBufferSize = 1024 + 1 // + 1 because telegram operates with blocks mod 4
 
 func ReadCurrentData(src io.Reader) (rv []byte, err error) {
 	buf := make([]byte, readCurrentDataBufferSize)

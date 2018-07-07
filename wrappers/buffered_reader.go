@@ -1,18 +1,10 @@
 package wrappers
 
-import (
-	"bytes"
-
-	"github.com/juju/errors"
-)
+import "bytes"
 
 type BufferedReader struct {
 	Buffer *bytes.Buffer
 }
-
-var (
-	BufferedReaderContinue = errors.New("Please continue reading")
-)
 
 func (b *BufferedReader) BufferedRead(p []byte, callback func() error) (int, error) {
 	if b.Buffer.Len() > 0 {
