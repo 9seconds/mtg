@@ -24,6 +24,10 @@ type MTProtoIntermediate struct {
 }
 
 func (m *MTProtoIntermediate) Read() ([]byte, error) {
+	defer func() {
+		m.readCounter++
+	}()
+
 	m.logger.Debugw("Read packet",
 		"simple_ack", m.opts.ReadHacks.SimpleAck,
 		"quick_ack", m.opts.ReadHacks.QuickAck,
@@ -59,18 +63,20 @@ func (m *MTProtoIntermediate) Read() ([]byte, error) {
 	if length%4 != 0 {
 		length -= length % 4
 	}
-	m.readCounter++
 
 	return buf.Bytes()[:length], nil
 }
 
 func (m *MTProtoIntermediate) Write(p []byte) (int, error) {
+	defer func() {
+		m.writeCounter++
+	}()
+
 	m.logger.Debugw("Write packet",
 		"simple_ack", m.opts.WriteHacks.SimpleAck,
 		"quick_ack", m.opts.WriteHacks.QuickAck,
 		"counter", m.writeCounter,
 	)
-	m.writeCounter++
 
 	if m.opts.ReadHacks.SimpleAck {
 		return m.conn.Write(p)

@@ -28,6 +28,10 @@ type MTProtoAbridged struct {
 }
 
 func (m *MTProtoAbridged) Read() ([]byte, error) {
+	defer func() {
+		m.readCounter++
+	}()
+
 	m.logger.Debugw("Read packet",
 		"simple_ack", m.opts.ReadHacks.SimpleAck,
 		"quick_ack", m.opts.ReadHacks.QuickAck,
@@ -75,16 +79,18 @@ func (m *MTProtoAbridged) Read() ([]byte, error) {
 
 	buf.Reset()
 	buf.Grow(int(msgLength32))
-
 	if _, err := io.CopyN(buf, m.conn, int64(msgLength32)); err != nil {
 		return nil, errors.Annotate(err, "Cannot read message")
 	}
-	m.readCounter++
 
 	return buf.Bytes(), nil
 }
 
 func (m *MTProtoAbridged) Write(p []byte) (int, error) {
+	defer func() {
+		m.writeCounter++
+	}()
+
 	m.logger.Debugw("Write packet",
 		"length", len(p),
 		"simple_ack", m.opts.WriteHacks.SimpleAck,
@@ -97,7 +103,6 @@ func (m *MTProtoAbridged) Write(p []byte) (int, error) {
 	}
 
 	if m.opts.WriteHacks.SimpleAck {
-		m.writeCounter++
 		return m.conn.Write(utils.ReverseBytes(p))
 	}
 
@@ -105,8 +110,6 @@ func (m *MTProtoAbridged) Write(p []byte) (int, error) {
 	switch {
 	case packetLength < mtprotoAbridgedSmallPacketLength:
 		newData := append([]byte{byte(packetLength)}, p...)
-
-		m.writeCounter++
 		return m.conn.Write(newData)
 
 	case packetLength < mtprotoAbridgedLargePacketLength:
@@ -119,7 +122,6 @@ func (m *MTProtoAbridged) Write(p []byte) (int, error) {
 		buf.Write(length24[:])
 		buf.Write(p)
 
-		m.writeCounter++
 		return m.conn.Write(buf.Bytes())
 	}
 

@@ -22,6 +22,10 @@ type MTProtoProxy struct {
 }
 
 func (m *MTProtoProxy) Read() ([]byte, error) {
+	defer func() {
+		m.readCounter++
+	}()
+
 	m.logger.Debugw("Read packet",
 		"counter", m.readCounter,
 		"simple_ack", m.req.Options.WriteHacks.SimpleAck,
@@ -32,9 +36,6 @@ func (m *MTProtoProxy) Read() ([]byte, error) {
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot read packet")
 	}
-	defer func() {
-		m.readCounter++
-	}()
 
 	m.logger.Debugw("Read packet length",
 		"counter", m.readCounter,
@@ -95,13 +96,16 @@ func (m *MTProtoProxy) readCloseExt(data []byte) ([]byte, error) {
 }
 
 func (m *MTProtoProxy) Write(p []byte) (int, error) {
+	defer func() {
+		m.writeCounter++
+	}()
+
 	m.logger.Debugw("Write packet",
 		"length", len(p),
 		"counter", m.writeCounter,
 		"simple_ack", m.req.Options.ReadHacks.SimpleAck,
 		"quick_ack", m.req.Options.ReadHacks.QuickAck,
 	)
-	m.writeCounter++
 
 	header := m.req.MakeHeader(p)
 	if ce := m.logger.Desugar().Check(zap.DebugLevel, "RPC_PROXY_REQ header"); ce != nil {
