@@ -20,7 +20,7 @@ const (
 var mtprotoFramePadding = []byte{0x04, 0x00, 0x00, 0x00}
 
 type MTProtoFrame struct {
-	conn       WrapStreamReadWriteCloser
+	conn       StreamReadWriteCloser
 	readSeqNo  int32
 	writeSeqNo int32
 }
@@ -142,7 +142,7 @@ func (m *MTProtoFrame) Close() error {
 	return m.conn.Close()
 }
 
-func NewMTProtoFrame(conn WrapStreamReadWriteCloser, seqNo int32) WrapPacketReadWriteCloser {
+func NewMTProtoFrame(conn StreamReadWriteCloser, seqNo int32) PacketReadWriteCloser {
 	return &MTProtoFrame{
 		conn:       conn,
 		readSeqNo:  seqNo,

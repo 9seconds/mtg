@@ -13,7 +13,7 @@ import (
 const mtprotoIntermediateQuickAckLength = 0x80000000
 
 type MTProtoIntermediate struct {
-	conn WrapStreamReadWriteCloser
+	conn StreamReadWriteCloser
 	opts *mtproto.ConnectionOpts
 
 	readCounter  uint32
@@ -111,7 +111,7 @@ func (m *MTProtoIntermediate) Close() error {
 	return m.conn.Close()
 }
 
-func NewMTProtoIntermediate(conn WrapStreamReadWriteCloser, opts *mtproto.ConnectionOpts) WrapPacketReadWriteCloser {
+func NewMTProtoIntermediate(conn StreamReadWriteCloser, opts *mtproto.ConnectionOpts) PacketReadWriteCloser {
 	return &MTProtoIntermediate{
 		conn: conn,
 		opts: opts,

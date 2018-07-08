@@ -11,7 +11,7 @@ import (
 )
 
 type MTProtoProxy struct {
-	conn WrapPacketReadWriteCloser
+	conn PacketReadWriteCloser
 	req  *rpc.ProxyRequest
 
 	readCounter  uint32
@@ -129,7 +129,7 @@ func (m *MTProtoProxy) Close() error {
 	return m.conn.Close()
 }
 
-func NewMTProtoProxy(conn WrapPacketReadWriteCloser, connOpts *mtproto.ConnectionOpts, adTag []byte) (WrapPacketReadWriteCloser, error) {
+func NewMTProtoProxy(conn PacketReadWriteCloser, connOpts *mtproto.ConnectionOpts, adTag []byte) (PacketReadWriteCloser, error) {
 	req, err := rpc.NewProxyRequest(connOpts.ClientAddr, conn.LocalAddr(), connOpts, adTag)
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot create new RPC proxy request")

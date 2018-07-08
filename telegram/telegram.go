@@ -10,8 +10,8 @@ import (
 )
 
 type Telegram interface {
-	Dial(string, *mtproto.ConnectionOpts) (wrappers.WrapStreamReadWriteCloser, error)
-	Init(*mtproto.ConnectionOpts, wrappers.WrapStreamReadWriteCloser) (wrappers.Wrap, error)
+	Dial(string, *mtproto.ConnectionOpts) (wrappers.StreamReadWriteCloser, error)
+	Init(*mtproto.ConnectionOpts, wrappers.StreamReadWriteCloser) (wrappers.Wrap, error)
 }
 
 type baseTelegram struct {
@@ -21,7 +21,7 @@ type baseTelegram struct {
 	v6Addresses map[int16][]string
 }
 
-func (b *baseTelegram) dial(dcIdx int16, connID string, proto mtproto.ConnectionProtocol) (wrappers.WrapStreamReadWriteCloser, error) {
+func (b *baseTelegram) dial(dcIdx int16, connID string, proto mtproto.ConnectionProtocol) (wrappers.StreamReadWriteCloser, error) {
 	addrs := make([]string, 2)
 
 	if proto&mtproto.ConnectionProtocolIPv6 != 0 {

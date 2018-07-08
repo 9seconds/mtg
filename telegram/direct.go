@@ -32,7 +32,7 @@ type DirectTelegram struct {
 	baseTelegram
 }
 
-func (t *DirectTelegram) Dial(connID string, connOpts *mtproto.ConnectionOpts) (wrappers.WrapStreamReadWriteCloser, error) {
+func (t *DirectTelegram) Dial(connID string, connOpts *mtproto.ConnectionOpts) (wrappers.StreamReadWriteCloser, error) {
 	dc := connOpts.DC
 	if dc < 0 {
 		dc = -dc
@@ -43,7 +43,7 @@ func (t *DirectTelegram) Dial(connID string, connOpts *mtproto.ConnectionOpts) (
 	return t.baseTelegram.dial(dc-1, connID, connOpts.ConnectionProto)
 }
 
-func (t *DirectTelegram) Init(connOpts *mtproto.ConnectionOpts, conn wrappers.WrapStreamReadWriteCloser) (wrappers.Wrap, error) {
+func (t *DirectTelegram) Init(connOpts *mtproto.ConnectionOpts, conn wrappers.StreamReadWriteCloser) (wrappers.Wrap, error) {
 	obfs2, frame := obfuscated2.MakeTelegramObfuscated2Frame(connOpts)
 
 	if _, err := conn.Write(frame); err != nil {

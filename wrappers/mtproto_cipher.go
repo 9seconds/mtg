@@ -22,7 +22,7 @@ const (
 
 var emptyIP = [4]byte{0x00, 0x00, 0x00, 0x00}
 
-func NewMiddleProxyCipher(conn WrapStreamReadWriteCloser, req *rpc.NonceRequest, resp *rpc.NonceResponse, secret []byte) WrapStreamReadWriteCloser {
+func NewMiddleProxyCipher(conn StreamReadWriteCloser, req *rpc.NonceRequest, resp *rpc.NonceResponse, secret []byte) StreamReadWriteCloser {
 	localAddr := conn.LocalAddr()
 	remoteAddr := conn.RemoteAddr()
 

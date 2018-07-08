@@ -58,26 +58,26 @@ func (p *Proxy) accept(conn net.Conn) {
 		log.Errorw("Cannot initialize client connection", "error", err)
 		return
 	}
-	defer client.(wrappers.WrapCloser).Close()
+	defer client.(io.Closer).Close()
 
 	server, err := p.getTelegramConn(ctx, cancel, opts, connID)
 	if err != nil {
 		log.Errorw("Cannot initialize server connection", "error", err)
 		return
 	}
-	defer server.(wrappers.WrapCloser).Close()
+	defer server.(io.Closer).Close()
 
 	wait := &sync.WaitGroup{}
 	wait.Add(2)
 
 	if p.conf.UseMiddleProxy() {
-		clientPacket := client.(wrappers.WrapPacketReadWriteCloser)
-		serverPacket := server.(wrappers.WrapPacketReadWriteCloser)
+		clientPacket := client.(wrappers.PacketReadWriteCloser)
+		serverPacket := server.(wrappers.PacketReadWriteCloser)
 		go p.middlePipe(clientPacket, serverPacket, wait, &opts.ReadHacks)
 		go p.middlePipe(serverPacket, clientPacket, wait, &opts.WriteHacks)
 	} else {
-		clientStream := client.(wrappers.WrapStreamReadWriteCloser)
-		serverStream := server.(wrappers.WrapStreamReadWriteCloser)
+		clientStream := client.(wrappers.StreamReadWriteCloser)
+		serverStream := server.(wrappers.StreamReadWriteCloser)
 		go p.directPipe(clientStream, serverStream, wait)
 		go p.directPipe(serverStream, clientStream, wait)
 	}
@@ -104,9 +104,8 @@ func (p *Proxy) getTelegramConn(ctx context.Context, cancel context.CancelFunc, 
 	return packetConn, nil
 }
 
-func (p *Proxy) middlePipe(src wrappers.WrapPacketReader, dst wrappers.WrapPacketWriter, wait *sync.WaitGroup, hacks *mtproto.Hacks) {
+func (p *Proxy) middlePipe(src wrappers.PacketReader, dst wrappers.PacketWriter, wait *sync.WaitGroup, hacks *mtproto.Hacks) {
 	defer wait.Done()
-
 	for {
 		hacks.SimpleAck = false
 		hacks.QuickAck = false

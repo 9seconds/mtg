@@ -96,7 +96,7 @@ func (c *Conn) LogError(msg string, data ...interface{}) {
 	c.logger.Errorw(msg, data...)
 }
 
-func NewConn(conn net.Conn, connID string, purpose ConnPurpose, publicIPv4, publicIPv6 net.IP) WrapStreamReadWriteCloser {
+func NewConn(conn net.Conn, connID string, purpose ConnPurpose, publicIPv4, publicIPv6 net.IP) StreamReadWriteCloser {
 	logger := zap.S().With(
 		"connection_id", connID,
 		"local_address", conn.LocalAddr(),

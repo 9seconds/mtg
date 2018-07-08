@@ -15,7 +15,7 @@ func MiddleInit(ctx context.Context, cancel context.CancelFunc, socket net.Conn,
 	if err != nil {
 		return nil, nil, err
 	}
-	connStream := conn.(wrappers.WrapStreamReadWriteCloser)
+	connStream := conn.(wrappers.StreamReadWriteCloser)
 
 	newConn := wrappers.NewMTProtoAbridged(connStream, opts)
 	if opts.ConnectionType != mtproto.ConnectionTypeAbridged {

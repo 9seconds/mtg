@@ -18,7 +18,7 @@ const (
 )
 
 type MTProtoAbridged struct {
-	conn WrapStreamReadWriteCloser
+	conn StreamReadWriteCloser
 	opts *mtproto.ConnectionOpts
 
 	readCounter  uint32
@@ -156,7 +156,7 @@ func (m *MTProtoAbridged) Close() error {
 	return m.conn.Close()
 }
 
-func NewMTProtoAbridged(conn WrapStreamReadWriteCloser, opts *mtproto.ConnectionOpts) WrapPacketReadWriteCloser {
+func NewMTProtoAbridged(conn StreamReadWriteCloser, opts *mtproto.ConnectionOpts) PacketReadWriteCloser {
 	return &MTProtoAbridged{
 		conn: conn,
 		opts: opts,

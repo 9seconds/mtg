@@ -15,74 +15,74 @@ type Wrap interface {
 	RemoteAddr() *net.TCPAddr
 }
 
-type WrapWriter interface {
+type Writer interface {
 	io.Writer
 	Wrap
 }
 
-type WrapCloser interface {
+type Closer interface {
 	io.Closer
 	Wrap
 }
 
-type WrapWriteCloser interface {
+type WriteCloser interface {
 	io.Closer
-	WrapWriter
+	Writer
 }
 
-type WrapStreamReader interface {
+type StreamReader interface {
 	io.Reader
 	Wrap
 }
 
-type WrapStreamReadCloser interface {
+type StreamReadCloser interface {
 	io.Closer
-	WrapStreamReader
+	StreamReader
 }
 
-type WrapStreamReadWriter interface {
+type StreamReadWriter interface {
 	io.Writer
-	WrapStreamReader
+	StreamReader
 }
 
-type WrapStreamWriteCloser interface {
+type StreamWriteCloser interface {
 	io.Closer
 	io.Writer
 	Wrap
 }
 
-type WrapStreamReadWriteCloser interface {
+type StreamReadWriteCloser interface {
 	io.Closer
-	WrapStreamReadWriter
+	StreamReadWriter
 }
 
-type WrapPacketReader interface {
+type PacketReader interface {
 	Read() ([]byte, error)
 	Wrap
 }
 
-type WrapPacketWriter interface {
+type PacketWriter interface {
 	io.Writer
 	Wrap
 }
 
-type WrapPacketReadWriter interface {
+type PacketReadWriter interface {
 	io.Writer
-	WrapPacketReader
+	PacketReader
 }
 
-type WrapBlockReadCloser interface {
+type BlockReadCloser interface {
 	io.Closer
-	WrapPacketReader
+	PacketReader
 }
 
-type WrapPacketWriteCloser interface {
+type PacketWriteCloser interface {
 	io.Writer
 	io.Closer
 	Wrap
 }
 
-type WrapPacketReadWriteCloser interface {
+type PacketReadWriteCloser interface {
 	io.Closer
-	WrapPacketReadWriter
+	PacketReadWriter
 }

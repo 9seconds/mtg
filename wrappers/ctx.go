@@ -9,7 +9,7 @@ import (
 
 type Ctx struct {
 	cancel context.CancelFunc
-	conn   WrapStreamReadWriteCloser
+	conn   StreamReadWriteCloser
 	ctx    context.Context
 }
 
@@ -67,7 +67,7 @@ func (c *Ctx) Close() error {
 	return c.conn.Close()
 }
 
-func NewCtx(ctx context.Context, cancel context.CancelFunc, conn WrapStreamReadWriteCloser) WrapStreamReadWriteCloser {
+func NewCtx(ctx context.Context, cancel context.CancelFunc, conn StreamReadWriteCloser) StreamReadWriteCloser {
 	return &Ctx{
 		ctx:    ctx,
 		cancel: cancel,

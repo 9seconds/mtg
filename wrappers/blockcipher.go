@@ -13,7 +13,7 @@ import (
 type BlockCipher struct {
 	buf *bytes.Buffer
 
-	conn      WrapStreamReadWriteCloser
+	conn      StreamReadWriteCloser
 	encryptor cipher.BlockMode
 	decryptor cipher.BlockMode
 }
@@ -88,7 +88,7 @@ func (b *BlockCipher) Close() error {
 	return b.conn.Close()
 }
 
-func NewBlockCipher(conn WrapStreamReadWriteCloser, encryptor, decryptor cipher.BlockMode) WrapStreamReadWriteCloser {
+func NewBlockCipher(conn StreamReadWriteCloser, encryptor, decryptor cipher.BlockMode) StreamReadWriteCloser {
 	return &BlockCipher{
 		buf:       &bytes.Buffer{},
 		conn:      conn,

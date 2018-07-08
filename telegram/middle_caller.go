@@ -28,7 +28,7 @@ const (
 	tgUserAgent       = "mtg"
 )
 
-var middleTelegramProxyConfigSplitter *regexp.Regexp
+var middleTelegramProxyConfigSplitter = regexp.MustCompile(`\s+`)
 
 type middleTelegramCaller struct {
 	baseTelegram
@@ -38,7 +38,7 @@ type middleTelegramCaller struct {
 	httpClient  *http.Client
 }
 
-func (t *middleTelegramCaller) Dial(connID string, connOpts *mtproto.ConnectionOpts) (wrappers.WrapStreamReadWriteCloser, error) {
+func (t *middleTelegramCaller) Dial(connID string, connOpts *mtproto.ConnectionOpts) (wrappers.StreamReadWriteCloser, error) {
 	dc := connOpts.DC
 	if dc == 0 {
 		dc = 1
@@ -149,8 +149,4 @@ func (t *middleTelegramCaller) call(url string) (*http.Response, error) {
 	req.Header.Set("User-Agent", tgUserAgent)
 
 	return t.httpClient.Do(req)
-}
-
-func init() {
-	middleTelegramProxyConfigSplitter = regexp.MustCompile(`\s+`)
 }

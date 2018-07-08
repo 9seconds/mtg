@@ -10,7 +10,7 @@ import (
 type StreamCipher struct {
 	encryptor cipher.Stream
 	decryptor cipher.Stream
-	conn      WrapStreamReadWriteCloser
+	conn      StreamReadWriteCloser
 }
 
 func (s *StreamCipher) Read(p []byte) (int, error) {
@@ -58,7 +58,7 @@ func (s *StreamCipher) Close() error {
 	return s.conn.Close()
 }
 
-func NewStreamCipher(conn WrapStreamReadWriteCloser, encryptor, decryptor cipher.Stream) WrapStreamReadWriteCloser {
+func NewStreamCipher(conn StreamReadWriteCloser, encryptor, decryptor cipher.Stream) StreamReadWriteCloser {
 	return &StreamCipher{
 		conn:      conn,
 		encryptor: encryptor,
