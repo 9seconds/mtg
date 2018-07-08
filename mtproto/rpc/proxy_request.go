@@ -33,7 +33,7 @@ func (r *ProxyRequest) MakeHeader(message []byte) *bytes.Buffer {
 	bufferLength += bufferLength % 4
 
 	buf := &bytes.Buffer{}
-	buf.Grow(bufferLength)
+	buf.Grow(bufferLength + len(message))
 
 	flags := r.Flags
 	if r.Options.ReadHacks.QuickAck {
