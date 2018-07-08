@@ -32,6 +32,10 @@ func (m *MTProtoProxy) Read() ([]byte, error) {
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot read packet")
 	}
+	defer func() {
+		m.readCounter++
+	}()
+
 	m.logger.Debugw("Read packet length",
 		"counter", m.readCounter,
 		"simple_ack", m.req.Options.WriteHacks.SimpleAck,
@@ -44,14 +48,6 @@ func (m *MTProtoProxy) Read() ([]byte, error) {
 	}
 
 	tag, packet := packet[:4], packet[4:]
-	m.logger.Debugw("Read RPC tag",
-		"counter", m.readCounter,
-		"simple_ack", m.req.Options.WriteHacks.SimpleAck,
-		"quick_ack", m.req.Options.WriteHacks.QuickAck,
-		"tag", tag,
-	)
-
-	m.readCounter++
 	switch {
 	case bytes.Equal(tag, rpc.TagProxyAns):
 		return m.readProxyAns(packet)
@@ -70,7 +66,10 @@ func (m *MTProtoProxy) readProxyAns(data []byte) ([]byte, error) {
 	}
 	data = data[12:]
 
-	m.logger.Debugw("Read RPC_PROXY_ANS", "length", len(data))
+	m.logger.Debugw("Read RPC_PROXY_ANS",
+		"counter", m.readCounter,
+		"length", len(data),
+	)
 
 	return data, nil
 }
@@ -81,13 +80,16 @@ func (m *MTProtoProxy) readSimpleAck(data []byte) ([]byte, error) {
 	}
 	data = data[8:12]
 
-	m.logger.Debugw("Read RPC_SIMPLE_ACK", "length", len(data))
+	m.logger.Debugw("Read RPC_SIMPLE_ACK",
+		"counter", m.readCounter,
+		"length", len(data),
+	)
 
 	return data, nil
 }
 
 func (m *MTProtoProxy) readCloseExt(data []byte) ([]byte, error) {
-	m.logger.Debugw("Read RPC_CLOSE_EXT")
+	m.logger.Debugw("Read RPC_CLOSE_EXT", "counter", m.readCounter)
 
 	return nil, errors.New("Connection has been closed remotely by RPC call")
 }

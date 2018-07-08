@@ -7,6 +7,7 @@ type HandshakeRequest struct {
 
 func (r *HandshakeRequest) Bytes() []byte {
 	buf := &bytes.Buffer{}
+	buf.Grow(len(TagHandshake) + len(HandshakeFlags) + len(HandshakeSenderPID) + len(HandshakePeerPID))
 
 	buf.Write(TagHandshake)
 	buf.Write(HandshakeFlags)
