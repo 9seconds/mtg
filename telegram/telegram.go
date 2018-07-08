@@ -9,6 +9,11 @@ import (
 	"github.com/9seconds/mtg/wrappers"
 )
 
+type Telegram interface {
+	Dial(string, *mtproto.ConnectionOpts) (wrappers.WrapStreamReadWriteCloser, error)
+	Init(*mtproto.ConnectionOpts, wrappers.WrapStreamReadWriteCloser) (wrappers.Wrap, error)
+}
+
 type baseTelegram struct {
 	dialer tgDialer
 

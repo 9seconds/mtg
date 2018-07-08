@@ -16,7 +16,7 @@ import (
 const handshakeTimeout = 10 * time.Second
 
 func DirectInit(ctx context.Context, cancel context.CancelFunc, socket net.Conn, connID string,
-	conf *config.Config) (wrappers.WrapStreamReadWriteCloser, *mtproto.ConnectionOpts, error) {
+	conf *config.Config) (wrappers.Wrap, *mtproto.ConnectionOpts, error) {
 	if err := config.SetSocketOptions(socket); err != nil {
 		return nil, nil, errors.Annotate(err, "Cannot set socket options")
 	}

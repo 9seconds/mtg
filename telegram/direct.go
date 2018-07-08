@@ -43,7 +43,7 @@ func (t *DirectTelegram) Dial(connID string, connOpts *mtproto.ConnectionOpts) (
 	return t.baseTelegram.dial(dc-1, connID, connOpts.ConnectionProto)
 }
 
-func (t *DirectTelegram) Init(connOpts *mtproto.ConnectionOpts, conn wrappers.WrapStreamReadWriteCloser) (wrappers.WrapStreamReadWriteCloser, error) {
+func (t *DirectTelegram) Init(connOpts *mtproto.ConnectionOpts, conn wrappers.WrapStreamReadWriteCloser) (wrappers.Wrap, error) {
 	obfs2, frame := obfuscated2.MakeTelegramObfuscated2Frame(connOpts)
 
 	if _, err := conn.Write(frame); err != nil {
@@ -55,7 +55,7 @@ func (t *DirectTelegram) Init(connOpts *mtproto.ConnectionOpts, conn wrappers.Wr
 
 // NewDirectTelegram returns Telegram instance which connects directly
 // to Telegram bypassing middleproxies.
-func NewDirectTelegram(conf *config.Config) *DirectTelegram {
+func NewDirectTelegram(conf *config.Config) Telegram {
 	return &DirectTelegram{baseTelegram{
 		dialer: tgDialer{
 			Dialer: net.Dialer{Timeout: telegramDialTimeout},

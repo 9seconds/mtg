@@ -58,6 +58,10 @@ func (c *Config) StatAddr() string {
 	return getAddr(c.StatsIP, c.StatsPort)
 }
 
+func (c *Config) UseMiddleProxy() bool {
+	return len(c.AdTag) > 0
+}
+
 // GetURLs returns configured IPURLs instance with links to this server.
 func (c *Config) GetURLs() IPURLs {
 	urls := IPURLs{}

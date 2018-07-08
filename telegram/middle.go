@@ -19,32 +19,7 @@ type MiddleTelegram struct {
 	conf *config.Config
 }
 
-func NewMiddleTelegram(conf *config.Config) *MiddleTelegram {
-	tg := &MiddleTelegram{
-		middleTelegramCaller: middleTelegramCaller{
-			baseTelegram: baseTelegram{
-				dialer: tgDialer{
-					Dialer: net.Dialer{Timeout: telegramDialTimeout},
-					conf:   conf,
-				},
-			},
-			httpClient: &http.Client{
-				Timeout: middleTelegramHTTPClientTimeout,
-			},
-			dialerMutex: &sync.RWMutex{},
-		},
-		conf: conf,
-	}
-
-	if err := tg.update(); err != nil {
-		panic(err)
-	}
-	go tg.autoUpdate()
-
-	return tg
-}
-
-func (t *MiddleTelegram) Init(connOpts *mtproto.ConnectionOpts, conn wrappers.WrapStreamReadWriteCloser) (wrappers.WrapPacketReadWriteCloser, error) {
+func (t *MiddleTelegram) Init(connOpts *mtproto.ConnectionOpts, conn wrappers.WrapStreamReadWriteCloser) (wrappers.Wrap, error) {
 	rpcNonceConn := wrappers.NewMTProtoFrame(conn, rpc.SeqNoNonce)
 
 	rpcNonceReq, err := t.sendRPCNonceRequest(rpcNonceConn)
@@ -124,4 +99,29 @@ func (t *MiddleTelegram) receiveRPCHandshakeResponse(conn wrappers.WrapPacketRea
 	}
 
 	return rpcHandshakeResp, nil
+}
+
+func NewMiddleTelegram(conf *config.Config) Telegram {
+	tg := &MiddleTelegram{
+		middleTelegramCaller: middleTelegramCaller{
+			baseTelegram: baseTelegram{
+				dialer: tgDialer{
+					Dialer: net.Dialer{Timeout: telegramDialTimeout},
+					conf:   conf,
+				},
+			},
+			httpClient: &http.Client{
+				Timeout: middleTelegramHTTPClientTimeout,
+			},
+			dialerMutex: &sync.RWMutex{},
+		},
+		conf: conf,
+	}
+
+	if err := tg.update(); err != nil {
+		panic(err)
+	}
+	go tg.autoUpdate()
+
+	return tg
 }

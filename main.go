@@ -115,17 +115,15 @@ func main() {
 	zap.ReplaceGlobals(logger)
 	defer logger.Sync()
 
-	var server *proxy.Proxy
-	if len(conf.AdTag) == 0 {
-		zap.S().Infow("Use direct connection to Telegram")
-		server = proxy.NewProxyDirect(conf)
-	} else {
+	if conf.UseMiddleProxy() {
 		zap.S().Infow("Use middle proxy connection to Telegram")
-		server = proxy.NewProxyMiddle(conf)
+	} else {
+		zap.S().Infow("Use direct connection to Telegram")
 	}
 
 	printURLs(conf.GetURLs())
 
+	server := proxy.NewProxy(conf)
 	if err := server.Serve(); err != nil {
 		zap.S().Fatalw("Server stopped", "error", err)
 	}

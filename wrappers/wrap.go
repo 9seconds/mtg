@@ -20,6 +20,11 @@ type WrapWriter interface {
 	Wrap
 }
 
+type WrapCloser interface {
+	io.Closer
+	Wrap
+}
+
 type WrapWriteCloser interface {
 	io.Closer
 	WrapWriter
