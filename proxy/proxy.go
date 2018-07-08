@@ -112,22 +112,26 @@ func (p *Proxy) middlePipe(src wrappers.PacketReadCloser, dst wrappers.PacketWri
 
 		packet, err := src.Read()
 		if err != nil {
+			src.Logger().Warnw("Cannot read packet", "error", err)
 			return
 		}
 		if _, err = dst.Write(packet); err != nil {
+			src.Logger().Warnw("Cannot write packet", "error", err)
 			return
 		}
 	}
 }
 
-func (p *Proxy) directPipe(src io.ReadCloser, dst io.WriteCloser, wait *sync.WaitGroup) {
+func (p *Proxy) directPipe(src wrappers.StreamReadCloser, dst wrappers.StreamWriteCloser, wait *sync.WaitGroup) {
 	defer func() {
 		src.Close()
 		dst.Close()
 		wait.Done()
 	}()
 
-	io.Copy(dst, src)
+	if _, err := io.Copy(dst, src); err != nil {
+		src.Logger().Warnw("Cannot pump sockets", "error", err)
+	}
 }
 
 func NewProxy(conf *config.Config) *Proxy {

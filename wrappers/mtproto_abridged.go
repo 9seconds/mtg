@@ -98,7 +98,7 @@ func (m *MTProtoAbridged) Write(p []byte) (int, error) {
 		"counter", m.writeCounter,
 	)
 
-	if len(p)%4 == 0 {
+	if len(p)%4 != 0 {
 		return 0, errors.Errorf("Incorrect packet length %d", len(p))
 	}
 

@@ -44,8 +44,7 @@ type StreamReadWriter interface {
 }
 
 type StreamWriteCloser interface {
-	io.Closer
-	io.Writer
+	io.WriteCloser
 	Wrap
 }
 
