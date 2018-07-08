@@ -67,19 +67,27 @@ func (m *MTProtoProxy) readProxyAns(data []byte) ([]byte, error) {
 	if len(data) < 12 {
 		return nil, errors.Errorf("Incorrect data of proxy answer: %d", len(data))
 	}
+	data = data[12:]
 
-	return data[12:], nil
+	m.logger.Debugw("Read RPC_PROXY_ANS", "length", len(data))
+
+	return data, nil
 }
 
 func (m *MTProtoProxy) readSimpleAck(data []byte) ([]byte, error) {
 	if len(data) != 12 {
 		return nil, errors.Errorf("Incorrect data of simple ack: %d", len(data))
 	}
+	data = data[8:12]
 
-	return data[8:12], nil // 0:8 - connection id
+	m.logger.Debugw("Read RPC_SIMPLE_ACK", "length", len(data))
+
+	return data, nil
 }
 
 func (m *MTProtoProxy) readCloseExt(data []byte) ([]byte, error) {
+	m.logger.Debugw("Read RPC_CLOSE_EXT")
+
 	return nil, errors.New("Connection has been closed remotely by RPC call")
 }
 
