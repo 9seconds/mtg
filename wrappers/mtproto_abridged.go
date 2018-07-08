@@ -125,22 +125,22 @@ func (m *MTProtoAbridged) Write(p []byte) (int, error) {
 }
 
 func (m *MTProtoAbridged) LogDebug(msg string, data ...interface{}) {
-	data = append(data, []interface{}{"type", "abridged"})
+	data = append(data, []interface{}{"type", "abridged"}...)
 	m.conn.LogDebug(msg, data...)
 }
 
 func (m *MTProtoAbridged) LogInfo(msg string, data ...interface{}) {
-	data = append(data, []interface{}{"type", "abridged"})
+	data = append(data, []interface{}{"type", "abridged"}...)
 	m.conn.LogInfo(msg, data...)
 }
 
 func (m *MTProtoAbridged) LogWarn(msg string, data ...interface{}) {
-	data = append(data, []interface{}{"type", "abridged"})
+	data = append(data, []interface{}{"type", "abridged"}...)
 	m.conn.LogWarn(msg, data...)
 }
 
 func (m *MTProtoAbridged) LogError(msg string, data ...interface{}) {
-	data = append(data, []interface{}{"type", "abridged"})
+	data = append(data, []interface{}{"type", "abridged"}...)
 	m.conn.LogError(msg, data...)
 }
 

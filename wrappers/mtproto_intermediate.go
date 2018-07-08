@@ -80,22 +80,22 @@ func (m *MTProtoIntermediate) Write(p []byte) (int, error) {
 }
 
 func (m *MTProtoIntermediate) LogDebug(msg string, data ...interface{}) {
-	data = append(data, []interface{}{"type", "intermediate"})
+	data = append(data, []interface{}{"type", "intermediate"}...)
 	m.conn.LogDebug(msg, data...)
 }
 
 func (m *MTProtoIntermediate) LogInfo(msg string, data ...interface{}) {
-	data = append(data, []interface{}{"type", "intermediate"})
+	data = append(data, []interface{}{"type", "intermediate"}...)
 	m.conn.LogInfo(msg, data...)
 }
 
 func (m *MTProtoIntermediate) LogWarn(msg string, data ...interface{}) {
-	data = append(data, []interface{}{"type", "intermediate"})
+	data = append(data, []interface{}{"type", "intermediate"}...)
 	m.conn.LogWarn(msg, data...)
 }
 
 func (m *MTProtoIntermediate) LogError(msg string, data ...interface{}) {
-	data = append(data, []interface{}{"type", "intermediate"})
+	data = append(data, []interface{}{"type", "intermediate"}...)
 	m.conn.LogError(msg, data...)
 }
 

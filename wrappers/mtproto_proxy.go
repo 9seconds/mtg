@@ -98,22 +98,22 @@ func (m *MTProtoProxy) Write(p []byte) (int, error) {
 }
 
 func (m *MTProtoProxy) LogDebug(msg string, data ...interface{}) {
-	data = append(data, []interface{}{"type", "proxy"})
+	data = append(data, []interface{}{"type", "proxy"}...)
 	m.conn.LogDebug(msg, data...)
 }
 
 func (m *MTProtoProxy) LogInfo(msg string, data ...interface{}) {
-	data = append(data, []interface{}{"type", "proxy"})
+	data = append(data, []interface{}{"type", "proxy"}...)
 	m.conn.LogInfo(msg, data...)
 }
 
 func (m *MTProtoProxy) LogWarn(msg string, data ...interface{}) {
-	data = append(data, []interface{}{"type", "proxy"})
+	data = append(data, []interface{}{"type", "proxy"}...)
 	m.conn.LogWarn(msg, data...)
 }
 
 func (m *MTProtoProxy) LogError(msg string, data ...interface{}) {
-	data = append(data, []interface{}{"type", "proxy"})
+	data = append(data, []interface{}{"type", "proxy"}...)
 	m.conn.LogError(msg, data...)
 }
 

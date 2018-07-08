@@ -115,18 +115,22 @@ func (m *MTProtoFrame) Write(p []byte) (int, error) {
 }
 
 func (m *MTProtoFrame) LogDebug(msg string, data ...interface{}) {
+	data = append(data, []interface{}{"type", "frame"}...)
 	m.conn.LogDebug(msg, data...)
 }
 
 func (m *MTProtoFrame) LogInfo(msg string, data ...interface{}) {
+	data = append(data, []interface{}{"type", "frame"}...)
 	m.conn.LogInfo(msg, data...)
 }
 
 func (m *MTProtoFrame) LogWarn(msg string, data ...interface{}) {
+	data = append(data, []interface{}{"type", "frame"}...)
 	m.conn.LogWarn(msg, data...)
 }
 
 func (m *MTProtoFrame) LogError(msg string, data ...interface{}) {
+	data = append(data, []interface{}{"type", "frame"}...)
 	m.conn.LogError(msg, data...)
 }
 
