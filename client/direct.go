@@ -36,5 +36,7 @@ func DirectInit(socket net.Conn, connID string, conf *config.Config) (wrappers.W
 
 	conn = wrappers.NewStreamCipher(conn, obfs2.Encryptor, obfs2.Decryptor)
 
+	conn.Logger().Infow("Client connection initialized")
+
 	return conn, connOpts, nil
 }

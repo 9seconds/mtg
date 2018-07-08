@@ -20,8 +20,20 @@ type ProxyRequest struct {
 	Options      *mtproto.ConnectionOpts
 }
 
-func (r *ProxyRequest) Bytes(message []byte) []byte {
+func (r *ProxyRequest) MakeHeader(message []byte) *bytes.Buffer {
+	bufferLength := len(TagProxyRequest) +
+		4 + // len(flags)
+		len(r.ConnectionID) +
+		len(r.ClientIPPort) +
+		len(r.OurIPPort) +
+		len(ProxyRequestExtraSize) +
+		len(ProxyRequestProxyTag) +
+		1 + // len(AdTag)
+		len(r.ADTag)
+	bufferLength += bufferLength % 4
+
 	buf := &bytes.Buffer{}
+	buf.Grow(bufferLength)
 
 	flags := r.Flags
 	if r.Options.ReadHacks.QuickAck {
@@ -42,9 +54,8 @@ func (r *ProxyRequest) Bytes(message []byte) []byte {
 	buf.WriteByte(byte(len(r.ADTag)))
 	buf.Write(r.ADTag)
 	buf.Write(make([]byte, (4-buf.Len()%4)%4))
-	buf.Write(message)
 
-	return buf.Bytes()
+	return buf
 }
 
 func NewProxyRequest(clientAddr, ownAddr *net.TCPAddr, opts *mtproto.ConnectionOpts, adTag []byte) (*ProxyRequest, error) {

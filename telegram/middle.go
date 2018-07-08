@@ -43,7 +43,13 @@ func (t *MiddleTelegram) Init(connOpts *mtproto.ConnectionOpts, conn wrappers.St
 		return nil, err
 	}
 
-	return wrappers.NewMTProtoProxy(frameConn, connOpts, t.conf.AdTag)
+	proxyConn, err := wrappers.NewMTProtoProxy(frameConn, connOpts, t.conf.AdTag)
+	if err != nil {
+		return nil, err
+	}
+	proxyConn.Logger().Infow("Telegram connection initialized")
+
+	return proxyConn, nil
 }
 
 func (t *MiddleTelegram) sendRPCNonceRequest(conn wrappers.PacketWriter) (*rpc.NonceRequest, error) {

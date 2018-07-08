@@ -2,6 +2,7 @@ package wrappers
 
 import (
 	"bytes"
+	"fmt"
 	"net"
 
 	"github.com/juju/errors"
@@ -100,7 +101,19 @@ func (m *MTProtoProxy) Write(p []byte) (int, error) {
 	)
 	m.writeCounter++
 
-	if _, err := m.conn.Write(p); err != nil {
+	header := m.req.MakeHeader(p)
+	if ce := m.logger.Desugar().Check(zap.DebugLevel, "RPC_PROXY_REQ header"); ce != nil {
+		ce.Write(
+			zap.Int("length", len(p)),
+			zap.Uint32("counter", m.writeCounter),
+			zap.Bool("simple_ack", m.req.Options.ReadHacks.QuickAck),
+			zap.Bool("quick_ack", m.req.Options.ReadHacks.SimpleAck),
+			zap.String("header", fmt.Sprintf("%v", header.Bytes())),
+		)
+	}
+	header.Write(p)
+
+	if _, err := m.conn.Write(header.Bytes()); err != nil {
 		return 0, err
 	}
 
