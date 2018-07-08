@@ -6,6 +6,8 @@ import (
 	"crypto/cipher"
 	"net"
 
+	"go.uber.org/zap"
+
 	"github.com/9seconds/mtg/utils"
 	"github.com/juju/errors"
 )
@@ -13,6 +15,7 @@ import (
 type BlockCipher struct {
 	buf *bytes.Buffer
 
+	logger    *zap.SugaredLogger
 	conn      StreamReadWriteCloser
 	encryptor cipher.BlockMode
 	decryptor cipher.BlockMode
@@ -60,20 +63,8 @@ func (b *BlockCipher) Write(p []byte) (int, error) {
 	return b.conn.Write(encrypted)
 }
 
-func (b *BlockCipher) LogDebug(msg string, data ...interface{}) {
-	b.conn.LogDebug(msg, data...)
-}
-
-func (b *BlockCipher) LogInfo(msg string, data ...interface{}) {
-	b.conn.LogInfo(msg, data...)
-}
-
-func (b *BlockCipher) LogWarn(msg string, data ...interface{}) {
-	b.conn.LogWarn(msg, data...)
-}
-
-func (b *BlockCipher) LogError(msg string, data ...interface{}) {
-	b.conn.LogError(msg, data...)
+func (b *BlockCipher) Logger() *zap.SugaredLogger {
+	return b.logger
 }
 
 func (b *BlockCipher) LocalAddr() *net.TCPAddr {
@@ -92,6 +83,7 @@ func NewBlockCipher(conn StreamReadWriteCloser, encryptor, decryptor cipher.Bloc
 	return &BlockCipher{
 		buf:       &bytes.Buffer{},
 		conn:      conn,
+		logger:    conn.Logger().Named("block-cipher"),
 		encryptor: encryptor,
 		decryptor: decryptor,
 	}

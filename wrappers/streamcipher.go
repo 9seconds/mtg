@@ -5,12 +5,14 @@ import (
 	"net"
 
 	"github.com/juju/errors"
+	"go.uber.org/zap"
 )
 
 type StreamCipher struct {
 	encryptor cipher.Stream
 	decryptor cipher.Stream
 	conn      StreamReadWriteCloser
+	logger    *zap.SugaredLogger
 }
 
 func (s *StreamCipher) Read(p []byte) (int, error) {
@@ -30,20 +32,8 @@ func (s *StreamCipher) Write(p []byte) (int, error) {
 	return s.conn.Write(encrypted)
 }
 
-func (s *StreamCipher) LogDebug(msg string, data ...interface{}) {
-	s.conn.LogDebug(msg, data...)
-}
-
-func (s *StreamCipher) LogInfo(msg string, data ...interface{}) {
-	s.conn.LogInfo(msg, data...)
-}
-
-func (s *StreamCipher) LogWarn(msg string, data ...interface{}) {
-	s.conn.LogWarn(msg, data...)
-}
-
-func (s *StreamCipher) LogError(msg string, data ...interface{}) {
-	s.conn.LogError(msg, data...)
+func (s *StreamCipher) Logger() *zap.SugaredLogger {
+	return s.logger
 }
 
 func (s *StreamCipher) LocalAddr() *net.TCPAddr {
@@ -61,6 +51,7 @@ func (s *StreamCipher) Close() error {
 func NewStreamCipher(conn StreamReadWriteCloser, encryptor, decryptor cipher.Stream) StreamReadWriteCloser {
 	return &StreamCipher{
 		conn:      conn,
+		logger:    conn.Logger().Named("stream-cipher"),
 		encryptor: encryptor,
 		decryptor: decryptor,
 	}

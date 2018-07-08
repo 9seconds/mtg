@@ -3,14 +3,12 @@ package wrappers
 import (
 	"io"
 	"net"
+
+	"go.uber.org/zap"
 )
 
 type Wrap interface {
-	LogDebug(msg string, data ...interface{})
-	LogInfo(msg string, data ...interface{})
-	LogWarn(msg string, data ...interface{})
-	LogError(msg string, data ...interface{})
-
+	Logger() *zap.SugaredLogger
 	LocalAddr() *net.TCPAddr
 	RemoteAddr() *net.TCPAddr
 }

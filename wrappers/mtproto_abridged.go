@@ -6,6 +6,7 @@ import (
 	"net"
 
 	"github.com/juju/errors"
+	"go.uber.org/zap"
 
 	"github.com/9seconds/mtg/mtproto"
 	"github.com/9seconds/mtg/utils"
@@ -18,15 +19,16 @@ const (
 )
 
 type MTProtoAbridged struct {
-	conn StreamReadWriteCloser
-	opts *mtproto.ConnectionOpts
+	conn   StreamReadWriteCloser
+	opts   *mtproto.ConnectionOpts
+	logger *zap.SugaredLogger
 
 	readCounter  uint32
 	writeCounter uint32
 }
 
 func (m *MTProtoAbridged) Read() ([]byte, error) {
-	m.LogDebug("Read packet",
+	m.logger.Debugw("Read packet",
 		"simple_ack", m.opts.ReadHacks.SimpleAck,
 		"quick_ack", m.opts.ReadHacks.QuickAck,
 		"counter", m.readCounter,
@@ -41,7 +43,7 @@ func (m *MTProtoAbridged) Read() ([]byte, error) {
 	msgLength := uint8(buf.Bytes()[0])
 	buf.Reset()
 
-	m.LogDebug("Packet first byte",
+	m.logger.Debugw("Packet first byte",
 		"byte", msgLength,
 		"counter", m.readCounter,
 		"simple_ack", m.opts.ReadHacks.SimpleAck,
@@ -64,7 +66,7 @@ func (m *MTProtoAbridged) Read() ([]byte, error) {
 	}
 	msgLength32 *= 4
 
-	m.LogDebug("Packet length",
+	m.logger.Debugw("Packet length",
 		"length", msgLength32,
 		"simple_ack", m.opts.ReadHacks.SimpleAck,
 		"quick_ack", m.opts.ReadHacks.QuickAck,
@@ -83,7 +85,7 @@ func (m *MTProtoAbridged) Read() ([]byte, error) {
 }
 
 func (m *MTProtoAbridged) Write(p []byte) (int, error) {
-	m.LogDebug("Write packet",
+	m.logger.Debugw("Write packet",
 		"length", len(p),
 		"simple_ack", m.opts.WriteHacks.SimpleAck,
 		"quick_ack", m.opts.WriteHacks.QuickAck,
@@ -124,24 +126,8 @@ func (m *MTProtoAbridged) Write(p []byte) (int, error) {
 	return 0, errors.Errorf("Packet is too big %d", len(p))
 }
 
-func (m *MTProtoAbridged) LogDebug(msg string, data ...interface{}) {
-	data = append(data, []interface{}{"type", "abridged"}...)
-	m.conn.LogDebug(msg, data...)
-}
-
-func (m *MTProtoAbridged) LogInfo(msg string, data ...interface{}) {
-	data = append(data, []interface{}{"type", "abridged"}...)
-	m.conn.LogInfo(msg, data...)
-}
-
-func (m *MTProtoAbridged) LogWarn(msg string, data ...interface{}) {
-	data = append(data, []interface{}{"type", "abridged"}...)
-	m.conn.LogWarn(msg, data...)
-}
-
-func (m *MTProtoAbridged) LogError(msg string, data ...interface{}) {
-	data = append(data, []interface{}{"type", "abridged"}...)
-	m.conn.LogError(msg, data...)
+func (m *MTProtoAbridged) Logger() *zap.SugaredLogger {
+	return m.logger
 }
 
 func (m *MTProtoAbridged) LocalAddr() *net.TCPAddr {
@@ -158,7 +144,8 @@ func (m *MTProtoAbridged) Close() error {
 
 func NewMTProtoAbridged(conn StreamReadWriteCloser, opts *mtproto.ConnectionOpts) PacketReadWriteCloser {
 	return &MTProtoAbridged{
-		conn: conn,
-		opts: opts,
+		conn:   conn,
+		opts:   opts,
+		logger: conn.Logger().Named("mtproto-abridged"),
 	}
 }

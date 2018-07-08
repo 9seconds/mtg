@@ -6,22 +6,25 @@ import (
 	"io"
 	"net"
 
-	"github.com/9seconds/mtg/mtproto"
 	"github.com/juju/errors"
+	"go.uber.org/zap"
+
+	"github.com/9seconds/mtg/mtproto"
 )
 
 const mtprotoIntermediateQuickAckLength = 0x80000000
 
 type MTProtoIntermediate struct {
-	conn StreamReadWriteCloser
-	opts *mtproto.ConnectionOpts
+	conn   StreamReadWriteCloser
+	opts   *mtproto.ConnectionOpts
+	logger *zap.SugaredLogger
 
 	readCounter  uint32
 	writeCounter uint32
 }
 
 func (m *MTProtoIntermediate) Read() ([]byte, error) {
-	m.LogDebug("Read packet",
+	m.logger.Debugw("Read packet",
 		"simple_ack", m.opts.ReadHacks.SimpleAck,
 		"quick_ack", m.opts.ReadHacks.QuickAck,
 		"counter", m.readCounter,
@@ -35,7 +38,7 @@ func (m *MTProtoIntermediate) Read() ([]byte, error) {
 	}
 	length := binary.LittleEndian.Uint32(buf.Bytes())
 
-	m.LogDebug("Packet message length",
+	m.logger.Debugw("Packet message length",
 		"simple_ack", m.opts.ReadHacks.SimpleAck,
 		"quick_ack", m.opts.ReadHacks.QuickAck,
 		"counter", m.readCounter,
@@ -62,7 +65,7 @@ func (m *MTProtoIntermediate) Read() ([]byte, error) {
 }
 
 func (m *MTProtoIntermediate) Write(p []byte) (int, error) {
-	m.LogDebug("Write packet",
+	m.logger.Debugw("Write packet",
 		"simple_ack", m.opts.WriteHacks.SimpleAck,
 		"quick_ack", m.opts.WriteHacks.QuickAck,
 		"counter", m.writeCounter,
@@ -79,24 +82,8 @@ func (m *MTProtoIntermediate) Write(p []byte) (int, error) {
 	return m.conn.Write(append(length[:], p...))
 }
 
-func (m *MTProtoIntermediate) LogDebug(msg string, data ...interface{}) {
-	data = append(data, []interface{}{"type", "intermediate"}...)
-	m.conn.LogDebug(msg, data...)
-}
-
-func (m *MTProtoIntermediate) LogInfo(msg string, data ...interface{}) {
-	data = append(data, []interface{}{"type", "intermediate"}...)
-	m.conn.LogInfo(msg, data...)
-}
-
-func (m *MTProtoIntermediate) LogWarn(msg string, data ...interface{}) {
-	data = append(data, []interface{}{"type", "intermediate"}...)
-	m.conn.LogWarn(msg, data...)
-}
-
-func (m *MTProtoIntermediate) LogError(msg string, data ...interface{}) {
-	data = append(data, []interface{}{"type", "intermediate"}...)
-	m.conn.LogError(msg, data...)
+func (m *MTProtoIntermediate) Logger() *zap.SugaredLogger {
+	return m.logger
 }
 
 func (m *MTProtoIntermediate) LocalAddr() *net.TCPAddr {
@@ -113,7 +100,8 @@ func (m *MTProtoIntermediate) Close() error {
 
 func NewMTProtoIntermediate(conn StreamReadWriteCloser, opts *mtproto.ConnectionOpts) PacketReadWriteCloser {
 	return &MTProtoIntermediate{
-		conn: conn,
-		opts: opts,
+		conn:   conn,
+		logger: conn.Logger().Named("mtproto-intermediate"),
+		opts:   opts,
 	}
 }

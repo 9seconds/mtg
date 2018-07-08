@@ -10,6 +10,7 @@ import (
 	"net"
 
 	"github.com/juju/errors"
+	"go.uber.org/zap"
 )
 
 const (
@@ -20,7 +21,9 @@ const (
 var mtprotoFramePadding = []byte{0x04, 0x00, 0x00, 0x00}
 
 type MTProtoFrame struct {
-	conn       StreamReadWriteCloser
+	conn   StreamReadWriteCloser
+	logger *zap.SugaredLogger
+
 	readSeqNo  int32
 	writeSeqNo int32
 }
@@ -42,7 +45,7 @@ func (m *MTProtoFrame) Read() ([]byte, error) {
 	}
 
 	messageLength := binary.LittleEndian.Uint32(buf.Bytes())
-	m.LogDebug("Read MTProto frame",
+	m.logger.Debugw("Read MTProto frame",
 		"messageLength", messageLength,
 		"sequence_number", m.readSeqNo,
 	)
@@ -75,7 +78,7 @@ func (m *MTProtoFrame) Read() ([]byte, error) {
 		return nil, errors.Errorf("CRC32 checksum mismatch. Wait for %d, got %d", sum.Sum32(), checksum)
 	}
 
-	m.LogDebug("Read MTProto frame",
+	m.logger.Debugw("Read MTProto frame",
 		"messageLength", messageLength,
 		"sequence_number", m.readSeqNo,
 		"dataLength", len(data),
@@ -101,7 +104,7 @@ func (m *MTProtoFrame) Write(p []byte) (int, error) {
 	binary.Write(buf, binary.LittleEndian, checksum)
 	buf.Write(bytes.Repeat(mtprotoFramePadding, paddingLength/4))
 
-	m.LogDebug("Write MTProto frame",
+	m.logger.Debugw("Write MTProto frame",
 		"length", len(p),
 		"sequence_number", m.writeSeqNo,
 		"crc32", checksum,
@@ -114,24 +117,8 @@ func (m *MTProtoFrame) Write(p []byte) (int, error) {
 	return len(p), err
 }
 
-func (m *MTProtoFrame) LogDebug(msg string, data ...interface{}) {
-	data = append(data, []interface{}{"type", "frame"}...)
-	m.conn.LogDebug(msg, data...)
-}
-
-func (m *MTProtoFrame) LogInfo(msg string, data ...interface{}) {
-	data = append(data, []interface{}{"type", "frame"}...)
-	m.conn.LogInfo(msg, data...)
-}
-
-func (m *MTProtoFrame) LogWarn(msg string, data ...interface{}) {
-	data = append(data, []interface{}{"type", "frame"}...)
-	m.conn.LogWarn(msg, data...)
-}
-
-func (m *MTProtoFrame) LogError(msg string, data ...interface{}) {
-	data = append(data, []interface{}{"type", "frame"}...)
-	m.conn.LogError(msg, data...)
+func (m *MTProtoFrame) Logger() *zap.SugaredLogger {
+	return m.logger
 }
 
 func (m *MTProtoFrame) LocalAddr() *net.TCPAddr {
@@ -149,6 +136,7 @@ func (m *MTProtoFrame) Close() error {
 func NewMTProtoFrame(conn StreamReadWriteCloser, seqNo int32) PacketReadWriteCloser {
 	return &MTProtoFrame{
 		conn:       conn,
+		logger:     conn.Logger().Named("mtproto-frame"),
 		readSeqNo:  seqNo,
 		writeSeqNo: seqNo,
 	}

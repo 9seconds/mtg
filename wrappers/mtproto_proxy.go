@@ -5,21 +5,23 @@ import (
 	"net"
 
 	"github.com/juju/errors"
+	"go.uber.org/zap"
 
 	"github.com/9seconds/mtg/mtproto"
 	"github.com/9seconds/mtg/mtproto/rpc"
 )
 
 type MTProtoProxy struct {
-	conn PacketReadWriteCloser
-	req  *rpc.ProxyRequest
+	conn   PacketReadWriteCloser
+	req    *rpc.ProxyRequest
+	logger *zap.SugaredLogger
 
 	readCounter  uint32
 	writeCounter uint32
 }
 
 func (m *MTProtoProxy) Read() ([]byte, error) {
-	m.LogDebug("Read packet",
+	m.logger.Debugw("Read packet",
 		"counter", m.readCounter,
 		"simple_ack", m.req.Options.WriteHacks.SimpleAck,
 		"quick_ack", m.req.Options.WriteHacks.QuickAck,
@@ -29,7 +31,7 @@ func (m *MTProtoProxy) Read() ([]byte, error) {
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot read packet")
 	}
-	m.LogDebug("Read packet length",
+	m.logger.Debugw("Read packet length",
 		"counter", m.readCounter,
 		"simple_ack", m.req.Options.WriteHacks.SimpleAck,
 		"quick_ack", m.req.Options.WriteHacks.QuickAck,
@@ -41,7 +43,7 @@ func (m *MTProtoProxy) Read() ([]byte, error) {
 	}
 
 	tag, packet := packet[:4], packet[4:]
-	m.LogDebug("Read RPC tag",
+	m.logger.Debugw("Read RPC tag",
 		"counter", m.readCounter,
 		"simple_ack", m.req.Options.WriteHacks.SimpleAck,
 		"quick_ack", m.req.Options.WriteHacks.QuickAck,
@@ -82,7 +84,7 @@ func (m *MTProtoProxy) readCloseExt(data []byte) ([]byte, error) {
 }
 
 func (m *MTProtoProxy) Write(p []byte) (int, error) {
-	m.LogDebug("Write packet",
+	m.logger.Debugw("Write packet",
 		"length", len(p),
 		"counter", m.writeCounter,
 		"simple_ack", m.req.Options.ReadHacks.SimpleAck,
@@ -97,24 +99,8 @@ func (m *MTProtoProxy) Write(p []byte) (int, error) {
 	return len(p), nil
 }
 
-func (m *MTProtoProxy) LogDebug(msg string, data ...interface{}) {
-	data = append(data, []interface{}{"type", "proxy"}...)
-	m.conn.LogDebug(msg, data...)
-}
-
-func (m *MTProtoProxy) LogInfo(msg string, data ...interface{}) {
-	data = append(data, []interface{}{"type", "proxy"}...)
-	m.conn.LogInfo(msg, data...)
-}
-
-func (m *MTProtoProxy) LogWarn(msg string, data ...interface{}) {
-	data = append(data, []interface{}{"type", "proxy"}...)
-	m.conn.LogWarn(msg, data...)
-}
-
-func (m *MTProtoProxy) LogError(msg string, data ...interface{}) {
-	data = append(data, []interface{}{"type", "proxy"}...)
-	m.conn.LogError(msg, data...)
+func (m *MTProtoProxy) Logger() *zap.SugaredLogger {
+	return m.logger
 }
 
 func (m *MTProtoProxy) LocalAddr() *net.TCPAddr {
@@ -136,7 +122,8 @@ func NewMTProtoProxy(conn PacketReadWriteCloser, connOpts *mtproto.ConnectionOpt
 	}
 
 	return &MTProtoProxy{
-		conn: conn,
-		req:  req,
+		conn:   conn,
+		logger: conn.Logger().Named("mtproto-proxy"),
+		req:    req,
 	}, nil
 }

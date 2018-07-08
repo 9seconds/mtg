@@ -57,7 +57,7 @@ func (c *Conn) Read(p []byte) (int, error) {
 }
 
 func (c *Conn) Close() error {
-	defer c.LogDebug("Closed connection")
+	defer c.logger.Debugw("Closed connection")
 	return c.conn.Close()
 }
 
@@ -80,20 +80,8 @@ func (c *Conn) RemoteAddr() *net.TCPAddr {
 	return c.conn.RemoteAddr().(*net.TCPAddr)
 }
 
-func (c *Conn) LogDebug(msg string, data ...interface{}) {
-	c.logger.Debugw(msg, data...)
-}
-
-func (c *Conn) LogInfo(msg string, data ...interface{}) {
-	c.logger.Infow(msg, data...)
-}
-
-func (c *Conn) LogWarn(msg string, data ...interface{}) {
-	c.logger.Warnw(msg, data...)
-}
-
-func (c *Conn) LogError(msg string, data ...interface{}) {
-	c.logger.Errorw(msg, data...)
+func (c *Conn) Logger() *zap.SugaredLogger {
+	return c.logger
 }
 
 func NewConn(conn net.Conn, connID string, purpose ConnPurpose, publicIPv4, publicIPv6 net.IP) StreamReadWriteCloser {
@@ -102,7 +90,7 @@ func NewConn(conn net.Conn, connID string, purpose ConnPurpose, publicIPv4, publ
 		"local_address", conn.LocalAddr(),
 		"remote_address", conn.RemoteAddr(),
 		"purpose", purpose,
-	)
+	).Named("conn")
 
 	wrapper := Conn{
 		logger:     logger,
