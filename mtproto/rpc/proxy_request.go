@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"encoding/binary"
+	"fmt"
 	"net"
 
 	"github.com/juju/errors"
@@ -20,7 +21,7 @@ type ProxyRequest struct {
 	Options      *mtproto.ConnectionOpts
 }
 
-func (r *ProxyRequest) MakeHeader(message []byte) *bytes.Buffer {
+func (r *ProxyRequest) MakeHeader(message []byte) (*bytes.Buffer, fmt.Stringer) {
 	bufferLength := len(TagProxyRequest) +
 		4 + // len(flags)
 		len(r.ConnectionID) +
@@ -55,7 +56,7 @@ func (r *ProxyRequest) MakeHeader(message []byte) *bytes.Buffer {
 	buf.Write(r.ADTag)
 	buf.Write(make([]byte, (4-buf.Len()%4)%4))
 
-	return buf
+	return buf, flags
 }
 
 func NewProxyRequest(clientAddr, ownAddr *net.TCPAddr, opts *mtproto.ConnectionOpts, adTag []byte) (*ProxyRequest, error) {

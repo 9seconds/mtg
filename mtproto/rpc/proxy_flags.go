@@ -1,6 +1,9 @@
 package rpc
 
-import "encoding/binary"
+import (
+	"encoding/binary"
+	"strings"
+)
 
 type proxyRequestFlags uint32
 
@@ -21,4 +24,32 @@ func (r proxyRequestFlags) Bytes() []byte {
 	binary.LittleEndian.PutUint32(converted, uint32(r))
 
 	return converted
+}
+
+func (r proxyRequestFlags) String() string {
+	flags := make([]string, 0, 7)
+
+	if r&proxyRequestFlagsHasAdTag != 0 {
+		flags = append(flags, "HAS_AD_TAG")
+	}
+	if r&proxyRequestFlagsEncrypted != 0 {
+		flags = append(flags, "ENCRYPTED")
+	}
+	if r&proxyRequestFlagsMagic != 0 {
+		flags = append(flags, "MAGIC")
+	}
+	if r&proxyRequestFlagsExtMode2 != 0 {
+		flags = append(flags, "EXT_MODE_2")
+	}
+	if r&proxyRequestFlagsIntermediate != 0 {
+		flags = append(flags, "INTERMEDIATE")
+	}
+	if r&proxyRequestFlagsAbdridged != 0 {
+		flags = append(flags, "ABRIDGED")
+	}
+	if r&proxyRequestFlagsQuickAck != 0 {
+		flags = append(flags, "QUICK_ACK")
+	}
+
+	return strings.Join(flags, " | ")
 }

@@ -107,7 +107,7 @@ func (m *MTProtoProxy) Write(p []byte) (int, error) {
 		"quick_ack", m.req.Options.ReadHacks.QuickAck,
 	)
 
-	header := m.req.MakeHeader(p)
+	header, flags := m.req.MakeHeader(p)
 	if ce := m.logger.Desugar().Check(zap.DebugLevel, "RPC_PROXY_REQ header"); ce != nil {
 		ce.Write(
 			zap.Int("length", len(p)),
@@ -115,6 +115,7 @@ func (m *MTProtoProxy) Write(p []byte) (int, error) {
 			zap.Bool("simple_ack", m.req.Options.ReadHacks.QuickAck),
 			zap.Bool("quick_ack", m.req.Options.ReadHacks.SimpleAck),
 			zap.String("header", fmt.Sprintf("%v", header.Bytes())),
+			zap.Stringer("flags", flags),
 		)
 	}
 	header.Write(p)
