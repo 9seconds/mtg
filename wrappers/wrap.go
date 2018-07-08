@@ -71,7 +71,7 @@ type PacketReadWriter interface {
 	PacketReader
 }
 
-type BlockReadCloser interface {
+type PacketReadCloser interface {
 	io.Closer
 	PacketReader
 }

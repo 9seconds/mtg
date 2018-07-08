@@ -1,7 +1,6 @@
 package client
 
 import (
-	"context"
 	"net"
 
 	"github.com/9seconds/mtg/config"
@@ -9,4 +8,4 @@ import (
 	"github.com/9seconds/mtg/wrappers"
 )
 
-type Init func(context.Context, context.CancelFunc, net.Conn, string, *config.Config) (wrappers.Wrap, *mtproto.ConnectionOpts, error)
+type Init func(net.Conn, string, *config.Config) (wrappers.Wrap, *mtproto.ConnectionOpts, error)

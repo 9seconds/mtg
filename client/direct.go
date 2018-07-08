@@ -1,7 +1,6 @@
 package client
 
 import (
-	"context"
 	"net"
 	"time"
 
@@ -15,8 +14,7 @@ import (
 
 const handshakeTimeout = 10 * time.Second
 
-func DirectInit(ctx context.Context, cancel context.CancelFunc, socket net.Conn, connID string,
-	conf *config.Config) (wrappers.Wrap, *mtproto.ConnectionOpts, error) {
+func DirectInit(socket net.Conn, connID string, conf *config.Config) (wrappers.Wrap, *mtproto.ConnectionOpts, error) {
 	if err := config.SetSocketOptions(socket); err != nil {
 		return nil, nil, errors.Annotate(err, "Cannot set socket options")
 	}
@@ -37,7 +35,6 @@ func DirectInit(ctx context.Context, cancel context.CancelFunc, socket net.Conn,
 	connOpts.ClientAddr = conn.RemoteAddr()
 
 	conn = wrappers.NewStreamCipher(conn, obfs2.Encryptor, obfs2.Decryptor)
-	conn = wrappers.NewCtx(ctx, cancel, conn)
 
 	return conn, connOpts, nil
 }

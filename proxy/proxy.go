@@ -1,7 +1,6 @@
 package proxy
 
 import (
-	"context"
 	"io"
 	"net"
 	"sync"
@@ -52,15 +51,14 @@ func (p *Proxy) accept(conn net.Conn) {
 
 	log.Infow("Client connected", "addr", conn.RemoteAddr())
 
-	ctx, cancel := context.WithCancel(context.Background())
-	client, opts, err := p.clientInit(ctx, cancel, conn, connID, p.conf)
+	client, opts, err := p.clientInit(conn, connID, p.conf)
 	if err != nil {
 		log.Errorw("Cannot initialize client connection", "error", err)
 		return
 	}
 	defer client.(io.Closer).Close()
 
-	server, err := p.getTelegramConn(ctx, cancel, opts, connID)
+	server, err := p.getTelegramConn(opts, connID)
 	if err != nil {
 		log.Errorw("Cannot initialize server connection", "error", err)
 		return
@@ -82,19 +80,16 @@ func (p *Proxy) accept(conn net.Conn) {
 		go p.directPipe(serverStream, clientStream, wait)
 	}
 
-	<-ctx.Done()
 	wait.Wait()
 
 	log.Infow("Client disconnected", "addr", conn.RemoteAddr())
 }
 
-func (p *Proxy) getTelegramConn(ctx context.Context, cancel context.CancelFunc, opts *mtproto.ConnectionOpts,
-	connID string) (wrappers.Wrap, error) {
+func (p *Proxy) getTelegramConn(opts *mtproto.ConnectionOpts, connID string) (wrappers.Wrap, error) {
 	streamConn, err := p.tg.Dial(connID, opts)
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot dial to Telegram")
 	}
-	streamConn = wrappers.NewCtx(ctx, cancel, streamConn)
 
 	packetConn, err := p.tg.Init(opts, streamConn)
 	if err != nil {
@@ -104,8 +99,13 @@ func (p *Proxy) getTelegramConn(ctx context.Context, cancel context.CancelFunc, 
 	return packetConn, nil
 }
 
-func (p *Proxy) middlePipe(src wrappers.PacketReader, dst wrappers.PacketWriter, wait *sync.WaitGroup, hacks *mtproto.Hacks) {
-	defer wait.Done()
+func (p *Proxy) middlePipe(src wrappers.PacketReadCloser, dst wrappers.PacketWriteCloser, wait *sync.WaitGroup, hacks *mtproto.Hacks) {
+	defer func() {
+		src.Close()
+		dst.Close()
+		wait.Done()
+	}()
+
 	for {
 		hacks.SimpleAck = false
 		hacks.QuickAck = false
@@ -120,10 +120,14 @@ func (p *Proxy) middlePipe(src wrappers.PacketReader, dst wrappers.PacketWriter,
 	}
 }
 
-func (p *Proxy) directPipe(src io.Reader, dst io.Writer, wait *sync.WaitGroup) {
-	defer wait.Done()
-	io.Copy(dst, src)
+func (p *Proxy) directPipe(src io.ReadCloser, dst io.WriteCloser, wait *sync.WaitGroup) {
+	defer func() {
+		src.Close()
+		dst.Close()
+		wait.Done()
+	}()
 
+	io.Copy(dst, src)
 }
 
 func NewProxy(conf *config.Config) *Proxy {

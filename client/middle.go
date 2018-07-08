@@ -1,7 +1,6 @@
 package client
 
 import (
-	"context"
 	"net"
 
 	"github.com/9seconds/mtg/config"
@@ -9,9 +8,8 @@ import (
 	"github.com/9seconds/mtg/wrappers"
 )
 
-func MiddleInit(ctx context.Context, cancel context.CancelFunc, socket net.Conn, connID string,
-	conf *config.Config) (wrappers.Wrap, *mtproto.ConnectionOpts, error) {
-	conn, opts, err := DirectInit(ctx, cancel, socket, connID, conf)
+func MiddleInit(socket net.Conn, connID string, conf *config.Config) (wrappers.Wrap, *mtproto.ConnectionOpts, error) {
+	conn, opts, err := DirectInit(socket, connID, conf)
 	if err != nil {
 		return nil, nil, err
 	}
