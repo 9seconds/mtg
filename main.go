@@ -16,6 +16,7 @@ import (
 
 	"github.com/9seconds/mtg/config"
 	"github.com/9seconds/mtg/proxy"
+	"github.com/9seconds/mtg/stats"
 	"github.com/juju/errors"
 )
 
@@ -115,13 +116,15 @@ func main() {
 	zap.ReplaceGlobals(logger)
 	defer logger.Sync()
 
+	printURLs(conf.GetURLs())
+
 	if conf.UseMiddleProxy() {
 		zap.S().Infow("Use middle proxy connection to Telegram")
 	} else {
 		zap.S().Infow("Use direct connection to Telegram")
 	}
 
-	printURLs(conf.GetURLs())
+	go stats.Start(conf)
 
 	server := proxy.NewProxy(conf)
 	if err := server.Serve(); err != nil {
