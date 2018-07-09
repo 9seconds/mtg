@@ -13,11 +13,14 @@ var instance *stats
 
 func Start(conf *config.Config) {
 	instance = &stats{
-		URLs:         conf.GetURLs(),
-		Uptime:       uptime(time.Now()),
-		speedCurrent: &speed{},
-		mutex:        &sync.RWMutex{},
+		URLs:   conf.GetURLs(),
+		Uptime: uptime(time.Now()),
+		mutex:  &sync.RWMutex{},
 	}
+
+	go crashManager()
+	go connectionManager()
+	go trafficManager()
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

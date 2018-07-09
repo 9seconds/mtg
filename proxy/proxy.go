@@ -39,7 +39,7 @@ func (p *Proxy) Serve() error {
 
 func (p *Proxy) accept(conn net.Conn) {
 	connID := uuid.NewV4().String()
-	log := zap.S().With("connection_id", connID)
+	log := zap.S().With("connection_id", connID).Named("main")
 
 	defer func() {
 		conn.Close()

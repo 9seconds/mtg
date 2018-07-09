@@ -49,9 +49,31 @@ func (t trafficSpeedValue) MarshalJSON() ([]byte, error) {
 }
 
 type connections struct {
-	All          uint32 `json:"all"`
-	Abridged     uint32 `json:"abridged"`
-	Intermediate uint32 `json:"intermediate"`
+	All          connectionType `json:"all"`
+	Abridged     connectionType `json:"abridged"`
+	Intermediate connectionType `json:"intermediate"`
+}
+
+func (c connections) MarshalJSON() ([]byte, error) {
+	c.All.IPv4 = c.Abridged.IPv4 + c.Intermediate.IPv4
+	c.All.IPv6 = c.Abridged.IPv6 + c.Intermediate.IPv6
+
+	value := struct {
+		All          connectionType `json:"all"`
+		Abridged     connectionType `json:"abridged"`
+		Intermediate connectionType `json:"intermediate"`
+	}{
+		All:          c.All,
+		Abridged:     c.Abridged,
+		Intermediate: c.Intermediate,
+	}
+
+	return json.Marshal(value)
+}
+
+type connectionType struct {
+	IPv6 uint32 `json:"ipv6"`
+	IPv4 uint32 `json:"ipv4"`
 }
 
 type traffic struct {
@@ -71,7 +93,8 @@ type stats struct {
 	Traffic           traffic       `json:"traffic"`
 	Speed             speed         `json:"speed"`
 	Uptime            uptime        `json:"uptime"`
+	Crashes           uint32        `json:"crashes"`
 
-	speedCurrent *speed
+	speedCurrent speed
 	mutex        *sync.RWMutex
 }
