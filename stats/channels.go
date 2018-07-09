@@ -21,8 +21,8 @@ var (
 
 type connectionData struct {
 	connectionType mtproto.ConnectionType
-	addr           *net.TCPAddr
 	connected      bool
+	addr           *net.TCPAddr
 }
 
 type trafficData struct {
@@ -40,7 +40,7 @@ func crashManager() {
 	}
 }
 
-func connectionManager() {
+func connectionManager() { // nolint: gocyclo
 	for event := range connectionsChan {
 		instance.mutex.RLock()
 
@@ -111,10 +111,12 @@ func trafficManager() {
 	}
 }
 
+// NewCrash indicates new crash.
 func NewCrash() {
 	crashesChan <- struct{}{}
 }
 
+// ClientConnected indicates that new client was connected.
 func ClientConnected(connectionType mtproto.ConnectionType, addr *net.TCPAddr) {
 	connectionsChan <- &connectionData{
 		connectionType: connectionType,
@@ -123,6 +125,7 @@ func ClientConnected(connectionType mtproto.ConnectionType, addr *net.TCPAddr) {
 	}
 }
 
+// ClientDisconnected indicates that client was disconnected.
 func ClientDisconnected(connectionType mtproto.ConnectionType, addr *net.TCPAddr) {
 	connectionsChan <- &connectionData{
 		connectionType: connectionType,
@@ -131,6 +134,7 @@ func ClientDisconnected(connectionType mtproto.ConnectionType, addr *net.TCPAddr
 	}
 }
 
+// IngressTraffic accounts new ingress traffic.
 func IngressTraffic(traffic int) {
 	trafficChan <- &trafficData{
 		traffic: traffic,
@@ -138,6 +142,7 @@ func IngressTraffic(traffic int) {
 	}
 }
 
+// EgressTraffic accounts new ingress traffic.
 func EgressTraffic(traffic int) {
 	trafficChan <- &trafficData{
 		traffic: traffic,

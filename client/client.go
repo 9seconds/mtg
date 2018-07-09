@@ -8,4 +8,5 @@ import (
 	"github.com/9seconds/mtg/wrappers"
 )
 
+// Init defines common method for initializing client connections.
 type Init func(net.Conn, string, *config.Config) (wrappers.Wrap, *mtproto.ConnectionOpts, error)

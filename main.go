@@ -114,7 +114,7 @@ func main() {
 		atom,
 	))
 	zap.ReplaceGlobals(logger)
-	defer logger.Sync()
+	defer logger.Sync() // nolint: errcheck
 
 	printURLs(conf.GetURLs())
 

@@ -12,6 +12,8 @@ import (
 	"github.com/9seconds/mtg/mtproto"
 )
 
+// ProxyRequest is the data type for storing data required to compose
+// RPC_PROXY_REQ request.
 type ProxyRequest struct {
 	Flags        proxyRequestFlags
 	ConnectionID []byte
@@ -21,6 +23,8 @@ type ProxyRequest struct {
 	Options      *mtproto.ConnectionOpts
 }
 
+// MakeHeader makes RPC_PROXY_REQ header. We need only to append the
+// data for it.
 func (r *ProxyRequest) MakeHeader(message []byte) (*bytes.Buffer, fmt.Stringer) {
 	bufferLength := len(TagProxyRequest) +
 		4 + // len(flags)
@@ -59,6 +63,7 @@ func (r *ProxyRequest) MakeHeader(message []byte) (*bytes.Buffer, fmt.Stringer) 
 	return buf, flags
 }
 
+// NewProxyRequest build new ProxyRequest data structure.
 func NewProxyRequest(clientAddr, ownAddr *net.TCPAddr, opts *mtproto.ConnectionOpts, adTag []byte) (*ProxyRequest, error) {
 	flags := proxyRequestFlagsHasAdTag | proxyRequestFlagsMagic | proxyRequestFlagsExtMode2
 

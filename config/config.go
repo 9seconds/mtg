@@ -58,6 +58,8 @@ func (c *Config) StatAddr() string {
 	return getAddr(c.StatsIP, c.StatsPort)
 }
 
+// UseMiddleProxy defines if this proxy has to connect middle proxies
+// which supports promoted channels or directly access Telegram.
 func (c *Config) UseMiddleProxy() bool {
 	return len(c.AdTag) > 0
 }

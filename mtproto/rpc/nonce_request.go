@@ -9,12 +9,15 @@ import (
 	"github.com/juju/errors"
 )
 
+// NonceRequest is the data type which contains all the data for correct
+// nonce request.
 type NonceRequest struct {
 	KeySelector []byte
 	CryptoTS    []byte
 	Nonce       []byte
 }
 
+// Bytes returns serialized nonce request.
 func (r *NonceRequest) Bytes() []byte {
 	buf := &bytes.Buffer{}
 
@@ -27,6 +30,7 @@ func (r *NonceRequest) Bytes() []byte {
 	return buf.Bytes()
 }
 
+// NewNonceRequest builds new none request based on proxy secret.
 func NewNonceRequest(proxySecret []byte) (*NonceRequest, error) {
 	nonce := make([]byte, 16)
 	keySelector := make([]byte, 4)

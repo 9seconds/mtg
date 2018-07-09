@@ -18,6 +18,8 @@ const (
 	mtprotoAbridgedLargePacketLength = 16777216 // 256 ^ 3
 )
 
+// MTProtoAbridged presents abridged connection between client and
+// middle proxy.
 type MTProtoAbridged struct {
 	conn   StreamReadWriteCloser
 	opts   *mtproto.ConnectionOpts
@@ -127,22 +129,27 @@ func (m *MTProtoAbridged) Write(p []byte) (int, error) {
 	return 0, errors.Errorf("Packet is too big %d", len(p))
 }
 
+// Logger returns an instance of the logger for this wrapper.
 func (m *MTProtoAbridged) Logger() *zap.SugaredLogger {
 	return m.logger
 }
 
+// LocalAddr returns local address of the underlying net.Conn.
 func (m *MTProtoAbridged) LocalAddr() *net.TCPAddr {
 	return m.conn.LocalAddr()
 }
 
+// RemoteAddr returns remote address of the underlying net.Conn.
 func (m *MTProtoAbridged) RemoteAddr() *net.TCPAddr {
 	return m.conn.RemoteAddr()
 }
 
+// Close closes underlying net.Conn instance.
 func (m *MTProtoAbridged) Close() error {
 	return m.conn.Close()
 }
 
+// NewMTProtoAbridged creates new wrapper for abridged client connection.
 func NewMTProtoAbridged(conn StreamReadWriteCloser, opts *mtproto.ConnectionOpts) PacketReadWriteCloser {
 	return &MTProtoAbridged{
 		conn:   conn,

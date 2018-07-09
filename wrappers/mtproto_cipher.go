@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
-	"crypto/md5"
+	"crypto/md5" // nolint: gas
 	"crypto/sha1"
 	"encoding/binary"
 	"net"
@@ -13,21 +13,23 @@ import (
 	"github.com/9seconds/mtg/utils"
 )
 
-type CipherPurpose uint8
+type cipherPurpose uint8
 
 const (
-	CipherPurposeClient CipherPurpose = iota
-	CipherPurposeServer
+	cipherPurposeClient cipherPurpose = iota
+	cipherPurposeServer
 )
 
 var emptyIP = [4]byte{0x00, 0x00, 0x00, 0x00}
 
+// NewMiddleProxyCipher creates new block cipher to proxy<->telegram
+// connection.
 func NewMiddleProxyCipher(conn StreamReadWriteCloser, req *rpc.NonceRequest, resp *rpc.NonceResponse, secret []byte) StreamReadWriteCloser {
 	localAddr := conn.LocalAddr()
 	remoteAddr := conn.RemoteAddr()
 
-	encKey, encIV := deriveKeys(CipherPurposeClient, req, resp, localAddr, remoteAddr, secret)
-	decKey, decIV := deriveKeys(CipherPurposeServer, req, resp, localAddr, remoteAddr, secret)
+	encKey, encIV := deriveKeys(cipherPurposeClient, req, resp, localAddr, remoteAddr, secret)
+	decKey, decIV := deriveKeys(cipherPurposeServer, req, resp, localAddr, remoteAddr, secret)
 
 	enc, _ := makeEncrypterDecrypter(encKey, encIV)
 	_, dec := makeEncrypterDecrypter(decKey, decIV)
@@ -35,7 +37,7 @@ func NewMiddleProxyCipher(conn StreamReadWriteCloser, req *rpc.NonceRequest, res
 	return NewBlockCipher(conn, enc, dec)
 }
 
-func deriveKeys(purpose CipherPurpose, req *rpc.NonceRequest, resp *rpc.NonceResponse, client *net.TCPAddr, remote *net.TCPAddr, secret []byte) ([]byte, []byte) {
+func deriveKeys(purpose cipherPurpose, req *rpc.NonceRequest, resp *rpc.NonceResponse, client *net.TCPAddr, remote *net.TCPAddr, secret []byte) ([]byte, []byte) {
 	message := bytes.Buffer{}
 	message.Write(resp.Nonce[:])
 	message.Write(req.Nonce[:])
@@ -54,9 +56,9 @@ func deriveKeys(purpose CipherPurpose, req *rpc.NonceRequest, resp *rpc.NonceRes
 	message.Write(port[:])
 
 	switch purpose {
-	case CipherPurposeClient:
+	case cipherPurposeClient:
 		message.WriteString("CLIENT")
-	case CipherPurposeServer:
+	case cipherPurposeServer:
 		message.WriteString("SERVER")
 	default:
 		panic("Unexpected cipher purpose")
@@ -75,11 +77,11 @@ func deriveKeys(purpose CipherPurpose, req *rpc.NonceRequest, resp *rpc.NonceRes
 	message.Write(req.Nonce[:])
 
 	data := message.Bytes()
-	md5sum := md5.Sum(data[1:])
+	md5sum := md5.Sum(data[1:]) // nolint: gas
 	sha1sum := sha1.Sum(data)
 
 	key := append(md5sum[:12], sha1sum[:]...)
-	iv := md5.Sum(data[2:])
+	iv := md5.Sum(data[2:]) // nolint: gas
 
 	return key, iv[:]
 }

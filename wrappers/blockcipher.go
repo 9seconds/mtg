@@ -12,6 +12,10 @@ import (
 	"github.com/juju/errors"
 )
 
+// BlockCipher is a stream writer which encrypts/decrypts blocks of data
+// with AES CBC. This also is buffered reader. It means, that block
+// reading is transparent for it, you can assume you are working with
+// good old io.Reader.
 type BlockCipher struct {
 	buf *bytes.Buffer
 
@@ -63,22 +67,27 @@ func (b *BlockCipher) Write(p []byte) (int, error) {
 	return b.conn.Write(encrypted)
 }
 
+// Logger returns an instance of the logger for this wrapper.
 func (b *BlockCipher) Logger() *zap.SugaredLogger {
 	return b.logger
 }
 
+// LocalAddr returns local address of the underlying net.Conn.
 func (b *BlockCipher) LocalAddr() *net.TCPAddr {
 	return b.conn.LocalAddr()
 }
 
+// RemoteAddr returns remote address of the underlying net.Conn.
 func (b *BlockCipher) RemoteAddr() *net.TCPAddr {
 	return b.conn.RemoteAddr()
 }
 
+// Close closes underlying net.Conn.
 func (b *BlockCipher) Close() error {
 	return b.conn.Close()
 }
 
+// NewBlockCipher creates new instance of BlockCipher based on given data.
 func NewBlockCipher(conn StreamReadWriteCloser, encryptor, decryptor cipher.BlockMode) StreamReadWriteCloser {
 	return &BlockCipher{
 		buf:       &bytes.Buffer{},

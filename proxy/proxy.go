@@ -17,12 +17,14 @@ import (
 	"github.com/9seconds/mtg/wrappers"
 )
 
+// Proxy is a core of this program.
 type Proxy struct {
 	clientInit client.Init
 	tg         telegram.Telegram
 	conf       *config.Config
 }
 
+// Serve runs TCP proxy server.
 func (p *Proxy) Serve() error {
 	lsock, err := net.Listen("tcp", p.conf.BindAddr())
 	if err != nil {
@@ -43,7 +45,7 @@ func (p *Proxy) accept(conn net.Conn) {
 	log := zap.S().With("connection_id", connID).Named("main")
 
 	defer func() {
-		conn.Close()
+		conn.Close() // nolint: errcheck
 
 		if err := recover(); err != nil {
 			stats.NewCrash()
@@ -58,7 +60,7 @@ func (p *Proxy) accept(conn net.Conn) {
 		log.Errorw("Cannot initialize client connection", "error", err)
 		return
 	}
-	defer client.(io.Closer).Close()
+	defer client.(io.Closer).Close() // nolint: errcheck
 
 	stats.ClientConnected(opts.ConnectionType, client.RemoteAddr())
 	defer stats.ClientDisconnected(opts.ConnectionType, client.RemoteAddr())
@@ -68,7 +70,7 @@ func (p *Proxy) accept(conn net.Conn) {
 		log.Errorw("Cannot initialize server connection", "error", err)
 		return
 	}
-	defer server.(io.Closer).Close()
+	defer server.(io.Closer).Close() // nolint: errcheck
 
 	wait := &sync.WaitGroup{}
 	wait.Add(2)
@@ -104,10 +106,10 @@ func (p *Proxy) getTelegramConn(opts *mtproto.ConnectionOpts, connID string) (wr
 	return packetConn, nil
 }
 
-func (p *Proxy) middlePipe(src wrappers.PacketReadCloser, dst wrappers.PacketWriteCloser, wait *sync.WaitGroup, hacks *mtproto.Hacks) {
+func (p *Proxy) middlePipe(src wrappers.PacketReadCloser, dst io.WriteCloser, wait *sync.WaitGroup, hacks *mtproto.Hacks) {
 	defer func() {
-		src.Close()
-		dst.Close()
+		src.Close() // nolint: errcheck
+		dst.Close() // nolint: errcheck
 		wait.Done()
 	}()
 
@@ -127,10 +129,10 @@ func (p *Proxy) middlePipe(src wrappers.PacketReadCloser, dst wrappers.PacketWri
 	}
 }
 
-func (p *Proxy) directPipe(src wrappers.StreamReadCloser, dst wrappers.StreamWriteCloser, wait *sync.WaitGroup) {
+func (p *Proxy) directPipe(src wrappers.StreamReadCloser, dst io.WriteCloser, wait *sync.WaitGroup) {
 	defer func() {
-		src.Close()
-		dst.Close()
+		src.Close() // nolint: errcheck
+		dst.Close() // nolint: errcheck
 		wait.Done()
 	}()
 
@@ -139,6 +141,7 @@ func (p *Proxy) directPipe(src wrappers.StreamReadCloser, dst wrappers.StreamWri
 	}
 }
 
+// NewProxy returns new proxy instance.
 func NewProxy(conf *config.Config) *Proxy {
 	var clientInit client.Init
 	var tg telegram.Telegram

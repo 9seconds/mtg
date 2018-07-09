@@ -28,11 +28,11 @@ var (
 	}
 )
 
-type DirectTelegram struct {
+type directTelegram struct {
 	baseTelegram
 }
 
-func (t *DirectTelegram) Dial(connID string, connOpts *mtproto.ConnectionOpts) (wrappers.StreamReadWriteCloser, error) {
+func (t *directTelegram) Dial(connID string, connOpts *mtproto.ConnectionOpts) (wrappers.StreamReadWriteCloser, error) {
 	dc := connOpts.DC
 	if dc < 0 {
 		dc = -dc
@@ -43,7 +43,7 @@ func (t *DirectTelegram) Dial(connID string, connOpts *mtproto.ConnectionOpts) (
 	return t.baseTelegram.dial(dc-1, connID, connOpts.ConnectionProto)
 }
 
-func (t *DirectTelegram) Init(connOpts *mtproto.ConnectionOpts, conn wrappers.StreamReadWriteCloser) (wrappers.Wrap, error) {
+func (t *directTelegram) Init(connOpts *mtproto.ConnectionOpts, conn wrappers.StreamReadWriteCloser) (wrappers.Wrap, error) {
 	obfs2, frame := obfuscated2.MakeTelegramObfuscated2Frame(connOpts)
 
 	if _, err := conn.Write(frame); err != nil {
@@ -56,7 +56,7 @@ func (t *DirectTelegram) Init(connOpts *mtproto.ConnectionOpts, conn wrappers.St
 // NewDirectTelegram returns Telegram instance which connects directly
 // to Telegram bypassing middleproxies.
 func NewDirectTelegram(conf *config.Config) Telegram {
-	return &DirectTelegram{baseTelegram{
+	return &directTelegram{baseTelegram{
 		dialer: tgDialer{
 			Dialer: net.Dialer{Timeout: telegramDialTimeout},
 			conf:   conf,

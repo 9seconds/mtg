@@ -20,6 +20,18 @@ const (
 
 var mtprotoFramePadding = []byte{0x04, 0x00, 0x00, 0x00}
 
+// MTProtoFrame is a wrapper which converts written data to the MTProtoFrame.
+// The format of the frame:
+//
+// [ MSGLEN(4) | SEQNO(4) | MSG(...) | CRC32(4) | PADDING(4*x) ]
+//
+// MSGLEN is the length of the message + len of seqno and msglen.
+// SEQNO is the number of frame in the receive/send sequence. If client
+//   sends a message with SeqNo 18, it has to receive message with SeqNo 18.
+// MSG is the data which has to be written
+// CRC32 is the CRC32 checksum of MSGLEN + SEQNO + MSG
+// PADDING is custom padding schema to complete frame length to such that
+//    len(frame) % 16 == 0
 type MTProtoFrame struct {
 	conn   StreamReadWriteCloser
 	logger *zap.SugaredLogger
@@ -28,7 +40,7 @@ type MTProtoFrame struct {
 	writeSeqNo int32
 }
 
-func (m *MTProtoFrame) Read() ([]byte, error) {
+func (m *MTProtoFrame) Read() ([]byte, error) { // nolint: gocyclo
 	buf := &bytes.Buffer{}
 	sum := crc32.NewIEEE()
 	writer := io.MultiWriter(buf, sum)
@@ -60,7 +72,7 @@ func (m *MTProtoFrame) Read() ([]byte, error) {
 	}
 
 	var seqNo int32
-	binary.Read(buf, binary.LittleEndian, &seqNo)
+	binary.Read(buf, binary.LittleEndian, &seqNo) // nolint: errcheck
 	if seqNo != m.readSeqNo {
 		return nil, errors.Errorf("Unexpected sequence number %d (wait for %d)", seqNo, m.readSeqNo)
 	}
@@ -96,12 +108,12 @@ func (m *MTProtoFrame) Write(p []byte) (int, error) {
 	buf := &bytes.Buffer{}
 	buf.Grow(messageLength + paddingLength)
 
-	binary.Write(buf, binary.LittleEndian, uint32(messageLength))
-	binary.Write(buf, binary.LittleEndian, m.writeSeqNo)
+	binary.Write(buf, binary.LittleEndian, uint32(messageLength)) // nolint: errcheck
+	binary.Write(buf, binary.LittleEndian, m.writeSeqNo)          // nolint: errcheck
 	buf.Write(p)
 
 	checksum := crc32.ChecksumIEEE(buf.Bytes())
-	binary.Write(buf, binary.LittleEndian, checksum)
+	binary.Write(buf, binary.LittleEndian, checksum) // nolint: errcheck
 	buf.Write(bytes.Repeat(mtprotoFramePadding, paddingLength/4))
 
 	m.logger.Debugw("Write MTProto frame",
@@ -117,22 +129,27 @@ func (m *MTProtoFrame) Write(p []byte) (int, error) {
 	return len(p), err
 }
 
+// Logger returns an instance of the logger for this wrapper.
 func (m *MTProtoFrame) Logger() *zap.SugaredLogger {
 	return m.logger
 }
 
+// LocalAddr returns local address of the underlying net.Conn.
 func (m *MTProtoFrame) LocalAddr() *net.TCPAddr {
 	return m.conn.LocalAddr()
 }
 
+// RemoteAddr returns remote address of the underlying net.Conn.
 func (m *MTProtoFrame) RemoteAddr() *net.TCPAddr {
 	return m.conn.RemoteAddr()
 }
 
+// Close closes underlying net.Conn instance.
 func (m *MTProtoFrame) Close() error {
 	return m.conn.Close()
 }
 
+// NewMTProtoFrame creates new PacketWrapper for underlying connection.
 func NewMTProtoFrame(conn StreamReadWriteCloser, seqNo int32) PacketReadWriteCloser {
 	return &MTProtoFrame{
 		conn:       conn,

@@ -14,6 +14,8 @@ import (
 
 const mtprotoIntermediateQuickAckLength = 0x80000000
 
+// MTProtoIntermediate presents intermediate connection between client
+// and Telegram.
 type MTProtoIntermediate struct {
 	conn   StreamReadWriteCloser
 	opts   *mtproto.ConnectionOpts
@@ -88,22 +90,28 @@ func (m *MTProtoIntermediate) Write(p []byte) (int, error) {
 	return m.conn.Write(append(length[:], p...))
 }
 
+// Logger returns an instance of the logger for this wrapper.
 func (m *MTProtoIntermediate) Logger() *zap.SugaredLogger {
 	return m.logger
 }
 
+// LocalAddr returns local address of the underlying net.Conn.
 func (m *MTProtoIntermediate) LocalAddr() *net.TCPAddr {
 	return m.conn.LocalAddr()
 }
 
+// RemoteAddr returns remote address of the underlying net.Conn.
 func (m *MTProtoIntermediate) RemoteAddr() *net.TCPAddr {
 	return m.conn.RemoteAddr()
 }
 
+// Close closes underlying net.Conn instance.
 func (m *MTProtoIntermediate) Close() error {
 	return m.conn.Close()
 }
 
+// NewMTProtoIntermediate creates new PacketWrapper for intermediate
+// client connection.
 func NewMTProtoIntermediate(conn StreamReadWriteCloser, opts *mtproto.ConnectionOpts) PacketReadWriteCloser {
 	return &MTProtoIntermediate{
 		conn:   conn,

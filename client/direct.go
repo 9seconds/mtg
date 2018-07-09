@@ -18,6 +18,8 @@ const (
 	writeBufferSize  = 64 * 1024
 )
 
+// DirectInit initializes client connection for proxy which connects to
+// Telegram directly.
 func DirectInit(socket net.Conn, connID string, conf *config.Config) (wrappers.Wrap, *mtproto.ConnectionOpts, error) {
 	tcpSocket := socket.(*net.TCPConn)
 	if err := tcpSocket.SetNoDelay(false); err != nil {
@@ -30,14 +32,14 @@ func DirectInit(socket net.Conn, connID string, conf *config.Config) (wrappers.W
 		return nil, nil, errors.Annotate(err, "Cannot set write buffer size of client socket")
 	}
 
-	socket.SetReadDeadline(time.Now().Add(handshakeTimeout))
+	socket.SetReadDeadline(time.Now().Add(handshakeTimeout)) // nolint: errcheck
 	frame, err := obfuscated2.ExtractFrame(socket)
 	if err != nil {
 		return nil, nil, errors.Annotate(err, "Cannot extract frame")
 	}
-	socket.SetReadDeadline(time.Time{})
-	conn := wrappers.NewConn(socket, connID, wrappers.ConnPurposeClient, conf.PublicIPv4, conf.PublicIPv6)
+	socket.SetReadDeadline(time.Time{}) // nolint: errcheck
 
+	conn := wrappers.NewConn(socket, connID, wrappers.ConnPurposeClient, conf.PublicIPv4, conf.PublicIPv6)
 	obfs2, connOpts, err := obfuscated2.ParseObfuscated2ClientFrame(conf.Secret, frame)
 	if err != nil {
 		return nil, nil, errors.Annotate(err, "Cannot parse obfuscated frame")

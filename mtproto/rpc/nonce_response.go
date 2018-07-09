@@ -6,6 +6,7 @@ import (
 	"github.com/juju/errors"
 )
 
+// NonceResponse is the data type which contains data of nonce response.
 type NonceResponse struct {
 	NonceRequest
 
@@ -13,6 +14,7 @@ type NonceResponse struct {
 	Crypto []byte
 }
 
+// Bytes returns serialized form of the nonce response.
 func (r *NonceResponse) Bytes() []byte {
 	buf := &bytes.Buffer{}
 
@@ -25,6 +27,7 @@ func (r *NonceResponse) Bytes() []byte {
 	return buf.Bytes()
 }
 
+// Valid checks that nonce response compliments nonce request.
 func (r *NonceResponse) Valid(req *NonceRequest) error {
 	if !bytes.Equal(r.Type, TagNonce) {
 		return errors.New("Unexpected RPC type")
@@ -39,6 +42,7 @@ func (r *NonceResponse) Valid(req *NonceRequest) error {
 	return nil
 }
 
+// NewNonceResponse build new nonce response based on the given data.
 func NewNonceResponse(data []byte) (*NonceResponse, error) {
 	if len(data) != 32 {
 		return nil, errors.New("Unexpected message length")

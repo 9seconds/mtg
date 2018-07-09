@@ -6,6 +6,8 @@ import (
 	"github.com/juju/errors"
 )
 
+// HandshakeResponse defines data structure which is used for storage of
+// handshake response.
 type HandshakeResponse struct {
 	Type      []byte
 	Flags     []byte
@@ -13,6 +15,7 @@ type HandshakeResponse struct {
 	PeerPID   []byte
 }
 
+// Bytes returns a serialized handshake response.
 func (r *HandshakeResponse) Bytes() []byte {
 	buf := &bytes.Buffer{}
 
@@ -24,6 +27,7 @@ func (r *HandshakeResponse) Bytes() []byte {
 	return buf.Bytes()
 }
 
+// Valid checks that handshake response compliments request.
 func (r *HandshakeResponse) Valid(req *HandshakeRequest) error {
 	if !bytes.Equal(r.Type, TagHandshake) {
 		return errors.New("Unexpected handshake tag")
@@ -35,6 +39,8 @@ func (r *HandshakeResponse) Valid(req *HandshakeRequest) error {
 	return nil
 }
 
+// NewHandshakeResponse constructs new handshake response from the given
+// data.
 func NewHandshakeResponse(data []byte) (*HandshakeResponse, error) {
 	if len(data) != 32 {
 		return nil, errors.New("Incorrect handshake response length")

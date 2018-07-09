@@ -1,6 +1,7 @@
 package telegram
 
 import (
+	"io"
 	"net"
 	"net/http"
 	"sync"
@@ -13,13 +14,13 @@ import (
 	"github.com/9seconds/mtg/wrappers"
 )
 
-type MiddleTelegram struct {
+type middleTelegram struct {
 	middleTelegramCaller
 
 	conf *config.Config
 }
 
-func (t *MiddleTelegram) Init(connOpts *mtproto.ConnectionOpts, conn wrappers.StreamReadWriteCloser) (wrappers.Wrap, error) {
+func (t *middleTelegram) Init(connOpts *mtproto.ConnectionOpts, conn wrappers.StreamReadWriteCloser) (wrappers.Wrap, error) {
 	rpcNonceConn := wrappers.NewMTProtoFrame(conn, rpc.SeqNoNonce)
 
 	rpcNonceReq, err := t.sendRPCNonceRequest(rpcNonceConn)
@@ -52,7 +53,7 @@ func (t *MiddleTelegram) Init(connOpts *mtproto.ConnectionOpts, conn wrappers.St
 	return proxyConn, nil
 }
 
-func (t *MiddleTelegram) sendRPCNonceRequest(conn wrappers.PacketWriter) (*rpc.NonceRequest, error) {
+func (t *middleTelegram) sendRPCNonceRequest(conn io.Writer) (*rpc.NonceRequest, error) {
 	rpcNonceReq, err := rpc.NewNonceRequest(t.proxySecret)
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot create RPC nonce request")
@@ -64,7 +65,7 @@ func (t *MiddleTelegram) sendRPCNonceRequest(conn wrappers.PacketWriter) (*rpc.N
 	return rpcNonceReq, nil
 }
 
-func (t *MiddleTelegram) receiveRPCNonceResponse(conn wrappers.PacketReader, req *rpc.NonceRequest) (*rpc.NonceResponse, error) {
+func (t *middleTelegram) receiveRPCNonceResponse(conn wrappers.PacketReader, req *rpc.NonceRequest) (*rpc.NonceResponse, error) {
 	packet, err := conn.Read()
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot read RPC nonce response")
@@ -81,7 +82,7 @@ func (t *MiddleTelegram) receiveRPCNonceResponse(conn wrappers.PacketReader, req
 	return rpcNonceResp, nil
 }
 
-func (t *MiddleTelegram) sendRPCHandshakeRequest(conn wrappers.PacketWriter) (*rpc.HandshakeRequest, error) {
+func (t *middleTelegram) sendRPCHandshakeRequest(conn io.Writer) (*rpc.HandshakeRequest, error) {
 	req := rpc.NewHandshakeRequest()
 	if _, err := conn.Write(req.Bytes()); err != nil {
 		return nil, errors.Annotate(err, "Cannot send RPC handshake request")
@@ -90,7 +91,7 @@ func (t *MiddleTelegram) sendRPCHandshakeRequest(conn wrappers.PacketWriter) (*r
 	return req, nil
 }
 
-func (t *MiddleTelegram) receiveRPCHandshakeResponse(conn wrappers.PacketReader, req *rpc.HandshakeRequest) (*rpc.HandshakeResponse, error) {
+func (t *middleTelegram) receiveRPCHandshakeResponse(conn wrappers.PacketReader, req *rpc.HandshakeRequest) (*rpc.HandshakeResponse, error) {
 	packet, err := conn.Read()
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot read RPC handshake response")
@@ -107,8 +108,10 @@ func (t *MiddleTelegram) receiveRPCHandshakeResponse(conn wrappers.PacketReader,
 	return rpcHandshakeResp, nil
 }
 
+// NewMiddleTelegram creates new instance of Telegram which works with
+// middle proxies.
 func NewMiddleTelegram(conf *config.Config) Telegram {
-	tg := &MiddleTelegram{
+	tg := &middleTelegram{
 		middleTelegramCaller: middleTelegramCaller{
 			baseTelegram: baseTelegram{
 				dialer: tgDialer{

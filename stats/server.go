@@ -13,6 +13,7 @@ import (
 
 var instance *stats
 
+// Start starts new statisitcs server.
 func Start(conf *config.Config) {
 	log := zap.S().Named("stats")
 
@@ -40,7 +41,7 @@ func Start(conf *config.Config) {
 		}
 
 		interm := map[string]interface{}{}
-		json.Unmarshal(first, &interm)
+		json.Unmarshal(first, &interm) // nolint: errcheck
 
 		encoder := json.NewEncoder(w)
 		encoder.SetEscapeHTML(false)

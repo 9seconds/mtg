@@ -11,8 +11,10 @@ import (
 // by the user.
 type ConnectionType uint8
 
+// ConnectionProtocol is a type of IP protocol to use.
 type ConnectionProtocol uint8
 
+// Hacks is a simple structure to store flags for packet transmission.
 type Hacks struct {
 	SimpleAck bool
 	QuickAck  bool
@@ -24,9 +26,12 @@ type ConnectionOpts struct {
 	DC              int16
 	ConnectionType  ConnectionType
 	ConnectionProto ConnectionProtocol
-	ReadHacks       Hacks
-	WriteHacks      Hacks
-	ClientAddr      *net.TCPAddr
+	// Read and Write means direction related to the client.
+	// ReadHacks are meant to be flushed on client read
+	// WriteHacks are meant to be flushed on client write.
+	ReadHacks  Hacks
+	WriteHacks Hacks
+	ClientAddr *net.TCPAddr
 }
 
 // Different connection types which user requests from Telegram.
@@ -36,6 +41,8 @@ const (
 	ConnectionTypeIntermediate
 )
 
+// ConnectionProtocol* define which connection protocols to use.
+// ConnectionProtocolAny means that any is suitable.
 const (
 	ConnectionProtocolIPv4 ConnectionProtocol = 1
 	ConnectionProtocolIPv6                    = ConnectionProtocolIPv4 << 1

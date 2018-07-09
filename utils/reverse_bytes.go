@@ -1,5 +1,6 @@
 package utils
 
+// ReverseBytes is a common slice reverser.
 func ReverseBytes(data []byte) []byte {
 	dataLen := len(data)
 	rv := make([]byte, dataLen)

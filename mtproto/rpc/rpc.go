@@ -1,10 +1,13 @@
 package rpc
 
+// SeqNo* is the number of the sequence which have special meaning for
+// the Telegram.
 const (
 	SeqNoNonce     = -2
 	SeqNoHandshake = -1
 )
 
+// Different constants for RPC protocol
 var (
 	TagCloseExt     = []byte{0xa2, 0x34, 0xb6, 0x5e}
 	TagProxyAns     = []byte{0x0d, 0xda, 0x03, 0x44}

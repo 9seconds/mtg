@@ -104,7 +104,7 @@ func (t *middleTelegramCaller) getTelegramAddresses(url string) (map[int16][]str
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot access telegram server")
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // nolint: errcheck
 
 	scanner := bufio.NewScanner(resp.Body)
 	data := map[int16][]string{}
