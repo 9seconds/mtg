@@ -12,11 +12,22 @@ import (
 	"github.com/9seconds/mtg/wrappers"
 )
 
-const handshakeTimeout = 10 * time.Second
+const (
+	handshakeTimeout = 10 * time.Second
+	readBufferSize   = 64 * 1024
+	writeBufferSize  = 64 * 1024
+)
 
 func DirectInit(socket net.Conn, connID string, conf *config.Config) (wrappers.Wrap, *mtproto.ConnectionOpts, error) {
-	if err := config.SetSocketOptions(socket); err != nil {
-		return nil, nil, errors.Annotate(err, "Cannot set socket options")
+	tcpSocket := socket.(*net.TCPConn)
+	if err := tcpSocket.SetNoDelay(false); err != nil {
+		return nil, nil, errors.Annotate(err, "Cannot disable NO_DELAY to client socket")
+	}
+	if err := tcpSocket.SetReadBuffer(readBufferSize); err != nil {
+		return nil, nil, errors.Annotate(err, "Cannot set read buffer size of client socket")
+	}
+	if err := tcpSocket.SetWriteBuffer(writeBufferSize); err != nil {
+		return nil, nil, errors.Annotate(err, "Cannot set write buffer size of client socket")
 	}
 
 	socket.SetReadDeadline(time.Now().Add(handshakeTimeout))

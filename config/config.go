@@ -149,20 +149,3 @@ func NewConfig(debug, verbose bool, // nolint: gocyclo
 
 	return conf, nil
 }
-
-// SetSocketOptions makes socket keepalive, sets buffer sizes
-func SetSocketOptions(conn net.Conn) error {
-	socket := conn.(*net.TCPConn)
-
-	if err := socket.SetReadBuffer(BufferReadSize); err != nil {
-		return errors.Annotate(err, "Cannot set read buffer size")
-	}
-	if err := socket.SetWriteBuffer(BufferWriteSize); err != nil {
-		return errors.Annotate(err, "Cannot set write buffer size")
-	}
-	if err := socket.SetNoDelay(true); err != nil {
-		return errors.Annotate(err, "Cannot activate nodelay for the socket")
-	}
-
-	return nil
-}
