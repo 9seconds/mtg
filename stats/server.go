@@ -6,12 +6,16 @@ import (
 	"sync"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/9seconds/mtg/config"
 )
 
 var instance *stats
 
 func Start(conf *config.Config) {
+	log := zap.S().Named("stats")
+
 	instance = &stats{
 		URLs:   conf.GetURLs(),
 		Uptime: uptime(time.Now()),
@@ -26,8 +30,14 @@ func Start(conf *config.Config) {
 		w.Header().Set("Content-Type", "application/json")
 
 		instance.mutex.Lock()
-		first, _ := json.Marshal(instance)
+		first, err := json.Marshal(instance)
 		instance.mutex.Unlock()
+
+		if err != nil {
+			log.Errorw("Cannot encode json", "error", err)
+			http.Error(w, "Internal server error", 500)
+			return
+		}
 
 		interm := map[string]interface{}{}
 		json.Unmarshal(first, &interm)
@@ -35,8 +45,12 @@ func Start(conf *config.Config) {
 		encoder := json.NewEncoder(w)
 		encoder.SetEscapeHTML(false)
 		encoder.SetIndent("", "  ")
-		encoder.Encode(interm)
+		if err = encoder.Encode(interm); err != nil {
+			log.Errorw("Cannot encode json", "error", err)
+		}
 	})
 
-	http.ListenAndServe(conf.StatAddr(), nil)
+	if err := http.ListenAndServe(conf.StatAddr(), nil); err != nil {
+		log.Fatalw("Stats server has been stopped", "error", err)
+	}
 }
