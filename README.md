@@ -47,7 +47,7 @@ secret. If you do not provide ADTag as a second parameter, promoted
 channels mode won't be activated.
 
 To get promoted channel, please contact
-[@MTProxybot|https://t.me/MTProxybot] and provide generated adtag as a
+[@MTProxybot](https://t.me/MTProxybot) and provide generated adtag as a
 second parameter.
 
 
