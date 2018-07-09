@@ -45,7 +45,7 @@ func connectionManager() {
 	for event := range ConnectionsChan {
 		instance.mutex.RLock()
 
-		isIPv4 := event.addr.IP.To4() == nil
+		isIPv4 := event.addr.IP.To4() != nil
 		var inc uint32 = 1
 		if !event.connected {
 			inc = ^uint32(0)
