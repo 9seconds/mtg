@@ -4,7 +4,7 @@ APP_NAME     := $(IMAGE_NAME)
 GOMETALINTER := gometalinter
 
 VENDOR_FILES := $(shell find "$(ROOT_DIR)/vendor" 2>/dev/null || echo -n "vendor")
-CC_BINARIES  := $(shell bash -c "echo -n $(APP_NAME)-{linux,windows,darwin,freebsd,openbsd}-{386,amd64} $(APP_NAME)-linux-{arm,arm64}")
+CC_BINARIES  := $(shell bash -c "echo -n $(APP_NAME)-{linux,freebsd,openbsd}-{386,amd64} $(APP_NAME)-linux-{arm,arm64}")
 APP_DEPS     := version.go $(VENDOR_FILES)
 
 COMMON_BUILD_FLAGS := -ldflags="-s -w"
