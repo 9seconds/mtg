@@ -16,6 +16,7 @@ import (
 
 	"github.com/9seconds/mtg/config"
 	"github.com/9seconds/mtg/proxy"
+	"github.com/9seconds/mtg/stats"
 	"github.com/juju/errors"
 )
 
@@ -70,6 +71,7 @@ var (
 			Uint16()
 
 	secret = app.Arg("secret", "Secret of this proxy.").Required().String()
+	adtag  = app.Arg("adtag", "ADTag of the proxy.").String()
 )
 
 func init() {
@@ -91,7 +93,7 @@ func main() {
 		*publicIPv4, *publicIPv4Port,
 		*publicIPv6, *publicIPv6Port,
 		*statsIP, *statsPort,
-		*secret,
+		*secret, *adtag,
 	)
 	if err != nil {
 		usage(err.Error())
@@ -110,16 +112,23 @@ func main() {
 		zapcore.NewJSONEncoder(encoderCfg),
 		zapcore.Lock(os.Stderr),
 		atom,
-	)).Sugar()
+	))
+	zap.ReplaceGlobals(logger)
+	defer logger.Sync() // nolint: errcheck
 
-	stat := proxy.NewStats(conf)
-	go stat.Serve()
-
-	srv := proxy.NewServer(conf, logger, stat)
 	printURLs(conf.GetURLs())
 
-	if err := srv.Serve(); err != nil {
-		logger.Fatal(err.Error())
+	if conf.UseMiddleProxy() {
+		zap.S().Infow("Use middle proxy connection to Telegram")
+	} else {
+		zap.S().Infow("Use direct connection to Telegram")
+	}
+
+	go stats.Start(conf)
+
+	server := proxy.NewProxy(conf)
+	if err := server.Serve(); err != nil {
+		zap.S().Fatalw("Server stopped", "error", err)
 	}
 }
 

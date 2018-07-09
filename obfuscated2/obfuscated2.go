@@ -21,7 +21,7 @@ type Obfuscated2 struct {
 // details: http://telegra.ph/telegram-blocks-wtf-05-26
 //
 // Beware, link above is in russian.
-func ParseObfuscated2ClientFrame(secret []byte, frame *Frame) (*Obfuscated2, *mtproto.ConnectionOpts, error) {
+func ParseObfuscated2ClientFrame(secret []byte, frame Frame) (*Obfuscated2, *mtproto.ConnectionOpts, error) {
 	decHasher := sha256.New()
 	decHasher.Write(frame.Key()) // nolint: errcheck
 	decHasher.Write(secret)      // nolint: errcheck
@@ -33,9 +33,8 @@ func ParseObfuscated2ClientFrame(secret []byte, frame *Frame) (*Obfuscated2, *mt
 	encHasher.Write(secret)              // nolint: errcheck
 	encryptor := makeStreamCipher(encHasher.Sum(nil), invertedFrame.IV())
 
-	decryptedFrame := MakeFrame()
-	defer ReturnFrame(decryptedFrame)
-	decryptor.XORKeyStream(*decryptedFrame, *frame)
+	decryptedFrame := make(Frame, FrameLen)
+	decryptor.XORKeyStream(decryptedFrame, frame)
 	connType, err := decryptedFrame.ConnectionType()
 	if err != nil {
 		return nil, nil, errors.Annotate(err, "Unknown protocol")
@@ -56,18 +55,17 @@ func ParseObfuscated2ClientFrame(secret []byte, frame *Frame) (*Obfuscated2, *mt
 // MakeTelegramObfuscated2Frame creates new handshake frame to send to
 // Telegram.
 // https://blog.susanka.eu/how-telegram-obfuscates-its-mtproto-traffic/
-func MakeTelegramObfuscated2Frame(opts *mtproto.ConnectionOpts) (*Obfuscated2, *Frame) {
+func MakeTelegramObfuscated2Frame(opts *mtproto.ConnectionOpts) (*Obfuscated2, Frame) {
 	frame := generateFrame(opts.ConnectionType)
 
 	encryptor := makeStreamCipher(frame.Key(), frame.IV())
 	decryptorFrame := frame.Invert()
 	decryptor := makeStreamCipher(decryptorFrame.Key(), decryptorFrame.IV())
 
-	copyFrame := MakeFrame()
-	defer ReturnFrame(copyFrame)
-	copy((*copyFrame)[:frameOffsetIV], (*frame)[:frameOffsetIV])
-	encryptor.XORKeyStream(*frame, *frame)
-	copy((*frame)[:frameOffsetIV], (*copyFrame)[:frameOffsetIV])
+	copyFrame := make(Frame, FrameLen)
+	copy(copyFrame[:frameOffsetIV], frame[:frameOffsetIV])
+	encryptor.XORKeyStream(frame, frame)
+	copy(frame[:frameOffsetIV], copyFrame[:frameOffsetIV])
 
 	obfs := &Obfuscated2{
 		Decryptor: decryptor,

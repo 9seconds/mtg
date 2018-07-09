@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 	"strconv"
-	"time"
 
 	"github.com/juju/errors"
 )
@@ -14,9 +13,6 @@ import (
 const (
 	BufferWriteSize = 32 * 1024
 	BufferReadSize  = 32 * 1024
-	BufferSizeCopy  = 32 * 1024
-
-	keepAlivePeriod = 20 * time.Second
 )
 
 // Config represents common configuration of mtg.
@@ -35,6 +31,7 @@ type Config struct {
 	StatsIP    net.IP
 
 	Secret []byte
+	AdTag  []byte
 }
 
 // URLs contains links to the proxy (tg://, t.me) and their QR codes.
@@ -56,27 +53,28 @@ func (c *Config) BindAddr() string {
 	return getAddr(c.BindIP, c.BindPort)
 }
 
-// IPv4Addr returns connection string to ipv6 for mtproto proxy.
-func (c *Config) IPv4Addr() string {
-	return getAddr(c.PublicIPv4, c.PublicIPv4Port)
-}
-
-// IPv6Addr returns connection string to ipv6 for mtproto proxy.
-func (c *Config) IPv6Addr() string {
-	return getAddr(c.PublicIPv6, c.PublicIPv6Port)
-}
-
 // StatAddr returns connection string to the stats API.
 func (c *Config) StatAddr() string {
 	return getAddr(c.StatsIP, c.StatsPort)
 }
 
+// UseMiddleProxy defines if this proxy has to connect middle proxies
+// which supports promoted channels or directly access Telegram.
+func (c *Config) UseMiddleProxy() bool {
+	return len(c.AdTag) > 0
+}
+
 // GetURLs returns configured IPURLs instance with links to this server.
 func (c *Config) GetURLs() IPURLs {
-	return IPURLs{
-		IPv4: getURLs(c.PublicIPv4, c.PublicIPv4Port, c.Secret),
-		IPv6: getURLs(c.PublicIPv6, c.PublicIPv6Port, c.Secret),
+	urls := IPURLs{}
+	if c.PublicIPv4 != nil {
+		urls.IPv4 = getURLs(c.PublicIPv4, c.PublicIPv4Port, c.Secret)
 	}
+	if c.PublicIPv6 != nil {
+		urls.IPv6 = getURLs(c.PublicIPv6, c.PublicIPv6Port, c.Secret)
+	}
+
+	return urls
 }
 
 func getAddr(host fmt.Stringer, port uint16) string {
@@ -91,7 +89,7 @@ func NewConfig(debug, verbose bool, // nolint: gocyclo
 	publicIPv4 net.IP, PublicIPv4Port uint16,
 	publicIPv6 net.IP, publicIPv6Port uint16,
 	statsIP net.IP, statsPort uint16,
-	secret string) (*Config, error) {
+	secret, adtag string) (*Config, error) {
 	if len(secret) != 32 {
 		return nil, errors.New("Telegram demands secret of length 32")
 	}
@@ -100,14 +98,21 @@ func NewConfig(debug, verbose bool, // nolint: gocyclo
 		return nil, errors.Annotate(err, "Cannot create config")
 	}
 
+	var adTagBytes []byte
+	if len(adtag) != 0 {
+		adTagBytes, err = hex.DecodeString(adtag)
+		if err != nil {
+			return nil, errors.Annotate(err, "Cannot create config")
+		}
+	}
+
 	if publicIPv4 == nil {
 		publicIPv4, err = getGlobalIPv4()
 		if err != nil {
-			return nil, errors.Errorf("Cannot get public IP")
+			publicIPv4 = nil
+		} else if publicIPv4.To4() == nil {
+			return nil, errors.Errorf("IP %s is not IPv4", publicIPv4.String())
 		}
-	}
-	if publicIPv4.To4() == nil {
-		return nil, errors.Errorf("IP %s is not IPv4", publicIPv4.String())
 	}
 	if PublicIPv4Port == 0 {
 		PublicIPv4Port = bindPort
@@ -116,11 +121,10 @@ func NewConfig(debug, verbose bool, // nolint: gocyclo
 	if publicIPv6 == nil {
 		publicIPv6, err = getGlobalIPv6()
 		if err != nil {
-			publicIPv6 = publicIPv4
+			publicIPv6 = nil
+		} else if publicIPv6.To4() != nil {
+			return nil, errors.Errorf("IP %s is not IPv6", publicIPv6.String())
 		}
-	}
-	if publicIPv6.To16() == nil {
-		return nil, errors.Errorf("IP %s is not IPv6", publicIPv6.String())
 	}
 	if publicIPv6Port == 0 {
 		publicIPv6Port = bindPort
@@ -142,30 +146,8 @@ func NewConfig(debug, verbose bool, // nolint: gocyclo
 		StatsIP:        statsIP,
 		StatsPort:      statsPort,
 		Secret:         secretBytes,
+		AdTag:          adTagBytes,
 	}
 
 	return conf, nil
-}
-
-// SetSocketOptions makes socket keepalive, sets buffer sizes
-func SetSocketOptions(conn net.Conn) error {
-	socket := conn.(*net.TCPConn)
-
-	if err := socket.SetReadBuffer(BufferReadSize); err != nil {
-		return errors.Annotate(err, "Cannot set read buffer size")
-	}
-	if err := socket.SetWriteBuffer(BufferWriteSize); err != nil {
-		return errors.Annotate(err, "Cannot set write buffer size")
-	}
-	if err := socket.SetKeepAlive(true); err != nil {
-		return errors.Annotate(err, "Cannot make socket keepalive")
-	}
-	if err := socket.SetKeepAlivePeriod(keepAlivePeriod); err != nil {
-		return errors.Annotate(err, "Cannot set keepalive period")
-	}
-	if err := socket.SetNoDelay(true); err != nil {
-		return errors.Annotate(err, "Cannot activate nodelay for the socket")
-	}
-
-	return nil
 }

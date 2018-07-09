@@ -2,6 +2,7 @@ package mtproto
 
 import (
 	"bytes"
+	"net"
 
 	"github.com/juju/errors"
 )
@@ -10,11 +11,27 @@ import (
 // by the user.
 type ConnectionType uint8
 
+// ConnectionProtocol is a type of IP protocol to use.
+type ConnectionProtocol uint8
+
+// Hacks is a simple structure to store flags for packet transmission.
+type Hacks struct {
+	SimpleAck bool
+	QuickAck  bool
+}
+
 // ConnectionOpts presents an options, metadata on connection requested
 // by the user on handshake.
 type ConnectionOpts struct {
-	DC             int16
-	ConnectionType ConnectionType
+	DC              int16
+	ConnectionType  ConnectionType
+	ConnectionProto ConnectionProtocol
+	// Read and Write means direction related to the client.
+	// ReadHacks are meant to be flushed on client read
+	// WriteHacks are meant to be flushed on client write.
+	ReadHacks  Hacks
+	WriteHacks Hacks
+	ClientAddr *net.TCPAddr
 }
 
 // Different connection types which user requests from Telegram.
@@ -22,6 +39,14 @@ const (
 	ConnectionTypeUnknown ConnectionType = iota
 	ConnectionTypeAbridged
 	ConnectionTypeIntermediate
+)
+
+// ConnectionProtocol* define which connection protocols to use.
+// ConnectionProtocolAny means that any is suitable.
+const (
+	ConnectionProtocolIPv4 ConnectionProtocol = 1
+	ConnectionProtocolIPv6                    = ConnectionProtocolIPv4 << 1
+	ConnectionProtocolAny                     = ConnectionProtocolIPv4 | ConnectionProtocolIPv6
 )
 
 // Connection tags for mtproto handshakes.

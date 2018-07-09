@@ -54,21 +54,21 @@ func TestFrameValid(t *testing.T) {
 
 func TestFrameDoubleInvert(t *testing.T) {
 	frame := makeFrame()
-	assert.True(t, bytes.Equal(frame, *frame.Invert().Invert()))
+	assert.True(t, bytes.Equal(frame, frame.Invert().Invert()))
 }
 
 func TestFrameInvert(t *testing.T) {
 	frame := makeFrame()
 	reversed := frame.Invert()
 
-	assert.Exactly(t, frame[:8], (*reversed)[:8])
-	assert.Exactly(t, frame[56:], (*reversed)[56:])
+	assert.Exactly(t, frame[:8], reversed[:8])
+	assert.Exactly(t, frame[56:], reversed[56:])
 
 	toCompare := make([]byte, 48)
 	for i := 0; i < 48; i++ {
 		toCompare[i] = frame[55-i]
 	}
-	assert.Equal(t, []byte((*reversed)[8:56]), toCompare)
+	assert.Equal(t, []byte(reversed[8:56]), toCompare)
 }
 
 func TestFrameGenerateValid(t *testing.T) {

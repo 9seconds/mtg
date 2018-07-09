@@ -21,7 +21,6 @@ docker run \
     --sysctl net.ipv4.tcp_congestion_control=bbr \
     --sysctl net.ipv4.tcp_fastopen=3 \
     --sysctl net.ipv4.tcp_fin_timeout=30 \
-    --sysctl net.ipv4.tcp_keepalive_time=1200 \
     --sysctl net.ipv4.tcp_max_syn_backlog=4096 \
     --sysctl net.ipv4.tcp_max_tw_buckets=5000 \
     --sysctl net.ipv4.tcp_mtu_probing=1 \

@@ -1,20 +1,18 @@
 package telegram
 
 import (
-	"io"
 	"math/rand"
 
 	"github.com/juju/errors"
 
 	"github.com/9seconds/mtg/mtproto"
+	"github.com/9seconds/mtg/wrappers"
 )
 
-// Telegram defines an interface to connect to Telegram. This
-// encapsulates logic of working with middleproxies or direct
-// connections.
+// Telegram is an interface for different Telegram work modes.
 type Telegram interface {
-	Dial(*mtproto.ConnectionOpts) (io.ReadWriteCloser, error)
-	Init(*mtproto.ConnectionOpts, io.ReadWriteCloser) (io.ReadWriteCloser, error)
+	Dial(string, *mtproto.ConnectionOpts) (wrappers.StreamReadWriteCloser, error)
+	Init(*mtproto.ConnectionOpts, wrappers.StreamReadWriteCloser) (wrappers.Wrap, error)
 }
 
 type baseTelegram struct {
@@ -24,17 +22,22 @@ type baseTelegram struct {
 	v6Addresses map[int16][]string
 }
 
-func (b *baseTelegram) dial(dcIdx int16) (io.ReadWriteCloser, error) {
+func (b *baseTelegram) dial(dcIdx int16, connID string, proto mtproto.ConnectionProtocol) (wrappers.StreamReadWriteCloser, error) {
 	addrs := make([]string, 2)
-	if addr, ok := b.v6Addresses[dcIdx]; ok && len(addr) > 0 {
-		addrs = append(addrs, addr[rand.Intn(len(addr))])
+
+	if proto&mtproto.ConnectionProtocolIPv6 != 0 {
+		if addr, ok := b.v6Addresses[dcIdx]; ok && len(addr) > 0 {
+			addrs = append(addrs, addr[rand.Intn(len(addr))])
+		}
 	}
-	if addr, ok := b.v4Addresses[dcIdx]; ok && len(addr) > 0 {
-		addrs = append(addrs, addr[rand.Intn(len(addr))])
+	if proto&mtproto.ConnectionProtocolIPv4 != 0 {
+		if addr, ok := b.v4Addresses[dcIdx]; ok && len(addr) > 0 {
+			addrs = append(addrs, addr[rand.Intn(len(addr))])
+		}
 	}
 
 	for _, addr := range addrs {
-		if conn, err := b.dialer.dialRWC(addr); err == nil {
+		if conn, err := b.dialer.dialRWC(addr, connID); err == nil {
 			return conn, err
 		}
 	}

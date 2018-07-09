@@ -38,6 +38,18 @@ mtg is an implementation in golang which is intended to be:
 * **No management WebUI**
   This is an implementation of simple lightweight proxy. I won't do that.
 
+This proxy supports 2 modes of work: direct connection to Telegram and
+promoted channel mode. If you do not need promoted channels, I would
+recommend you to go with direct mode: this is way more robust.
+
+To run proxy in direct mode, all you need to do is just provide a
+secret. If you do not provide ADTag as a second parameter, promoted
+channels mode won't be activated.
+
+To get promoted channel, please contact
+[@MTProxybot|https://t.me/MTProxybot] and provide generated adtag as a
+second parameter.
+
 
 # How to build
 
