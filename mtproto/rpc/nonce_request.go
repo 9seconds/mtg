@@ -9,25 +9,25 @@ import (
 	"github.com/juju/errors"
 )
 
-type RPCNonceRequest struct {
+type NonceRequest struct {
 	KeySelector []byte
 	CryptoTS    []byte
 	Nonce       []byte
 }
 
-func (r *RPCNonceRequest) Bytes() []byte {
+func (r *NonceRequest) Bytes() []byte {
 	buf := &bytes.Buffer{}
 
-	buf.Write(RPCTagNonce)
+	buf.Write(TagNonce)
 	buf.Write(r.KeySelector)
-	buf.Write(RPCNonceCryptoAES)
+	buf.Write(NonceCryptoAES)
 	buf.Write(r.CryptoTS)
 	buf.Write(r.Nonce)
 
 	return buf.Bytes()
 }
 
-func NewRPCNonceRequest(proxySecret []byte) (*RPCNonceRequest, error) {
+func NewNonceRequest(proxySecret []byte) (*NonceRequest, error) {
 	nonce := make([]byte, 16)
 	keySelector := make([]byte, 4)
 	cryptoTS := make([]byte, 4)
@@ -40,7 +40,7 @@ func NewRPCNonceRequest(proxySecret []byte) (*RPCNonceRequest, error) {
 	timestamp := time.Now().Truncate(time.Second).Unix() % 4294967296 // 256 ^ 4 - do not know how to name
 	binary.LittleEndian.PutUint32(cryptoTS, uint32(timestamp))
 
-	return &RPCNonceRequest{
+	return &NonceRequest{
 		KeySelector: keySelector,
 		CryptoTS:    cryptoTS,
 		Nonce:       nonce,

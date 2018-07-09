@@ -14,28 +14,29 @@ import (
 
 const handshakeTimeout = 10 * time.Second
 
-// DirectInit initializes client to access Telegram bypassing middleproxies.
-func DirectInit(conn net.Conn, conf *config.Config) (*mtproto.ConnectionOpts, wrappers.ReadWriteCloserWithAddr, error) {
-	if err := config.SetSocketOptions(conn); err != nil {
+func DirectInit(socket net.Conn, connID string, conf *config.Config) (wrappers.Wrap, *mtproto.ConnectionOpts, error) {
+	if err := config.SetSocketOptions(socket); err != nil {
 		return nil, nil, errors.Annotate(err, "Cannot set socket options")
 	}
 
-	conn.SetReadDeadline(time.Now().Add(handshakeTimeout)) // nolint: errcheck
-	frame, err := obfuscated2.ExtractFrame(conn)
-	conn.SetReadDeadline(time.Time{}) // nolint: errcheck
+	socket.SetReadDeadline(time.Now().Add(handshakeTimeout))
+	frame, err := obfuscated2.ExtractFrame(socket)
 	if err != nil {
 		return nil, nil, errors.Annotate(err, "Cannot extract frame")
 	}
+	socket.SetReadDeadline(time.Time{})
+	conn := wrappers.NewConn(socket, connID, wrappers.ConnPurposeClient, conf.PublicIPv4, conf.PublicIPv6)
 
 	obfs2, connOpts, err := obfuscated2.ParseObfuscated2ClientFrame(conf.Secret, frame)
 	if err != nil {
 		return nil, nil, errors.Annotate(err, "Cannot parse obfuscated frame")
 	}
 	connOpts.ConnectionProto = mtproto.ConnectionProtocolAny
-	connOpts.ClientAddr = conn.RemoteAddr().(*net.TCPAddr)
+	connOpts.ClientAddr = conn.RemoteAddr()
 
-	socket := wrappers.NewTimeoutRWC(conn, conf.PublicIPv4, conf.PublicIPv6)
-	socket = wrappers.NewStreamCipherRWC(socket, obfs2.Encryptor, obfs2.Decryptor)
+	conn = wrappers.NewStreamCipher(conn, obfs2.Encryptor, obfs2.Decryptor)
 
-	return connOpts, socket, nil
+	conn.Logger().Infow("Client connection initialized")
+
+	return conn, connOpts, nil
 }

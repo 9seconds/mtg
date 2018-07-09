@@ -4,7 +4,6 @@ import (
 	"net"
 
 	"github.com/juju/errors"
-	"go.uber.org/zap"
 
 	"github.com/9seconds/mtg/config"
 	"github.com/9seconds/mtg/mtproto"
@@ -29,11 +28,11 @@ var (
 	}
 )
 
-type directTelegram struct {
+type DirectTelegram struct {
 	baseTelegram
 }
 
-func (t *directTelegram) Dial(connOpts *mtproto.ConnectionOpts) (wrappers.ReadWriteCloserWithAddr, error) {
+func (t *DirectTelegram) Dial(connID string, connOpts *mtproto.ConnectionOpts) (wrappers.StreamReadWriteCloser, error) {
 	dc := connOpts.DC
 	if dc < 0 {
 		dc = -dc
@@ -41,23 +40,23 @@ func (t *directTelegram) Dial(connOpts *mtproto.ConnectionOpts) (wrappers.ReadWr
 		dc = 1
 	}
 
-	return t.baseTelegram.dial(dc-1, connOpts.ConnectionProto)
+	return t.baseTelegram.dial(dc-1, connID, connOpts.ConnectionProto)
 }
 
-func (t *directTelegram) Init(connOpts *mtproto.ConnectionOpts, conn wrappers.ReadWriteCloserWithAddr) (wrappers.ReadWriteCloserWithAddr, error) {
+func (t *DirectTelegram) Init(connOpts *mtproto.ConnectionOpts, conn wrappers.StreamReadWriteCloser) (wrappers.Wrap, error) {
 	obfs2, frame := obfuscated2.MakeTelegramObfuscated2Frame(connOpts)
 
-	if n, err := conn.Write(frame); err != nil || n != obfuscated2.FrameLen {
+	if _, err := conn.Write(frame); err != nil {
 		return nil, errors.Annotate(err, "Cannot write hadnshake frame")
 	}
 
-	return wrappers.NewStreamCipherRWC(conn, obfs2.Encryptor, obfs2.Decryptor), nil
+	return wrappers.NewStreamCipher(conn, obfs2.Encryptor, obfs2.Decryptor), nil
 }
 
 // NewDirectTelegram returns Telegram instance which connects directly
 // to Telegram bypassing middleproxies.
-func NewDirectTelegram(conf *config.Config, _ *zap.SugaredLogger) Telegram {
-	return &directTelegram{baseTelegram{
+func NewDirectTelegram(conf *config.Config) Telegram {
+	return &DirectTelegram{baseTelegram{
 		dialer: tgDialer{
 			Dialer: net.Dialer{Timeout: telegramDialTimeout},
 			conf:   conf,

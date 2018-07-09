@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 	"strconv"
-	"time"
 
 	"github.com/juju/errors"
 )
@@ -14,10 +13,6 @@ import (
 const (
 	BufferWriteSize = 32 * 1024
 	BufferReadSize  = 32 * 1024
-	BufferSizeCopy  = 32 * 1024
-
-	TimeoutRead  = time.Minute
-	TimeoutWrite = time.Minute
 )
 
 // Config represents common configuration of mtg.
@@ -61,6 +56,10 @@ func (c *Config) BindAddr() string {
 // StatAddr returns connection string to the stats API.
 func (c *Config) StatAddr() string {
 	return getAddr(c.StatsIP, c.StatsPort)
+}
+
+func (c *Config) UseMiddleProxy() bool {
+	return len(c.AdTag) > 0
 }
 
 // GetURLs returns configured IPURLs instance with links to this server.

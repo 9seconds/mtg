@@ -10,7 +10,7 @@ import (
 	"net"
 
 	"github.com/9seconds/mtg/mtproto/rpc"
-	"github.com/9seconds/mtg/wrappers"
+	"github.com/9seconds/mtg/utils"
 )
 
 type CipherPurpose uint8
@@ -22,21 +22,20 @@ const (
 
 var emptyIP = [4]byte{0x00, 0x00, 0x00, 0x00}
 
-func NewMiddleProxyCipherRWC(conn wrappers.ReadWriteCloserWithAddr, req *rpc.RPCNonceRequest, resp *rpc.RPCNonceResponse, secret []byte) wrappers.ReadWriteCloserWithAddr {
+func NewMiddleProxyCipher(conn StreamReadWriteCloser, req *rpc.NonceRequest, resp *rpc.NonceResponse, secret []byte) StreamReadWriteCloser {
 	localAddr := conn.LocalAddr()
 	remoteAddr := conn.RemoteAddr()
 
-	encKey, encIV := makeKeys(CipherPurposeClient, req, resp, localAddr, remoteAddr, secret)
-	decKey, decIV := makeKeys(CipherPurposeServer, req, resp, localAddr, remoteAddr, secret)
+	encKey, encIV := deriveKeys(CipherPurposeClient, req, resp, localAddr, remoteAddr, secret)
+	decKey, decIV := deriveKeys(CipherPurposeServer, req, resp, localAddr, remoteAddr, secret)
 
 	enc, _ := makeEncrypterDecrypter(encKey, encIV)
 	_, dec := makeEncrypterDecrypter(decKey, decIV)
 
-	return wrappers.NewBlockCipherRWC(conn, enc, dec)
+	return NewBlockCipher(conn, enc, dec)
 }
 
-func makeKeys(purpose CipherPurpose, req *rpc.RPCNonceRequest, resp *rpc.RPCNonceResponse,
-	client *net.TCPAddr, remote *net.TCPAddr, secret []byte) ([]byte, []byte) {
+func deriveKeys(purpose CipherPurpose, req *rpc.NonceRequest, resp *rpc.NonceResponse, client *net.TCPAddr, remote *net.TCPAddr, secret []byte) ([]byte, []byte) {
 	message := bytes.Buffer{}
 	message.Write(resp.Nonce[:])
 	message.Write(req.Nonce[:])
@@ -45,8 +44,8 @@ func makeKeys(purpose CipherPurpose, req *rpc.RPCNonceRequest, resp *rpc.RPCNonc
 	clientIPv4 := emptyIP[:]
 	serverIPv4 := emptyIP[:]
 	if client.IP.To4() != nil {
-		clientIPv4 = reverseBytes(client.IP.To4())
-		serverIPv4 = reverseBytes(remote.IP.To4())
+		clientIPv4 = utils.ReverseBytes(client.IP.To4())
+		serverIPv4 = utils.ReverseBytes(remote.IP.To4())
 	}
 	message.Write(serverIPv4)
 
@@ -92,17 +91,4 @@ func makeEncrypterDecrypter(key, iv []byte) (cipher.BlockMode, cipher.BlockMode)
 	}
 
 	return cipher.NewCBCEncrypter(block, iv), cipher.NewCBCDecrypter(block, iv)
-}
-
-func reverseBytes(data []byte) []byte {
-	dataLen := len(data)
-	rv := make([]byte, dataLen)
-
-	rv[dataLen/2] = data[dataLen/2]
-	for i := dataLen/2 - 1; i >= 0; i-- {
-		opp := dataLen - i - 1
-		rv[i], rv[opp] = data[opp], data[i]
-	}
-
-	return rv
 }

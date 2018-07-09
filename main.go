@@ -111,16 +111,21 @@ func main() {
 		zapcore.NewJSONEncoder(encoderCfg),
 		zapcore.Lock(os.Stderr),
 		atom,
-	)).Sugar()
+	))
+	zap.ReplaceGlobals(logger)
+	defer logger.Sync()
 
-	stat := proxy.NewStats(conf)
-	go stat.Serve()
+	if conf.UseMiddleProxy() {
+		zap.S().Infow("Use middle proxy connection to Telegram")
+	} else {
+		zap.S().Infow("Use direct connection to Telegram")
+	}
 
-	srv := proxy.NewServer(conf, logger, stat)
 	printURLs(conf.GetURLs())
 
-	if err := srv.Serve(); err != nil {
-		logger.Fatal(err.Error())
+	server := proxy.NewProxy(conf)
+	if err := server.Serve(); err != nil {
+		zap.S().Fatalw("Server stopped", "error", err)
 	}
 }
 

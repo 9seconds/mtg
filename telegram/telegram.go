@@ -9,12 +9,9 @@ import (
 	"github.com/9seconds/mtg/wrappers"
 )
 
-// Telegram defines an interface to connect to Telegram. This
-// encapsulates logic of working with middleproxies or direct
-// connections.
 type Telegram interface {
-	Dial(*mtproto.ConnectionOpts) (wrappers.ReadWriteCloserWithAddr, error)
-	Init(*mtproto.ConnectionOpts, wrappers.ReadWriteCloserWithAddr) (wrappers.ReadWriteCloserWithAddr, error)
+	Dial(string, *mtproto.ConnectionOpts) (wrappers.StreamReadWriteCloser, error)
+	Init(*mtproto.ConnectionOpts, wrappers.StreamReadWriteCloser) (wrappers.Wrap, error)
 }
 
 type baseTelegram struct {
@@ -24,7 +21,7 @@ type baseTelegram struct {
 	v6Addresses map[int16][]string
 }
 
-func (b *baseTelegram) dial(dcIdx int16, proto mtproto.ConnectionProtocol) (wrappers.ReadWriteCloserWithAddr, error) {
+func (b *baseTelegram) dial(dcIdx int16, connID string, proto mtproto.ConnectionProtocol) (wrappers.StreamReadWriteCloser, error) {
 	addrs := make([]string, 2)
 
 	if proto&mtproto.ConnectionProtocolIPv6 != 0 {
@@ -39,7 +36,7 @@ func (b *baseTelegram) dial(dcIdx int16, proto mtproto.ConnectionProtocol) (wrap
 	}
 
 	for _, addr := range addrs {
-		if conn, err := b.dialer.dialRWC(addr); err == nil {
+		if conn, err := b.dialer.dialRWC(addr, connID); err == nil {
 			return conn, err
 		}
 	}

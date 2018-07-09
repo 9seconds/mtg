@@ -6,14 +6,14 @@ import (
 	"github.com/juju/errors"
 )
 
-type RPCHandshakeResponse struct {
+type HandshakeResponse struct {
 	Type      []byte
 	Flags     []byte
 	SenderPID []byte
 	PeerPID   []byte
 }
 
-func (r *RPCHandshakeResponse) Bytes() []byte {
+func (r *HandshakeResponse) Bytes() []byte {
 	buf := &bytes.Buffer{}
 
 	buf.Write(r.Type[:])
@@ -24,23 +24,23 @@ func (r *RPCHandshakeResponse) Bytes() []byte {
 	return buf.Bytes()
 }
 
-func (r *RPCHandshakeResponse) Valid(req *RPCHandshakeRequest) error {
-	if !bytes.Equal(r.Type, RPCTagHandshake) {
+func (r *HandshakeResponse) Valid(req *HandshakeRequest) error {
+	if !bytes.Equal(r.Type, TagHandshake) {
 		return errors.New("Unexpected handshake tag")
 	}
-	if !bytes.Equal(r.PeerPID, RPCHandshakeSenderPID) {
+	if !bytes.Equal(r.PeerPID, HandshakeSenderPID) {
 		return errors.New("Incorrect sender PID")
 	}
 
 	return nil
 }
 
-func NewRPCHandshakeResponse(data []byte) (*RPCHandshakeResponse, error) {
+func NewHandshakeResponse(data []byte) (*HandshakeResponse, error) {
 	if len(data) != 32 {
 		return nil, errors.New("Incorrect handshake response length")
 	}
 
-	return &RPCHandshakeResponse{
+	return &HandshakeResponse{
 		Type:      data[:4],
 		Flags:     data[4:8],
 		SenderPID: data[8:20],

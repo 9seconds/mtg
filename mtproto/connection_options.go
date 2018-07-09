@@ -13,14 +13,19 @@ type ConnectionType uint8
 
 type ConnectionProtocol uint8
 
+type Hacks struct {
+	SimpleAck bool
+	QuickAck  bool
+}
+
 // ConnectionOpts presents an options, metadata on connection requested
 // by the user on handshake.
 type ConnectionOpts struct {
 	DC              int16
 	ConnectionType  ConnectionType
 	ConnectionProto ConnectionProtocol
-	QuickAck        bool
-	SimpleAck       bool
+	ReadHacks       Hacks
+	WriteHacks      Hacks
 	ClientAddr      *net.TCPAddr
 }
 
