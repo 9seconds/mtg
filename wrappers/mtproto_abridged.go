@@ -44,7 +44,7 @@ func (m *MTProtoAbridged) Read() ([]byte, error) {
 	if _, err := io.CopyN(buf, m.conn, 1); err != nil {
 		return nil, errors.Annotate(err, "Cannot read message length")
 	}
-	msgLength := uint8(buf.Bytes()[0])
+	msgLength := uint32(buf.Bytes()[0])
 	buf.Reset()
 
 	m.logger.Debugw("Packet first byte",
@@ -59,27 +59,26 @@ func (m *MTProtoAbridged) Read() ([]byte, error) {
 		msgLength -= mtprotoAbridgedQuickAckLength
 	}
 
-	msgLength32 := uint32(msgLength)
 	if msgLength == mtprotoAbridgedSmallPacketLength {
 		if _, err := io.CopyN(buf, m.conn, 3); err != nil {
 			return nil, errors.Annotate(err, "Cannot read the correct message length")
 		}
 		number := utils.Uint24{}
 		copy(number[:], buf.Bytes())
-		msgLength32 = utils.FromUint24(number)
+		msgLength = utils.FromUint24(number)
 	}
-	msgLength32 *= 4
+	msgLength *= 4
 
 	m.logger.Debugw("Packet length",
-		"length", msgLength32,
+		"length", msgLength,
 		"simple_ack", m.opts.ReadHacks.SimpleAck,
 		"quick_ack", m.opts.ReadHacks.QuickAck,
 		"counter", m.readCounter,
 	)
 
 	buf.Reset()
-	buf.Grow(int(msgLength32))
-	if _, err := io.CopyN(buf, m.conn, int64(msgLength32)); err != nil {
+	buf.Grow(int(msgLength))
+	if _, err := io.CopyN(buf, m.conn, int64(msgLength)); err != nil {
 		return nil, errors.Annotate(err, "Cannot read message")
 	}
 

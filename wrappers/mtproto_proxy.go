@@ -80,6 +80,7 @@ func (m *MTProtoProxy) readSimpleAck(data []byte) ([]byte, error) {
 		return nil, errors.Errorf("Incorrect data of simple ack: %d", len(data))
 	}
 	data = data[8:12]
+	m.req.Options.WriteHacks.SimpleAck = true
 
 	m.logger.Debugw("Read RPC_SIMPLE_ACK",
 		"counter", m.readCounter,
