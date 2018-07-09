@@ -24,6 +24,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/dustin/go-humanize"
+  packages = ["."]
+  revision = "02af3965c54e8cacf948b97fef38925c4120652c"
+
+[[projects]]
+  branch = "master"
   name = "github.com/juju/errors"
   packages = ["."]
   revision = "c7d06af17c68cd34c835053720b21f6549d9b0ee"
@@ -80,6 +86,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "24afdd6b64331aeba47fed75918d04032e13e404612cac107bad1d68a5038b72"
+  inputs-digest = "312c9fb15085cbe9660443b15a07981990e1f70ec3ddfcce1b7e6cd5902307da"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -12,6 +12,7 @@ import (
 	"github.com/9seconds/mtg/client"
 	"github.com/9seconds/mtg/config"
 	"github.com/9seconds/mtg/mtproto"
+	"github.com/9seconds/mtg/stats"
 	"github.com/9seconds/mtg/telegram"
 	"github.com/9seconds/mtg/wrappers"
 )
@@ -39,12 +40,13 @@ func (p *Proxy) Serve() error {
 
 func (p *Proxy) accept(conn net.Conn) {
 	connID := uuid.NewV4().String()
-	log := zap.S().With("connection_id", connID)
+	log := zap.S().With("connection_id", connID).Named("main")
 
 	defer func() {
 		conn.Close()
 
 		if err := recover(); err != nil {
+			stats.NewCrash()
 			log.Errorw("Crash of accept handler", "error", err)
 		}
 	}()
@@ -57,6 +59,9 @@ func (p *Proxy) accept(conn net.Conn) {
 		return
 	}
 	defer client.(io.Closer).Close()
+
+	stats.ClientConnected(opts.ConnectionType, client.RemoteAddr())
+	defer stats.ClientDisconnected(opts.ConnectionType, client.RemoteAddr())
 
 	server, err := p.getTelegramConn(opts, connID)
 	if err != nil {

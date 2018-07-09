@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+
+	"github.com/9seconds/mtg/stats"
 )
 
 type ConnPurpose uint8
@@ -31,9 +33,10 @@ const (
 )
 
 type Conn struct {
-	connID     string
-	conn       net.Conn
-	logger     *zap.SugaredLogger
+	connID string
+	conn   net.Conn
+	logger *zap.SugaredLogger
+
 	publicIPv4 net.IP
 	publicIPv6 net.IP
 }
@@ -43,6 +46,7 @@ func (c *Conn) Write(p []byte) (int, error) {
 	n, err := c.conn.Write(p)
 
 	c.logger.Debugw("Write to stream", "bytes", n, "error", err)
+	stats.EgressTraffic(n)
 
 	return n, err
 }
@@ -52,6 +56,7 @@ func (c *Conn) Read(p []byte) (int, error) {
 	n, err := c.conn.Read(p)
 
 	c.logger.Debugw("Read from stream", "bytes", n, "error", err)
+	stats.IngressTraffic(n)
 
 	return n, err
 }
