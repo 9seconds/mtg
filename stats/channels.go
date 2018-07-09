@@ -14,9 +14,9 @@ const (
 )
 
 var (
-	CrashesChan     = make(chan struct{}, crashesChanLength)
-	ConnectionsChan = make(chan *connectionData, connectionsChanLength)
-	TrafficChan     = make(chan *trafficData, trafficChanLength)
+	crashesChan     = make(chan struct{}, crashesChanLength)
+	connectionsChan = make(chan *connectionData, connectionsChanLength)
+	trafficChan     = make(chan *trafficData, trafficChanLength)
 )
 
 type connectionData struct {
@@ -31,7 +31,7 @@ type trafficData struct {
 }
 
 func crashManager() {
-	for range CrashesChan {
+	for range crashesChan {
 		instance.mutex.RLock()
 
 		instance.Crashes++
@@ -41,7 +41,7 @@ func crashManager() {
 }
 
 func connectionManager() {
-	for event := range ConnectionsChan {
+	for event := range connectionsChan {
 		instance.mutex.RLock()
 
 		isIPv4 := event.addr.IP.To4() != nil
@@ -86,7 +86,7 @@ func trafficManager() {
 
 	for {
 		select {
-		case event := <-TrafficChan:
+		case event := <-trafficChan:
 			instance.mutex.RLock()
 
 			if event.ingress {
@@ -112,11 +112,11 @@ func trafficManager() {
 }
 
 func NewCrash() {
-	CrashesChan <- struct{}{}
+	crashesChan <- struct{}{}
 }
 
 func ClientConnected(connectionType mtproto.ConnectionType, addr *net.TCPAddr) {
-	ConnectionsChan <- &connectionData{
+	connectionsChan <- &connectionData{
 		connectionType: connectionType,
 		addr:           addr,
 		connected:      true,
@@ -124,7 +124,7 @@ func ClientConnected(connectionType mtproto.ConnectionType, addr *net.TCPAddr) {
 }
 
 func ClientDisconnected(connectionType mtproto.ConnectionType, addr *net.TCPAddr) {
-	ConnectionsChan <- &connectionData{
+	connectionsChan <- &connectionData{
 		connectionType: connectionType,
 		addr:           addr,
 		connected:      false,
@@ -132,14 +132,14 @@ func ClientDisconnected(connectionType mtproto.ConnectionType, addr *net.TCPAddr
 }
 
 func IngressTraffic(traffic int) {
-	TrafficChan <- &trafficData{
+	trafficChan <- &trafficData{
 		traffic: traffic,
 		ingress: true,
 	}
 }
 
 func EgressTraffic(traffic int) {
-	TrafficChan <- &trafficData{
+	trafficChan <- &trafficData{
 		traffic: traffic,
 		ingress: false,
 	}
