@@ -32,8 +32,8 @@ const (
 )
 
 const (
-	connTimeoutRead  = 5 * time.Minute
-	connTimeoutWrite = 5 * time.Minute
+	connTimeoutRead  = 2 * time.Minute
+	connTimeoutWrite = 2 * time.Minute
 )
 
 // Conn is a basic wrapper for net.Conn providing the most low-level
