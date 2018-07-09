@@ -55,34 +55,34 @@ func (p *Proxy) accept(conn net.Conn) {
 
 	log.Infow("Client connected", "addr", conn.RemoteAddr())
 
-	client, opts, err := p.clientInit(conn, connID, p.conf)
+	clientConn, opts, err := p.clientInit(conn, connID, p.conf)
 	if err != nil {
 		log.Errorw("Cannot initialize client connection", "error", err)
 		return
 	}
-	defer client.(io.Closer).Close() // nolint: errcheck
+	defer clientConn.(io.Closer).Close() // nolint: errcheck
 
-	stats.ClientConnected(opts.ConnectionType, client.RemoteAddr())
-	defer stats.ClientDisconnected(opts.ConnectionType, client.RemoteAddr())
+	stats.ClientConnected(opts.ConnectionType, clientConn.RemoteAddr())
+	defer stats.ClientDisconnected(opts.ConnectionType, clientConn.RemoteAddr())
 
-	server, err := p.getTelegramConn(opts, connID)
+	serverConn, err := p.getTelegramConn(opts, connID)
 	if err != nil {
 		log.Errorw("Cannot initialize server connection", "error", err)
 		return
 	}
-	defer server.(io.Closer).Close() // nolint: errcheck
+	defer serverConn.(io.Closer).Close() // nolint: errcheck
 
 	wait := &sync.WaitGroup{}
 	wait.Add(2)
 
 	if p.conf.UseMiddleProxy() {
-		clientPacket := client.(wrappers.PacketReadWriteCloser)
-		serverPacket := server.(wrappers.PacketReadWriteCloser)
+		clientPacket := clientConn.(wrappers.PacketReadWriteCloser)
+		serverPacket := serverConn.(wrappers.PacketReadWriteCloser)
 		go p.middlePipe(clientPacket, serverPacket, wait, &opts.ReadHacks)
 		go p.middlePipe(serverPacket, clientPacket, wait, &opts.WriteHacks)
 	} else {
-		clientStream := client.(wrappers.StreamReadWriteCloser)
-		serverStream := server.(wrappers.StreamReadWriteCloser)
+		clientStream := clientConn.(wrappers.StreamReadWriteCloser)
+		serverStream := serverConn.(wrappers.StreamReadWriteCloser)
 		go p.directPipe(clientStream, serverStream, wait)
 		go p.directPipe(serverStream, clientStream, wait)
 	}
