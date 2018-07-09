@@ -2,7 +2,6 @@ package stats
 
 import (
 	"net"
-	"sync/atomic"
 	"time"
 
 	"github.com/9seconds/mtg/mtproto"
@@ -54,26 +53,26 @@ func connectionManager() {
 		switch event.connectionType {
 		case mtproto.ConnectionTypeAbridged:
 			if isIPv4 {
-				atomic.AddUint32(&instance.ActiveConnections.Abridged.IPv4, inc)
+				instance.ActiveConnections.Abridged.IPv4 += inc
 				if event.connected {
-					atomic.AddUint32(&instance.AllConnections.Abridged.IPv4, inc)
+					instance.AllConnections.Abridged.IPv4 += inc
 				}
 			} else {
-				atomic.AddUint32(&instance.ActiveConnections.Abridged.IPv6, inc)
+				instance.ActiveConnections.Abridged.IPv6 += inc
 				if event.connected {
-					atomic.AddUint32(&instance.AllConnections.Abridged.IPv6, inc)
+					instance.AllConnections.Abridged.IPv6 += inc
 				}
 			}
 		default:
 			if isIPv4 {
-				atomic.AddUint32(&instance.ActiveConnections.Intermediate.IPv4, inc)
+				instance.ActiveConnections.Intermediate.IPv4 += inc
 				if event.connected {
-					atomic.AddUint32(&instance.AllConnections.Intermediate.IPv4, inc)
+					instance.AllConnections.Intermediate.IPv4 += inc
 				}
 			} else {
-				atomic.AddUint32(&instance.ActiveConnections.Intermediate.IPv6, inc)
+				instance.ActiveConnections.Intermediate.IPv6 += inc
 				if event.connected {
-					atomic.AddUint32(&instance.AllConnections.Intermediate.IPv6, inc)
+					instance.AllConnections.Intermediate.IPv6 += inc
 				}
 			}
 		}
