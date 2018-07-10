@@ -91,18 +91,53 @@ or
 $ head -c 512 /dev/urandom | md5sum | cut -f 1 -d ' '
 ```
 
+## Secure mode
+
+If you want to support new secure mode, please prepend `dd` to the
+secret. For example, secret `cf18fa8ea0267057e2c61a5f7322a8e7` should
+be `ddcf18fa8ea0267057e2c61a5f7322a8e7`. But pay attention that some
+old clients won't support this mode. If this is not your case, I would
+suggest to go with this mode.
+
+Oneliners to generate such secrets:
+
+```console
+$ echo dd$(openssl rand -hex 16)
+```
+
+or
+
+```console
+$ echo dd$(head -c 512 /dev/urandom | md5sum | cut -f 1 -d ' ')
+```
+
+
+# How to run the tool
+
 Now run the tool:
 
 ```console
 $ mtg <secret>
 ```
 
+How to run the tool with ADTag:
+
+```console
+$ mtg <secret> <adtag>
+```
+
 This tool will listen on port 3128 by default with the given secret.
 
 # One-line runner
 
-```
+```console
 $ docker run --name mtg --restart=unless-stopped -p 3128:3128 -p 3129:3129 -d nineseconds/mtg $(openssl rand -hex 16)
+```
+
+or in secret mode:
+
+```console
+$ docker run --name mtg --restart=unless-stopped -p 3128:3128 -p 3129:3129 -d nineseconds/mtg dd$(openssl rand -hex 16)
 ```
 
 You will have this tool up and running on port 3128. Now curl
