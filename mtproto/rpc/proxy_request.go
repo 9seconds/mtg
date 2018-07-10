@@ -67,10 +67,9 @@ func (r *ProxyRequest) MakeHeader(message []byte) (*bytes.Buffer, fmt.Stringer) 
 func NewProxyRequest(clientAddr, ownAddr *net.TCPAddr, opts *mtproto.ConnectionOpts, adTag []byte) (*ProxyRequest, error) {
 	flags := proxyRequestFlagsHasAdTag | proxyRequestFlagsMagic | proxyRequestFlagsExtMode2
 
-	switch opts.ConnectionType {
-	case mtproto.ConnectionTypeAbridged:
+	if opts.ConnectionType == mtproto.ConnectionTypeAbridged {
 		flags |= proxyRequestFlagsAbdridged
-	case mtproto.ConnectionTypeIntermediate:
+	} else {
 		flags |= proxyRequestFlagsIntermediate
 	}
 
