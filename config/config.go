@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"strings"
 
 	"github.com/juju/errors"
 )
@@ -90,6 +91,9 @@ func NewConfig(debug, verbose bool, // nolint: gocyclo
 	publicIPv6 net.IP, publicIPv6Port uint16,
 	statsIP net.IP, statsPort uint16,
 	secret, adtag string) (*Config, error) {
+	if strings.HasPrefix(secret, "dd") {
+		secret = secret[2:]
+	}
 	if len(secret) != 32 {
 		return nil, errors.New("Telegram demands secret of length 32")
 	}

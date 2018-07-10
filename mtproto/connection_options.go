@@ -39,6 +39,7 @@ const (
 	ConnectionTypeUnknown ConnectionType = iota
 	ConnectionTypeAbridged
 	ConnectionTypeIntermediate
+	ConnectionTypeSecure
 )
 
 // ConnectionProtocol* define which connection protocols to use.
@@ -53,6 +54,7 @@ const (
 var (
 	ConnectionTagAbridged     = []byte{0xef, 0xef, 0xef, 0xef}
 	ConnectionTagIntermediate = []byte{0xee, 0xee, 0xee, 0xee}
+	ConnectionTagSecure       = []byte{0xdd, 0xdd, 0xdd, 0xdd}
 )
 
 // Tag maps connection type to the corresponding handshake tag.
@@ -62,6 +64,8 @@ func (t ConnectionType) Tag() ([]byte, error) {
 		return ConnectionTagAbridged, nil
 	case ConnectionTypeIntermediate:
 		return ConnectionTagIntermediate, nil
+	case ConnectionTypeSecure:
+		return ConnectionTagSecure, nil
 	default:
 		return nil, errors.Errorf("Unknown connection type %d", t)
 	}
@@ -74,6 +78,9 @@ func ConnectionTagFromHandshake(magic []byte) (ConnectionType, error) {
 	}
 	if bytes.Equal(magic, ConnectionTagAbridged) {
 		return ConnectionTypeAbridged, nil
+	}
+	if bytes.Equal(magic, ConnectionTagSecure) {
+		return ConnectionTypeSecure, nil
 	}
 
 	return ConnectionTypeUnknown, errors.New("Unknown handshake protocol")
