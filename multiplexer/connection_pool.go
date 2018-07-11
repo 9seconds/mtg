@@ -14,8 +14,6 @@ import (
 
 const connectionPoolCleanupEvery = 10 * time.Second
 
-var pools map[mtproto.ConnectionProtocol]map[int16]*connectionPool
-
 type connectionPool struct {
 	queue    *list.List
 	pressure bool
@@ -26,18 +24,19 @@ type connectionPool struct {
 	logger   *zap.SugaredLogger
 }
 
-func (c *connectionPool) get() (wrappers.PacketReadWriteCloser, error) {
+func (c *connectionPool) get() (wrappers.PacketReadWriteCloser, bool, error) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
 	if c.queue.Len() > 0 {
-		return c.queue.Remove(c.queue.Front()).(wrappers.PacketReadWriteCloser), nil
+		return c.queue.Remove(c.queue.Front()).(wrappers.PacketReadWriteCloser), false, nil
 	}
 
 	c.pressure = true
 	c.logger.Debugw("Cannot find out free connection, create new one")
 
-	return c.tg.Dial(c.dc, c.protocol)
+	conn, err := c.tg.Dial(c.dc, c.protocol)
+	return conn, true, err
 }
 
 func (c *connectionPool) put(connection wrappers.PacketReadWriteCloser) {
@@ -66,7 +65,7 @@ func (c *connectionPool) autoCleanup() {
 	}
 }
 
-func newConnectionPool(logger *zap.SugaredLogger, dc int16, proto mtproto.ConnectionProtocol, dialer telegram.TelegramMiddleDialer) *connectionPool {
+func newConnectionPool(logger *zap.SugaredLogger, dialer telegram.TelegramMiddleDialer, proto mtproto.ConnectionProtocol, dc int16) *connectionPool {
 	pool := &connectionPool{
 		dc:       dc,
 		lock:     &sync.Mutex{},
@@ -78,25 +77,4 @@ func newConnectionPool(logger *zap.SugaredLogger, dc int16, proto mtproto.Connec
 	go pool.autoCleanup()
 
 	return pool
-}
-
-func getConnection(logger *zap.SugaredLogger, dc int16, proto mtproto.ConnectionProtocol, dialer telegram.TelegramMiddleDialer) (wrappers.PacketReadWriteCloser, error) {
-	pool, ok := pools[proto][dc]
-	if !ok {
-		pool = newConnectionPool(logger, dc, proto, dialer)
-		pools[proto][dc] = pool
-	}
-
-	return pool.get()
-}
-
-func returnConnection(dc int16, proto mtproto.ConnectionProtocol, conn wrappers.PacketReadWriteCloser) {
-	pools[proto][dc].put(conn)
-}
-
-func init() {
-	pools = map[mtproto.ConnectionProtocol]map[int16]*connectionPool{
-		mtproto.ConnectionProtocolIPv4: map[int16]*connectionPool{},
-		mtproto.ConnectionProtocolIPv6: map[int16]*connectionPool{},
-	}
 }
