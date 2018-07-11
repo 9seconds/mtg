@@ -15,6 +15,10 @@ type Telegram interface {
 	ProxyInit(*mtproto.ConnectionOpts, wrappers.StreamReadWriteCloser) (wrappers.Wrap, error)
 }
 
+type TelegramMiddleDialer interface {
+	Dial(int16, mtproto.ConnectionProtocol) (wrappers.PacketReadWriteCloser, error)
+}
+
 type baseTelegram struct {
 	dialer tgDialer
 
