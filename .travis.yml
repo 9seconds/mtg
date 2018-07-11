@@ -4,6 +4,8 @@ language: go
 sudo: false
 dist: trusty
 
+go_import_path: mtg
+
 go:
   - "1.9.x"
   - "1.10.x"
