@@ -93,7 +93,7 @@ func NewConfig(debug, verbose bool, // nolint: gocyclo
 	secret, adtag string) (*Config, error) {
 	secret = strings.TrimPrefix(secret, "dd")
 	if len(secret) != 32 && len(secret) != 34 {
-		return nil, errors.New("Telegram demands secret of length 32 or 34 in secret mode")
+		return nil, errors.New("Telegram demands secret of length 32 or 34 in secure mode")
 	}
 	secretBytes, err := hex.DecodeString(secret)
 	if err != nil {
