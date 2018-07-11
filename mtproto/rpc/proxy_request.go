@@ -9,7 +9,7 @@ import (
 
 	"github.com/juju/errors"
 
-	"github.com/9seconds/mtg/mtproto"
+	"mtg/mtproto"
 )
 
 // ProxyRequest is the data type for storing data required to compose

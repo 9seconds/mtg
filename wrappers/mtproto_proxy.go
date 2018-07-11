@@ -8,8 +8,8 @@ import (
 	"github.com/juju/errors"
 	"go.uber.org/zap"
 
-	"github.com/9seconds/mtg/mtproto"
-	"github.com/9seconds/mtg/mtproto/rpc"
+	"mtg/mtproto"
+	"mtg/mtproto/rpc"
 )
 
 // MTProtoProxy is a wrapper which creates/reads RPC responses from Telegram.

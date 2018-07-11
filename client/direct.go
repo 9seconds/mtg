@@ -6,10 +6,10 @@ import (
 
 	"github.com/juju/errors"
 
-	"github.com/9seconds/mtg/config"
-	"github.com/9seconds/mtg/mtproto"
-	"github.com/9seconds/mtg/obfuscated2"
-	"github.com/9seconds/mtg/wrappers"
+	"mtg/config"
+	"mtg/mtproto"
+	"mtg/obfuscated2"
+	"mtg/wrappers"
 )
 
 const (

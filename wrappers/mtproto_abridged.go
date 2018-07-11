@@ -8,8 +8,8 @@ import (
 	"github.com/juju/errors"
 	"go.uber.org/zap"
 
-	"github.com/9seconds/mtg/mtproto"
-	"github.com/9seconds/mtg/utils"
+	"mtg/mtproto"
+	"mtg/utils"
 )
 
 const (

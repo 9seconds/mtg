@@ -14,8 +14,8 @@ import (
 	"github.com/juju/errors"
 	"go.uber.org/zap"
 
-	"github.com/9seconds/mtg/mtproto"
-	"github.com/9seconds/mtg/wrappers"
+	"mtg/mtproto"
+	"mtg/wrappers"
 )
 
 const (

@@ -9,8 +9,8 @@ import (
 	"encoding/binary"
 	"net"
 
-	"github.com/9seconds/mtg/mtproto/rpc"
-	"github.com/9seconds/mtg/utils"
+	"mtg/mtproto/rpc"
+	"mtg/utils"
 )
 
 type cipherPurpose uint8

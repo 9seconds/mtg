@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
-	humanize "github.com/dustin/go-humanize"
+	"github.com/dustin/go-humanize"
 
-	"github.com/9seconds/mtg/config"
+	"mtg/config"
 )
 
 type uptime time.Time
