@@ -54,6 +54,10 @@ func (s *StreamCipher) Close() error {
 	return s.conn.Close()
 }
 
+func (s *StreamCipher) SocketID() string {
+	return s.conn.SocketID()
+}
+
 // NewStreamCipher creates new stream cipher wrapper.
 func NewStreamCipher(conn StreamReadWriteCloser, encryptor, decryptor cipher.Stream) StreamReadWriteCloser {
 	return &StreamCipher{

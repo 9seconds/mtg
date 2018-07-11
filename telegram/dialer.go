@@ -42,12 +42,12 @@ func (t *tgDialer) dial(addr string) (net.Conn, error) {
 	return conn, nil
 }
 
-func (t *tgDialer) dialRWC(addr, connID string) (wrappers.StreamReadWriteCloser, error) {
+func (t *tgDialer) dialRWC(addr string) (wrappers.StreamReadWriteCloser, error) {
 	conn, err := t.dial(addr)
 	if err != nil {
 		return nil, err
 	}
-	tgConn := wrappers.NewConn(conn, connID, wrappers.ConnPurposeTelegram, t.conf.PublicIPv4, t.conf.PublicIPv6)
+	tgConn := wrappers.NewConn(conn, wrappers.ConnPurposeTelegram, t.conf.PublicIPv4, t.conf.PublicIPv6)
 
 	return tgConn, nil
 }

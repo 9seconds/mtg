@@ -87,6 +87,10 @@ func (b *BlockCipher) Close() error {
 	return b.conn.Close()
 }
 
+func (b *BlockCipher) SocketID() string {
+	return b.conn.SocketID()
+}
+
 // NewBlockCipher creates new instance of BlockCipher based on given data.
 func NewBlockCipher(conn StreamReadWriteCloser, encryptor, decryptor cipher.BlockMode) StreamReadWriteCloser {
 	return &BlockCipher{

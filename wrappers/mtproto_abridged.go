@@ -149,6 +149,10 @@ func (m *MTProtoAbridged) Close() error {
 	return m.conn.Close()
 }
 
+func (m *MTProtoAbridged) SocketID() string {
+	return m.conn.SocketID()
+}
+
 // NewMTProtoAbridged creates new wrapper for abridged client connection.
 func NewMTProtoAbridged(conn StreamReadWriteCloser, opts *mtproto.ConnectionOpts) PacketReadWriteCloser {
 	return &MTProtoAbridged{

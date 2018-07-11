@@ -149,6 +149,10 @@ func (m *MTProtoFrame) Close() error {
 	return m.conn.Close()
 }
 
+func (m *MTProtoFrame) SocketID() string {
+	return m.conn.SocketID()
+}
+
 // NewMTProtoFrame creates new PacketWrapper for underlying connection.
 func NewMTProtoFrame(conn StreamReadWriteCloser, seqNo int32) PacketReadWriteCloser {
 	return &MTProtoFrame{

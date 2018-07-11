@@ -10,8 +10,8 @@ import (
 
 // MiddleInit initializes client connection for proxy which has to
 // support promoted channels, connect to Telegram middle proxies etc.
-func MiddleInit(socket net.Conn, connID string, conf *config.Config) (wrappers.Wrap, *mtproto.ConnectionOpts, error) {
-	conn, opts, err := DirectInit(socket, connID, conf)
+func MiddleInit(socket net.Conn, conf *config.Config) (wrappers.Wrap, *mtproto.ConnectionOpts, error) {
+	conn, opts, err := DirectInit(socket, conf)
 	if err != nil {
 		return nil, nil, err
 	}

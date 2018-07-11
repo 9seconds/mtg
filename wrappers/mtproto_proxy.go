@@ -149,6 +149,10 @@ func (m *MTProtoProxy) Close() error {
 	return m.conn.Close()
 }
 
+func (m *MTProtoProxy) SocketID() string {
+	return m.conn.SocketID()
+}
+
 // NewMTProtoProxy creates new RPC wrapper.
 func NewMTProtoProxy(conn PacketReadWriteCloser, connOpts *mtproto.ConnectionOpts, adTag []byte) (PacketReadWriteCloser, error) {
 	req, err := rpc.NewProxyRequest(connOpts.ClientAddr, conn.LocalAddr(), connOpts, adTag)

@@ -11,7 +11,7 @@ import (
 
 // Telegram is an interface for different Telegram work modes.
 type Telegram interface {
-	Dial(string, *mtproto.ConnectionOpts) (wrappers.StreamReadWriteCloser, error)
+	Dial(*mtproto.ConnectionOpts) (wrappers.StreamReadWriteCloser, error)
 	Init(*mtproto.ConnectionOpts, wrappers.StreamReadWriteCloser) (wrappers.Wrap, error)
 }
 
@@ -22,7 +22,7 @@ type baseTelegram struct {
 	v6Addresses map[int16][]string
 }
 
-func (b *baseTelegram) dial(dcIdx int16, connID string, proto mtproto.ConnectionProtocol) (wrappers.StreamReadWriteCloser, error) {
+func (b *baseTelegram) dial(dcIdx int16, proto mtproto.ConnectionProtocol) (wrappers.StreamReadWriteCloser, error) {
 	addrs := make([]string, 2)
 
 	if proto&mtproto.ConnectionProtocolIPv6 != 0 {
@@ -37,7 +37,7 @@ func (b *baseTelegram) dial(dcIdx int16, connID string, proto mtproto.Connection
 	}
 
 	for _, addr := range addrs {
-		if conn, err := b.dialer.dialRWC(addr, connID); err == nil {
+		if conn, err := b.dialer.dialRWC(addr); err == nil {
 			return conn, err
 		}
 	}

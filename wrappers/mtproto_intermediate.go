@@ -110,6 +110,10 @@ func (m *MTProtoIntermediate) Close() error {
 	return m.conn.Close()
 }
 
+func (m *MTProtoIntermediate) SocketID() string {
+	return m.conn.SocketID()
+}
+
 // NewMTProtoIntermediate creates new PacketWrapper for intermediate
 // client connection.
 func NewMTProtoIntermediate(conn StreamReadWriteCloser, opts *mtproto.ConnectionOpts) PacketReadWriteCloser {
