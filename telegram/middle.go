@@ -20,7 +20,7 @@ type middleTelegram struct {
 	conf *config.Config
 }
 
-func (t *middleTelegram) Init(connOpts *mtproto.ConnectionOpts, conn wrappers.StreamReadWriteCloser) (wrappers.Wrap, error) {
+func (t *middleTelegram) ProxyInit(connOpts *mtproto.ConnectionOpts, conn wrappers.StreamReadWriteCloser) (wrappers.Wrap, error) {
 	rpcNonceConn := wrappers.NewMTProtoFrame(conn, rpc.SeqNoNonce)
 
 	rpcNonceReq, err := t.sendRPCNonceRequest(rpcNonceConn)

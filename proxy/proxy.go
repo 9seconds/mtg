@@ -97,12 +97,12 @@ func (p *Proxy) accept(conn net.Conn) {
 }
 
 func (p *Proxy) getTelegramConn(opts *mtproto.ConnectionOpts) (wrappers.Wrap, error) {
-	streamConn, err := p.tg.Dial(opts)
+	streamConn, err := p.tg.ProxyDial(opts)
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot dial to Telegram")
 	}
 
-	packetConn, err := p.tg.Init(opts, streamConn)
+	packetConn, err := p.tg.ProxyInit(opts, streamConn)
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot handshake telegram")
 	}

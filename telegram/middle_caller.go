@@ -38,7 +38,7 @@ type middleTelegramCaller struct {
 	httpClient  *http.Client
 }
 
-func (t *middleTelegramCaller) Dial(connOpts *mtproto.ConnectionOpts) (wrappers.StreamReadWriteCloser, error) {
+func (t *middleTelegramCaller) ProxyDial(connOpts *mtproto.ConnectionOpts) (wrappers.StreamReadWriteCloser, error) {
 	dc := connOpts.DC
 	if dc == 0 {
 		dc = 1

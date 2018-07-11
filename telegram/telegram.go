@@ -11,8 +11,8 @@ import (
 
 // Telegram is an interface for different Telegram work modes.
 type Telegram interface {
-	Dial(*mtproto.ConnectionOpts) (wrappers.StreamReadWriteCloser, error)
-	Init(*mtproto.ConnectionOpts, wrappers.StreamReadWriteCloser) (wrappers.Wrap, error)
+	ProxyDial(*mtproto.ConnectionOpts) (wrappers.StreamReadWriteCloser, error)
+	ProxyInit(*mtproto.ConnectionOpts, wrappers.StreamReadWriteCloser) (wrappers.Wrap, error)
 }
 
 type baseTelegram struct {
