@@ -4,7 +4,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/9seconds/mtg/mtproto"
+	"mtg/mtproto"
 )
 
 const (

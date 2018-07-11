@@ -6,7 +6,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/9seconds/mtg/stats"
+	"mtg/stats"
 )
 
 // ConnPurpose is intented to be identifier of connection purpose. We

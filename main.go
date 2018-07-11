@@ -12,11 +12,11 @@ import (
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
+	"gopkg.in/alecthomas/kingpin.v2"
 
-	"github.com/9seconds/mtg/config"
-	"github.com/9seconds/mtg/proxy"
-	"github.com/9seconds/mtg/stats"
+	"mtg/config"
+	"mtg/proxy"
+	"mtg/stats"
 	"github.com/juju/errors"
 )
 

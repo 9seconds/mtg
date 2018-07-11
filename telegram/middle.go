@@ -8,10 +8,10 @@ import (
 
 	"github.com/juju/errors"
 
-	"github.com/9seconds/mtg/config"
-	"github.com/9seconds/mtg/mtproto"
-	"github.com/9seconds/mtg/mtproto/rpc"
-	"github.com/9seconds/mtg/wrappers"
+	"mtg/config"
+	"mtg/mtproto"
+	"mtg/mtproto/rpc"
+	"mtg/wrappers"
 )
 
 type middleTelegram struct {

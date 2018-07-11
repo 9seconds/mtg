@@ -3,9 +3,9 @@ package client
 import (
 	"net"
 
-	"github.com/9seconds/mtg/config"
-	"github.com/9seconds/mtg/mtproto"
-	"github.com/9seconds/mtg/wrappers"
+	"mtg/config"
+	"mtg/mtproto"
+	"mtg/wrappers"
 )
 
 // Init defines common method for initializing client connections.
