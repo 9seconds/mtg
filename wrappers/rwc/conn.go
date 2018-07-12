@@ -1,12 +1,14 @@
-package wrappers
+package rwc
 
 import (
 	"net"
 	"time"
 
+	uuid "github.com/satori/go.uuid"
 	"go.uber.org/zap"
 
 	"github.com/9seconds/mtg/stats"
+	"github.com/9seconds/mtg/wrappers"
 )
 
 // ConnPurpose is intented to be identifier of connection purpose. We
@@ -39,9 +41,9 @@ const (
 // Conn is a basic wrapper for net.Conn providing the most low-level
 // logic and management as possible.
 type Conn struct {
-	connID string
-	conn   net.Conn
-	logger *zap.SugaredLogger
+	socketID string
+	conn     net.Conn
+	logger   *zap.SugaredLogger
 
 	publicIPv4 net.IP
 	publicIPv6 net.IP
@@ -99,10 +101,15 @@ func (c *Conn) RemoteAddr() *net.TCPAddr {
 	return c.conn.RemoteAddr().(*net.TCPAddr)
 }
 
+func (c *Conn) SocketID() string {
+	return c.socketID
+}
+
 // NewConn initializes Conn wrapper for net.Conn.
-func NewConn(conn net.Conn, connID string, purpose ConnPurpose, publicIPv4, publicIPv6 net.IP) StreamReadWriteCloser {
+func NewConn(conn net.Conn, purpose ConnPurpose, publicIPv4, publicIPv6 net.IP) wrappers.StreamReadWriteCloser {
+	socketID := uuid.NewV4().String()
 	logger := zap.S().With(
-		"connection_id", connID,
+		"socket_id", socketID,
 		"local_address", conn.LocalAddr(),
 		"remote_address", conn.RemoteAddr(),
 		"purpose", purpose,
@@ -110,7 +117,7 @@ func NewConn(conn net.Conn, connID string, purpose ConnPurpose, publicIPv4, publ
 
 	wrapper := Conn{
 		logger:     logger,
-		connID:     connID,
+		socketID:   socketID,
 		conn:       conn,
 		publicIPv4: publicIPv4,
 		publicIPv6: publicIPv6,

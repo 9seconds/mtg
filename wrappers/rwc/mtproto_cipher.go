@@ -1,4 +1,4 @@
-package wrappers
+package rwc
 
 import (
 	"bytes"
@@ -11,6 +11,7 @@ import (
 
 	"github.com/9seconds/mtg/mtproto/rpc"
 	"github.com/9seconds/mtg/utils"
+	"github.com/9seconds/mtg/wrappers"
 )
 
 type cipherPurpose uint8
@@ -24,7 +25,7 @@ var emptyIP = [4]byte{0x00, 0x00, 0x00, 0x00}
 
 // NewMiddleProxyCipher creates new block cipher to proxy<->telegram
 // connection.
-func NewMiddleProxyCipher(conn StreamReadWriteCloser, req *rpc.NonceRequest, resp *rpc.NonceResponse, secret []byte) StreamReadWriteCloser {
+func NewMiddleProxyCipher(conn wrappers.StreamReadWriteCloser, req *rpc.NonceRequest, resp *rpc.NonceResponse, secret []byte) wrappers.StreamReadWriteCloser {
 	localAddr := conn.LocalAddr()
 	remoteAddr := conn.RemoteAddr()
 

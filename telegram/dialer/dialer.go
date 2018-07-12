@@ -1,4 +1,4 @@
-package telegram
+package dialer
 
 import (
 	"net"
@@ -8,6 +8,7 @@ import (
 
 	"github.com/9seconds/mtg/config"
 	"github.com/9seconds/mtg/wrappers"
+	"github.com/9seconds/mtg/wrappers/rwc"
 )
 
 const (
@@ -16,18 +17,17 @@ const (
 	writeBufferSize     = 64 * 1024
 )
 
-type tgDialer struct {
+type Dialer struct {
 	net.Dialer
 
 	conf *config.Config
 }
 
-func (t *tgDialer) dial(addr string) (net.Conn, error) {
+func (t *Dialer) dial(addr string) (net.Conn, error) {
 	conn, err := t.Dialer.Dial("tcp", addr)
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot connect to Telegram")
 	}
-
 	tcpSocket := conn.(*net.TCPConn)
 	if err = tcpSocket.SetNoDelay(true); err != nil {
 		return nil, errors.Annotate(err, "Cannot set NO_DELAY to Telegram")
@@ -42,12 +42,19 @@ func (t *tgDialer) dial(addr string) (net.Conn, error) {
 	return conn, nil
 }
 
-func (t *tgDialer) dialRWC(addr, connID string) (wrappers.StreamReadWriteCloser, error) {
+func (t *Dialer) Dial(addr string) (wrappers.StreamReadWriteCloser, error) {
 	conn, err := t.dial(addr)
 	if err != nil {
 		return nil, err
 	}
-	tgConn := wrappers.NewConn(conn, connID, wrappers.ConnPurposeTelegram, t.conf.PublicIPv4, t.conf.PublicIPv6)
+	tgConn := rwc.NewConn(conn, rwc.ConnPurposeTelegram, t.conf.PublicIPv4, t.conf.PublicIPv6)
 
 	return tgConn, nil
+}
+
+func NewDialer(conf *config.Config) Dialer {
+	return Dialer{
+		Dialer: net.Dialer{Timeout: telegramDialTimeout},
+		conf:   conf,
+	}
 }

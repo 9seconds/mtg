@@ -9,4 +9,4 @@ import (
 )
 
 // Init defines common method for initializing client connections.
-type Init func(net.Conn, string, *config.Config) (wrappers.Wrap, *mtproto.ConnectionOpts, error)
+type Init func(net.Conn, *config.Config) (wrappers.Wrap, *mtproto.ConnectionOpts, error)

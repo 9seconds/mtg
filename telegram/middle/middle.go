@@ -1,8 +1,7 @@
-package telegram
+package middle
 
 import (
 	"io"
-	"net"
 	"net/http"
 	"sync"
 
@@ -11,7 +10,11 @@ import (
 	"github.com/9seconds/mtg/config"
 	"github.com/9seconds/mtg/mtproto"
 	"github.com/9seconds/mtg/mtproto/rpc"
+	"github.com/9seconds/mtg/telegram"
+	"github.com/9seconds/mtg/telegram/base"
+	"github.com/9seconds/mtg/telegram/dialer"
 	"github.com/9seconds/mtg/wrappers"
+	"github.com/9seconds/mtg/wrappers/rwc"
 )
 
 type middleTelegram struct {
@@ -20,8 +23,8 @@ type middleTelegram struct {
 	conf *config.Config
 }
 
-func (t *middleTelegram) Init(connOpts *mtproto.ConnectionOpts, conn wrappers.StreamReadWriteCloser) (wrappers.Wrap, error) {
-	rpcNonceConn := wrappers.NewMTProtoFrame(conn, rpc.SeqNoNonce)
+func (t *middleTelegram) ProxyInit(connOpts *mtproto.ConnectionOpts, conn wrappers.StreamReadWriteCloser) (wrappers.Wrap, error) {
+	rpcNonceConn := rwc.NewMTProtoFrame(conn, rpc.SeqNoNonce)
 
 	rpcNonceReq, err := t.sendRPCNonceRequest(rpcNonceConn)
 	if err != nil {
@@ -32,8 +35,8 @@ func (t *middleTelegram) Init(connOpts *mtproto.ConnectionOpts, conn wrappers.St
 		return nil, err
 	}
 
-	secureConn := wrappers.NewMiddleProxyCipher(conn, rpcNonceReq, rpcNonceResp, t.proxySecret)
-	frameConn := wrappers.NewMTProtoFrame(secureConn, rpc.SeqNoHandshake)
+	secureConn := rwc.NewMiddleProxyCipher(conn, rpcNonceReq, rpcNonceResp, t.proxySecret)
+	frameConn := rwc.NewMTProtoFrame(secureConn, rpc.SeqNoHandshake)
 
 	rpcHandshakeReq, err := t.sendRPCHandshakeRequest(frameConn)
 	if err != nil {
@@ -44,7 +47,7 @@ func (t *middleTelegram) Init(connOpts *mtproto.ConnectionOpts, conn wrappers.St
 		return nil, err
 	}
 
-	proxyConn, err := wrappers.NewMTProtoProxy(frameConn, connOpts, t.conf.AdTag)
+	proxyConn, err := rwc.NewMTProtoProxy(frameConn, connOpts, t.conf.AdTag)
 	if err != nil {
 		return nil, err
 	}
@@ -110,14 +113,11 @@ func (t *middleTelegram) receiveRPCHandshakeResponse(conn wrappers.PacketReader,
 
 // NewMiddleTelegram creates new instance of Telegram which works with
 // middle proxies.
-func NewMiddleTelegram(conf *config.Config) Telegram {
+func NewMiddleTelegram(conf *config.Config) telegram.Telegram {
 	tg := &middleTelegram{
 		middleTelegramCaller: middleTelegramCaller{
-			baseTelegram: baseTelegram{
-				dialer: tgDialer{
-					Dialer: net.Dialer{Timeout: telegramDialTimeout},
-					conf:   conf,
-				},
+			BaseTelegram: base.BaseTelegram{
+				Dialer: dialer.NewDialer(conf),
 			},
 			httpClient: &http.Client{
 				Timeout: middleTelegramHTTPClientTimeout,

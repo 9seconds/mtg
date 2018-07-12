@@ -9,6 +9,7 @@ import (
 
 // Wrap is a base interface for all wrappers in this package.
 type Wrap interface {
+	SocketID() string
 	Logger() *zap.SugaredLogger
 	LocalAddr() *net.TCPAddr
 	RemoteAddr() *net.TCPAddr

@@ -1,4 +1,4 @@
-package wrappers
+package rwc
 
 import (
 	"bytes"
@@ -10,11 +10,12 @@ import (
 
 	"github.com/9seconds/mtg/mtproto"
 	"github.com/9seconds/mtg/mtproto/rpc"
+	"github.com/9seconds/mtg/wrappers"
 )
 
 // MTProtoProxy is a wrapper which creates/reads RPC responses from Telegram.
 type MTProtoProxy struct {
-	conn   PacketReadWriteCloser
+	conn   wrappers.PacketReadWriteCloser
 	req    *rpc.ProxyRequest
 	logger *zap.SugaredLogger
 
@@ -149,8 +150,12 @@ func (m *MTProtoProxy) Close() error {
 	return m.conn.Close()
 }
 
+func (m *MTProtoProxy) SocketID() string {
+	return m.conn.SocketID()
+}
+
 // NewMTProtoProxy creates new RPC wrapper.
-func NewMTProtoProxy(conn PacketReadWriteCloser, connOpts *mtproto.ConnectionOpts, adTag []byte) (PacketReadWriteCloser, error) {
+func NewMTProtoProxy(conn wrappers.PacketReadWriteCloser, connOpts *mtproto.ConnectionOpts, adTag []byte) (wrappers.PacketReadWriteCloser, error) {
 	req, err := rpc.NewProxyRequest(connOpts.ClientAddr, conn.LocalAddr(), connOpts, adTag)
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot create new RPC proxy request")

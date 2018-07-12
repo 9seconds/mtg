@@ -1,4 +1,4 @@
-package wrappers
+package rwc
 
 import (
 	"bytes"
@@ -10,6 +10,7 @@ import (
 
 	"github.com/9seconds/mtg/mtproto"
 	"github.com/9seconds/mtg/utils"
+	"github.com/9seconds/mtg/wrappers"
 )
 
 const (
@@ -21,7 +22,7 @@ const (
 // MTProtoAbridged presents abridged connection between client and
 // middle proxy.
 type MTProtoAbridged struct {
-	conn   StreamReadWriteCloser
+	conn   wrappers.StreamReadWriteCloser
 	opts   *mtproto.ConnectionOpts
 	logger *zap.SugaredLogger
 
@@ -149,8 +150,12 @@ func (m *MTProtoAbridged) Close() error {
 	return m.conn.Close()
 }
 
+func (m *MTProtoAbridged) SocketID() string {
+	return m.conn.SocketID()
+}
+
 // NewMTProtoAbridged creates new wrapper for abridged client connection.
-func NewMTProtoAbridged(conn StreamReadWriteCloser, opts *mtproto.ConnectionOpts) PacketReadWriteCloser {
+func NewMTProtoAbridged(conn wrappers.StreamReadWriteCloser, opts *mtproto.ConnectionOpts) wrappers.PacketReadWriteCloser {
 	return &MTProtoAbridged{
 		conn:   conn,
 		opts:   opts,

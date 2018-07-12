@@ -10,6 +10,7 @@ import (
 	"github.com/9seconds/mtg/mtproto"
 	"github.com/9seconds/mtg/obfuscated2"
 	"github.com/9seconds/mtg/wrappers"
+	"github.com/9seconds/mtg/wrappers/rwc"
 )
 
 const (
@@ -20,7 +21,7 @@ const (
 
 // DirectInit initializes client connection for proxy which connects to
 // Telegram directly.
-func DirectInit(socket net.Conn, connID string, conf *config.Config) (wrappers.Wrap, *mtproto.ConnectionOpts, error) {
+func DirectInit(socket net.Conn, conf *config.Config) (wrappers.Wrap, *mtproto.ConnectionOpts, error) {
 	tcpSocket := socket.(*net.TCPConn)
 	if err := tcpSocket.SetNoDelay(false); err != nil {
 		return nil, nil, errors.Annotate(err, "Cannot disable NO_DELAY to client socket")
@@ -39,7 +40,7 @@ func DirectInit(socket net.Conn, connID string, conf *config.Config) (wrappers.W
 	}
 	socket.SetReadDeadline(time.Time{}) // nolint: errcheck
 
-	conn := wrappers.NewConn(socket, connID, wrappers.ConnPurposeClient, conf.PublicIPv4, conf.PublicIPv6)
+	conn := rwc.NewConn(socket, rwc.ConnPurposeClient, conf.PublicIPv4, conf.PublicIPv6)
 	obfs2, connOpts, err := obfuscated2.ParseObfuscated2ClientFrame(conf.Secret, frame)
 	if err != nil {
 		return nil, nil, errors.Annotate(err, "Cannot parse obfuscated frame")
@@ -47,7 +48,7 @@ func DirectInit(socket net.Conn, connID string, conf *config.Config) (wrappers.W
 	connOpts.ConnectionProto = mtproto.ConnectionProtocolAny
 	connOpts.ClientAddr = conn.RemoteAddr()
 
-	conn = wrappers.NewStreamCipher(conn, obfs2.Encryptor, obfs2.Decryptor)
+	conn = rwc.NewStreamCipher(conn, obfs2.Encryptor, obfs2.Decryptor)
 
 	conn.Logger().Infow("Client connection initialized")
 

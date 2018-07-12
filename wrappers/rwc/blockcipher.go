@@ -1,4 +1,4 @@
-package wrappers
+package rwc
 
 import (
 	"bytes"
@@ -6,10 +6,11 @@ import (
 	"crypto/cipher"
 	"net"
 
+	"github.com/juju/errors"
 	"go.uber.org/zap"
 
 	"github.com/9seconds/mtg/utils"
-	"github.com/juju/errors"
+	"github.com/9seconds/mtg/wrappers"
 )
 
 // BlockCipher is a stream writer which encrypts/decrypts blocks of data
@@ -20,7 +21,7 @@ type BlockCipher struct {
 	buf *bytes.Buffer
 
 	logger    *zap.SugaredLogger
-	conn      StreamReadWriteCloser
+	conn      wrappers.StreamReadWriteCloser
 	encryptor cipher.BlockMode
 	decryptor cipher.BlockMode
 }
@@ -87,8 +88,12 @@ func (b *BlockCipher) Close() error {
 	return b.conn.Close()
 }
 
+func (b *BlockCipher) SocketID() string {
+	return b.conn.SocketID()
+}
+
 // NewBlockCipher creates new instance of BlockCipher based on given data.
-func NewBlockCipher(conn StreamReadWriteCloser, encryptor, decryptor cipher.BlockMode) StreamReadWriteCloser {
+func NewBlockCipher(conn wrappers.StreamReadWriteCloser, encryptor, decryptor cipher.BlockMode) wrappers.StreamReadWriteCloser {
 	return &BlockCipher{
 		buf:       &bytes.Buffer{},
 		conn:      conn,

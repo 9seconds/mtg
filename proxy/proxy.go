@@ -14,6 +14,8 @@ import (
 	"github.com/9seconds/mtg/mtproto"
 	"github.com/9seconds/mtg/stats"
 	"github.com/9seconds/mtg/telegram"
+	"github.com/9seconds/mtg/telegram/direct"
+	"github.com/9seconds/mtg/telegram/middle"
 	"github.com/9seconds/mtg/wrappers"
 )
 
@@ -41,8 +43,7 @@ func (p *Proxy) Serve() error {
 }
 
 func (p *Proxy) accept(conn net.Conn) {
-	connID := uuid.NewV4().String()
-	log := zap.S().With("connection_id", connID).Named("main")
+	log := zap.S().With("connection_id", uuid.NewV4().String()).Named("main")
 
 	defer func() {
 		conn.Close() // nolint: errcheck
@@ -55,7 +56,7 @@ func (p *Proxy) accept(conn net.Conn) {
 
 	log.Infow("Client connected", "addr", conn.RemoteAddr())
 
-	clientConn, opts, err := p.clientInit(conn, connID, p.conf)
+	clientConn, opts, err := p.clientInit(conn, p.conf)
 	if err != nil {
 		log.Errorw("Cannot initialize client connection", "error", err)
 		return
@@ -65,7 +66,7 @@ func (p *Proxy) accept(conn net.Conn) {
 	stats.ClientConnected(opts.ConnectionType, clientConn.RemoteAddr())
 	defer stats.ClientDisconnected(opts.ConnectionType, clientConn.RemoteAddr())
 
-	serverConn, err := p.getTelegramConn(opts, connID)
+	serverConn, err := p.getTelegramConn(opts)
 	if err != nil {
 		log.Errorw("Cannot initialize server connection", "error", err)
 		return
@@ -74,6 +75,11 @@ func (p *Proxy) accept(conn net.Conn) {
 
 	wait := &sync.WaitGroup{}
 	wait.Add(2)
+
+	log.Infow("Bridge sockets",
+		"client", clientConn.SocketID(),
+		"server", serverConn.SocketID(),
+	)
 
 	if p.conf.UseMiddleProxy() {
 		clientPacket := clientConn.(wrappers.PacketReadWriteCloser)
@@ -92,13 +98,13 @@ func (p *Proxy) accept(conn net.Conn) {
 	log.Infow("Client disconnected", "addr", conn.RemoteAddr())
 }
 
-func (p *Proxy) getTelegramConn(opts *mtproto.ConnectionOpts, connID string) (wrappers.Wrap, error) {
-	streamConn, err := p.tg.Dial(connID, opts)
+func (p *Proxy) getTelegramConn(opts *mtproto.ConnectionOpts) (wrappers.Wrap, error) {
+	streamConn, err := p.tg.ProxyDial(opts)
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot dial to Telegram")
 	}
 
-	packetConn, err := p.tg.Init(opts, streamConn)
+	packetConn, err := p.tg.ProxyInit(opts, streamConn)
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot handshake telegram")
 	}
@@ -148,10 +154,10 @@ func NewProxy(conf *config.Config) *Proxy {
 
 	if conf.UseMiddleProxy() {
 		clientInit = client.MiddleInit
-		tg = telegram.NewMiddleTelegram(conf)
+		tg = middle.NewMiddleTelegram(conf)
 	} else {
 		clientInit = client.DirectInit
-		tg = telegram.NewDirectTelegram(conf)
+		tg = direct.NewDirectTelegram(conf)
 	}
 
 	return &Proxy{
