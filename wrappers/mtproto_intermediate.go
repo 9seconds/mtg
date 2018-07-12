@@ -62,10 +62,6 @@ func (m *MTProtoIntermediate) Read() ([]byte, error) {
 		return nil, errors.Annotate(err, "Cannot read the message")
 	}
 
-	if length%4 != 0 {
-		length -= length % 4
-	}
-
 	return buf.Bytes()[:length], nil
 }
 
