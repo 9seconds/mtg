@@ -1,4 +1,4 @@
-package wrappers
+package rwc
 
 import (
 	"bytes"
@@ -10,6 +10,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/9seconds/mtg/mtproto"
+	"github.com/9seconds/mtg/wrappers"
 )
 
 const mtprotoIntermediateQuickAckLength = 0x80000000
@@ -17,7 +18,7 @@ const mtprotoIntermediateQuickAckLength = 0x80000000
 // MTProtoIntermediate presents intermediate connection between client
 // and Telegram.
 type MTProtoIntermediate struct {
-	conn   StreamReadWriteCloser
+	conn   wrappers.StreamReadWriteCloser
 	opts   *mtproto.ConnectionOpts
 	logger *zap.SugaredLogger
 
@@ -116,7 +117,7 @@ func (m *MTProtoIntermediate) SocketID() string {
 
 // NewMTProtoIntermediate creates new PacketWrapper for intermediate
 // client connection.
-func NewMTProtoIntermediate(conn StreamReadWriteCloser, opts *mtproto.ConnectionOpts) PacketReadWriteCloser {
+func NewMTProtoIntermediate(conn wrappers.StreamReadWriteCloser, opts *mtproto.ConnectionOpts) wrappers.PacketReadWriteCloser {
 	return &MTProtoIntermediate{
 		conn:   conn,
 		logger: conn.Logger().Named("mtproto-intermediate"),

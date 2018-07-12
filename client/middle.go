@@ -6,6 +6,7 @@ import (
 	"github.com/9seconds/mtg/config"
 	"github.com/9seconds/mtg/mtproto"
 	"github.com/9seconds/mtg/wrappers"
+	"github.com/9seconds/mtg/wrappers/rwc"
 )
 
 // MiddleInit initializes client connection for proxy which has to
@@ -17,9 +18,9 @@ func MiddleInit(socket net.Conn, conf *config.Config) (wrappers.Wrap, *mtproto.C
 	}
 	connStream := conn.(wrappers.StreamReadWriteCloser)
 
-	newConn := wrappers.NewMTProtoAbridged(connStream, opts)
+	newConn := rwc.NewMTProtoAbridged(connStream, opts)
 	if opts.ConnectionType != mtproto.ConnectionTypeAbridged {
-		newConn = wrappers.NewMTProtoIntermediate(connStream, opts)
+		newConn = rwc.NewMTProtoIntermediate(connStream, opts)
 	}
 
 	opts.ConnectionProto = mtproto.ConnectionProtocolIPv4

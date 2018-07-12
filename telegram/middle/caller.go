@@ -1,4 +1,4 @@
-package telegram
+package middle
 
 import (
 	"bufio"
@@ -15,6 +15,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/9seconds/mtg/mtproto"
+	"github.com/9seconds/mtg/telegram/base"
 	"github.com/9seconds/mtg/wrappers"
 )
 
@@ -31,7 +32,7 @@ const (
 var middleTelegramProxyConfigSplitter = regexp.MustCompile(`\s+`)
 
 type middleTelegramCaller struct {
-	baseTelegram
+	base.BaseTelegram
 
 	proxySecret []byte
 	dialerMutex *sync.RWMutex
@@ -46,7 +47,7 @@ func (t *middleTelegramCaller) ProxyDial(connOpts *mtproto.ConnectionOpts) (wrap
 	t.dialerMutex.RLock()
 	defer t.dialerMutex.RUnlock()
 
-	return t.baseTelegram.dial(dc, connOpts.ConnectionProto)
+	return t.BaseTelegram.Dial(dc, connOpts.ConnectionProto)
 }
 
 func (t *middleTelegramCaller) autoUpdate() {
@@ -75,8 +76,8 @@ func (t *middleTelegramCaller) update() error {
 
 	t.dialerMutex.Lock()
 	t.proxySecret = secret
-	t.v4Addresses = v4Addresses
-	t.v6Addresses = v6Addresses
+	t.V4Addresses = v4Addresses
+	t.V6Addresses = v6Addresses
 	t.dialerMutex.Unlock()
 
 	zap.S().Infow("Telegram middle proxy data has been updated")

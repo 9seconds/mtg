@@ -14,6 +14,8 @@ import (
 	"github.com/9seconds/mtg/mtproto"
 	"github.com/9seconds/mtg/stats"
 	"github.com/9seconds/mtg/telegram"
+	"github.com/9seconds/mtg/telegram/direct"
+	"github.com/9seconds/mtg/telegram/middle"
 	"github.com/9seconds/mtg/wrappers"
 )
 
@@ -152,10 +154,10 @@ func NewProxy(conf *config.Config) *Proxy {
 
 	if conf.UseMiddleProxy() {
 		clientInit = client.MiddleInit
-		tg = telegram.NewMiddleTelegram(conf)
+		tg = middle.NewMiddleTelegram(conf)
 	} else {
 		clientInit = client.DirectInit
-		tg = telegram.NewDirectTelegram(conf)
+		tg = direct.NewDirectTelegram(conf)
 	}
 
 	return &Proxy{

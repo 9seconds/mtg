@@ -1,14 +1,16 @@
-package telegram
+package direct
 
 import (
-	"net"
-
 	"github.com/juju/errors"
 
 	"github.com/9seconds/mtg/config"
 	"github.com/9seconds/mtg/mtproto"
 	"github.com/9seconds/mtg/obfuscated2"
+	"github.com/9seconds/mtg/telegram"
+	"github.com/9seconds/mtg/telegram/base"
+	"github.com/9seconds/mtg/telegram/dialer"
 	"github.com/9seconds/mtg/wrappers"
+	"github.com/9seconds/mtg/wrappers/rwc"
 )
 
 var (
@@ -29,7 +31,7 @@ var (
 )
 
 type directTelegram struct {
-	baseTelegram
+	base.BaseTelegram
 }
 
 func (t *directTelegram) ProxyDial(connOpts *mtproto.ConnectionOpts) (wrappers.StreamReadWriteCloser, error) {
@@ -40,7 +42,7 @@ func (t *directTelegram) ProxyDial(connOpts *mtproto.ConnectionOpts) (wrappers.S
 		dc = 1
 	}
 
-	return t.baseTelegram.dial(dc-1, connOpts.ConnectionProto)
+	return t.BaseTelegram.Dial(dc-1, connOpts.ConnectionProto)
 }
 
 func (t *directTelegram) ProxyInit(connOpts *mtproto.ConnectionOpts, conn wrappers.StreamReadWriteCloser) (wrappers.Wrap, error) {
@@ -50,18 +52,16 @@ func (t *directTelegram) ProxyInit(connOpts *mtproto.ConnectionOpts, conn wrappe
 		return nil, errors.Annotate(err, "Cannot write hadnshake frame")
 	}
 
-	return wrappers.NewStreamCipher(conn, obfs2.Encryptor, obfs2.Decryptor), nil
+	return rwc.NewStreamCipher(conn, obfs2.Encryptor, obfs2.Decryptor), nil
 }
 
 // NewDirectTelegram returns Telegram instance which connects directly
 // to Telegram bypassing middleproxies.
-func NewDirectTelegram(conf *config.Config) Telegram {
-	return &directTelegram{baseTelegram{
-		dialer: tgDialer{
-			Dialer: net.Dialer{Timeout: telegramDialTimeout},
-			conf:   conf,
-		},
-		v4Addresses: directV4Addresses,
-		v6Addresses: directV6Addresses,
-	}}
+func NewDirectTelegram(conf *config.Config) telegram.Telegram {
+	return &directTelegram{
+		BaseTelegram: base.BaseTelegram{
+			Dialer:      dialer.NewDialer(conf),
+			V4Addresses: directV4Addresses,
+			V6Addresses: directV6Addresses,
+		}}
 }

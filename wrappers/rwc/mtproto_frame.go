@@ -1,4 +1,4 @@
-package wrappers
+package rwc
 
 import (
 	"bytes"
@@ -11,6 +11,8 @@ import (
 
 	"github.com/juju/errors"
 	"go.uber.org/zap"
+
+	"github.com/9seconds/mtg/wrappers"
 )
 
 const (
@@ -33,7 +35,7 @@ var mtprotoFramePadding = []byte{0x04, 0x00, 0x00, 0x00}
 // PADDING is custom padding schema to complete frame length to such that
 //    len(frame) % 16 == 0
 type MTProtoFrame struct {
-	conn   StreamReadWriteCloser
+	conn   wrappers.StreamReadWriteCloser
 	logger *zap.SugaredLogger
 
 	readSeqNo  int32
@@ -154,7 +156,7 @@ func (m *MTProtoFrame) SocketID() string {
 }
 
 // NewMTProtoFrame creates new PacketWrapper for underlying connection.
-func NewMTProtoFrame(conn StreamReadWriteCloser, seqNo int32) PacketReadWriteCloser {
+func NewMTProtoFrame(conn wrappers.StreamReadWriteCloser, seqNo int32) wrappers.PacketReadWriteCloser {
 	return &MTProtoFrame{
 		conn:       conn,
 		logger:     conn.Logger().Named("mtproto-frame"),

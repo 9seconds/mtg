@@ -1,13 +1,14 @@
-package wrappers
+package rwc
 
 import (
 	"net"
 	"time"
 
+	uuid "github.com/satori/go.uuid"
 	"go.uber.org/zap"
 
 	"github.com/9seconds/mtg/stats"
-	uuid "github.com/satori/go.uuid"
+	"github.com/9seconds/mtg/wrappers"
 )
 
 // ConnPurpose is intented to be identifier of connection purpose. We
@@ -105,7 +106,7 @@ func (c *Conn) SocketID() string {
 }
 
 // NewConn initializes Conn wrapper for net.Conn.
-func NewConn(conn net.Conn, purpose ConnPurpose, publicIPv4, publicIPv6 net.IP) StreamReadWriteCloser {
+func NewConn(conn net.Conn, purpose ConnPurpose, publicIPv4, publicIPv6 net.IP) wrappers.StreamReadWriteCloser {
 	socketID := uuid.NewV4().String()
 	logger := zap.S().With(
 		"socket_id", socketID,

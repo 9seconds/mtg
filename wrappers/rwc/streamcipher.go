@@ -1,4 +1,4 @@
-package wrappers
+package rwc
 
 import (
 	"crypto/cipher"
@@ -6,6 +6,8 @@ import (
 
 	"github.com/juju/errors"
 	"go.uber.org/zap"
+
+	"github.com/9seconds/mtg/wrappers"
 )
 
 // StreamCipher is a wrapper which encrypts/decrypts stream with AES-CTR
@@ -13,7 +15,7 @@ import (
 type StreamCipher struct {
 	encryptor cipher.Stream
 	decryptor cipher.Stream
-	conn      StreamReadWriteCloser
+	conn      wrappers.StreamReadWriteCloser
 	logger    *zap.SugaredLogger
 }
 
@@ -59,7 +61,7 @@ func (s *StreamCipher) SocketID() string {
 }
 
 // NewStreamCipher creates new stream cipher wrapper.
-func NewStreamCipher(conn StreamReadWriteCloser, encryptor, decryptor cipher.Stream) StreamReadWriteCloser {
+func NewStreamCipher(conn wrappers.StreamReadWriteCloser, encryptor, decryptor cipher.Stream) wrappers.StreamReadWriteCloser {
 	return &StreamCipher{
 		conn:      conn,
 		logger:    conn.Logger().Named("stream-cipher"),
