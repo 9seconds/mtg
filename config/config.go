@@ -67,12 +67,15 @@ func (c *Config) UseMiddleProxy() bool {
 	return len(c.AdTag) > 0
 }
 
-func (c *Config) SecretString() string {
+// BotSecretString returns secret string which should work with MTProxybot.
+func (c *Config) BotSecretString() string {
 	return hex.EncodeToString(c.Secret)
 }
 
-func (c *Config) BotSecretString() string {
-	secret := c.SecretString()
+// SecretString returns a secret in a form entered on the start of the
+// application.
+func (c *Config) SecretString() string {
+	secret := c.BotSecretString()
 	if c.SecureMode {
 		return "dd" + secret
 	}

@@ -8,6 +8,9 @@ import (
 	"github.com/9seconds/mtg/mtproto"
 )
 
+// MTProtoIntermediateSecure is an extension of MTProtoIntermediate
+// mode which supports random paddings (socalled 'secure mode' or
+// 'dd-secrets').
 type MTProtoIntermediateSecure struct {
 	MTProtoIntermediate
 }
@@ -41,7 +44,7 @@ func (m *MTProtoIntermediateSecure) Write(p []byte) (int, error) {
 	paddingLength := rand.Intn(4)
 	buf.Grow(4 + len(p) + paddingLength)
 
-	binary.Write(buf, binary.LittleEndian, uint32(len(p)+paddingLength))
+	binary.Write(buf, binary.LittleEndian, uint32(len(p)+paddingLength)) // nolint: errcheck
 	buf.Write(p)
 	buf.Write(make([]byte, paddingLength))
 
@@ -58,6 +61,8 @@ func (m *MTProtoIntermediateSecure) Write(p []byte) (int, error) {
 	return len(p), err
 }
 
+// NewMTProtoIntermediateSecure create new instance of
+// MTProtoIntermediateSecure instance.
 func NewMTProtoIntermediateSecure(conn StreamReadWriteCloser, opts *mtproto.ConnectionOpts) PacketReadWriteCloser {
 	return &MTProtoIntermediateSecure{
 		MTProtoIntermediate: MTProtoIntermediate{
