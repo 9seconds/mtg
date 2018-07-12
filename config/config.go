@@ -18,8 +18,9 @@ const (
 
 // Config represents common configuration of mtg.
 type Config struct {
-	Debug   bool
-	Verbose bool
+	Debug      bool
+	Verbose    bool
+	SecureMode bool
 
 	BindPort       uint16
 	PublicIPv4Port uint16
@@ -45,8 +46,9 @@ type URLs struct {
 
 // IPURLs contains links to both ipv4 and ipv6 of the proxy.
 type IPURLs struct {
-	IPv4 URLs `json:"ipv4"`
-	IPv6 URLs `json:"ipv6"`
+	IPv4      URLs   `json:"ipv4"`
+	IPv6      URLs   `json:"ipv6"`
+	BotSecret string `json:"secret_for_mtproxybot"`
 }
 
 // BindAddr returns connection for this server to bind to.
@@ -65,15 +67,29 @@ func (c *Config) UseMiddleProxy() bool {
 	return len(c.AdTag) > 0
 }
 
+func (c *Config) SecretString() string {
+	return hex.EncodeToString(c.Secret)
+}
+
+func (c *Config) BotSecretString() string {
+	secret := c.SecretString()
+	if c.SecureMode {
+		return "dd" + secret
+	}
+	return secret
+}
+
 // GetURLs returns configured IPURLs instance with links to this server.
 func (c *Config) GetURLs() IPURLs {
 	urls := IPURLs{}
+	secret := c.SecretString()
 	if c.PublicIPv4 != nil {
-		urls.IPv4 = getURLs(c.PublicIPv4, c.PublicIPv4Port, c.Secret)
+		urls.IPv4 = getURLs(c.PublicIPv4, c.PublicIPv4Port, secret)
 	}
 	if c.PublicIPv6 != nil {
-		urls.IPv6 = getURLs(c.PublicIPv6, c.PublicIPv6Port, c.Secret)
+		urls.IPv6 = getURLs(c.PublicIPv6, c.PublicIPv6Port, secret)
 	}
+	urls.BotSecret = c.BotSecretString()
 
 	return urls
 }
@@ -91,8 +107,11 @@ func NewConfig(debug, verbose bool, // nolint: gocyclo
 	publicIPv6 net.IP, publicIPv6Port uint16,
 	statsIP net.IP, statsPort uint16,
 	secret, adtag string) (*Config, error) {
-	secret = strings.TrimPrefix(secret, "dd")
-	if len(secret) != 32 {
+	secureMode := false
+	if strings.HasPrefix(secret, "dd") && len(secret) == 34 {
+		secureMode = true
+		secret = strings.TrimPrefix(secret, "dd")
+	} else if len(secret) != 32 {
 		return nil, errors.New("Telegram demands secret of length 32")
 	}
 	secretBytes, err := hex.DecodeString(secret)
@@ -149,6 +168,7 @@ func NewConfig(debug, verbose bool, // nolint: gocyclo
 		StatsPort:      statsPort,
 		Secret:         secretBytes,
 		AdTag:          adTagBytes,
+		SecureMode:     secureMode,
 	}
 
 	return conf, nil
