@@ -15,6 +15,7 @@ const (
 	proxyRequestFlagsIntermediate                   = 0x20000000
 	proxyRequestFlagsAbdridged                      = 0x40000000
 	proxyRequestFlagsQuickAck                       = 0x80000000
+	proxyRequestFlagsPad                            = 0x8000000
 )
 
 var proxyRequestFlagsEncryptedPrefix [8]byte
@@ -49,6 +50,9 @@ func (r proxyRequestFlags) String() string {
 	}
 	if r&proxyRequestFlagsQuickAck != 0 {
 		flags = append(flags, "QUICK_ACK")
+	}
+	if r&proxyRequestFlagsPad != 0 {
+		flags = append(flags, "PAD")
 	}
 
 	return strings.Join(flags, " | ")

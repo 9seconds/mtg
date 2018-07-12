@@ -67,10 +67,15 @@ func (r *ProxyRequest) MakeHeader(message []byte) (*bytes.Buffer, fmt.Stringer) 
 func NewProxyRequest(clientAddr, ownAddr *net.TCPAddr, opts *mtproto.ConnectionOpts, adTag []byte) (*ProxyRequest, error) {
 	flags := proxyRequestFlagsHasAdTag | proxyRequestFlagsMagic | proxyRequestFlagsExtMode2
 
-	if opts.ConnectionType == mtproto.ConnectionTypeAbridged {
+	switch opts.ConnectionType {
+	case mtproto.ConnectionTypeAbridged:
 		flags |= proxyRequestFlagsAbdridged
-	} else {
+	case mtproto.ConnectionTypeIntermediate:
 		flags |= proxyRequestFlagsIntermediate
+	case mtproto.ConnectionTypeSecure:
+		flags |= proxyRequestFlagsIntermediate | proxyRequestFlagsPad
+	default:
+		panic("Unknown connection type")
 	}
 
 	request := &ProxyRequest{
