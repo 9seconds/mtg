@@ -100,9 +100,15 @@
   revision = "947dcec5ba9c011838740e680966fd7087a71d0d"
   version = "v2.2.6"
 
+[[projects]]
+  name = "gopkg.in/alexcesaro/statsd.v2"
+  packages = ["."]
+  revision = "7fea3f0d2fab1ad973e641e51dba45443a311a90"
+  version = "v2.0.0"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f828340a30ea13c563829f9a37d0ff62974d4578411c9be02e61125dbdf98692"
+  inputs-digest = "7fad0f62feb7737b064d85cc4333a1a3e9298faec2afd864b4404f515fc7f17c"
   solver-name = "gps-cdcl"
   solver-version = 1

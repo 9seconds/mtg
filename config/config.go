@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/juju/errors"
+	statsd "gopkg.in/alexcesaro/statsd.v2"
 )
 
 // Buffer sizes define internal socket buffer sizes.
@@ -31,6 +32,14 @@ type Config struct {
 	PublicIPv4 net.IP
 	PublicIPv6 net.IP
 	StatsIP    net.IP
+
+	StatsD struct {
+		Addr       net.Addr
+		Prefix     string
+		Tags       map[string]string
+		TagsFormat statsd.TagFormat
+		Enabled    bool
+	}
 
 	Secret []byte
 	AdTag  []byte
@@ -109,7 +118,9 @@ func NewConfig(debug, verbose bool, // nolint: gocyclo
 	publicIPv4 net.IP, PublicIPv4Port uint16,
 	publicIPv6 net.IP, publicIPv6Port uint16,
 	statsIP net.IP, statsPort uint16,
-	secret, adtag string) (*Config, error) {
+	secret, adtag string,
+	statsdIP string, statsdPort uint16, statsdNetwork string, statsdPrefix string,
+	statsdTagsFormat string, statsdTags map[string]string) (*Config, error) {
 	secureMode := false
 	if strings.HasPrefix(secret, "dd") && len(secret) == 34 {
 		secureMode = true
@@ -172,6 +183,37 @@ func NewConfig(debug, verbose bool, // nolint: gocyclo
 		Secret:         secretBytes,
 		AdTag:          adTagBytes,
 		SecureMode:     secureMode,
+	}
+
+	if statsdIP != "" {
+		conf.StatsD.Enabled = true
+		conf.StatsD.Prefix = statsdPrefix
+		conf.StatsD.Tags = statsdTags
+
+		var addr net.Addr
+		hostPort := net.JoinHostPort(statsdIP, strconv.Itoa(int(statsdPort)))
+		switch statsdNetwork {
+		case "tcp":
+			addr, err = net.ResolveTCPAddr("tcp", hostPort)
+		case "udp":
+			addr, err = net.ResolveUDPAddr("udp", hostPort)
+		default:
+			err = errors.Errorf("Unknown network %s", statsdNetwork)
+		}
+		if err != nil {
+			return nil, errors.Annotate(err, "Cannot resolve statsd address")
+		}
+		conf.StatsD.Addr = addr
+
+		switch statsdTagsFormat {
+		case "datadog":
+			conf.StatsD.TagsFormat = statsd.Datadog
+		case "influxdb":
+			conf.StatsD.TagsFormat = statsd.InfluxDB
+		case "":
+		default:
+			return nil, errors.Errorf("Unknown tags format %s", statsdTagsFormat)
+		}
 	}
 
 	return conf, nil
