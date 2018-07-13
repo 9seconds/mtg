@@ -14,13 +14,21 @@ import (
 var instance *stats
 
 // Start starts new statisitcs server.
-func Start(conf *config.Config) {
+func Start(conf *config.Config) error {
 	log := zap.S().Named("stats")
 
 	instance = &stats{
 		URLs:   conf.GetURLs(),
 		Uptime: uptime(time.Now()),
 		mutex:  &sync.RWMutex{},
+	}
+
+	if conf.StatsD.Enabled {
+		client, err := newStatsd(conf)
+		if err != nil {
+			return err
+		}
+		go client.run()
 	}
 
 	go crashManager()
@@ -51,7 +59,11 @@ func Start(conf *config.Config) {
 		}
 	})
 
-	if err := http.ListenAndServe(conf.StatAddr(), nil); err != nil {
-		log.Fatalw("Stats server has been stopped", "error", err)
-	}
+	go func() {
+		if err := http.ListenAndServe(conf.StatAddr(), nil); err != nil {
+			log.Fatalw("Stats server has been stopped", "error", err)
+		}
+	}()
+
+	return nil
 }

@@ -158,7 +158,9 @@ func main() {
 		zap.S().Infow("Use direct connection to Telegram")
 	}
 
-	go stats.Start(conf)
+	if err := stats.Start(conf); err != nil {
+		panic(err)
+	}
 
 	server := proxy.NewProxy(conf)
 	if err := server.Serve(); err != nil {
