@@ -40,7 +40,7 @@ func crashManager() {
 	}
 }
 
-func connectionManager() { // nolint: gocyclo
+func connectionManager() {
 	for event := range connectionsChan {
 		instance.mutex.RLock()
 
@@ -53,27 +53,21 @@ func connectionManager() { // nolint: gocyclo
 		switch event.connectionType {
 		case mtproto.ConnectionTypeAbridged:
 			if isIPv4 {
-				instance.ActiveConnections.Abridged.IPv4 += inc
-				if event.connected {
-					instance.AllConnections.Abridged.IPv4 += inc
-				}
+				instance.Connections.Abridged.IPv4 += inc
 			} else {
-				instance.ActiveConnections.Abridged.IPv6 += inc
-				if event.connected {
-					instance.AllConnections.Abridged.IPv6 += inc
-				}
+				instance.Connections.Abridged.IPv6 += inc
+			}
+		case mtproto.ConnectionTypeSecure:
+			if isIPv4 {
+				instance.Connections.Secure.IPv4 += inc
+			} else {
+				instance.Connections.Secure.IPv6 += inc
 			}
 		default:
 			if isIPv4 {
-				instance.ActiveConnections.Intermediate.IPv4 += inc
-				if event.connected {
-					instance.AllConnections.Intermediate.IPv4 += inc
-				}
+				instance.Connections.Intermediate.IPv4 += inc
 			} else {
-				instance.ActiveConnections.Intermediate.IPv6 += inc
-				if event.connected {
-					instance.AllConnections.Intermediate.IPv6 += inc
-				}
+				instance.Connections.Intermediate.IPv6 += inc
 			}
 		}
 

@@ -52,20 +52,23 @@ type connections struct {
 	All          connectionType `json:"all"`
 	Abridged     connectionType `json:"abridged"`
 	Intermediate connectionType `json:"intermediate"`
+	Secure       connectionType `json:"secure"`
 }
 
 func (c connections) MarshalJSON() ([]byte, error) {
-	c.All.IPv4 = c.Abridged.IPv4 + c.Intermediate.IPv4
-	c.All.IPv6 = c.Abridged.IPv6 + c.Intermediate.IPv6
+	c.All.IPv4 = c.Abridged.IPv4 + c.Intermediate.IPv4 + c.Secure.IPv4
+	c.All.IPv6 = c.Abridged.IPv6 + c.Intermediate.IPv6 + c.Secure.IPv6
 
 	value := struct {
 		All          connectionType `json:"all"`
 		Abridged     connectionType `json:"abridged"`
 		Intermediate connectionType `json:"intermediate"`
+		Secure       connectionType `json:"secure"`
 	}{
 		All:          c.All,
 		Abridged:     c.Abridged,
 		Intermediate: c.Intermediate,
+		Secure:       c.Secure,
 	}
 
 	return json.Marshal(value)
@@ -87,13 +90,12 @@ type speed struct {
 }
 
 type stats struct {
-	URLs              config.IPURLs `json:"urls"`
-	ActiveConnections connections   `json:"active_connections"`
-	AllConnections    connections   `json:"all_connections"`
-	Traffic           traffic       `json:"traffic"`
-	Speed             speed         `json:"speed"`
-	Uptime            uptime        `json:"uptime"`
-	Crashes           uint32        `json:"crashes"`
+	URLs        config.IPURLs `json:"urls"`
+	Connections connections   `json:"connections"`
+	Traffic     traffic       `json:"traffic"`
+	Speed       speed         `json:"speed"`
+	Uptime      uptime        `json:"uptime"`
+	Crashes     uint32        `json:"crashes"`
 
 	speedCurrent speed
 	mutex        *sync.RWMutex
