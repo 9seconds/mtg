@@ -4,20 +4,22 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"math/rand"
 	"os"
 	"syscall"
 	"time"
 
+	"github.com/juju/errors"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/9seconds/mtg/config"
+	"github.com/9seconds/mtg/ntp"
 	"github.com/9seconds/mtg/proxy"
 	"github.com/9seconds/mtg/stats"
-	"github.com/juju/errors"
 )
 
 var (
@@ -120,6 +122,14 @@ func main() {
 
 	if conf.UseMiddleProxy() {
 		zap.S().Infow("Use middle proxy connection to Telegram")
+		if diff, err := ntp.Fetch(); err != nil {
+			zap.S().Warnw("Could not fetch time data from NTP")
+		} else {
+			if diff >= time.Second {
+				usage(fmt.Sprintf("You choose to use middle proxy but your clock drift (%s) is bigger than 1 second. Please, sync your time", diff))
+			}
+			go ntp.AutoUpdate()
+		}
 	} else {
 		zap.S().Infow("Use direct connection to Telegram")
 	}
