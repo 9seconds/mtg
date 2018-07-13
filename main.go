@@ -61,7 +61,7 @@ var (
 			Envar("MTG_IPV6_PORT").
 			Uint16()
 
-	statsIP = app.Flag("stats-ip", "Which IP bind stats server to").
+	statsIP = app.Flag("stats-ip", "Which IP bind stats server to.").
 		Short('t').
 		Envar("MTG_STATS_IP").
 		Default("127.0.0.1").
@@ -71,6 +71,28 @@ var (
 			Envar("MTG_STATS_PORT").
 			Default("3129").
 			Uint16()
+
+	statsdIP = app.Flag("statsd-ip", "Which IP should we use for working with statsd.").
+			Envar("MTG_STATSD_IP").
+			String()
+	statsdPort = app.Flag("statsd-port", "Which port should we use for working with statsd.").
+			Envar("MTG_STATSD_PORT").
+			Default("8125").
+			Uint16()
+	statsdNetwork = app.Flag("statsd-network", "Which network is used to work with statsd. Only 'tcp' and 'udp' are supported.").
+			Envar("MTG_STATSD_NETWORK").
+			Default("udp").
+			String()
+	statsdPrefix = app.Flag("statsd-prefix", "Which bucket prefix should we use for sending stats to statsd.").
+			Envar("MTG_STATSD_PREFIX").
+			Default("mtg").
+			String()
+	statsdTagsFormat = app.Flag("statsd-tags-format", "Which tag format should we use to send stats metrics. Valid options are 'datadog' and 'influxdb'.").
+				Envar("MTG_STATSD_TAGS_FORMAT").
+				String()
+	statsdTags = app.Flag("statsd-tags", "Tags to use for working with statsd (specified as 'key=value').").
+			Envar("MTG_STATSD_TAGS").
+			StringMap()
 
 	secret = app.Arg("secret", "Secret of this proxy.").Required().String()
 	adtag  = app.Arg("adtag", "ADTag of the proxy.").String()
@@ -96,6 +118,8 @@ func main() {
 		*publicIPv6, *publicIPv6Port,
 		*statsIP, *statsPort,
 		*secret, *adtag,
+		*statsdIP, *statsdPort, *statsdNetwork, *statsdPrefix,
+		*statsdTagsFormat, *statsdTags,
 	)
 	if err != nil {
 		usage(err.Error())
@@ -134,7 +158,9 @@ func main() {
 		zap.S().Infow("Use direct connection to Telegram")
 	}
 
-	go stats.Start(conf)
+	if err := stats.Start(conf); err != nil {
+		panic(err)
+	}
 
 	server := proxy.NewProxy(conf)
 	if err := server.Serve(); err != nil {

@@ -145,3 +145,33 @@ You will have this tool up and running on port 3128. Now curl
 port 3129 will show you some statistics if you are interested in.
 
 Also, you can use [run-mtg.sh](https://github.com/9seconds/mtg/blob/master/run-mtg.sh) script
+
+
+# statsd integration
+
+mtg provides an integration with statsd, you can enable it with command
+line interface. To enable it, you have to provide IP address of statsd
+service.
+
+Out of the box, mtg supports 2 additional dialects: [InfluxDB](https://www.influxdata.com/blog/getting-started-with-sending-statsd-metrics-to-telegraf-influxdb/)
+and [Datadog](https://docs.datadoghq.com/developers/dogstatsd/).
+
+All metrics are gauges. Here is the list of metrics and their meaning:
+
+| Metric name                     | Unit    | Description                                               |
+|---------------------------------|---------|-----------------------------------------------------------|
+| `connections.abridged.ipv4`     | number  | The number of active abridged IPv4 connections            |
+| `connections.abridged.ipv6`     | number  | The number of active abridged IPv6 connections            |
+| `connections.intermediate.ipv4` | number  | The number of active intermediate IPv4 connections        |
+| `connections.intermediate.ipv6` | number  | The number of active intermediate IPv6 connections        |
+| `connections.secure.ipv4`       | number  | The number of active secure intermediate IPv4 connections |
+| `connections.secure.ipv6`       | number  | The number of active secure intermediate IPv6 connections |
+| `crashes`                       | number  | An amount of crashes in client handlers                   |
+| `traffic.ingress`               | bytes   | Ingress traffic from the start of application (incoming)  |
+| `traffic.egress`                | bytes   | Egress traffic from the start of application (outgoing)   |
+| `speed.ingress`                 | bytes/s | Ingress bandwidth of the latest second (incoming traffic) |
+| `speed.egress`                  | bytes/s | Egress bandwidth of the latest second (outgoing traffic)  |
+
+All metrics are prefixed with given prefix. Default prefix is `mtg`.
+With such prefix metric name `traffic.ingress`, for example, would be
+`mtg.traffic.ingress`.
