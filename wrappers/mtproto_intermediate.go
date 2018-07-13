@@ -62,10 +62,6 @@ func (m *MTProtoIntermediate) Read() ([]byte, error) {
 		return nil, errors.Annotate(err, "Cannot read the message")
 	}
 
-	if length%4 != 0 {
-		length -= length % 4
-	}
-
 	return buf.Bytes()[:length], nil
 }
 
@@ -80,7 +76,7 @@ func (m *MTProtoIntermediate) Write(p []byte) (int, error) {
 		"counter", m.writeCounter,
 	)
 
-	if m.opts.ReadHacks.SimpleAck {
+	if m.opts.WriteHacks.SimpleAck {
 		return m.conn.Write(p)
 	}
 

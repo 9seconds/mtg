@@ -17,9 +17,16 @@ func MiddleInit(socket net.Conn, connID string, conf *config.Config) (wrappers.W
 	}
 	connStream := conn.(wrappers.StreamReadWriteCloser)
 
-	newConn := wrappers.NewMTProtoAbridged(connStream, opts)
-	if opts.ConnectionType != mtproto.ConnectionTypeAbridged {
+	var newConn wrappers.PacketReadWriteCloser
+	switch opts.ConnectionType {
+	case mtproto.ConnectionTypeAbridged:
+		newConn = wrappers.NewMTProtoAbridged(connStream, opts)
+	case mtproto.ConnectionTypeIntermediate:
 		newConn = wrappers.NewMTProtoIntermediate(connStream, opts)
+	case mtproto.ConnectionTypeSecure:
+		newConn = wrappers.NewMTProtoIntermediateSecure(connStream, opts)
+	default:
+		panic("Unknown connection type")
 	}
 
 	opts.ConnectionProto = mtproto.ConnectionProtocolIPv4
