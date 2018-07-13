@@ -48,3 +48,7 @@
 [[constraint]]
   branch = "master"
   name = "github.com/dustin/go-humanize"
+
+[[constraint]]
+  name = "github.com/beevik/ntp"
+  version = "0.2.0"
