@@ -76,7 +76,7 @@ func (m *MTProtoIntermediate) Write(p []byte) (int, error) {
 		"counter", m.writeCounter,
 	)
 
-	if m.opts.ReadHacks.SimpleAck {
+	if m.opts.WriteHacks.SimpleAck {
 		return m.conn.Write(p)
 	}
 
