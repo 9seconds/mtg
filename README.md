@@ -50,6 +50,13 @@ To get promoted channel, please contact
 second parameter.
 
 
+# Source code organization
+
+There are 2 main branches:
+
+1. `master` branch contains potentially unstable features
+2. `stable` branch contains stable version. Usually you want to use this branch.
+
 # How to build
 
 ```console
@@ -70,8 +77,22 @@ $ make docker
 
 # Docker image
 
+Docker follows the same policy as the source code organization:
+
+- `latest` mirrors the master branch
+- `stable` mirrors the stable branch
+- tags are for tagged releases
+
 ```console
-$ docker pull nineseconds/mtg
+$ docker pull nineseconds/mtg:latest
+```
+
+```console
+$ docker pull nineseconds/mtg:stable
+```
+
+```console
+$ docker pull nineseconds/mtg:0.10
 ```
 
 # Configuration
@@ -130,13 +151,13 @@ This tool will listen on port 3128 by default with the given secret.
 # One-line runner
 
 ```console
-$ docker run --name mtg --restart=unless-stopped -p 3128:3128 -p 3129:3129 -d nineseconds/mtg $(openssl rand -hex 16)
+$ docker run --name mtg --restart=unless-stopped -p 3128:3128 -p 3129:3129 -d nineseconds/mtg:stable $(openssl rand -hex 16)
 ```
 
 or in secret mode:
 
 ```console
-$ docker run --name mtg --restart=unless-stopped -p 3128:3128 -p 3129:3129 -d nineseconds/mtg dd$(openssl rand -hex 16)
+$ docker run --name mtg --restart=unless-stopped -p 3128:3128 -p 3129:3129 -d nineseconds/mtg:stable dd$(openssl rand -hex 16)
 ```
 
 You will have this tool up and running on port 3128. Now curl
