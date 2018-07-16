@@ -14,7 +14,6 @@ are the most notable:
 * [Official](https://github.com/TelegramMessenger/MTProxy)
 * [Python](https://github.com/alexbers/mtprotoproxy)
 * [Erlang](https://github.com/seriyps/mtproto_proxy)
-* [JS](https://github.com/FreedomPrevails/JSMTProxy)
 
 Almost all of them follow the way how official proxy was build. This
 includes support of multiple secrets, support of promoted channels etc.
