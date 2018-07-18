@@ -129,24 +129,22 @@ func main() {
 	}
 
 	conf, err := config.NewConfig(*debug, *verbose,
-		*bindIP, *bindPort,
-		*publicIPv4, *publicIPv4Port,
-		*publicIPv6, *publicIPv6Port,
-		*statsIP, *statsPort,
-		*secret, *adtag,
-		*statsdIP, *statsdPort, *statsdNetwork, *statsdPrefix,
-		*statsdTagsFormat, *statsdTags,
+		*bindIP, *publicIPv4, *publicIPv6, *statsIP,
+		*bindPort, *publicIPv4Port, *publicIPv6Port, *statsPort, *statsdPort,
+		*secret, *adtag, *statsdIP, *statsdNetwork, *statsdPrefix, *statsdTagsFormat,
+		*statsdTags,
 	)
 	if err != nil {
 		usage(err.Error())
 	}
 
 	atom := zap.NewAtomicLevel()
-	if conf.Debug {
+	switch {
+	case conf.Debug:
 		atom.SetLevel(zapcore.DebugLevel)
-	} else if conf.Verbose {
+	case conf.Verbose:
 		atom.SetLevel(zapcore.InfoLevel)
-	} else {
+	default:
 		atom.SetLevel(zapcore.ErrorLevel)
 	}
 	encoderCfg := zap.NewProductionEncoderConfig()

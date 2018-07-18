@@ -58,6 +58,10 @@ test: vendor version.go
 lint: version.go
 	@golangci-lint run
 
+.PHONY: critic
+critic: version.go
+	@gocritic check-project "$(ROOT_DIR)"
+
 .PHONY: clean
 clean:
 	@git clean -xfd && \
@@ -69,7 +73,7 @@ docker:
 	@docker build --pull -t "$(IMAGE_NAME)" "$(ROOT_DIR)"
 
 .PHONY: prepare
-prepare: install-dep install-lint
+prepare: install-dep install-lint install-critic
 
 .PHONY: install-dep
 install-dep:
@@ -79,3 +83,7 @@ install-dep:
 install-lint:
 	@curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh \
 		| bash -s -- -b $(GOPATH)/bin $(GOLANGCI_LINT_VERSION)
+
+.PHONY: install-critic
+install-critic:
+	@go get -u github.com/go-critic/go-critic/...

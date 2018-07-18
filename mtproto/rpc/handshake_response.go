@@ -19,10 +19,10 @@ type HandshakeResponse struct {
 func (r *HandshakeResponse) Bytes() []byte {
 	buf := &bytes.Buffer{}
 
-	buf.Write(r.Type[:])
-	buf.Write(r.Flags[:])
-	buf.Write(r.SenderPID[:])
-	buf.Write(r.PeerPID[:])
+	buf.Write(r.Type)
+	buf.Write(r.Flags)
+	buf.Write(r.SenderPID)
+	buf.Write(r.PeerPID)
 
 	return buf.Bytes()
 }

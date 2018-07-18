@@ -13,6 +13,7 @@ script:
   - make prepare
   - make all
   - make lint
+  - make critic
   - make test
 
 cache:

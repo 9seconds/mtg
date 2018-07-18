@@ -41,9 +41,9 @@ func NewMiddleProxyCipher(conn StreamReadWriteCloser,
 func deriveKeys(purpose cipherPurpose, req *rpc.NonceRequest, resp *rpc.NonceResponse,
 	client, remote *net.TCPAddr, secret []byte) ([]byte, []byte) {
 	message := bytes.Buffer{}
-	message.Write(resp.Nonce[:])
-	message.Write(req.Nonce[:])
-	message.Write(req.CryptoTS[:])
+	message.Write(resp.Nonce)
+	message.Write(req.Nonce)
+	message.Write(req.CryptoTS)
 
 	clientIPv4 := emptyIP[:]
 	serverIPv4 := emptyIP[:]
@@ -70,13 +70,13 @@ func deriveKeys(purpose cipherPurpose, req *rpc.NonceRequest, resp *rpc.NonceRes
 	binary.LittleEndian.PutUint16(port[:], uint16(remote.Port))
 	message.Write(port[:])
 	message.Write(secret)
-	message.Write(resp.Nonce[:])
+	message.Write(resp.Nonce)
 
 	if client.IP.To4() == nil {
 		message.Write(client.IP.To16())
 		message.Write(remote.IP.To16())
 	}
-	message.Write(req.Nonce[:])
+	message.Write(req.Nonce)
 
 	data := message.Bytes()
 	md5sum := md5.Sum(data[1:]) // nolint: gas

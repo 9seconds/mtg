@@ -42,7 +42,7 @@ func makeTMeURL(values url.Values) string {
 }
 
 func makeQRCodeURL(data string) string {
-	QRURL := url.URL{
+	qr := url.URL{
 		Scheme: "https",
 		Host:   "api.qrserver.com",
 		Path:   "v1/create-qr-code",
@@ -52,7 +52,7 @@ func makeQRCodeURL(data string) string {
 	values.Set("qzone", "4")
 	values.Set("format", "svg")
 	values.Set("data", data)
-	QRURL.RawQuery = values.Encode()
+	qr.RawQuery = values.Encode()
 
-	return QRURL.String()
+	return qr.String()
 }

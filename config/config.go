@@ -114,13 +114,10 @@ func getAddr(host fmt.Stringer, port uint16) string {
 // fetches data from external sources. Parameters passed to this
 // function, should come from command line arguments.
 func NewConfig(debug, verbose bool, // nolint: gocyclo
-	bindIP net.IP, bindPort uint16,
-	publicIPv4 net.IP, PublicIPv4Port uint16,
-	publicIPv6 net.IP, publicIPv6Port uint16,
-	statsIP net.IP, statsPort uint16,
-	secret, adtag string,
-	statsdIP string, statsdPort uint16, statsdNetwork string, statsdPrefix string,
-	statsdTagsFormat string, statsdTags map[string]string) (*Config, error) {
+	bindIP, publicIPv4, publicIPv6, statsIP net.IP,
+	bindPort, publicIPv4Port, publicIPv6Port, statsPort, statsdPort uint16,
+	secret, adtag, statsdIP, statsdNetwork, statsdPrefix, statsdTagsFormat string,
+	statsdTags map[string]string) (*Config, error) {
 	secureMode := false
 	if strings.HasPrefix(secret, "dd") && len(secret) == 34 {
 		secureMode = true
@@ -149,8 +146,8 @@ func NewConfig(debug, verbose bool, // nolint: gocyclo
 			return nil, errors.Errorf("IP %s is not IPv4", publicIPv4.String())
 		}
 	}
-	if PublicIPv4Port == 0 {
-		PublicIPv4Port = bindPort
+	if publicIPv4Port == 0 {
+		publicIPv4Port = bindPort
 	}
 
 	if publicIPv6 == nil {
@@ -175,7 +172,7 @@ func NewConfig(debug, verbose bool, // nolint: gocyclo
 		BindIP:         bindIP,
 		BindPort:       bindPort,
 		PublicIPv4:     publicIPv4,
-		PublicIPv4Port: PublicIPv4Port,
+		PublicIPv4Port: publicIPv4Port,
 		PublicIPv6:     publicIPv6,
 		PublicIPv6Port: publicIPv6Port,
 		StatsIP:        statsIP,
