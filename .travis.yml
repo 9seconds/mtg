@@ -9,8 +9,9 @@ go:
   - "1.10.x"
   - master
 
+before_script: make prepare
+
 script:
-  - make prepare
   - make all
   - make lint
   - make critic
@@ -19,3 +20,7 @@ script:
 cache:
   directories:
     - vendor
+
+matrix:
+  allow_failures:
+    - go: master
