@@ -20,7 +20,8 @@ type middleTelegram struct {
 	conf *config.Config
 }
 
-func (t *middleTelegram) Init(connOpts *mtproto.ConnectionOpts, conn wrappers.StreamReadWriteCloser) (wrappers.Wrap, error) {
+func (t *middleTelegram) Init(connOpts *mtproto.ConnectionOpts,
+	conn wrappers.StreamReadWriteCloser) (wrappers.Wrap, error) {
 	rpcNonceConn := wrappers.NewMTProtoFrame(conn, rpc.SeqNoNonce)
 
 	rpcNonceReq, err := t.sendRPCNonceRequest(rpcNonceConn)
@@ -65,7 +66,8 @@ func (t *middleTelegram) sendRPCNonceRequest(conn io.Writer) (*rpc.NonceRequest,
 	return rpcNonceReq, nil
 }
 
-func (t *middleTelegram) receiveRPCNonceResponse(conn wrappers.PacketReader, req *rpc.NonceRequest) (*rpc.NonceResponse, error) {
+func (t *middleTelegram) receiveRPCNonceResponse(conn wrappers.PacketReader,
+	req *rpc.NonceRequest) (*rpc.NonceResponse, error) {
 	packet, err := conn.Read()
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot read RPC nonce response")
@@ -91,7 +93,8 @@ func (t *middleTelegram) sendRPCHandshakeRequest(conn io.Writer) (*rpc.Handshake
 	return req, nil
 }
 
-func (t *middleTelegram) receiveRPCHandshakeResponse(conn wrappers.PacketReader, req *rpc.HandshakeRequest) (*rpc.HandshakeResponse, error) {
+func (t *middleTelegram) receiveRPCHandshakeResponse(conn wrappers.PacketReader,
+	req *rpc.HandshakeRequest) (*rpc.HandshakeResponse, error) {
 	packet, err := conn.Read()
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot read RPC handshake response")

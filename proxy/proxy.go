@@ -106,7 +106,8 @@ func (p *Proxy) getTelegramConn(opts *mtproto.ConnectionOpts, connID string) (wr
 	return packetConn, nil
 }
 
-func (p *Proxy) middlePipe(src wrappers.PacketReadCloser, dst io.WriteCloser, wait *sync.WaitGroup, hacks *mtproto.Hacks) {
+func (p *Proxy) middlePipe(src wrappers.PacketReadCloser, dst io.WriteCloser,
+	wait *sync.WaitGroup, hacks *mtproto.Hacks) {
 	defer func() {
 		src.Close() // nolint: errcheck
 		dst.Close() // nolint: errcheck

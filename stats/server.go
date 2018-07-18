@@ -13,7 +13,7 @@ import (
 
 var instance *stats
 
-// Start starts new statisitcs server.
+// Start starts new statistics server.
 func Start(conf *config.Config) error {
 	log := zap.S().Named("stats")
 

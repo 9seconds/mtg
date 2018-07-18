@@ -10,6 +10,8 @@ go:
   - master
 
 script:
+  - make prepare
+  - make all
   - make lint
   - make test
 

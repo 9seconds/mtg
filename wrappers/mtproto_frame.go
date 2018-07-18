@@ -61,7 +61,8 @@ func (m *MTProtoFrame) Read() ([]byte, error) { // nolint: gocyclo
 		"messageLength", messageLength,
 		"sequence_number", m.readSeqNo,
 	)
-	if messageLength%4 != 0 || messageLength < mtprotoFrameMinMessageLength || messageLength > mtprotoFrameMaxMessageLength {
+	if messageLength%4 != 0 || messageLength < mtprotoFrameMinMessageLength ||
+		messageLength > mtprotoFrameMaxMessageLength {
 		return nil, errors.Errorf("Incorrect frame message length %d", messageLength)
 	}
 

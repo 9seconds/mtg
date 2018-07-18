@@ -56,7 +56,7 @@ func (m *MTProtoProxy) Read() ([]byte, error) {
 	case bytes.Equal(tag, rpc.TagSimpleAck):
 		return m.readSimpleAck(packet)
 	case bytes.Equal(tag, rpc.TagCloseExt):
-		return m.readCloseExt(packet)
+		return m.readCloseExt()
 	}
 
 	return nil, errors.Errorf("Unknown RPC answer %v", tag)
@@ -91,7 +91,7 @@ func (m *MTProtoProxy) readSimpleAck(data []byte) ([]byte, error) {
 	return data, nil
 }
 
-func (m *MTProtoProxy) readCloseExt(data []byte) ([]byte, error) {
+func (m *MTProtoProxy) readCloseExt() ([]byte, error) {
 	m.logger.Debugw("Read RPC_CLOSE_EXT", "counter", m.readCounter)
 
 	return nil, errors.New("Connection has been closed remotely by RPC call")
@@ -150,7 +150,8 @@ func (m *MTProtoProxy) Close() error {
 }
 
 // NewMTProtoProxy creates new RPC wrapper.
-func NewMTProtoProxy(conn PacketReadWriteCloser, connOpts *mtproto.ConnectionOpts, adTag []byte) (PacketReadWriteCloser, error) {
+func NewMTProtoProxy(conn PacketReadWriteCloser, connOpts *mtproto.ConnectionOpts,
+	adTag []byte) (PacketReadWriteCloser, error) {
 	req, err := rpc.NewProxyRequest(connOpts.ClientAddr, conn.LocalAddr(), connOpts, adTag)
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot create new RPC proxy request")

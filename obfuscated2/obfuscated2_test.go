@@ -47,8 +47,8 @@ func TestObfs2Full(t *testing.T) {
 
 	clientFrame := generateFrame(mtproto.ConnectionTypeIntermediate)
 	clientHasher := sha256.New()
-	clientHasher.Write(clientFrame.Key())
-	clientHasher.Write(secret)
+	clientHasher.Write(clientFrame.Key()) // nolint: errcheck
+	clientHasher.Write(secret)            // nolint: errcheck
 	clientKey := clientHasher.Sum(nil)
 
 	encryptor := makeStreamCipher(clientKey, clientFrame.IV())
@@ -58,8 +58,8 @@ func TestObfs2Full(t *testing.T) {
 
 	invertedClientFrame := clientFrame.Invert()
 	clientHasher = sha256.New()
-	clientHasher.Write(invertedClientFrame.Key())
-	clientHasher.Write(secret)
+	clientHasher.Write(invertedClientFrame.Key()) // nolint: errcheck
+	clientHasher.Write(secret)                    // nolint: errcheck
 	invertedClientKey := clientHasher.Sum(nil)
 	clientDecryptor := makeStreamCipher(invertedClientKey, invertedClientFrame.IV())
 

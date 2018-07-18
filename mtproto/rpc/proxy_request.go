@@ -64,7 +64,8 @@ func (r *ProxyRequest) MakeHeader(message []byte) (*bytes.Buffer, fmt.Stringer) 
 }
 
 // NewProxyRequest build new ProxyRequest data structure.
-func NewProxyRequest(clientAddr, ownAddr *net.TCPAddr, opts *mtproto.ConnectionOpts, adTag []byte) (*ProxyRequest, error) {
+func NewProxyRequest(clientAddr, ownAddr *net.TCPAddr,
+	opts *mtproto.ConnectionOpts, adTag []byte) (*ProxyRequest, error) {
 	flags := proxyRequestFlagsHasAdTag | proxyRequestFlagsMagic | proxyRequestFlagsExtMode2
 
 	switch opts.ConnectionType {

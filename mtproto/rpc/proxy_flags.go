@@ -9,13 +9,13 @@ type proxyRequestFlags uint32
 
 const (
 	proxyRequestFlagsHasAdTag     proxyRequestFlags = 0x8
-	proxyRequestFlagsEncrypted                      = 0x2
-	proxyRequestFlagsMagic                          = 0x1000
-	proxyRequestFlagsExtMode2                       = 0x20000
-	proxyRequestFlagsIntermediate                   = 0x20000000
-	proxyRequestFlagsAbdridged                      = 0x40000000
-	proxyRequestFlagsQuickAck                       = 0x80000000
-	proxyRequestFlagsPad                            = 0x8000000
+	proxyRequestFlagsEncrypted    proxyRequestFlags = 0x2
+	proxyRequestFlagsMagic        proxyRequestFlags = 0x1000
+	proxyRequestFlagsExtMode2     proxyRequestFlags = 0x20000
+	proxyRequestFlagsIntermediate proxyRequestFlags = 0x20000000
+	proxyRequestFlagsAbdridged    proxyRequestFlags = 0x40000000
+	proxyRequestFlagsQuickAck     proxyRequestFlags = 0x80000000
+	proxyRequestFlagsPad          proxyRequestFlags = 0x8000000
 )
 
 var proxyRequestFlagsEncryptedPrefix [8]byte

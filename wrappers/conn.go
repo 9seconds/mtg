@@ -9,7 +9,7 @@ import (
 	"github.com/9seconds/mtg/stats"
 )
 
-// ConnPurpose is intented to be identifier of connection purpose. We
+// ConnPurpose is intended to be identifier of connection purpose. We
 // sometimes want to treat client/telegram connection differently (for
 // logging for example).
 type ConnPurpose uint8
