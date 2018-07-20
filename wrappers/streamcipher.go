@@ -1,6 +1,7 @@
 package wrappers
 
 import (
+	"bytes"
 	"crypto/cipher"
 	"net"
 
@@ -28,10 +29,17 @@ func (s *StreamCipher) Read(p []byte) (int, error) {
 }
 
 func (s *StreamCipher) Write(p []byte) (int, error) {
-	encrypted := make([]byte, len(p))
-	s.encryptor.XORKeyStream(encrypted, p)
+	buf := streamCipherBufferPool.Get().(*bytes.Buffer)
+	defer streamCipherBufferPool.Put(buf)
 
-	return s.conn.Write(encrypted)
+	buf.Reset()
+	buf.Grow(len(p))
+	buf.Write(p)
+
+	data := buf.Bytes()
+	s.encryptor.XORKeyStream(data, data)
+
+	return s.conn.Write(data)
 }
 
 // Logger returns an instance of the logger for this wrapper.
