@@ -11,17 +11,14 @@ import (
 	statsd "gopkg.in/alexcesaro/statsd.v2"
 )
 
-// Buffer sizes define internal socket buffer sizes.
-const (
-	BufferWriteSize = 32 * 1024
-	BufferReadSize  = 32 * 1024
-)
-
 // Config represents common configuration of mtg.
 type Config struct {
 	Debug      bool
 	Verbose    bool
 	SecureMode bool
+
+	ReadBufferSize  int
+	WriteBufferSize int
 
 	BindPort       uint16
 	PublicIPv4Port uint16
@@ -114,6 +111,7 @@ func getAddr(host fmt.Stringer, port uint16) string {
 // fetches data from external sources. Parameters passed to this
 // function, should come from command line arguments.
 func NewConfig(debug, verbose bool, // nolint: gocyclo
+	writeBufferSize, readBufferSize uint32,
 	bindIP, publicIPv4, publicIPv6, statsIP net.IP,
 	bindPort, publicIPv4Port, publicIPv6Port, statsPort, statsdPort uint16,
 	statsdIP, statsdNetwork, statsdPrefix, statsdTagsFormat string,
@@ -157,19 +155,21 @@ func NewConfig(debug, verbose bool, // nolint: gocyclo
 	}
 
 	conf := &Config{
-		Debug:          debug,
-		Verbose:        verbose,
-		BindIP:         bindIP,
-		BindPort:       bindPort,
-		PublicIPv4:     publicIPv4,
-		PublicIPv4Port: publicIPv4Port,
-		PublicIPv6:     publicIPv6,
-		PublicIPv6Port: publicIPv6Port,
-		StatsIP:        statsIP,
-		StatsPort:      statsPort,
-		Secret:         secret,
-		AdTag:          adtag,
-		SecureMode:     secureMode,
+		Debug:           debug,
+		Verbose:         verbose,
+		BindIP:          bindIP,
+		BindPort:        bindPort,
+		PublicIPv4:      publicIPv4,
+		PublicIPv4Port:  publicIPv4Port,
+		PublicIPv6:      publicIPv6,
+		PublicIPv6Port:  publicIPv6Port,
+		StatsIP:         statsIP,
+		StatsPort:       statsPort,
+		Secret:          secret,
+		AdTag:           adtag,
+		SecureMode:      secureMode,
+		ReadBufferSize:  int(readBufferSize),
+		WriteBufferSize: int(writeBufferSize),
 	}
 
 	if statsdIP != "" {

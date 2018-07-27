@@ -49,6 +49,19 @@ var (
 		Default("3128").
 		Uint16()
 
+	writeBufferSize = app.Flag("write-buffer",
+		"Write buffer size in bytes. You can think about it as a buffer from client to Telegram.").
+		Short('w').
+		Envar("MTG_BUFFER_WRITE").
+		Default("65536").
+		Uint32()
+	readBufferSize = app.Flag("read-buffer",
+		"Read buffer size in bytes. You can think about it as a buffer from Telegram to client.").
+		Short('r').
+		Envar("MTG_BUFFER_READ").
+		Default("131072").
+		Uint32()
+
 	publicIPv4 = app.Flag("public-ipv4",
 		"Which IPv4 address is public.").
 		Short('4').
@@ -117,7 +130,7 @@ var (
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 	app.Version(version)
-
+	app.HelpFlag.Short('h')
 }
 
 func main() { // nolint: gocyclo
@@ -129,6 +142,7 @@ func main() { // nolint: gocyclo
 	}
 
 	conf, err := config.NewConfig(*debug, *verbose,
+		*writeBufferSize, *readBufferSize,
 		*bindIP, *publicIPv4, *publicIPv6, *statsIP,
 		*bindPort, *publicIPv4Port, *publicIPv6Port, *statsPort, *statsdPort,
 		*statsdIP, *statsdNetwork, *statsdPrefix, *statsdTagsFormat,
