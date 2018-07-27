@@ -1,20 +1,14 @@
 package config
 
 import (
+	"bytes"
 	"encoding/hex"
 	"fmt"
 	"net"
 	"strconv"
-	"strings"
 
 	"github.com/juju/errors"
 	statsd "gopkg.in/alexcesaro/statsd.v2"
-)
-
-// Buffer sizes define internal socket buffer sizes.
-const (
-	BufferWriteSize = 32 * 1024
-	BufferReadSize  = 32 * 1024
 )
 
 // Config represents common configuration of mtg.
@@ -22,6 +16,9 @@ type Config struct {
 	Debug      bool
 	Verbose    bool
 	SecureMode bool
+
+	ReadBufferSize  int
+	WriteBufferSize int
 
 	BindPort       uint16
 	PublicIPv4Port uint16
@@ -114,30 +111,21 @@ func getAddr(host fmt.Stringer, port uint16) string {
 // fetches data from external sources. Parameters passed to this
 // function, should come from command line arguments.
 func NewConfig(debug, verbose bool, // nolint: gocyclo
+	writeBufferSize, readBufferSize uint32,
 	bindIP, publicIPv4, publicIPv6, statsIP net.IP,
 	bindPort, publicIPv4Port, publicIPv6Port, statsPort, statsdPort uint16,
-	secret, adtag, statsdIP, statsdNetwork, statsdPrefix, statsdTagsFormat string,
-	statsdTags map[string]string) (*Config, error) {
+	statsdIP, statsdNetwork, statsdPrefix, statsdTagsFormat string,
+	statsdTags map[string]string,
+	secret, adtag []byte) (*Config, error) {
 	secureMode := false
-	if strings.HasPrefix(secret, "dd") && len(secret) == 34 {
+	if bytes.HasPrefix(secret, []byte{0xdd}) && len(secret) == 17 {
 		secureMode = true
-		secret = strings.TrimPrefix(secret, "dd")
-	} else if len(secret) != 32 {
+		secret = bytes.TrimPrefix(secret, []byte{0xdd})
+	} else if len(secret) != 16 {
 		return nil, errors.New("Telegram demands secret of length 32")
 	}
-	secretBytes, err := hex.DecodeString(secret)
-	if err != nil {
-		return nil, errors.Annotate(err, "Cannot create config")
-	}
 
-	var adTagBytes []byte
-	if len(adtag) != 0 {
-		adTagBytes, err = hex.DecodeString(adtag)
-		if err != nil {
-			return nil, errors.Annotate(err, "Cannot create config")
-		}
-	}
-
+	var err error
 	if publicIPv4 == nil {
 		publicIPv4, err = getGlobalIPv4()
 		if err != nil {
@@ -167,19 +155,21 @@ func NewConfig(debug, verbose bool, // nolint: gocyclo
 	}
 
 	conf := &Config{
-		Debug:          debug,
-		Verbose:        verbose,
-		BindIP:         bindIP,
-		BindPort:       bindPort,
-		PublicIPv4:     publicIPv4,
-		PublicIPv4Port: publicIPv4Port,
-		PublicIPv6:     publicIPv6,
-		PublicIPv6Port: publicIPv6Port,
-		StatsIP:        statsIP,
-		StatsPort:      statsPort,
-		Secret:         secretBytes,
-		AdTag:          adTagBytes,
-		SecureMode:     secureMode,
+		Debug:           debug,
+		Verbose:         verbose,
+		BindIP:          bindIP,
+		BindPort:        bindPort,
+		PublicIPv4:      publicIPv4,
+		PublicIPv4Port:  publicIPv4Port,
+		PublicIPv6:      publicIPv6,
+		PublicIPv6Port:  publicIPv6Port,
+		StatsIP:         statsIP,
+		StatsPort:       statsPort,
+		Secret:          secret,
+		AdTag:           adtag,
+		SecureMode:      secureMode,
+		ReadBufferSize:  int(readBufferSize),
+		WriteBufferSize: int(writeBufferSize),
 	}
 
 	if statsdIP != "" {
@@ -187,7 +177,10 @@ func NewConfig(debug, verbose bool, // nolint: gocyclo
 		conf.StatsD.Prefix = statsdPrefix
 		conf.StatsD.Tags = statsdTags
 
-		var addr net.Addr
+		var (
+			addr net.Addr
+			err  error
+		)
 		hostPort := net.JoinHostPort(statsdIP, strconv.Itoa(int(statsdPort)))
 		switch statsdNetwork {
 		case "tcp":

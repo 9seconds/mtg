@@ -10,11 +10,7 @@ import (
 	"github.com/9seconds/mtg/wrappers"
 )
 
-const (
-	telegramDialTimeout = 10 * time.Second
-	readBufferSize      = 64 * 1024
-	writeBufferSize     = 64 * 1024
-)
+const telegramDialTimeout = 10 * time.Second
 
 type tgDialer struct {
 	net.Dialer
@@ -32,10 +28,10 @@ func (t *tgDialer) dial(addr string) (net.Conn, error) {
 	if err = tcpSocket.SetNoDelay(true); err != nil {
 		return nil, errors.Annotate(err, "Cannot set NO_DELAY to Telegram")
 	}
-	if err = tcpSocket.SetReadBuffer(readBufferSize); err != nil {
+	if err = tcpSocket.SetReadBuffer(t.conf.WriteBufferSize); err != nil {
 		return nil, errors.Annotate(err, "Cannot set read buffer size on telegram socket")
 	}
-	if err = tcpSocket.SetWriteBuffer(writeBufferSize); err != nil {
+	if err = tcpSocket.SetWriteBuffer(t.conf.ReadBufferSize); err != nil {
 		return nil, errors.Annotate(err, "Cannot set write buffer size on telegram socket")
 	}
 

@@ -49,6 +49,19 @@ var (
 		Default("3128").
 		Uint16()
 
+	writeBufferSize = app.Flag("write-buffer",
+		"Write buffer size in bytes. You can think about it as a buffer from client to Telegram.").
+		Short('w').
+		Envar("MTG_BUFFER_WRITE").
+		Default("65536").
+		Uint32()
+	readBufferSize = app.Flag("read-buffer",
+		"Read buffer size in bytes. You can think about it as a buffer from Telegram to client.").
+		Short('r').
+		Envar("MTG_BUFFER_READ").
+		Default("131072").
+		Uint32()
+
 	publicIPv4 = app.Flag("public-ipv4",
 		"Which IPv4 address is public.").
 		Short('4').
@@ -110,17 +123,17 @@ var (
 		Envar("MTG_STATSD_TAGS").
 		StringMap()
 
-	secret = app.Arg("secret", "Secret of this proxy.").Required().String()
-	adtag  = app.Arg("adtag", "ADTag of the proxy.").String()
+	secret = app.Arg("secret", "Secret of this proxy.").Required().HexBytes()
+	adtag  = app.Arg("adtag", "ADTag of the proxy.").HexBytes()
 )
 
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 	app.Version(version)
-
+	app.HelpFlag.Short('h')
 }
 
-func main() {
+func main() { // nolint: gocyclo
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
 	err := setRLimit()
@@ -129,10 +142,12 @@ func main() {
 	}
 
 	conf, err := config.NewConfig(*debug, *verbose,
+		*writeBufferSize, *readBufferSize,
 		*bindIP, *publicIPv4, *publicIPv6, *statsIP,
 		*bindPort, *publicIPv4Port, *publicIPv6Port, *statsPort, *statsdPort,
-		*secret, *adtag, *statsdIP, *statsdNetwork, *statsdPrefix, *statsdTagsFormat,
+		*statsdIP, *statsdNetwork, *statsdPrefix, *statsdTagsFormat,
 		*statsdTags,
+		*secret, *adtag,
 	)
 	if err != nil {
 		usage(err.Error())

@@ -83,8 +83,8 @@ func (p *Proxy) accept(conn net.Conn) {
 	} else {
 		clientStream := clientConn.(wrappers.StreamReadWriteCloser)
 		serverStream := serverConn.(wrappers.StreamReadWriteCloser)
-		go p.directPipe(clientStream, serverStream, wait)
-		go p.directPipe(serverStream, clientStream, wait)
+		go p.directPipe(clientStream, serverStream, wait, p.conf.ReadBufferSize)
+		go p.directPipe(serverStream, clientStream, wait, p.conf.WriteBufferSize)
 	}
 
 	wait.Wait()
@@ -130,14 +130,16 @@ func (p *Proxy) middlePipe(src wrappers.PacketReadCloser, dst io.WriteCloser,
 	}
 }
 
-func (p *Proxy) directPipe(src wrappers.StreamReadCloser, dst io.WriteCloser, wait *sync.WaitGroup) {
+func (p *Proxy) directPipe(src wrappers.StreamReadCloser, dst io.WriteCloser,
+	wait *sync.WaitGroup, bufferSize int) {
 	defer func() {
 		src.Close() // nolint: errcheck
 		dst.Close() // nolint: errcheck
 		wait.Done()
 	}()
 
-	if _, err := io.Copy(dst, src); err != nil {
+	buffer := make([]byte, bufferSize)
+	if _, err := io.CopyBuffer(dst, src, buffer); err != nil {
 		src.Logger().Warnw("Cannot pump sockets", "error", err)
 	}
 }
