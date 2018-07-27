@@ -3,7 +3,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:45a787c1adea69a03a5384865b307c7a72bb28bd5844bd57679d889a726a588b"
+  digest = "1:315c5f2f60c76d89b871c73f9bd5fe689cad96597afd50fb9992228ef80bdd34"
   name = "github.com/alecthomas/template"
   packages = [
     ".",
@@ -46,11 +46,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:70107cf7ee5eb9e3c3dabe65bcb220bff22ee42e32d9b7fca988e16b8727cacc"
+  digest = "1:53bd4347b151fcbedcdda527f7ebf4924f0e21d672131812f857175d8c7a1051"
   name = "github.com/juju/errors"
   packages = ["."]
   pruneopts = "UT"
-  revision = "c7d06af17c68cd34c835053720b21f6549d9b0ee"
+  revision = "812b06ada1776ad4dd95d575e18ffffe3a9ac34a"
 
 [[projects]]
   digest = "1:0028cb19b2e4c3112225cd871870f2d9cf49b9b4276531f03438a88e94be86fe"
@@ -93,7 +93,7 @@
   version = "v1.1.0"
 
 [[projects]]
-  digest = "1:e6d865f90ef1178c14bdb49ea9f244bfcb28c06ea9773dc077492032632de0b8"
+  digest = "1:d9a420eae5f76973feeb733fbf58f6a89173255b63b27a7ae4b2124a73dc6c5b"
   name = "go.uber.org/zap"
   packages = [
     ".",
@@ -104,12 +104,12 @@
     "zapcore",
   ]
   pruneopts = "UT"
-  revision = "eeedf312bc6c57391d84767a4cd413f02a917974"
-  version = "v1.8.0"
+  revision = "4d45f9617f7d90f7a663ff21c7a4321dbe78098b"
+  version = "v1.9.0"
 
 [[projects]]
   branch = "master"
-  digest = "1:656046288ed20c53157025a0915f176cad9340ac515501c427806a6f76023d75"
+  digest = "1:becb2131aece71c64ebca5ddfd38cf631784fbb3a678d73ead3b42107c9f41ce"
   name = "golang.org/x/net"
   packages = [
     "bpf",
@@ -118,7 +118,7 @@
     "ipv4",
   ]
   pruneopts = "UT"
-  revision = "d0887baf81f4598189d4e12a37c6da86f0bba4d0"
+  revision = "3673e40ba22529d22c3fd7c93e97b0ce50fa7bdd"
 
 [[projects]]
   digest = "1:c06d9e11d955af78ac3bbb26bd02e01d2f61f689e1a3bce2ef6fb683ef8a7f2d"
