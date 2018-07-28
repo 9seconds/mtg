@@ -1,6 +1,7 @@
 package telegram
 
 import (
+	"context"
 	"math/rand"
 
 	"github.com/juju/errors"
@@ -11,7 +12,7 @@ import (
 
 // Telegram is an interface for different Telegram work modes.
 type Telegram interface {
-	Dial(string, *mtproto.ConnectionOpts) (wrappers.StreamReadWriteCloser, error)
+	Dial(context.Context, context.CancelFunc, string, *mtproto.ConnectionOpts) (wrappers.StreamReadWriteCloser, error)
 	Init(*mtproto.ConnectionOpts, wrappers.StreamReadWriteCloser) (wrappers.Wrap, error)
 }
 
@@ -22,7 +23,7 @@ type baseTelegram struct {
 	v6Addresses map[int16][]string
 }
 
-func (b *baseTelegram) dial(dcIdx int16, connID string,
+func (b *baseTelegram) dial(ctx context.Context, cancel context.CancelFunc, dcIdx int16, connID string,
 	proto mtproto.ConnectionProtocol) (wrappers.StreamReadWriteCloser, error) {
 	addrs := make([]string, 2)
 
@@ -38,7 +39,7 @@ func (b *baseTelegram) dial(dcIdx int16, connID string,
 	}
 
 	for _, addr := range addrs {
-		if conn, err := b.dialer.dialRWC(addr, connID); err == nil {
+		if conn, err := b.dialer.dialRWC(ctx, cancel, addr, connID); err == nil {
 			return conn, err
 		}
 	}

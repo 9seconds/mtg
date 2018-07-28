@@ -2,6 +2,7 @@ package telegram
 
 import (
 	"bufio"
+	"context"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -38,7 +39,7 @@ type middleTelegramCaller struct {
 	httpClient  *http.Client
 }
 
-func (t *middleTelegramCaller) Dial(connID string,
+func (t *middleTelegramCaller) Dial(ctx context.Context, cancel context.CancelFunc, connID string,
 	connOpts *mtproto.ConnectionOpts) (wrappers.StreamReadWriteCloser, error) {
 	dc := connOpts.DC
 	if dc == 0 {
@@ -47,7 +48,7 @@ func (t *middleTelegramCaller) Dial(connID string,
 	t.dialerMutex.RLock()
 	defer t.dialerMutex.RUnlock()
 
-	return t.baseTelegram.dial(dc, connID, connOpts.ConnectionProto)
+	return t.baseTelegram.dial(ctx, cancel, dc, connID, connOpts.ConnectionProto)
 }
 
 func (t *middleTelegramCaller) autoUpdate() {

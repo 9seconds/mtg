@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"context"
 	"io"
 	"net"
 	"sync"
@@ -43,6 +44,7 @@ func (p *Proxy) Serve() error {
 func (p *Proxy) accept(conn net.Conn) {
 	connID := uuid.NewV4().String()
 	log := zap.S().With("connection_id", connID).Named("main")
+	ctx, cancel := context.WithCancel(context.Background())
 
 	defer func() {
 		conn.Close() // nolint: errcheck
@@ -55,7 +57,7 @@ func (p *Proxy) accept(conn net.Conn) {
 
 	log.Infow("Client connected", "addr", conn.RemoteAddr())
 
-	clientConn, opts, err := p.clientInit(conn, connID, p.conf)
+	clientConn, opts, err := p.clientInit(ctx, cancel, conn, connID, p.conf)
 	if err != nil {
 		log.Errorw("Cannot initialize client connection", "error", err)
 		return
@@ -65,7 +67,7 @@ func (p *Proxy) accept(conn net.Conn) {
 	stats.ClientConnected(opts.ConnectionType, clientConn.RemoteAddr())
 	defer stats.ClientDisconnected(opts.ConnectionType, clientConn.RemoteAddr())
 
-	serverConn, err := p.getTelegramConn(opts, connID)
+	serverConn, err := p.getTelegramConn(ctx, cancel, opts, connID)
 	if err != nil {
 		log.Errorw("Cannot initialize server connection", "error", err)
 		return
@@ -92,8 +94,9 @@ func (p *Proxy) accept(conn net.Conn) {
 	log.Infow("Client disconnected", "addr", conn.RemoteAddr())
 }
 
-func (p *Proxy) getTelegramConn(opts *mtproto.ConnectionOpts, connID string) (wrappers.Wrap, error) {
-	streamConn, err := p.tg.Dial(connID, opts)
+func (p *Proxy) getTelegramConn(ctx context.Context, cancel context.CancelFunc,
+	opts *mtproto.ConnectionOpts, connID string) (wrappers.Wrap, error) {
+	streamConn, err := p.tg.Dial(ctx, cancel, connID, opts)
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot dial to Telegram")
 	}
