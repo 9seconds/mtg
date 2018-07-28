@@ -32,8 +32,8 @@ ccbuilds:
 version.go:
 	@go generate main.go
 
-vendor: Gopkg.lock Gopkg.toml install-dep
-	@dep ensure
+vendor: Gopkg.lock Gopkg.toml
+	@dep ensure --vendor-only
 
 # -----------------------------------------------------------------------------
 
