@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"net"
 
 	"github.com/9seconds/mtg/config"
@@ -9,4 +10,5 @@ import (
 )
 
 // Init defines common method for initializing client connections.
-type Init func(net.Conn, string, *config.Config) (wrappers.Wrap, *mtproto.ConnectionOpts, error)
+type Init func(context.Context, context.CancelFunc, net.Conn, string,
+	*config.Config) (wrappers.Wrap, *mtproto.ConnectionOpts, error)
