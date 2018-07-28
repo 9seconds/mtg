@@ -47,6 +47,7 @@ func (p *Proxy) accept(conn net.Conn) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	defer func() {
+		cancel()
 		conn.Close() // nolint: errcheck
 
 		if err := recover(); err != nil {
@@ -73,6 +74,12 @@ func (p *Proxy) accept(conn net.Conn) {
 		return
 	}
 	defer serverConn.(io.Closer).Close() // nolint: errcheck
+
+	go func() {
+		<-ctx.Done()
+		serverConn.(io.Closer).Close()
+		clientConn.(io.Closer).Close()
+	}()
 
 	wait := &sync.WaitGroup{}
 	wait.Add(2)
