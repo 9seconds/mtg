@@ -13,11 +13,17 @@ RUN set -x \
     upx \
   && update-ca-certificates
 
-ADD . /go/src/github.com/9seconds/mtg
+COPY Gopkg.toml Gopkg.lock Makefile /go/src/github.com/9seconds/mtg/
+
+RUN set -x && \
+  cd /go/src/github.com/9seconds/mtg && \
+  make -j 4 prepare && \
+  make vendor
+
+COPY . /go/src/github.com/9seconds/mtg
 
 RUN set -x \
   && cd /go/src/github.com/9seconds/mtg \
-  && make clean \
   && make -j 4 static \
   && upx --ultra-brute -qq ./mtg
 

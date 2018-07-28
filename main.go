@@ -49,19 +49,6 @@ var (
 		Default("3128").
 		Uint16()
 
-	writeBufferSize = app.Flag("write-buffer",
-		"Write buffer size in bytes. You can think about it as a buffer from client to Telegram.").
-		Short('w').
-		Envar("MTG_BUFFER_WRITE").
-		Default("65536").
-		Uint32()
-	readBufferSize = app.Flag("read-buffer",
-		"Read buffer size in bytes. You can think about it as a buffer from Telegram to client.").
-		Short('r').
-		Envar("MTG_BUFFER_READ").
-		Default("131072").
-		Uint32()
-
 	publicIPv4 = app.Flag("public-ipv4",
 		"Which IPv4 address is public.").
 		Short('4').
@@ -122,6 +109,19 @@ var (
 		"Tags to use for working with statsd (specified as 'key=value').").
 		Envar("MTG_STATSD_TAGS").
 		StringMap()
+
+	writeBufferSize = app.Flag("write-buffer",
+		"Write buffer size in bytes. You can think about it as a buffer from client to Telegram.").
+		Short('w').
+		Envar("MTG_BUFFER_WRITE").
+		Default("65536").
+		Uint32()
+	readBufferSize = app.Flag("read-buffer",
+		"Read buffer size in bytes. You can think about it as a buffer from Telegram to client.").
+		Short('r').
+		Envar("MTG_BUFFER_READ").
+		Default("131072").
+		Uint32()
 
 	secret = app.Arg("secret", "Secret of this proxy.").Required().HexBytes()
 	adtag  = app.Arg("adtag", "ADTag of the proxy.").HexBytes()

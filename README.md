@@ -5,7 +5,6 @@ Bullshit-free MTPROTO proxy for Telegram
 [![Build Status](https://travis-ci.org/9seconds/mtg.svg?branch=master)](https://travis-ci.org/9seconds/mtg)
 [![Docker Build Status](https://img.shields.io/docker/build/nineseconds/mtg.svg)](https://hub.docker.com/r/nineseconds/mtg/)
 
-
 # Rationale
 
 There are several available proxies for Telegram MTPROTO available. Here
@@ -60,19 +59,19 @@ There are 2 main branches:
 # How to build
 
 ```console
-$ make
+make
 ```
 
 If you want to build for another platform:
 
 ```console
-$ make crosscompile
+make crosscompile
 ```
 
 If you want to build Docker image (called `mtg`):
 
 ```console
-$ make docker
+make docker
 ```
 
 # Docker image
@@ -84,15 +83,15 @@ Docker follows the same policy as the source code organization:
 - tags are for tagged releases
 
 ```console
-$ docker pull nineseconds/mtg:latest
+docker pull nineseconds/mtg:latest
 ```
 
 ```console
-$ docker pull nineseconds/mtg:stable
+docker pull nineseconds/mtg:stable
 ```
 
 ```console
-$ docker pull nineseconds/mtg:0.10
+docker pull nineseconds/mtg:0.10
 ```
 
 # Configuration
@@ -102,13 +101,13 @@ Basically, to run this tool you need to configure as less as possible.
 First, you need to generate a secret:
 
 ```console
-$ openssl rand -hex 16
+openssl rand -hex 16
 ```
 
 or
 
 ```console
-$ head -c 512 /dev/urandom | md5sum | cut -f 1 -d ' '
+head -c 512 /dev/urandom | md5sum | cut -f 1 -d ' '
 ```
 
 ## Secure mode
@@ -122,28 +121,62 @@ suggest to go with this mode.
 Oneliners to generate such secrets:
 
 ```console
-$ echo dd$(openssl rand -hex 16)
+echo dd$(openssl rand -hex 16)
 ```
 
 or
 
 ```console
-$ echo dd$(head -c 512 /dev/urandom | md5sum | cut -f 1 -d ' ')
+echo dd$(head -c 512 /dev/urandom | md5sum | cut -f 1 -d ' ')
 ```
 
+## Environment variables
+
+It is possible to configure this tool using environment variables. You
+can configure any flag but not secret or adtag. Here is the list of
+supported environment variables:
+
+| Environment variable     | Corresponding flags    | Default value                     | Description                                                                                                                                                                                                                                                                |
+|--------------------------|------------------------|-----------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `MTG_DEBUG               | `-d`, `--debug`        | `false`                           | Run in debug mode. Usually, you need to run in this mode  only if you develop this tool or its maintainer is asking you to provide  logs with such verbosity.                                                                                                              |
+| `MTG_VERBOSE`            | `-v`, `--verbose`      | `false`                           | Run in verbose mode. This is way less chatty than debug mode.                                                                                                                                                                                                              |
+| `MTG_IP`                 | `-b`, `--bind-ip`      | `127.0.0.1`                       | Which IP should we bind to. As usual, `0.0.0.0` means that we want to listen on all interfaces. Also, 4 zeroes will bind to both IPv4 and IPv6.                                                                                                                            |
+| `MTG_PORT`               | `-p`, `--bind-port`    | `3128`                            | Which port should we bind to (listen on).                                                                                                                                                                                                                                  |
+| `MTG_IPV4`               | `-4`, `--public-ipv4`  | [Autodetect](https://ifconfig.co) | IPv4 address of this proxy. This is required if you NAT your proxy or run it in a docker container. In that case, you absolutely need to specify public IPv4 address of the proxy, otherwise either URLs will be broken or proxy could not access Telegram middle proxies. |
+| `MTG_IPV4_PORT`          | `--public-ipv4-port`   | Value of `--bind-port`            | Which port should be public of IPv4 interface. This affects only generated links and should be changed only if you NAT your proxy or run it in a docker container.                                                                                                         |
+| `MTG_IPV6`               | `-6`, `--public-ipv6`  | [Autodetect](https://ifconfig.co) | IPv6 address of this proxy. This is required if you NAT your proxy or run it in a docker container. In that case, you absolutely need to specify public IPv6 address of the proxy, otherwise either URLs will be broken or proxy could not access Telegram middle proxies. |
+| `MTG_IPV6_PORT`          | `--public-ipv6-port`   | Value of `--bind-port`            | Which port should be public of IPv6 interface. This affects only generated links and should be changed only if you NAT your proxy or run it in a docker container.                                                                                                         |
+| `MTG_STATS_IP`           | `-t`, `--stats-ip`     | `127.0.0.1`                       | Which IP should we bind the internal statistics HTTP server.                                                                                                                                                                                                               |
+| `MTG_STATS_PORT`         | `-q`, `--stats-port`   | `3129`                            | Which port should we bind the internal statistics HTTP server.                                                                                                                                                                                                             |
+| `MTG_STATSD_IP`          | `--statsd-ip`          |                                   | IP/host addresses of statsd service. No defaults, by defaults we do not send anything there.                                                                                                                                                                               |
+| `MTG_STATSD_PORT`        | `--statsd-port`        | `8125`                            | Which port should we use to work with statsd.                                                                                                                                                                                                                              |
+| `MTG_STATSD_NETWORK`     | `--statsd-network`     | `udp`                             | Which protocol should we use to work with statsd. Possible options are `udp` and `tcp`.                                                                                                                                                                                    |
+| `MTG_STATSD_PREFIX`      | `--statsd-prefix`      | `mtg`                             | Which bucket prefix we should use. For example, if you set `mtg`, then metric `traffic.ingress` would be send as `mtg.traffic.ingress`.                                                                                                                                    |
+| `MTG_STATSD_TAGS_FORMAT` | `--statsd-tags-format` |                                   | Which tags format we should use. By default, we are using default vanilla statsd tags format but if you want to send directly to InfluxDB or Datadog, please specify it there. Possible options are `influxdb` and `datadog`.                                              |
+| `MTG_STATSD_TAGS`        | `--statsd-tags`        |                                   | Which tags should we send to statsd with our metrics. Please specify them as `key=value` pairs.                                                                                                                                                                            |
+| `MTG_BUFFER_WRITE`       | `-w`, `--write-buffer` | `65536`                           | The size of TCP write buffer in bytes. Write buffer is the buffer for messages which are going from client to Telegram.                                                                                                                                                    |
+| `MTG_BUFFER_READ`        | `-r`, `--read-buffer`  | `131072`                          | The size of TCP read buffer in bytes. Read buffer is the buffer for messages from Telegram to client.                                                                                                                                                                      |
+
+Usually you want to modify only read/write buffer sizes. If you feel
+that proxy is slow, try to increase both sizes giving more priority to
+read buffer.
+
+Unfortunately, MTPROTO proxy protocol does not allow us to use splice
+or any other neat tricks how to eliminate the need of copying data into
+userspace.
 
 # How to run the tool
 
 Now run the tool:
 
 ```console
-$ mtg <secret>
+mtg <secret>
 ```
 
 How to run the tool with ADTag:
 
 ```console
-$ mtg <secret> <adtag>
+mtg <secret> <adtag>
 ```
 
 This tool will listen on port 3128 by default with the given secret.
@@ -151,13 +184,13 @@ This tool will listen on port 3128 by default with the given secret.
 # One-line runner
 
 ```console
-$ docker run --name mtg --restart=unless-stopped -p 3128:3128 -p 3129:3129 -d nineseconds/mtg:stable $(openssl rand -hex 16)
+docker run --name mtg --restart=unless-stopped -p 3128:3128 -p 3129:3129 -d nineseconds/mtg:stable $(openssl rand -hex 16)
 ```
 
 or in secret mode:
 
 ```console
-$ docker run --name mtg --restart=unless-stopped -p 3128:3128 -p 3129:3129 -d nineseconds/mtg:stable dd$(openssl rand -hex 16)
+docker run --name mtg --restart=unless-stopped -p 3128:3128 -p 3129:3129 -d nineseconds/mtg:stable dd$(openssl rand -hex 16)
 ```
 
 You will have this tool up and running on port 3128. Now curl
