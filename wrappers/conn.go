@@ -38,6 +38,13 @@ const (
 	connTimeoutWrite = 2 * time.Minute
 )
 
+type ioResult struct {
+	n   int
+	err error
+}
+
+type ioFunc func([]byte) (int, error)
+
 // Conn is a basic wrapper for net.Conn providing the most low-level
 // logic and management as possible.
 type Conn struct {
@@ -56,11 +63,7 @@ func (c *Conn) Write(p []byte) (int, error) {
 	case <-c.ctx.Done():
 		return 0, errors.Annotate(c.ctx.Err(), "Cannot write because context was closed")
 	default:
-		c.conn.SetWriteDeadline(time.Now().Add(connTimeoutWrite)) // nolint: errcheck
-		n, err := c.conn.Write(p)
-		if err != nil {
-			c.cancel()
-		}
+		n, err := c.doIO(c.conn.Write, p, connTimeoutWrite)
 
 		c.logger.Debugw("Write to stream", "bytes", n, "error", err)
 		stats.EgressTraffic(n)
@@ -74,16 +77,38 @@ func (c *Conn) Read(p []byte) (int, error) {
 	case <-c.ctx.Done():
 		return 0, errors.Annotate(c.ctx.Err(), "Cannot read because context was closed")
 	default:
-		c.conn.SetReadDeadline(time.Now().Add(connTimeoutRead)) // nolint: errcheck
-		n, err := c.conn.Read(p)
-		if err != nil {
-			c.cancel()
-		}
+		n, err := c.doIO(c.conn.Read, p, connTimeoutRead)
 
 		c.logger.Debugw("Read from stream", "bytes", n, "error", err)
 		stats.IngressTraffic(n)
 
 		return n, err
+	}
+}
+
+func (c *Conn) doIO(callback ioFunc, p []byte, timeout time.Duration) (int, error) {
+	resChan := make(chan ioResult, 1)
+	timer := time.NewTimer(timeout)
+
+	go func() {
+		n, err := callback(p)
+		resChan <- ioResult{n: n, err: err}
+	}()
+
+	select {
+	case res := <-resChan:
+		timer.Stop()
+		if res.err != nil {
+			c.Close()
+		}
+		return res.n, res.err
+	case <-c.ctx.Done():
+		timer.Stop()
+		c.Close()
+		return 0, errors.Annotate(c.ctx.Err(), "Cannot do IO because context is closed")
+	case <-timer.C:
+		c.Close()
+		return 0, errors.Annotate(c.ctx.Err(), "Timeout on IO operation")
 	}
 }
 
