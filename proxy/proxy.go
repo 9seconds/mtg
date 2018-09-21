@@ -6,8 +6,8 @@ import (
 	"net"
 	"sync"
 
+	"github.com/gofrs/uuid"
 	"github.com/juju/errors"
-	uuid "github.com/satori/go.uuid"
 	"go.uber.org/zap"
 
 	"github.com/9seconds/mtg/client"
@@ -42,7 +42,7 @@ func (p *Proxy) Serve() error {
 }
 
 func (p *Proxy) accept(conn net.Conn) {
-	connID := uuid.NewV4().String()
+	connID := uuid.Must(uuid.NewV4()).String()
 	log := zap.S().With("connection_id", connID).Named("main")
 	ctx, cancel := context.WithCancel(context.Background())
 
