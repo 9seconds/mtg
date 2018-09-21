@@ -74,6 +74,7 @@ docker:
 
 .PHONY: prepare
 prepare: install-dep install-lint install-critic
+	@dep ensure --vendor-only
 
 .PHONY: install-dep
 install-dep:
