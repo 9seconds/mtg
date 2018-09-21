@@ -1,7 +1,7 @@
 ###############################################################################
 # BUILD STAGE
 
-FROM golang:alpine
+FROM golang:1.10-alpine
 
 RUN set -x \
   && apk --no-cache --update add \
