@@ -120,7 +120,7 @@ func (m *MTProtoProxy) Write(p []byte) (int, error) {
 			zap.Stringer("flags", flags),
 		)
 	}
-	header.Write(p)
+	header.Write(p) // nolint: gosec
 
 	if _, err := m.conn.Write(header.Bytes()); err != nil {
 		return 0, err

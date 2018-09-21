@@ -29,12 +29,12 @@
   version = "v0.2.0"
 
 [[projects]]
-  digest = "1:a2c1d0e43bd3baaa071d1b9ed72c27d78169b2b269f71c105ac4ba34b1be4a39"
+  digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
   pruneopts = "UT"
-  revision = "346938d642f2ec3594ed81d874461961cd0faa76"
-  version = "v1.1.0"
+  revision = "8991bc29aa16c548c550c7ff78260e27b9ab7c73"
+  version = "v1.1.1"
 
 [[projects]]
   branch = "master"
@@ -46,11 +46,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:53bd4347b151fcbedcdda527f7ebf4924f0e21d672131812f857175d8c7a1051"
+  digest = "1:1261ccace00babbf02bb702e71c85c8e81f65bad7bdb98c12c7a409c14de1d86"
   name = "github.com/juju/errors"
   packages = ["."]
   pruneopts = "UT"
-  revision = "812b06ada1776ad4dd95d575e18ffffe3a9ac34a"
+  revision = "22422dad46e14561a0854ad42497a75af9b61909"
 
 [[projects]]
   digest = "1:0028cb19b2e4c3112225cd871870f2d9cf49b9b4276531f03438a88e94be86fe"
@@ -93,7 +93,7 @@
   version = "v1.1.0"
 
 [[projects]]
-  digest = "1:d9a420eae5f76973feeb733fbf58f6a89173255b63b27a7ae4b2124a73dc6c5b"
+  digest = "1:c52caf7bd44f92e54627a31b85baf06a68333a196b3d8d241480a774733dcf8b"
   name = "go.uber.org/zap"
   packages = [
     ".",
@@ -104,12 +104,12 @@
     "zapcore",
   ]
   pruneopts = "UT"
-  revision = "4d45f9617f7d90f7a663ff21c7a4321dbe78098b"
-  version = "v1.9.0"
+  revision = "ff33455a0e382e8a81d14dd7c922020b6b5e7982"
+  version = "v1.9.1"
 
 [[projects]]
   branch = "master"
-  digest = "1:becb2131aece71c64ebca5ddfd38cf631784fbb3a678d73ead3b42107c9f41ce"
+  digest = "1:937d8f64b118c494c48b0cc9c990f2163c7483e6c70b5828f20006d81c61412f"
   name = "golang.org/x/net"
   packages = [
     "bpf",
@@ -118,7 +118,7 @@
     "ipv4",
   ]
   pruneopts = "UT"
-  revision = "3673e40ba22529d22c3fd7c93e97b0ce50fa7bdd"
+  revision = "2f5d2388922f370f4355f327fcf4cfe9f5583908"
 
 [[projects]]
   digest = "1:c06d9e11d955af78ac3bbb26bd02e01d2f61f689e1a3bce2ef6fb683ef8a7f2d"

@@ -18,11 +18,11 @@ type NonceResponse struct {
 func (r *NonceResponse) Bytes() []byte {
 	buf := &bytes.Buffer{}
 
-	buf.Write(r.Type)
-	buf.Write(r.KeySelector)
-	buf.Write(r.Crypto)
-	buf.Write(r.CryptoTS)
-	buf.Write(r.Nonce)
+	buf.Write(r.Type)        // nolint: gosec
+	buf.Write(r.KeySelector) // nolint: gosec
+	buf.Write(r.Crypto)      // nolint: gosec
+	buf.Write(r.CryptoTS)    // nolint: gosec
+	buf.Write(r.Nonce)       // nolint: gosec
 
 	return buf.Bytes()
 }

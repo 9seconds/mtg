@@ -49,7 +49,7 @@ func Start(conf *config.Config) error {
 		}
 
 		interm := map[string]interface{}{}
-		json.Unmarshal(first, &interm) // nolint: errcheck
+		json.Unmarshal(first, &interm) // nolint: errcheck, gosec
 
 		encoder := json.NewEncoder(w)
 		encoder.SetEscapeHTML(false)

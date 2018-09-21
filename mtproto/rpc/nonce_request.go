@@ -21,11 +21,11 @@ type NonceRequest struct {
 func (r *NonceRequest) Bytes() []byte {
 	buf := &bytes.Buffer{}
 
-	buf.Write(TagNonce)
-	buf.Write(r.KeySelector)
-	buf.Write(NonceCryptoAES)
-	buf.Write(r.CryptoTS)
-	buf.Write(r.Nonce)
+	buf.Write(TagNonce)       // nolint: gosec
+	buf.Write(r.KeySelector)  // nolint: gosec
+	buf.Write(NonceCryptoAES) // nolint: gosec
+	buf.Write(r.CryptoTS)     // nolint: gosec
+	buf.Write(r.Nonce)        // nolint: gosec
 
 	return buf.Bytes()
 }
