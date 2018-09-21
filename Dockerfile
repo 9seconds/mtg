@@ -1,7 +1,7 @@
 ###############################################################################
 # BUILD STAGE
 
-FROM golang:alpine
+FROM golang:1.11-alpine
 
 RUN set -x \
   && apk --no-cache --update add \
@@ -13,14 +13,7 @@ RUN set -x \
     upx \
   && update-ca-certificates
 
-COPY Gopkg.toml Gopkg.lock Makefile /go/src/github.com/9seconds/mtg/
-
-RUN set -x && \
-  cd /go/src/github.com/9seconds/mtg && \
-  make -j 4 prepare && \
-  make vendor
-
-COPY . /go/src/github.com/9seconds/mtg
+COPY . /go/src/github.com/9seconds/mtg/
 
 RUN set -x \
   && cd /go/src/github.com/9seconds/mtg \

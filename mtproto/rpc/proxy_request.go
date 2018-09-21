@@ -49,16 +49,16 @@ func (r *ProxyRequest) MakeHeader(message []byte) (*bytes.Buffer, fmt.Stringer) 
 		flags |= proxyRequestFlagsEncrypted
 	}
 
-	buf.Write(TagProxyRequest)
-	buf.Write(flags.Bytes())
-	buf.Write(r.ConnectionID)
-	buf.Write(r.ClientIPPort)
-	buf.Write(r.OurIPPort)
-	buf.Write(ProxyRequestExtraSize)
-	buf.Write(ProxyRequestProxyTag)
-	buf.WriteByte(byte(len(r.ADTag)))
-	buf.Write(r.ADTag)
-	buf.Write(make([]byte, (4-buf.Len()%4)%4))
+	buf.Write(TagProxyRequest)                 // nolint: gosec
+	buf.Write(flags.Bytes())                   // nolint: gosec
+	buf.Write(r.ConnectionID)                  // nolint: gosec
+	buf.Write(r.ClientIPPort)                  // nolint: gosec
+	buf.Write(r.OurIPPort)                     // nolint: gosec
+	buf.Write(ProxyRequestExtraSize)           // nolint: gosec
+	buf.Write(ProxyRequestProxyTag)            // nolint: gosec
+	buf.WriteByte(byte(len(r.ADTag)))          // nolint: gosec
+	buf.Write(r.ADTag)                         // nolint: gosec
+	buf.Write(make([]byte, (4-buf.Len()%4)%4)) // nolint: gosec
 
 	return buf, flags
 }

@@ -12,6 +12,11 @@ import (
 	"github.com/9seconds/mtg/wrappers"
 )
 
+const (
+	directV4DefaultIdx = 1
+	directV6DefaultIdx = 1
+)
+
 var (
 	directV4Addresses = map[int16][]string{
 		0: {"149.154.175.50:443"},
@@ -65,8 +70,10 @@ func NewDirectTelegram(conf *config.Config) Telegram {
 				Dialer: net.Dialer{Timeout: telegramDialTimeout},
 				conf:   conf,
 			},
-			v4Addresses: directV4Addresses,
-			v6Addresses: directV6Addresses,
+			v4DefaultIdx: directV4DefaultIdx,
+			v6DefaultIdx: directV6DefaultIdx,
+			v4Addresses:  directV4Addresses,
+			v6Addresses:  directV6Addresses,
 		},
 	}
 }

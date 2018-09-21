@@ -65,18 +65,20 @@ func (t *middleTelegramCaller) update() error {
 		return errors.Annotate(err, "Cannot get proxy secret")
 	}
 
-	v4Addresses, err := t.getTelegramAddresses(tgAddrProxyV4)
+	v4Addresses, v4DefaultIdx, err := t.getTelegramAddresses(tgAddrProxyV4)
 	if err != nil {
 		return errors.Annotate(err, "Cannot get ipv4 addresses")
 	}
 
-	v6Addresses, err := t.getTelegramAddresses(tgAddrProxyV6)
+	v6Addresses, v6DefaultIdx, err := t.getTelegramAddresses(tgAddrProxyV6)
 	if err != nil {
 		return errors.Annotate(err, "Cannot get ipv6 addresses")
 	}
 
 	t.dialerMutex.Lock()
 	t.proxySecret = secret
+	t.v4DefaultIdx = v4DefaultIdx
+	t.v6DefaultIdx = v6DefaultIdx
 	t.v4Addresses = v4Addresses
 	t.v6Addresses = v6Addresses
 	t.dialerMutex.Unlock()
@@ -101,52 +103,87 @@ func (t *middleTelegramCaller) getTelegramProxySecret() ([]byte, error) {
 	return secret, nil
 }
 
-func (t *middleTelegramCaller) getTelegramAddresses(url string) (map[int16][]string, error) {
+func (t *middleTelegramCaller) getTelegramAddresses(url string) (map[int16][]string, int16, error) { // nolint: gocyclo
 	resp, err := t.call(url)
 	if err != nil {
-		return nil, errors.Annotate(err, "Cannot access telegram server")
+		return nil, 0, errors.Annotate(err, "Cannot access telegram server")
 	}
 	defer resp.Body.Close() // nolint: errcheck
 
 	scanner := bufio.NewScanner(resp.Body)
 	data := map[int16][]string{}
+
+	var defaultIdx int16 = 1
 	for scanner.Scan() {
 		text := strings.TrimSpace(scanner.Text())
-		if strings.HasPrefix(text, "#") {
+		switch {
+		case strings.HasPrefix(text, "#"):
 			continue
-		}
-
-		chunks := middleTelegramProxyConfigSplitter.Split(text, 3)
-		if len(chunks) != 3 || chunks[0] != "proxy_for" {
-			return nil, errors.Errorf("Incorrect config '%s'", text)
-		}
-		dcIdx64, err2 := strconv.ParseInt(chunks[1], 10, 16)
-		if err2 != nil {
-			return nil, errors.Errorf("Incorrect config '%s'", text)
-		}
-		dcIdx := int16(dcIdx64)
-
-		addr := strings.TrimRight(chunks[2], ";")
-		if _, _, err2 = net.SplitHostPort(addr); err != nil {
-			return nil, errors.Annotatef(err2, "Incorrect config '%s'", text)
-		}
-
-		if addresses, ok := data[dcIdx]; ok {
-			data[dcIdx] = append(addresses, addr)
-		} else {
-			data[dcIdx] = []string{addr}
+		case strings.HasPrefix(text, "proxy_for"):
+			addr, idx, err2 := t.parseProxyFor(text)
+			if err2 != nil {
+				return nil, 0, errors.Annotate(err2, "Cannot parse 'proxy_for' section")
+			}
+			if addresses, ok := data[idx]; ok {
+				data[idx] = append(addresses, addr)
+			} else {
+				data[idx] = []string{addr}
+			}
+		case strings.HasPrefix(text, "default"):
+			idx, err2 := t.parseDefault(text)
+			if err2 != nil {
+				return nil, 0, errors.Annotate(err2, "Cannot parse 'default' section")
+			}
+			defaultIdx = idx
+		default:
+			return nil, 0, errors.Errorf("Unknown config string '%s'", text)
 		}
 	}
+
 	err = scanner.Err()
 	if err != nil {
-		return nil, errors.Annotate(err, "Cannot read response from the telegram")
+		return nil, 0, errors.Annotate(err, "Cannot read response from the telegram")
 	}
 
-	return data, nil
+	return data, defaultIdx, nil
+}
+
+func (t *middleTelegramCaller) parseProxyFor(text string) (string, int16, error) {
+	chunks := middleTelegramProxyConfigSplitter.Split(text, 3)
+	if len(chunks) != 3 || chunks[0] != "proxy_for" {
+		return "", 0, errors.Errorf("Incorrect config '%s'", text)
+	}
+
+	dcIdx, err := strconv.ParseInt(chunks[1], 10, 16)
+	if err != nil {
+		return "", 0, errors.Annotatef(err, "Incorrect config '%s'", text)
+	}
+
+	addr := strings.TrimRight(chunks[2], ";")
+	if _, _, err = net.SplitHostPort(addr); err != nil {
+		return "", 0, errors.Annotatef(err, "Incorrect config '%s'", text)
+	}
+
+	return addr, int16(dcIdx), nil
+}
+
+func (t *middleTelegramCaller) parseDefault(text string) (int16, error) {
+	chunks := middleTelegramProxyConfigSplitter.Split(text, 2)
+	if len(chunks) != 2 || chunks[0] != "default" {
+		return 0, errors.Errorf("Incorrect config '%s'", text)
+	}
+
+	dcIdxString := strings.TrimRight(chunks[1], ";")
+	dcIdx, err := strconv.ParseInt(dcIdxString, 10, 16)
+	if err != nil {
+		return 0, errors.Annotatef(err, "Incorrect config '%s'", text)
+	}
+
+	return int16(dcIdx), nil
 }
 
 func (t *middleTelegramCaller) call(url string) (*http.Response, error) {
-	req, _ := http.NewRequest("GET", url, nil)
+	req, _ := http.NewRequest("GET", url, nil) // nolint: gosec
 	req.Header.Set("Accept", "text/plain")
 	req.Header.Set("User-Agent", tgUserAgent)
 

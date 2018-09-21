@@ -227,6 +227,6 @@ func printURLs(data interface{}) {
 }
 
 func usage(msg string) {
-	io.WriteString(os.Stderr, msg+"\n") // nolint: errcheck
+	io.WriteString(os.Stderr, msg+"\n") // nolint: errcheck, gosec
 	os.Exit(1)
 }

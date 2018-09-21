@@ -40,7 +40,7 @@ func (b *BlockCipher) Read(p []byte) (int, error) {
 	}
 
 	b.decryptor.CryptBlocks(buf, buf)
-	b.buf.Write(buf)
+	b.buf.Write(buf) // nolint: gosec
 
 	return b.flush(p)
 }
