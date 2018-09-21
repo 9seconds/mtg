@@ -19,8 +19,10 @@ type Telegram interface {
 type baseTelegram struct {
 	dialer tgDialer
 
-	v4Addresses map[int16][]string
-	v6Addresses map[int16][]string
+	v4DefaultIdx int16
+	v6DefaultIdx int16
+	v4Addresses  map[int16][]string
+	v6Addresses  map[int16][]string
 }
 
 func (b *baseTelegram) dial(ctx context.Context, cancel context.CancelFunc, dcIdx int16, connID string,
@@ -28,13 +30,13 @@ func (b *baseTelegram) dial(ctx context.Context, cancel context.CancelFunc, dcId
 	addrs := make([]string, 2)
 
 	if proto&mtproto.ConnectionProtocolIPv6 != 0 {
-		if addr, ok := b.v6Addresses[dcIdx]; ok && len(addr) > 0 {
-			addrs = append(addrs, addr[rand.Intn(len(addr))])
+		if addr := b.chooseAddress(b.v6Addresses, dcIdx, b.v6DefaultIdx); addr != "" {
+			addrs = append(addrs, addr)
 		}
 	}
 	if proto&mtproto.ConnectionProtocolIPv4 != 0 {
-		if addr, ok := b.v4Addresses[dcIdx]; ok && len(addr) > 0 {
-			addrs = append(addrs, addr[rand.Intn(len(addr))])
+		if addr := b.chooseAddress(b.v4Addresses, dcIdx, b.v4DefaultIdx); addr != "" {
+			addrs = append(addrs, addr)
 		}
 	}
 
@@ -45,4 +47,22 @@ func (b *baseTelegram) dial(ctx context.Context, cancel context.CancelFunc, dcId
 	}
 
 	return nil, errors.New("Cannot connect to Telegram")
+}
+
+func (b *baseTelegram) chooseAddress(addresses map[int16][]string, idx, defaultIdx int16) string {
+	if addr, ok := addresses[idx]; ok {
+		return b.chooseRandomAddress(addr)
+	} else if addr, ok := addresses[defaultIdx]; ok {
+		return b.chooseRandomAddress(addr)
+	}
+
+	return ""
+}
+
+func (b *baseTelegram) chooseRandomAddress(addresses []string) string {
+	if len(addresses) > 0 {
+		return addresses[rand.Intn(len(addresses))]
+	}
+
+	return ""
 }

@@ -6,7 +6,7 @@ VENDOR_FILES := $(shell find "$(ROOT_DIR)/vendor" 2>/dev/null || echo -n "vendor
 CC_BINARIES  := $(shell bash -c "echo -n $(APP_NAME)-{linux,freebsd,openbsd}-{386,amd64} $(APP_NAME)-linux-{arm,arm64}")
 APP_DEPS     := version.go $(VENDOR_FILES)
 
-GOLANGCI_LINT_VERSION := v1.9.2
+GOLANGCI_LINT_VERSION := v1.10.2
 
 COMMON_BUILD_FLAGS := -ldflags="-s -w"
 

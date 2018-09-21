@@ -34,7 +34,7 @@ func (s *StreamCipher) Write(p []byte) (int, error) {
 
 	buf.Reset()
 	buf.Grow(len(p))
-	buf.Write(p)
+	buf.Write(p) // nolint: gosec
 
 	data := buf.Bytes()
 	s.encryptor.XORKeyStream(data, data)

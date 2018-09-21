@@ -73,12 +73,12 @@ func (m *MTProtoFrame) Read() ([]byte, error) { // nolint: gocyclo
 	}
 
 	var seqNo int32
-	binary.Read(buf, binary.LittleEndian, &seqNo) // nolint: errcheck
+	binary.Read(buf, binary.LittleEndian, &seqNo) // nolint: errcheck, gosec
 	if seqNo != m.readSeqNo {
 		return nil, errors.Errorf("Unexpected sequence number %d (wait for %d)", seqNo, m.readSeqNo)
 	}
 
-	data, _ := ioutil.ReadAll(buf)
+	data, _ := ioutil.ReadAll(buf) // nolint: gosec
 	buf.Reset()
 	// write to buf, not to writer. This is because we are going to fetch
 	// crc32 checksum.
@@ -109,13 +109,13 @@ func (m *MTProtoFrame) Write(p []byte) (int, error) {
 	buf := &bytes.Buffer{}
 	buf.Grow(messageLength + paddingLength)
 
-	binary.Write(buf, binary.LittleEndian, uint32(messageLength)) // nolint: errcheck
-	binary.Write(buf, binary.LittleEndian, m.writeSeqNo)          // nolint: errcheck
-	buf.Write(p)
+	binary.Write(buf, binary.LittleEndian, uint32(messageLength)) // nolint: errcheck, gosec
+	binary.Write(buf, binary.LittleEndian, m.writeSeqNo)          // nolint: errcheck, gosec
+	buf.Write(p)                                                  // nolint: gosec
 
 	checksum := crc32.ChecksumIEEE(buf.Bytes())
-	binary.Write(buf, binary.LittleEndian, checksum) // nolint: errcheck
-	buf.Write(bytes.Repeat(mtprotoFramePadding, paddingLength/4))
+	binary.Write(buf, binary.LittleEndian, checksum)              // nolint: errcheck, gosec
+	buf.Write(bytes.Repeat(mtprotoFramePadding, paddingLength/4)) // nolint: gosec
 
 	m.logger.Debugw("Write MTProto frame",
 		"length", len(p),

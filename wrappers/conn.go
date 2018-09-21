@@ -99,15 +99,15 @@ func (c *Conn) doIO(callback ioFunc, p []byte, timeout time.Duration) (int, erro
 	case res := <-resChan:
 		timer.Stop()
 		if res.err != nil {
-			c.Close()
+			c.Close() // nolint: gosec
 		}
 		return res.n, res.err
 	case <-c.ctx.Done():
 		timer.Stop()
-		c.Close()
+		c.Close() // nolint: gosec
 		return 0, errors.Annotate(c.ctx.Err(), "Cannot do IO because context is closed")
 	case <-timer.C:
-		c.Close()
+		c.Close() // nolint: gosec
 		return 0, errors.Annotate(c.ctx.Err(), "Timeout on IO operation")
 	}
 }

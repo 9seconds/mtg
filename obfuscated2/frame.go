@@ -113,7 +113,7 @@ func generateFrame(connectionType mtproto.ConnectionType) Frame {
 		}
 
 		// error has to be checked before calling this function
-		tag, _ := connectionType.Tag() // nolint: errcheck
+		tag, _ := connectionType.Tag() // nolint: errcheck, gosec
 		copy(frame.Magic(), tag)
 
 		return frame

@@ -48,7 +48,7 @@ func (p *Proxy) accept(conn net.Conn) {
 
 	defer func() {
 		cancel()
-		conn.Close() // nolint: errcheck
+		conn.Close() // nolint: errcheck, gosec
 
 		if err := recover(); err != nil {
 			stats.NewCrash()
@@ -77,8 +77,8 @@ func (p *Proxy) accept(conn net.Conn) {
 
 	go func() {
 		<-ctx.Done()
-		serverConn.(io.Closer).Close()
-		clientConn.(io.Closer).Close()
+		serverConn.(io.Closer).Close() // nolint: gosec
+		clientConn.(io.Closer).Close() // nolint: gosec
 	}()
 
 	wait := &sync.WaitGroup{}
@@ -119,8 +119,8 @@ func (p *Proxy) getTelegramConn(ctx context.Context, cancel context.CancelFunc,
 func (p *Proxy) middlePipe(src wrappers.PacketReadCloser, dst io.WriteCloser,
 	wait *sync.WaitGroup, hacks *mtproto.Hacks) {
 	defer func() {
-		src.Close() // nolint: errcheck
-		dst.Close() // nolint: errcheck
+		src.Close() // nolint: errcheck, gosec
+		dst.Close() // nolint: errcheck, gosec
 		wait.Done()
 	}()
 
@@ -143,8 +143,8 @@ func (p *Proxy) middlePipe(src wrappers.PacketReadCloser, dst io.WriteCloser,
 func (p *Proxy) directPipe(src wrappers.StreamReadCloser, dst io.WriteCloser,
 	wait *sync.WaitGroup, bufferSize int) {
 	defer func() {
-		src.Close() // nolint: errcheck
-		dst.Close() // nolint: errcheck
+		src.Close() // nolint: errcheck, gosec
+		dst.Close() // nolint: errcheck, gosec
 		wait.Done()
 	}()
 

@@ -30,12 +30,12 @@ func DirectInit(ctx context.Context, cancel context.CancelFunc, socket net.Conn,
 		return nil, nil, errors.Annotate(err, "Cannot set write buffer size of client socket")
 	}
 
-	socket.SetReadDeadline(time.Now().Add(handshakeTimeout)) // nolint: errcheck
+	socket.SetReadDeadline(time.Now().Add(handshakeTimeout)) // nolint: errcheck, gosec
 	frame, err := obfuscated2.ExtractFrame(socket)
 	if err != nil {
 		return nil, nil, errors.Annotate(err, "Cannot extract frame")
 	}
-	socket.SetReadDeadline(time.Time{}) // nolint: errcheck
+	socket.SetReadDeadline(time.Time{}) // nolint: errcheck, gosec
 
 	conn := wrappers.NewConn(ctx, cancel, socket, connID, wrappers.ConnPurposeClient, conf.PublicIPv4, conf.PublicIPv6)
 	obfs2, connOpts, err := obfuscated2.ParseObfuscated2ClientFrame(conf.Secret, frame)

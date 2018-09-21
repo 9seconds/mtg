@@ -119,9 +119,9 @@ func (m *MTProtoAbridged) Write(p []byte) (int, error) {
 		buf := &bytes.Buffer{}
 		buf.Grow(1 + 3 + len(p))
 
-		buf.WriteByte(byte(mtprotoAbridgedSmallPacketLength))
-		buf.Write(length24[:])
-		buf.Write(p)
+		buf.WriteByte(byte(mtprotoAbridgedSmallPacketLength)) // nolint: gosec
+		buf.Write(length24[:])                                // nolint: gosec
+		buf.Write(p)                                          // nolint: gosec
 
 		return m.conn.Write(buf.Bytes())
 	}

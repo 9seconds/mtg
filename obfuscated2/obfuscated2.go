@@ -23,14 +23,14 @@ type Obfuscated2 struct {
 // Beware, link above is in russian.
 func ParseObfuscated2ClientFrame(secret []byte, frame Frame) (*Obfuscated2, *mtproto.ConnectionOpts, error) {
 	decHasher := sha256.New()
-	decHasher.Write(frame.Key()) // nolint: errcheck
-	decHasher.Write(secret)      // nolint: errcheck
+	decHasher.Write(frame.Key()) // nolint: errcheck, gosec
+	decHasher.Write(secret)      // nolint: errcheck, gosec
 	decryptor := makeStreamCipher(decHasher.Sum(nil), frame.IV())
 
 	invertedFrame := frame.Invert()
 	encHasher := sha256.New()
-	encHasher.Write(invertedFrame.Key()) // nolint: errcheck
-	encHasher.Write(secret)              // nolint: errcheck
+	encHasher.Write(invertedFrame.Key()) // nolint: errcheck, gosec
+	encHasher.Write(secret)              // nolint: errcheck, gosec
 	encryptor := makeStreamCipher(encHasher.Sum(nil), invertedFrame.IV())
 
 	decryptedFrame := make(Frame, FrameLen)
@@ -76,6 +76,6 @@ func MakeTelegramObfuscated2Frame(opts *mtproto.ConnectionOpts) (*Obfuscated2, F
 }
 
 func makeStreamCipher(key, iv []byte) cipher.Stream {
-	block, _ := aes.NewCipher(key)
+	block, _ := aes.NewCipher(key) // nolint: gosec
 	return cipher.NewCTR(block, iv)
 }

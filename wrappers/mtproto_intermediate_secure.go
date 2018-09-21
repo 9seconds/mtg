@@ -44,9 +44,9 @@ func (m *MTProtoIntermediateSecure) Write(p []byte) (int, error) {
 	paddingLength := rand.Intn(4)
 	buf.Grow(4 + len(p) + paddingLength)
 
-	binary.Write(buf, binary.LittleEndian, uint32(len(p)+paddingLength)) // nolint: errcheck
-	buf.Write(p)
-	buf.Write(make([]byte, paddingLength))
+	binary.Write(buf, binary.LittleEndian, uint32(len(p)+paddingLength)) // nolint: errcheck, gosec
+	buf.Write(p)                                                         // nolint: gosec
+	buf.Write(make([]byte, paddingLength))                               // nolint: gosec
 
 	m.logger.Debugw("Write packet with padding",
 		"simple_ack", m.opts.WriteHacks.SimpleAck,
