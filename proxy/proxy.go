@@ -65,6 +65,11 @@ func (p *Proxy) accept(conn net.Conn) {
 	}
 	defer clientConn.(io.Closer).Close() // nolint: errcheck
 
+	if p.conf.SecureOnly && opts.ConnectionType != mtproto.ConnectionTypeSecure {
+		log.Errorw("Proxy supports only secure connections", "connection_type", opts.ConnectionType)
+		return
+	}
+
 	stats.ClientConnected(opts.ConnectionType, clientConn.RemoteAddr())
 	defer stats.ClientDisconnected(opts.ConnectionType, clientConn.RemoteAddr())
 

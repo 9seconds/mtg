@@ -130,6 +130,11 @@ or
 echo dd$(head -c 512 /dev/urandom | md5sum | cut -f 1 -d ' ')
 ```
 
+If you want to enforce the usage of secure mode, please pass `-s` or
+`--secure-only` flags. In that case, clients which do not use dd-secrets
+are going to be disconnected from the proxy.
+
+
 ## Environment variables
 
 It is possible to configure this tool using environment variables. You
@@ -156,6 +161,7 @@ supported environment variables:
 | `MTG_STATSD_TAGS`        | `--statsd-tags`        |                                   | Which tags should we send to statsd with our metrics. Please specify them as `key=value` pairs.                                                                                                                                                                            |
 | `MTG_BUFFER_WRITE`       | `-w`, `--write-buffer` | `65536`                           | The size of TCP write buffer in bytes. Write buffer is the buffer for messages which are going from client to Telegram.                                                                                                                                                    |
 | `MTG_BUFFER_READ`        | `-r`, `--read-buffer`  | `131072`                          | The size of TCP read buffer in bytes. Read buffer is the buffer for messages from Telegram to client.                                                                                                                                                                      |
+| `MTG_SECURE_ONLY`        | `-s`, `--secure-only`  | `false`                           | Support only clients with secure mode (i.e only clients with dd-secrets).                                                                                                                                                                                                  |
 
 Usually you want to modify only read/write buffer sizes. If you feel
 that proxy is slow, try to increase both sizes giving more priority to

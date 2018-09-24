@@ -122,6 +122,11 @@ var (
 		Envar("MTG_BUFFER_READ").
 		Default("131072").
 		Uint32()
+	secureOnly = app.Flag("secure-only",
+		"Support clients with dd-secrets only.").
+		Short('s').
+		Envar("MTG_SECURE_ONLY").
+		Bool()
 
 	secret = app.Arg("secret", "Secret of this proxy.").Required().HexBytes()
 	adtag  = app.Arg("adtag", "ADTag of the proxy.").HexBytes()
@@ -146,7 +151,7 @@ func main() { // nolint: gocyclo
 		*bindIP, *publicIPv4, *publicIPv6, *statsIP,
 		*bindPort, *publicIPv4Port, *publicIPv6Port, *statsPort, *statsdPort,
 		*statsdIP, *statsdNetwork, *statsdPrefix, *statsdTagsFormat,
-		*statsdTags,
+		*statsdTags, *secureOnly,
 		*secret, *adtag,
 	)
 	if err != nil {
