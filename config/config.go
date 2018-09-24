@@ -16,6 +16,7 @@ type Config struct {
 	Debug      bool
 	Verbose    bool
 	SecureMode bool
+	SecureOnly bool
 
 	ReadBufferSize  int
 	WriteBufferSize int
@@ -116,8 +117,9 @@ func NewConfig(debug, verbose bool, // nolint: gocyclo
 	bindPort, publicIPv4Port, publicIPv6Port, statsPort, statsdPort uint16,
 	statsdIP, statsdNetwork, statsdPrefix, statsdTagsFormat string,
 	statsdTags map[string]string,
+	secureOnly bool,
 	secret, adtag []byte) (*Config, error) {
-	secureMode := false
+	secureMode := secureOnly
 	if bytes.HasPrefix(secret, []byte{0xdd}) && len(secret) == 17 {
 		secureMode = true
 		secret = bytes.TrimPrefix(secret, []byte{0xdd})
@@ -157,6 +159,7 @@ func NewConfig(debug, verbose bool, // nolint: gocyclo
 	conf := &Config{
 		Debug:           debug,
 		Verbose:         verbose,
+		SecureOnly:      secureOnly,
 		BindIP:          bindIP,
 		BindPort:        bindPort,
 		PublicIPv4:      publicIPv4,
