@@ -93,12 +93,12 @@ func (p *Proxy) accept(conn net.Conn) {
 		clientPacket := clientConn.(wrappers.PacketReadWriteCloser)
 		serverPacket := serverConn.(wrappers.PacketReadWriteCloser)
 		go p.middlePipe(clientPacket, serverPacket, wait, &opts.ReadHacks)
-		go p.middlePipe(serverPacket, clientPacket, wait, &opts.WriteHacks)
+		p.middlePipe(serverPacket, clientPacket, wait, &opts.WriteHacks)
 	} else {
 		clientStream := clientConn.(wrappers.StreamReadWriteCloser)
 		serverStream := serverConn.(wrappers.StreamReadWriteCloser)
 		go p.directPipe(clientStream, serverStream, wait, p.conf.ReadBufferSize)
-		go p.directPipe(serverStream, clientStream, wait, p.conf.WriteBufferSize)
+		p.directPipe(serverStream, clientStream, wait, p.conf.WriteBufferSize)
 	}
 
 	wait.Wait()
@@ -121,13 +121,8 @@ func (p *Proxy) getTelegramConn(ctx context.Context, cancel context.CancelFunc,
 	return packetConn, nil
 }
 
-func (p *Proxy) middlePipe(src wrappers.PacketReadCloser, dst io.WriteCloser,
-	wait *sync.WaitGroup, hacks *mtproto.Hacks) {
-	defer func() {
-		src.Close() // nolint: errcheck, gosec
-		dst.Close() // nolint: errcheck, gosec
-		wait.Done()
-	}()
+func (p *Proxy) middlePipe(src wrappers.PacketReadCloser, dst io.Writer, wait *sync.WaitGroup, hacks *mtproto.Hacks) {
+	defer wait.Done()
 
 	for {
 		hacks.SimpleAck = false
@@ -145,13 +140,8 @@ func (p *Proxy) middlePipe(src wrappers.PacketReadCloser, dst io.WriteCloser,
 	}
 }
 
-func (p *Proxy) directPipe(src wrappers.StreamReadCloser, dst io.WriteCloser,
-	wait *sync.WaitGroup, bufferSize int) {
-	defer func() {
-		src.Close() // nolint: errcheck, gosec
-		dst.Close() // nolint: errcheck, gosec
-		wait.Done()
-	}()
+func (p *Proxy) directPipe(src wrappers.StreamReadCloser, dst io.Writer, wait *sync.WaitGroup, bufferSize int) {
+	defer wait.Done()
 
 	buffer := make([]byte, bufferSize)
 	if _, err := io.CopyBuffer(dst, src, buffer); err != nil {

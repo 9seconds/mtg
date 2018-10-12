@@ -38,13 +38,6 @@ const (
 	connTimeoutWrite = 2 * time.Minute
 )
 
-type ioResult struct {
-	n   int
-	err error
-}
-
-type ioFunc func([]byte) (int, error)
-
 // Conn is a basic wrapper for net.Conn providing the most low-level
 // logic and management as possible.
 type Conn struct {
@@ -61,12 +54,20 @@ type Conn struct {
 func (c *Conn) Write(p []byte) (int, error) {
 	select {
 	case <-c.ctx.Done():
+		c.Close() // nolint: gosec
 		return 0, errors.Annotate(c.ctx.Err(), "Cannot write because context was closed")
 	default:
-		n, err := c.doIO(c.conn.Write, p, connTimeoutWrite)
+		if err := c.conn.SetWriteDeadline(time.Now().Add(connTimeoutWrite)); err != nil {
+			c.Close() // nolint: gosec
+			return 0, errors.Annotate(err, "Cannot set write deadline to the socket")
+		}
 
+		n, err := c.conn.Write(p)
 		c.logger.Debugw("Write to stream", "bytes", n, "error", err)
 		stats.EgressTraffic(n)
+		if err != nil {
+			c.Close() // nolint: gosec
+		}
 
 		return n, err
 	}
@@ -75,48 +76,30 @@ func (c *Conn) Write(p []byte) (int, error) {
 func (c *Conn) Read(p []byte) (int, error) {
 	select {
 	case <-c.ctx.Done():
+		c.Close() // nolint: gosec
 		return 0, errors.Annotate(c.ctx.Err(), "Cannot read because context was closed")
 	default:
-		n, err := c.doIO(c.conn.Read, p, connTimeoutRead)
+		if err := c.conn.SetReadDeadline(time.Now().Add(connTimeoutRead)); err != nil {
+			c.Close() // nolint: gosec
+			return 0, errors.Annotate(err, "Cannot set read deadline to the socket")
+		}
 
+		n, err := c.conn.Read(p)
 		c.logger.Debugw("Read from stream", "bytes", n, "error", err)
 		stats.IngressTraffic(n)
+		if err != nil {
+			c.Close() // nolint: gosec
+		}
 
 		return n, err
 	}
 }
 
-func (c *Conn) doIO(callback ioFunc, p []byte, timeout time.Duration) (int, error) {
-	resChan := make(chan ioResult, 1)
-	timer := time.NewTimer(timeout)
-
-	go func() {
-		n, err := callback(p)
-		resChan <- ioResult{n: n, err: err}
-	}()
-
-	select {
-	case res := <-resChan:
-		timer.Stop()
-		if res.err != nil {
-			c.Close() // nolint: gosec
-		}
-		return res.n, res.err
-	case <-c.ctx.Done():
-		timer.Stop()
-		c.Close() // nolint: gosec
-		return 0, errors.Annotate(c.ctx.Err(), "Cannot do IO because context is closed")
-	case <-timer.C:
-		c.Close() // nolint: gosec
-		return 0, errors.Annotate(c.ctx.Err(), "Timeout on IO operation")
-	}
-}
-
 // Close closes underlying net.Conn instance.
 func (c *Conn) Close() error {
-	defer c.logger.Debugw("Close connection")
-
+	c.logger.Debugw("Close connection")
 	c.cancel()
+
 	return c.conn.Close()
 }
 
