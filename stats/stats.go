@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
-	"sync"
 	"time"
 
 	humanize "github.com/dustin/go-humanize"
 
 	"github.com/9seconds/mtg/config"
+	"github.com/9seconds/mtg/mtproto"
 )
 
 type uptime time.Time
@@ -24,72 +24,72 @@ func (u uptime) MarshalJSON() ([]byte, error) {
 	return json.Marshal(value)
 }
 
-type trafficValue uint64
-
-func (t trafficValue) MarshalJSON() ([]byte, error) {
-	tv := uint64(t)
-	value := map[string]interface{}{
-		"bytes": tv,
-		"human": humanize.Bytes(tv),
-	}
-
-	return json.Marshal(value)
+type connectionType struct {
+	IPv6 uint32 `json:"ipv6"`
+	IPv4 uint32 `json:"ipv4"`
 }
 
-type trafficSpeedValue uint64
-
-func (t trafficSpeedValue) MarshalJSON() ([]byte, error) {
-	speed := uint64(t)
-	value := map[string]interface{}{
-		"bytes/s": speed,
-		"human":   fmt.Sprintf("%s/S", humanize.Bytes(speed)),
-	}
-
-	return json.Marshal(value)
-}
-
-type connections struct {
+type baseConnections struct {
 	All          connectionType `json:"all"`
 	Abridged     connectionType `json:"abridged"`
 	Intermediate connectionType `json:"intermediate"`
 	Secure       connectionType `json:"secure"`
 }
 
+type connections struct {
+	baseConnections
+}
+
 func (c connections) MarshalJSON() ([]byte, error) {
 	c.All.IPv4 = c.Abridged.IPv4 + c.Intermediate.IPv4 + c.Secure.IPv4
 	c.All.IPv6 = c.Abridged.IPv6 + c.Intermediate.IPv6 + c.Secure.IPv6
 
-	value := struct {
-		All          connectionType `json:"all"`
-		Abridged     connectionType `json:"abridged"`
-		Intermediate connectionType `json:"intermediate"`
-		Secure       connectionType `json:"secure"`
-	}{
-		All:          c.All,
-		Abridged:     c.Abridged,
-		Intermediate: c.Intermediate,
-		Secure:       c.Secure,
+	return json.Marshal(c.baseConnections)
+}
+
+type traffic struct {
+	ingress uint64
+	egress  uint64
+}
+
+func (t *traffic) dumpValue(value uint64) map[string]interface{} {
+	return map[string]interface{}{
+		"bytes": value,
+		"human": humanize.Bytes(value),
+	}
+}
+
+func (t traffic) MarshalJSON() ([]byte, error) {
+	value := map[string]map[string]interface{}{
+		"ingress": t.dumpValue(t.ingress),
+		"egress":  t.dumpValue(t.egress),
 	}
 
 	return json.Marshal(value)
 }
 
-type connectionType struct {
-	IPv6 uint32 `json:"ipv6"`
-	IPv4 uint32 `json:"ipv4"`
-}
-
-type traffic struct {
-	Ingress trafficValue `json:"ingress"`
-	Egress  trafficValue `json:"egress"`
-}
-
 type speed struct {
-	Ingress trafficSpeedValue `json:"ingress"`
-	Egress  trafficSpeedValue `json:"egress"`
+	ingress uint64
+	egress  uint64
 }
 
-type stats struct {
+func (s *speed) dumpValue(value uint64) map[string]interface{} {
+	return map[string]interface{}{
+		"bytes/s": value,
+		"human":   fmt.Sprintf("%s/s", humanize.Bytes(value)),
+	}
+}
+
+func (s speed) MarshalJSON() ([]byte, error) {
+	value := map[string]map[string]interface{}{
+		"ingress": s.dumpValue(s.ingress),
+		"egress":  s.dumpValue(s.egress),
+	}
+
+	return json.Marshal(value)
+}
+
+type Stats struct {
 	URLs        config.IPURLs `json:"urls"`
 	Connections connections   `json:"connections"`
 	Traffic     traffic       `json:"traffic"`
@@ -97,6 +97,77 @@ type stats struct {
 	Uptime      uptime        `json:"uptime"`
 	Crashes     uint32        `json:"crashes"`
 
-	speedCurrent speed
-	mutex        *sync.RWMutex
+	previousTraffic traffic
+}
+
+func (s *Stats) start() {
+	speedChan := time.Tick(time.Second)
+
+	for {
+		select {
+		case <-speedChan:
+			s.handleSpeed()
+		case event := <-trafficChan:
+			s.handleTraffic(event)
+		case event := <-connectionsChan:
+			s.handleConnection(event)
+		case getStatsChan := <-statsChan:
+			s.handleGetStats(getStatsChan)
+		case <-crashesChan:
+			s.handleCrash()
+		}
+	}
+}
+
+func (s *Stats) handleTraffic(evt trafficData) {
+	if evt.ingress {
+		s.Traffic.ingress += uint64(evt.traffic)
+	} else {
+		s.Traffic.egress += uint64(evt.traffic)
+	}
+}
+
+func (s *Stats) handleSpeed() {
+	s.Speed.ingress = s.Traffic.ingress - s.previousTraffic.ingress
+	s.Speed.egress = s.Traffic.egress - s.previousTraffic.egress
+	s.previousTraffic.ingress = s.Traffic.ingress
+	s.previousTraffic.egress = s.Traffic.egress
+}
+
+func (s *Stats) handleConnection(evt connectionData) {
+	var inc uint32 = 1
+	if !evt.connected {
+		inc = ^uint32(0)
+	}
+
+	var conn *connectionType
+	switch evt.connectionType {
+	case mtproto.ConnectionTypeAbridged:
+		conn = &s.Connections.Abridged
+	case mtproto.ConnectionTypeSecure:
+		conn = &s.Connections.Secure
+	default:
+		conn = &s.Connections.Intermediate
+	}
+
+	if evt.addr.IP.To4() != nil {
+		conn.IPv4 += inc
+	} else {
+		conn.IPv6 += inc
+	}
+}
+
+func (s *Stats) handleGetStats(getStatsChan chan<- Stats) {
+	getStatsChan <- *s
+}
+
+func (s *Stats) handleCrash() {
+	s.Crashes++
+}
+
+func NewStats(conf *config.Config) *Stats {
+	return &Stats{
+		URLs:   conf.GetURLs(),
+		Uptime: uptime(time.Now()),
+	}
 }
