@@ -193,7 +193,7 @@ func main() { // nolint: gocyclo
 		zap.S().Infow("Use direct connection to Telegram")
 	}
 
-	if err := stats.Start(conf); err != nil {
+	if err := stats.Init(conf); err != nil {
 		panic(err)
 	}
 
