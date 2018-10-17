@@ -160,6 +160,7 @@ supported environment variables:
 | `MTG_STATSD_PREFIX`      | `--statsd-prefix`      | `mtg`                             | Which bucket prefix we should use. For example, if you set `mtg`, then metric `traffic.ingress` would be send as `mtg.traffic.ingress`.                                                                                                                                    |
 | `MTG_STATSD_TAGS_FORMAT` | `--statsd-tags-format` |                                   | Which tags format we should use. By default, we are using default vanilla statsd tags format but if you want to send directly to InfluxDB or Datadog, please specify it there. Possible options are `influxdb` and `datadog`.                                              |
 | `MTG_STATSD_TAGS`        | `--statsd-tags`        |                                   | Which tags should we send to statsd with our metrics. Please specify them as `key=value` pairs.                                                                                                                                                                            |
+| `MTG_PROMETHEUS_PREFIX`  | `--prometheus-prefix`  | `mtg`                             | Which namespace should be used for prometheus metrics.                                                                                                                                                                                                                     |
 | `MTG_BUFFER_WRITE`       | `-w`, `--write-buffer` | `65536`                           | The size of TCP write buffer in bytes. Write buffer is the buffer for messages which are going from client to Telegram.                                                                                                                                                    |
 | `MTG_BUFFER_READ`        | `-r`, `--read-buffer`  | `131072`                          | The size of TCP read buffer in bytes. Read buffer is the buffer for messages from Telegram to client.                                                                                                                                                                      |
 | `MTG_SECURE_ONLY`        | `-s`, `--secure-only`  | `false`                           | Support only clients with secure mode (i.e only clients with dd-secrets).                                                                                                                                                                                                  |
@@ -235,3 +236,14 @@ All metrics are gauges. Here is the list of metrics and their meaning:
 All metrics are prefixed with given prefix. Default prefix is `mtg`.
 With such prefix metric name `traffic.ingress`, for example, would be
 `mtg.traffic.ingress`.
+
+
+# Prometheus integration
+
+[Prometheus](https://prometheus.io) integration comes out of
+the box, you do not need to setup anything special. Prometheus
+scrape endpoint lives on the same IP/port where generic stats
+service (`http://${MTG_STATS_IP}:${MTG_STATS_PORT}`) but on
+`/prometheus` path. So, if you access http stats service as `curl
+http://localhost:3129/`, then your prometheus endpoint is `curl
+http://localhost:3129/prometheus/`.
