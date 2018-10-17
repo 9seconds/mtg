@@ -15,6 +15,11 @@ func Init(conf *config.Config) error {
 		}
 		go client.run()
 	}
+	prometheus, err := newPrometheus(conf)
+	if err != nil {
+		return errors.Annotate(err, "Cannot initialize prometheus client")
+	}
+	go prometheus.run()
 
 	go NewStats(conf).start()
 	go startServer(conf)
