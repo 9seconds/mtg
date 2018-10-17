@@ -22,13 +22,13 @@ func startServer(conf *config.Config) {
 			return
 		}
 
-		interm := map[string]interface{}{}
-		json.Unmarshal(first, &interm) // nolint: errcheck, gosec
+		interim := map[string]interface{}{}
+		json.Unmarshal(first, &interim) // nolint: errcheck, gosec
 
 		encoder := json.NewEncoder(w)
 		encoder.SetEscapeHTML(false)
 		encoder.SetIndent("", "  ")
-		if err = encoder.Encode(interm); err != nil {
+		if err = encoder.Encode(interim); err != nil {
 			log.Errorw("Cannot encode json", "error", err)
 		}
 	})
