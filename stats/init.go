@@ -6,6 +6,7 @@ import (
 	"github.com/9seconds/mtg/config"
 )
 
+// Init initializes stats subsystem.
 func Init(conf *config.Config) error {
 	if conf.StatsD.Enabled {
 		client, err := newStatsd(conf)

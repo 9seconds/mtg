@@ -68,6 +68,7 @@ func EgressTraffic(traffic int) {
 	}
 }
 
+// GetStats returns a snapshot of Stats instance.
 func GetStats() Stats {
 	rpcChan := make(chan Stats)
 	statsChan <- rpcChan

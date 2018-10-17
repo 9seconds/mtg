@@ -89,6 +89,7 @@ func (s speed) MarshalJSON() ([]byte, error) {
 	return json.Marshal(value)
 }
 
+// Stats represents a statistics of the proxy.
 type Stats struct {
 	URLs        config.IPURLs `json:"urls"`
 	Connections connections   `json:"connections"`
@@ -165,6 +166,7 @@ func (s *Stats) handleCrash() {
 	s.Crashes++
 }
 
+// NewStats creates a new instance of Stats structure.
 func NewStats(conf *config.Config) *Stats {
 	return &Stats{
 		URLs:   conf.GetURLs(),
