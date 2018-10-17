@@ -38,6 +38,9 @@ type Config struct {
 		TagsFormat statsd.TagFormat
 		Enabled    bool
 	}
+	Prometheus struct {
+		Prefix string
+	}
 
 	Secret []byte
 	AdTag  []byte
@@ -116,7 +119,7 @@ func NewConfig(debug, verbose bool, // nolint: gocyclo
 	bindIP, publicIPv4, publicIPv6, statsIP net.IP,
 	bindPort, publicIPv4Port, publicIPv6Port, statsPort, statsdPort uint16,
 	statsdIP, statsdNetwork, statsdPrefix, statsdTagsFormat string,
-	statsdTags map[string]string,
+	statsdTags map[string]string, prometheusPrefix string,
 	secureOnly bool,
 	secret, adtag []byte) (*Config, error) {
 	secureMode := secureOnly
@@ -174,6 +177,7 @@ func NewConfig(debug, verbose bool, // nolint: gocyclo
 		ReadBufferSize:  int(readBufferSize),
 		WriteBufferSize: int(writeBufferSize),
 	}
+	conf.Prometheus.Prefix = prometheusPrefix
 
 	if statsdIP != "" {
 		conf.StatsD.Enabled = true
