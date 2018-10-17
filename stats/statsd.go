@@ -36,7 +36,7 @@ type statsdExporter struct {
 
 func (s *statsdExporter) run() {
 	for range time.Tick(statsdPollTime) {
-		instance.mutex.Lock()
+		instance := GetStats()
 
 		s.client.Gauge(statsdConnectionsAbridgedV4, instance.Connections.Abridged.IPv4)
 		s.client.Gauge(statsdConnectionsAbridgedV6, instance.Connections.Abridged.IPv6)
@@ -44,13 +44,11 @@ func (s *statsdExporter) run() {
 		s.client.Gauge(statsdConnectionsIntermediateV6, instance.Connections.Intermediate.IPv6)
 		s.client.Gauge(statsdConnectionsSecureV4, instance.Connections.Secure.IPv4)
 		s.client.Gauge(statsdConnectionsSecureV6, instance.Connections.Secure.IPv6)
-		s.client.Gauge(statsdTrafficIngress, uint64(instance.Traffic.Ingress))
-		s.client.Gauge(statsdTrafficEgress, uint64(instance.Traffic.Egress))
-		s.client.Gauge(statsdSpeedIngress, uint64(instance.Speed.Ingress))
-		s.client.Gauge(statsdSpeedEgress, uint64(instance.Speed.Egress))
+		s.client.Gauge(statsdTrafficIngress, instance.Traffic.ingress)
+		s.client.Gauge(statsdTrafficEgress, instance.Traffic.egress)
+		s.client.Gauge(statsdSpeedIngress, instance.Speed.ingress)
+		s.client.Gauge(statsdSpeedEgress, instance.Speed.egress)
 		s.client.Gauge(statsdCrashes, instance.Crashes)
-
-		instance.mutex.Unlock()
 	}
 }
 

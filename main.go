@@ -110,6 +110,12 @@ var (
 		Envar("MTG_STATSD_TAGS").
 		StringMap()
 
+	prometheusPrefix = app.Flag("prometheus-prefix",
+		"Which namespace to use to send stats to Prometheus.").
+		Envar("MTG_PROMETHEUS_PREFIX").
+		Default("mtg").
+		String()
+
 	writeBufferSize = app.Flag("write-buffer",
 		"Write buffer size in bytes. You can think about it as a buffer from client to Telegram.").
 		Short('w').
@@ -151,7 +157,7 @@ func main() { // nolint: gocyclo
 		*bindIP, *publicIPv4, *publicIPv6, *statsIP,
 		*bindPort, *publicIPv4Port, *publicIPv6Port, *statsPort, *statsdPort,
 		*statsdIP, *statsdNetwork, *statsdPrefix, *statsdTagsFormat,
-		*statsdTags, *secureOnly,
+		*statsdTags, *prometheusPrefix, *secureOnly,
 		*secret, *adtag,
 	)
 	if err != nil {
@@ -193,7 +199,7 @@ func main() { // nolint: gocyclo
 		zap.S().Infow("Use direct connection to Telegram")
 	}
 
-	if err := stats.Start(conf); err != nil {
+	if err := stats.Init(conf); err != nil {
 		panic(err)
 	}
 
