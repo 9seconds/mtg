@@ -1,10 +1,12 @@
 package stats
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/juju/errors"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/9seconds/mtg/config"
 )
@@ -12,6 +14,8 @@ import (
 const prometheusPollTime = time.Second
 
 type prometheusExporter struct {
+	registry prometheus.Gatherer
+
 	connections *prometheus.GaugeVec
 	traffic     *prometheus.GaugeVec
 	speed       *prometheus.GaugeVec
@@ -36,7 +40,13 @@ func (p *prometheusExporter) run() {
 	}
 }
 
+func (p *prometheusExporter) getHTTPHandler() http.Handler {
+	return promhttp.HandlerFor(p.registry, promhttp.HandlerOpts{})
+}
+
 func newPrometheus(conf *config.Config) (*prometheusExporter, error) {
+	registry := prometheus.NewRegistry()
+
 	connections := prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: conf.Prometheus.Prefix,
 		Name:      "connections",
@@ -58,20 +68,21 @@ func newPrometheus(conf *config.Config) (*prometheusExporter, error) {
 		Help:      "How many crashes happened.",
 	})
 
-	if err := prometheus.Register(connections); err != nil {
+	if err := registry.Register(connections); err != nil {
 		return nil, errors.Annotate(err, "Cannot register connections collector")
 	}
-	if err := prometheus.Register(traffic); err != nil {
+	if err := registry.Register(traffic); err != nil {
 		return nil, errors.Annotate(err, "cannot register traffic collector")
 	}
-	if err := prometheus.Register(speed); err != nil {
+	if err := registry.Register(speed); err != nil {
 		return nil, errors.Annotate(err, "cannot register speed collector")
 	}
-	if err := prometheus.Register(crashes); err != nil {
+	if err := registry.Register(crashes); err != nil {
 		return nil, errors.Annotate(err, "cannot register crashes collector")
 	}
 
 	return &prometheusExporter{
+		registry:    registry,
 		connections: connections,
 		traffic:     traffic,
 		speed:       speed,
