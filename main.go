@@ -183,6 +183,7 @@ func main() { // nolint: gocyclo
 	defer logger.Sync() // nolint: errcheck
 
 	printURLs(conf.GetURLs())
+	zap.S().Debugw("Configuration", "config", conf)
 
 	if conf.UseMiddleProxy() {
 		zap.S().Infow("Use middle proxy connection to Telegram")
