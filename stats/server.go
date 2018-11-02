@@ -4,13 +4,12 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 
 	"github.com/9seconds/mtg/config"
 )
 
-func startServer(conf *config.Config) {
+func startServer(conf *config.Config, prometheusHandler http.Handler) {
 	log := zap.S().Named("stats")
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -33,7 +32,7 @@ func startServer(conf *config.Config) {
 			log.Errorw("Cannot encode json", "error", err)
 		}
 	})
-	http.Handle("/prometheus/", promhttp.Handler())
+	http.Handle("/prometheus/", prometheusHandler)
 
 	if err := http.ListenAndServe(conf.StatAddr(), nil); err != nil {
 		log.Fatalw("Stats server has been stopped", "error", err)

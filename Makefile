@@ -3,26 +3,28 @@ IMAGE_NAME   := mtg
 APP_NAME     := $(IMAGE_NAME)
 
 CC_BINARIES  := $(shell bash -c "echo -n $(APP_NAME)-{linux,freebsd,openbsd}-{386,amd64} $(APP_NAME)-linux-{arm,arm64}")
-APP_DEPS     := version.go
 
-GOLANGCI_LINT_VERSION := v1.10.2
+GOLANGCI_LINT_VERSION := v1.11.2
 
-COMMON_BUILD_FLAGS := -ldflags="-s -w"
+VERSION_GO         := $(shell go version)
+VERSION_DATE       := $(shell date -Ru)
+VERSION_TAG        := $(shell git describe --tags --always)
+COMMON_BUILD_FLAGS := -ldflags="-s -w -X 'main.version=$(VERSION_TAG) ($(VERSION_GO)) [$(VERSION_DATE)]'"
 
 MOD_ON  := env GO111MODULE=on
 MOD_OFF := env GO111MODULE=auto
 
 # -----------------------------------------------------------------------------
 
-$(APP_NAME): $(APP_DEPS)
+$(APP_NAME):
 	@$(MOD_ON) go build $(COMMON_BUILD_FLAGS) -o "$(APP_NAME)"
 
-static-$(APP_NAME): $(APP_DEPS)
+static-$(APP_NAME):
 	@$(MOD_ON) env CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo $(COMMON_BUILD_FLAGS) -o "$(APP_NAME)"
 
 $(APP_NAME)-%: GOOS=$(shell echo -n "$@" | sed 's?$(APP_NAME)-??' | cut -f1 -d-)
 $(APP_NAME)-%: GOARCH=$(shell echo -n "$@" | sed 's?$(APP_NAME)-??' | cut -f2 -d-)
-$(APP_NAME)-%: $(APP_DEPS) ccbuilds
+$(APP_NAME)-%: ccbuilds
 	@$(MOD_ON) env "GOOS=$(GOOS)" "GOARCH=$(GOARCH)" \
 		go build \
 		$(COMMON_BUILD_FLAGS) \
@@ -30,9 +32,6 @@ $(APP_NAME)-%: $(APP_DEPS) ccbuilds
 
 ccbuilds:
 	@rm -rf ./ccbuilds && mkdir -p ./ccbuilds
-
-version.go:
-	@$(MOD_ON) go generate main.go
 
 vendor: go.mod go.sum
 	@$(MOD_ON) go mod vendor
@@ -53,15 +52,15 @@ crosscompile-dir:
 	@rm -rf "$(CC_DIR)" && mkdir -p "$(CC_DIR)"
 
 .PHONY: test
-test: vendor $(APP_DEPS)
+test: vendor
 	@$(MOD_ON) go test -v ./...
 
 .PHONY: lint
-lint: vendor $(APP_DEPS)
+lint: vendor
 	@$(MOD_OFF) golangci-lint run
 
 .PHONY: critic
-critic: vendor $(APP_DEPS)
+critic: vendor
 	@$(MOD_OFF) gocritic check-project "$(ROOT_DIR)"
 
 .PHONY: clean

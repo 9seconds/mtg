@@ -113,11 +113,49 @@ head -c 512 /dev/urandom | md5sum | cut -f 1 -d ' '
 
 ## Secure mode
 
-If you want to support new secure mode, please prepend `dd` to the
-secret. For example, secret `cf18fa8ea0267057e2c61a5f7322a8e7` should
-be `ddcf18fa8ea0267057e2c61a5f7322a8e7`. But pay attention that some
-old clients won't support this mode. If this is not your case, I would
-suggest to go with this mode.
+Secure mode is not the best name and of course, it creates a lot of
+confusion. To explain what it means, we need to tell you some bits on
+dd-secrets.
+
+MTPROTO proxy protocol requires 16-byte secret. You usually
+propagate it as a 32 characters hexadecimal string like
+`282831900f371ca182feb0e4e1e1aeef` (if you decode this string
+to bytes, you will get a real secret which is used in the
+protocol). Everything went quite good until the moment when
+developers found an evidence that [protocol is quite weak to
+DPI](https://github.com/TelegramMessenger/MTProxy/issues/35) and some
+enthusiasts even created simple proofs of concepts on [detecting MTPROTO
+traffic](https://github.com/darkk/poormansmtproto).
+
+Telegram team has introduced a patch called dd-secrets. If you have
+a secret `282831900f371ca182feb0e4e1e1aeef` then your dd-secret is
+`dd282831900f371ca182feb0e4e1e1aeef`. That is, you just add dd prefix
+to the secret, prepend it with dd. In that case, original secret
+`282831900f371ca182feb0e4e1e1aeef` is used but client and server start
+to act a little bit different: they start to add random noise to the
+packets so they can't be detected by their length. In order to keep
+backward compatibility, all proxies a quite liberal to the secrets to
+use: if the client uses plain secret, without dd prefix, they fall back
+to the normal behavior. If dd-secret is used (proxy can extract this
+information on the handshake), then more secured, the hardened behavior
+is used.
+
+Yes, it can look like a hack but it is as it is.
+
+Now going back to the secure mode: if you do not pass `-s` flag to the
+mtg, then it checks what mode is requested by the client. If the client
+uses plain secret, without dd prefix, then proxy falls back to the
+original behavior and do not play with paddings. If dd-secret is used
+and client demands this mode, then proxy start to add that random noise
+to the packets. But if you pass `-s`, then only clients with dd-secrets
+can connect. How to migrate existing clients then? If a client is new
+enough, you can just prepend the secret with dd string in the settings.
+If it is an old guy, then nothing to do, sorry.
+
+Why this mode matters? We do not have evidence but there is quite a big
+suspicion that some ISPs start to filter MTPROTO traffic. If they detect
+the IP address which acts as a proxy, they block it and no clients can
+use this proxy. This is an attempt to prevent such a situation.
 
 Oneliners to generate such secrets:
 
@@ -130,10 +168,6 @@ or
 ```console
 echo dd$(head -c 512 /dev/urandom | md5sum | cut -f 1 -d ' ')
 ```
-
-If you want to enforce the usage of secure mode, please pass `-s` or
-`--secure-only` flags. In that case, clients which do not use dd-secrets
-are going to be disconnected from the proxy.
 
 
 ## Environment variables
@@ -192,13 +226,13 @@ This tool will listen on port 3128 by default with the given secret.
 # One-line runner
 
 ```console
-docker run --name mtg --restart=unless-stopped -p 3128:3128 -p 3129:3129 -d nineseconds/mtg:stable $(openssl rand -hex 16)
+docker run --name mtg --restart=unless-stopped -p 3128:3128 -q 3129:3129 -d nineseconds/mtg:stable $(openssl rand -hex 16)
 ```
 
 or in secret mode:
 
 ```console
-docker run --name mtg --restart=unless-stopped -p 3128:3128 -p 3129:3129 -d nineseconds/mtg:stable dd$(openssl rand -hex 16)
+docker run --name mtg --restart=unless-stopped -p 3128:3128 -q 3129:3129 -d nineseconds/mtg:stable dd$(openssl rand -hex 16)
 ```
 
 You will have this tool up and running on port 3128. Now curl

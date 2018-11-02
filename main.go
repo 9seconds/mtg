@@ -1,7 +1,5 @@
 package main
 
-//go:generate scripts/generate_version.sh
-
 import (
 	"encoding/json"
 	"fmt"
@@ -21,6 +19,8 @@ import (
 	"github.com/9seconds/mtg/proxy"
 	"github.com/9seconds/mtg/stats"
 )
+
+var version = "dev" // this has to be set by build ld flags
 
 var (
 	app = kingpin.New("mtg", "Simple MTPROTO proxy.")
@@ -183,6 +183,7 @@ func main() { // nolint: gocyclo
 	defer logger.Sync() // nolint: errcheck
 
 	printURLs(conf.GetURLs())
+	zap.S().Debugw("Configuration", "config", conf)
 
 	if conf.UseMiddleProxy() {
 		zap.S().Infow("Use middle proxy connection to Telegram")

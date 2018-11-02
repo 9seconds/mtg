@@ -22,7 +22,7 @@ func Init(conf *config.Config) error {
 	go prometheus.run()
 
 	go NewStats(conf).start()
-	go startServer(conf)
+	go startServer(conf, prometheus.getHTTPHandler())
 
 	return nil
 }
