@@ -113,17 +113,49 @@ head -c 512 /dev/urandom | md5sum | cut -f 1 -d ' '
 
 ## Secure mode
 
-Secure mode is not the best name and of course, it creates a lot of confusion. To explain what it means, we need to tell you some bits on dd-secrets.
+Secure mode is not the best name and of course, it creates a lot of
+confusion. To explain what it means, we need to tell you some bits on
+dd-secrets.
 
-MTPROTO proxy protocol requires 16-byte secret. You usually propagate it as a 32 characters hexadecimal string like `282831900f371ca182feb0e4e1e1aeef` (if you decode this string to bytes, you will get a real secret which is used in the protocol). Everything went quite good until the moment when developers found an evidence that [protocol is quite weak to DPI](https://github.com/TelegramMessenger/MTProxy/issues/35) and some enthusiasts even created simple proofs of concepts on [detecting MTPROTO traffic](https://github.com/darkk/poormansmtproto).
+MTPROTO proxy protocol requires 16-byte secret. You usually
+propagate it as a 32 characters hexadecimal string like
+`282831900f371ca182feb0e4e1e1aeef` (if you decode this string
+to bytes, you will get a real secret which is used in the
+protocol). Everything went quite good until the moment when
+developers found an evidence that [protocol is quite weak to
+DPI](https://github.com/TelegramMessenger/MTProxy/issues/35) and some
+enthusiasts even created simple proofs of concepts on [detecting MTPROTO
+traffic](https://github.com/darkk/poormansmtproto).
 
-Telegram team has introduced a patch called dd-secrets. If you have a secret `282831900f371ca182feb0e4e1e1aeef` then your dd-secret is `dd282831900f371ca182feb0e4e1e1aeef`. That is, you just add dd prefix to the secret, prepend it with dd. In that case, original secret `282831900f371ca182feb0e4e1e1aeef` is used but client and server start to act a little bit different: they start to add random noise to the packets so they can't be detected by their length. In order to keep backward compatibility, all proxies a quite liberal to the secrets to use: if the client uses plain secret, without dd prefix, they fall back to the normal behavior. If dd-secret is used (proxy can extract this information on the handshake), then more secured, the hardened behavior is used.
+Telegram team has introduced a patch called dd-secrets. If you have
+a secret `282831900f371ca182feb0e4e1e1aeef` then your dd-secret is
+`dd282831900f371ca182feb0e4e1e1aeef`. That is, you just add dd prefix
+to the secret, prepend it with dd. In that case, original secret
+`282831900f371ca182feb0e4e1e1aeef` is used but client and server start
+to act a little bit different: they start to add random noise to the
+packets so they can't be detected by their length. In order to keep
+backward compatibility, all proxies a quite liberal to the secrets to
+use: if the client uses plain secret, without dd prefix, they fall back
+to the normal behavior. If dd-secret is used (proxy can extract this
+information on the handshake), then more secured, the hardened behavior
+is used.
 
 Yes, it can look like a hack but it is as it is.
 
-Now going back to the secure mode: if you do not pass `-s` flag to the mtg, then it checks what mode is requested by the client. If the client uses plain secret, without dd prefix, then proxy falls back to the original behavior and do not play with paddings. If dd-secret is used and client demands this mode, then proxy start to add that random noise to the packets. But if you pass `-s`, then only clients with dd-secrets can connect. How to migrate existing clients then? If a client is new enough, you can just prepend the secret with dd string in the settings. If it is an old guy, then nothing to do, sorry.
+Now going back to the secure mode: if you do not pass `-s` flag to the
+mtg, then it checks what mode is requested by the client. If the client
+uses plain secret, without dd prefix, then proxy falls back to the
+original behavior and do not play with paddings. If dd-secret is used
+and client demands this mode, then proxy start to add that random noise
+to the packets. But if you pass `-s`, then only clients with dd-secrets
+can connect. How to migrate existing clients then? If a client is new
+enough, you can just prepend the secret with dd string in the settings.
+If it is an old guy, then nothing to do, sorry.
 
-Why this mode matters? We do not have evidence but there is quite a big suspicion that some ISPs start to filter MTPROTO traffic. If they detect the IP address which acts as a proxy, they block it and no clients can use this proxy. This is an attempt to prevent such a situation.
+Why this mode matters? We do not have evidence but there is quite a big
+suspicion that some ISPs start to filter MTPROTO traffic. If they detect
+the IP address which acts as a proxy, they block it and no clients can
+use this proxy. This is an attempt to prevent such a situation.
 
 Oneliners to generate such secrets:
 
