@@ -138,13 +138,11 @@ var (
 	adtag  = app.Arg("adtag", "ADTag of the proxy.").HexBytes()
 )
 
-func init() {
+func main() { // nolint: gocyclo
 	rand.Seed(time.Now().UTC().UnixNano())
 	app.Version(version)
 	app.HelpFlag.Short('h')
-}
 
-func main() { // nolint: gocyclo
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
 	err := setRLimit()

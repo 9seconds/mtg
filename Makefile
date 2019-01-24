@@ -4,7 +4,7 @@ APP_NAME     := $(IMAGE_NAME)
 
 CC_BINARIES  := $(shell bash -c "echo -n $(APP_NAME)-{linux,freebsd,openbsd}-{386,amd64} $(APP_NAME)-linux-{arm,arm64}")
 
-GOLANGCI_LINT_VERSION := v1.11.2
+GOLANGCI_LINT_VERSION := v1.13
 
 VERSION_GO         := $(shell go version)
 VERSION_DATE       := $(shell date -Ru)
@@ -59,10 +59,6 @@ test: vendor
 lint: vendor
 	@$(MOD_OFF) golangci-lint run
 
-.PHONY: critic
-critic: vendor
-	@$(MOD_OFF) gocritic check-project "$(ROOT_DIR)"
-
 .PHONY: clean
 clean:
 	@git clean -xfd && \
@@ -74,13 +70,9 @@ docker:
 	@docker build --pull -t "$(IMAGE_NAME)" "$(ROOT_DIR)"
 
 .PHONY: prepare
-prepare: install-lint install-critic
+prepare: install-lint
 
 .PHONY: install-lint
 install-lint:
 	@curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh \
 		| $(MOD_OFF) bash -s -- -b $(GOPATH)/bin $(GOLANGCI_LINT_VERSION)
-
-.PHONY: install-critic
-install-critic:
-	@$(MOD_OFF) go get -u github.com/go-critic/go-critic/...

@@ -12,7 +12,7 @@ import (
 func startServer(conf *config.Config, prometheusHandler http.Handler) {
 	log := zap.S().Named("stats")
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
 		first, err := json.Marshal(GetStats())
