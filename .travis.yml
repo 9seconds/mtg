@@ -13,7 +13,6 @@ before_script: make prepare
 script:
   - make all
   - make lint
-  - make critic
   - make test
 
 matrix:

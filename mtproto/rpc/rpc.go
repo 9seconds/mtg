@@ -23,11 +23,6 @@ var (
 	ProxyRequestExtraSize = []byte{0x18, 0x00, 0x00, 0x00}
 	ProxyRequestProxyTag  = []byte{0xae, 0x26, 0x1e, 0xdb}
 
-	HandshakeSenderPID []byte
-	HandshakePeerPID   []byte
-)
-
-func init() {
 	HandshakeSenderPID = []byte("IPIPPRPDTIME")
-	HandshakePeerPID = []byte("IPIPPRPDTIME")
-}
+	HandshakePeerPID   = []byte("IPIPPRPDTIME")
+)

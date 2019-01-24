@@ -78,10 +78,10 @@ func TestFrameGenerateValid(t *testing.T) {
 	}
 	for _, test := range validTests {
 		t.Run(strconv.Itoa(int(test)), func(tt *testing.T) {
-			frame := generateFrame(test)
+			frame := generateFrame(test) // nolint: scopelint
 			conType, err := frame.ConnectionType()
-			assert.Nil(t, err)
-			assert.Equal(t, conType, test)
+			assert.Nil(tt, err)
+			assert.Equal(tt, conType, test) // nolint: scopelint
 		})
 	}
 }

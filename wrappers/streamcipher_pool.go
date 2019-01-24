@@ -5,12 +5,10 @@ import (
 	"sync"
 )
 
-var streamCipherBufferPool sync.Pool
-
-func init() {
+var (
 	streamCipherBufferPool = sync.Pool{
 		New: func() interface{} {
 			return &bytes.Buffer{}
 		},
 	}
-}
+)

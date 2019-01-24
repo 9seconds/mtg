@@ -10,3 +10,4 @@ format = "colored-line-number"
 
 [linters]
 enable-all = true
+disable = ["gochecknoglobals"]
