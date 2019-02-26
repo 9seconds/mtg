@@ -21,7 +21,7 @@ func getGlobalIPv6() (net.IP, error) {
 }
 
 func fetchIP(network string) (net.IP, error) {
-	dialer := &net.Dialer{DualStack: false}
+	dialer := &net.Dialer{FallbackDelay: -1}
 	client := &http.Client{
 		Jar: nil,
 		Transport: &http.Transport{
