@@ -113,6 +113,10 @@ head -c 512 /dev/urandom | md5sum | cut -f 1 -d ' '
 
 ## Secure mode
 
+_tl;dr - use secret mode for all new installation of proxy; only clients
+with dd-secrets will be able to connect. This mode abuses attempts to
+DPI MTPROTO traffic._
+
 Secure mode is not the best name and of course, it creates a lot of
 confusion. To explain what it means, we need to tell you some bits on
 dd-secrets.
