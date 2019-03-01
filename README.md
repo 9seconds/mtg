@@ -157,6 +157,11 @@ suspicion that some ISPs start to filter MTPROTO traffic. If they detect
 the IP address which acts as a proxy, they block it and no clients can
 use this proxy. This is an attempt to prevent such a situation.
 
+General rule of thumb: with all new installation of proxies I would
+advise to go with secure mode by default. But please do remember that it
+means that clients, which do not pass dd-prefix to their secrets, will
+not be able to connect. *Secure mode works only with dd-prefixes!*
+
 Oneliners to generate such secrets:
 
 ```console
