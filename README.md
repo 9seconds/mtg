@@ -95,6 +95,11 @@ docker pull nineseconds/mtg:stable
 docker pull nineseconds/mtg:0.10
 ```
 
+# Ansible role
+
+You can find unofficial Ansible role for mtg here: https://github.com/rlex/ansible-role-mtg
+Also, there is another project on Ansible Galaxy: https://galaxy.ansible.com/ivansible/lin_mtproxy
+
 # Configuration
 
 Basically, to run this tool you need to configure as less as possible.
