@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 
+	"github.com/9seconds/mtg/antireplay"
 	"github.com/9seconds/mtg/config"
 	"github.com/9seconds/mtg/mtproto"
 	"github.com/9seconds/mtg/wrappers"
@@ -12,8 +13,9 @@ import (
 // MiddleInit initializes client connection for proxy which has to
 // support promoted channels, connect to Telegram middle proxies etc.
 func MiddleInit(ctx context.Context, cancel context.CancelFunc, socket net.Conn,
-	connID string, conf *config.Config) (wrappers.Wrap, *mtproto.ConnectionOpts, error) {
-	conn, opts, err := DirectInit(ctx, cancel, socket, connID, conf)
+	connID string, antiReplayCache antireplay.Cache,
+	conf *config.Config) (wrappers.Wrap, *mtproto.ConnectionOpts, error) {
+	conn, opts, err := DirectInit(ctx, cancel, socket, connID, antiReplayCache, conf)
 	if err != nil {
 		return nil, nil, err
 	}
