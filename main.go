@@ -134,6 +134,17 @@ var (
 		Envar("MTG_SECURE_ONLY").
 		Bool()
 
+	antiReplayMaxSize = app.Flag("anti-replay-max-size",
+		"Max size of antireplay cache in megabytes.").
+		Envar("MTG_ANTIREPLAY_MAXSIZE").
+		Default("128").
+		Int()
+	antiReplayEvictionTime = app.Flag("anti-replay-eviction-time",
+		"Eviction time period for obfuscated2 handshakes").
+		Envar("MTG_ANTIREPLAY_EVICTIONTIME").
+		Default("168h").
+		Duration()
+
 	secret = app.Arg("secret", "Secret of this proxy.").Required().HexBytes()
 	adtag  = app.Arg("adtag", "ADTag of the proxy.").HexBytes()
 )
@@ -156,6 +167,7 @@ func main() { // nolint: gocyclo
 		*bindPort, *publicIPv4Port, *publicIPv6Port, *statsPort, *statsdPort,
 		*statsdIP, *statsdNetwork, *statsdPrefix, *statsdTagsFormat,
 		*statsdTags, *prometheusPrefix, *secureOnly,
+		*antiReplayMaxSize, *antiReplayEvictionTime,
 		*secret, *adtag,
 	)
 	if err != nil {
@@ -202,7 +214,10 @@ func main() { // nolint: gocyclo
 		panic(err)
 	}
 
-	server := proxy.NewProxy(conf)
+	server, err := proxy.NewProxy(conf)
+	if err != nil {
+		panic(err)
+	}
 	if err := server.Serve(); err != nil {
 		zap.S().Fatalw("Server stopped", "error", err)
 	}

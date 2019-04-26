@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"time"
 
 	"github.com/juju/errors"
 	statsd "gopkg.in/alexcesaro/statsd.v2"
@@ -30,6 +31,9 @@ type Config struct {
 	PublicIPv4 net.IP
 	PublicIPv6 net.IP
 	StatsIP    net.IP
+
+	AntiReplayMaxSize      int
+	AntiReplayEvictionTime time.Duration
 
 	StatsD struct {
 		Addr       net.Addr
@@ -121,6 +125,7 @@ func NewConfig(debug, verbose bool, // nolint: gocyclo
 	statsdIP, statsdNetwork, statsdPrefix, statsdTagsFormat string,
 	statsdTags map[string]string, prometheusPrefix string,
 	secureOnly bool,
+	antiReplayMaxSize int, antiReplayEvictionTime time.Duration,
 	secret, adtag []byte) (*Config, error) {
 	secureMode := secureOnly
 	if bytes.HasPrefix(secret, []byte{0xdd}) && len(secret) == 17 {
@@ -160,22 +165,24 @@ func NewConfig(debug, verbose bool, // nolint: gocyclo
 	}
 
 	conf := &Config{
-		Debug:           debug,
-		Verbose:         verbose,
-		SecureOnly:      secureOnly,
-		BindIP:          bindIP,
-		BindPort:        bindPort,
-		PublicIPv4:      publicIPv4,
-		PublicIPv4Port:  publicIPv4Port,
-		PublicIPv6:      publicIPv6,
-		PublicIPv6Port:  publicIPv6Port,
-		StatsIP:         statsIP,
-		StatsPort:       statsPort,
-		Secret:          secret,
-		AdTag:           adtag,
-		SecureMode:      secureMode,
-		ReadBufferSize:  int(readBufferSize),
-		WriteBufferSize: int(writeBufferSize),
+		Debug:                  debug,
+		Verbose:                verbose,
+		SecureOnly:             secureOnly,
+		BindIP:                 bindIP,
+		BindPort:               bindPort,
+		PublicIPv4:             publicIPv4,
+		PublicIPv4Port:         publicIPv4Port,
+		PublicIPv6:             publicIPv6,
+		PublicIPv6Port:         publicIPv6Port,
+		StatsIP:                statsIP,
+		StatsPort:              statsPort,
+		Secret:                 secret,
+		AdTag:                  adtag,
+		SecureMode:             secureMode,
+		ReadBufferSize:         int(readBufferSize),
+		WriteBufferSize:        int(writeBufferSize),
+		AntiReplayMaxSize:      antiReplayMaxSize,
+		AntiReplayEvictionTime: antiReplayEvictionTime,
 	}
 	conf.Prometheus.Prefix = prometheusPrefix
 

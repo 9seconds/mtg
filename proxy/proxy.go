@@ -10,6 +10,7 @@ import (
 	"github.com/juju/errors"
 	"go.uber.org/zap"
 
+	"github.com/9seconds/mtg/antireplay"
 	"github.com/9seconds/mtg/client"
 	"github.com/9seconds/mtg/config"
 	"github.com/9seconds/mtg/mtproto"
@@ -20,9 +21,10 @@ import (
 
 // Proxy is a core of this program.
 type Proxy struct {
-	clientInit client.Init
-	tg         telegram.Telegram
-	conf       *config.Config
+	antiReplayCache antireplay.Cache
+	clientInit      client.Init
+	tg              telegram.Telegram
+	conf            *config.Config
 }
 
 // Serve runs TCP proxy server.
@@ -58,7 +60,7 @@ func (p *Proxy) accept(conn net.Conn) {
 
 	log.Infow("Client connected", "addr", conn.RemoteAddr())
 
-	clientConn, opts, err := p.clientInit(ctx, cancel, conn, connID, p.conf)
+	clientConn, opts, err := p.clientInit(ctx, cancel, conn, connID, p.antiReplayCache, p.conf)
 	if err != nil {
 		log.Errorw("Cannot initialize client connection", "error", err)
 		return
@@ -150,9 +152,14 @@ func (p *Proxy) directPipe(src wrappers.StreamReadCloser, dst io.Writer, wait *s
 }
 
 // NewProxy returns new proxy instance.
-func NewProxy(conf *config.Config) *Proxy {
+func NewProxy(conf *config.Config) (*Proxy, error) {
 	var clientInit client.Init
 	var tg telegram.Telegram
+
+	cache, err := antireplay.NewCache(conf)
+	if err != nil {
+		return nil, errors.Annotate(err, "Cannot make proxy")
+	}
 
 	if conf.UseMiddleProxy() {
 		clientInit = client.MiddleInit
@@ -163,8 +170,9 @@ func NewProxy(conf *config.Config) *Proxy {
 	}
 
 	return &Proxy{
-		conf:       conf,
-		clientInit: clientInit,
-		tg:         tg,
-	}
+		antiReplayCache: cache,
+		conf:            conf,
+		clientInit:      clientInit,
+		tg:              tg,
+	}, nil
 }

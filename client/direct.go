@@ -7,6 +7,7 @@ import (
 
 	"github.com/juju/errors"
 
+	"github.com/9seconds/mtg/antireplay"
 	"github.com/9seconds/mtg/config"
 	"github.com/9seconds/mtg/mtproto"
 	"github.com/9seconds/mtg/obfuscated2"
@@ -18,7 +19,8 @@ const handshakeTimeout = 10 * time.Second
 // DirectInit initializes client connection for proxy which connects to
 // Telegram directly.
 func DirectInit(ctx context.Context, cancel context.CancelFunc, socket net.Conn,
-	connID string, conf *config.Config) (wrappers.Wrap, *mtproto.ConnectionOpts, error) {
+	connID string, antiReplayCache antireplay.Cache,
+	conf *config.Config) (wrappers.Wrap, *mtproto.ConnectionOpts, error) {
 	tcpSocket := socket.(*net.TCPConn)
 	if err := tcpSocket.SetNoDelay(false); err != nil {
 		return nil, nil, errors.Annotate(err, "Cannot disable NO_DELAY to client socket")
@@ -42,6 +44,12 @@ func DirectInit(ctx context.Context, cancel context.CancelFunc, socket net.Conn,
 	if err != nil {
 		return nil, nil, errors.Annotate(err, "Cannot parse obfuscated frame")
 	}
+
+	if antiReplayCache.Has([]byte(frame)) {
+		return nil, nil, errors.New("Replay attack is detected")
+	}
+	antiReplayCache.Add([]byte(frame))
+
 	connOpts.ConnectionProto = mtproto.ConnectionProtocolAny
 	connOpts.ClientAddr = conn.RemoteAddr()
 

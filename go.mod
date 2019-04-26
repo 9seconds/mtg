@@ -3,8 +3,11 @@ module github.com/9seconds/mtg
 replace github.com/golang/lint => github.com/golang/lint v0.0.0-20190227174305-8f45f776aaf1
 
 require (
+	github.com/OneOfOne/xxhash v1.2.5 // indirect
+	github.com/allegro/bigcache v1.2.0
 	github.com/beevik/ntp v0.2.0
 	github.com/beorn7/perks v1.0.0 // indirect
+	github.com/cespare/xxhash v1.1.0
 	github.com/dustin/go-humanize v1.0.0
 	github.com/gofrs/uuid v3.2.0+incompatible
 	github.com/golang/protobuf v1.3.1 // indirect
@@ -17,6 +20,7 @@ require (
 	github.com/prometheus/client_model v0.0.0-20190129233127-fd36f4220a90 // indirect
 	github.com/prometheus/common v0.3.0 // indirect
 	github.com/prometheus/procfs v0.0.0-20190425082905-87a4384529e0 // indirect
+	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/stretchr/testify v1.3.0
 	go.uber.org/atomic v1.3.2 // indirect
 	go.uber.org/multierr v1.1.0 // indirect
