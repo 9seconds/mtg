@@ -6,26 +6,22 @@ require (
 	github.com/OneOfOne/xxhash v1.2.5 // indirect
 	github.com/allegro/bigcache v1.2.0
 	github.com/beevik/ntp v0.2.0
-	github.com/beorn7/perks v1.0.0 // indirect
 	github.com/cespare/xxhash v1.1.0
 	github.com/dustin/go-humanize v1.0.0
 	github.com/gofrs/uuid v3.2.0+incompatible
-	github.com/golang/protobuf v1.3.1 // indirect
 	github.com/juju/errors v0.0.0-20190207033735-e65537c515d7
-	github.com/juju/loggo v0.0.0-20190212223446-d976af380377 // indirect
-	github.com/juju/testing v0.0.0-20190418112600-6570bd8f8541 // indirect
+	github.com/juju/loggo v0.0.0-20190526231331-6e530bcce5d8 // indirect
+	github.com/juju/testing v0.0.0-20190429233213-dfc56b8c09fc // indirect
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/pkg/errors v0.8.1 // indirect
-	github.com/prometheus/client_golang v0.9.3-0.20190127221311-3c4408c8b829
-	github.com/prometheus/client_model v0.0.0-20190129233127-fd36f4220a90 // indirect
-	github.com/prometheus/common v0.3.0 // indirect
-	github.com/prometheus/procfs v0.0.0-20190425082905-87a4384529e0 // indirect
+	github.com/prometheus/client_golang v0.9.4
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/stretchr/testify v1.3.0
-	go.uber.org/atomic v1.3.2 // indirect
+	go.uber.org/atomic v1.4.0 // indirect
 	go.uber.org/multierr v1.1.0 // indirect
-	go.uber.org/zap v1.9.1
-	golang.org/x/net v0.0.0-20190424112056-4829fb13d2c6 // indirect
+	go.uber.org/zap v1.10.0
+	golang.org/x/net v0.0.0-20190607181551-461777fb6f67 // indirect
+	golang.org/x/sys v0.0.0-20190610200419-93c9922d18ae // indirect
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 	gopkg.in/alexcesaro/statsd.v2 v2.0.0
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
