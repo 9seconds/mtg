@@ -8,7 +8,7 @@ import (
 )
 
 func Set() (err error) {
-	rLimit := unix.RLimit{}
+	rLimit := unix.Rlimit{}
 	err = unix.Getrlimit(unix.RLIMIT_NOFILE, &rLimit)
 	if err != nil {
 		err = errors.Annotate(err, "Cannot get rlimit")
