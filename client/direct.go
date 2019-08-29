@@ -45,10 +45,12 @@ func DirectInit(ctx context.Context, cancel context.CancelFunc, socket net.Conn,
 		return nil, nil, errors.Annotate(err, "Cannot parse obfuscated frame")
 	}
 
-	if antiReplayCache.Has([]byte(frame)) {
+	var replayPart = []byte(frame)
+
+	if antiReplayCache.Has(replayPart[4:60]) {
 		return nil, nil, errors.New("Replay attack is detected")
 	}
-	antiReplayCache.Add([]byte(frame))
+	antiReplayCache.Add(replayPart[4:60])
 
 	connOpts.ConnectionProto = mtproto.ConnectionProtocolAny
 	connOpts.ClientAddr = conn.RemoteAddr()
