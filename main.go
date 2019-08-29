@@ -6,17 +6,16 @@ import (
 	"io"
 	"math/rand"
 	"os"
-	"syscall"
 	"time"
 
-	"github.com/juju/errors"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
+	"gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/9seconds/mtg/config"
 	"github.com/9seconds/mtg/ntp"
 	"github.com/9seconds/mtg/proxy"
+	"github.com/9seconds/mtg/rlimit"
 	"github.com/9seconds/mtg/stats"
 )
 
@@ -156,7 +155,7 @@ func main() { // nolint: gocyclo
 
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
-	err := setRLimit()
+	err := rlimit.Set()
 	if err != nil {
 		usage(err.Error())
 	}
@@ -221,23 +220,6 @@ func main() { // nolint: gocyclo
 	if err := server.Serve(); err != nil {
 		zap.S().Fatalw("Server stopped", "error", err)
 	}
-}
-
-func setRLimit() (err error) {
-	rLimit := syscall.Rlimit{}
-	err = syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
-	if err != nil {
-		err = errors.Annotate(err, "Cannot get rlimit")
-		return
-	}
-	rLimit.Cur = rLimit.Max
-
-	err = syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit)
-	if err != nil {
-		err = errors.Annotate(err, "Cannot set rlimit")
-	}
-
-	return
 }
 
 func printURLs(data interface{}) {
