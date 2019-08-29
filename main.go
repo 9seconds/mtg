@@ -1,23 +1,16 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	"io"
 	"math/rand"
 	"os"
 	"syscall"
 	"time"
 
 	"github.com/juju/errors"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
-	"github.com/9seconds/mtg/config"
-	"github.com/9seconds/mtg/ntp"
-	"github.com/9seconds/mtg/proxy"
-	"github.com/9seconds/mtg/stats"
+	"github.com/9seconds/mtg/newcli"
+	"github.com/9seconds/mtg/newconfig"
 )
 
 var version = "dev" // this has to be set by build ld flags
@@ -25,201 +18,172 @@ var version = "dev" // this has to be set by build ld flags
 var (
 	app = kingpin.New("mtg", "Simple MTPROTO proxy.")
 
-	debug = app.Flag("debug",
+	generateSecretCommand = app.Command("generate-secret",
+		"Generate new secret")
+	generateSecretType = generateSecretCommand.Arg("type",
+		"A type of secret to generate. Valid options are 'simple', 'secured' and 'tls'").
+		Required().
+		Enum("simple", "secured", "tls")
+
+	proxyCommand = app.Command("proxy",
+		"Run new proxy instance")
+	proxyDebug = proxyCommand.Flag("debug",
 		"Run in debug mode.").
 		Short('d').
 		Envar("MTG_DEBUG").
 		Bool()
-	verbose = app.Flag("verbose",
+	proxyVerbose = proxyCommand.Flag("verbose",
 		"Run in verbose mode.").
 		Short('v').
 		Envar("MTG_VERBOSE").
 		Bool()
-
-	bindIP = app.Flag("bind-ip",
+	proxyBindIP = proxyCommand.Flag("bind-ip",
 		"Which IP to bind to.").
 		Short('b').
 		Envar("MTG_IP").
 		Default("127.0.0.1").
 		IP()
-	bindPort = app.Flag("bind-port",
+	proxyBindPort = proxyCommand.Flag("bind-port",
 		"Which port to bind to.").
 		Short('p').
 		Envar("MTG_PORT").
 		Default("3128").
 		Uint16()
-
-	publicIPv4 = app.Flag("public-ipv4",
+	proxyPublicIPv4 = proxyCommand.Flag("public-ipv4",
 		"Which IPv4 address is public.").
 		Short('4').
 		Envar("MTG_IPV4").
 		IP()
-	publicIPv4Port = app.Flag("public-ipv4-port",
+	proxyPublicIPv4Port = proxyCommand.Flag("public-ipv4-port",
 		"Which IPv4 port is public. Default is 'bind-port' value.").
 		Envar("MTG_IPV4_PORT").
 		Uint16()
-
-	publicIPv6 = app.Flag("public-ipv6",
+	proxyPublicIPv6 = proxyCommand.Flag("public-ipv6",
 		"Which IPv6 address is public.").
 		Short('6').
 		Envar("MTG_IPV6").
 		IP()
-	publicIPv6Port = app.Flag("public-ipv6-port",
+	proxyPublicIPv6Port = proxyCommand.Flag("public-ipv6-port",
 		"Which IPv6 port is public. Default is 'bind-port' value.").
 		Envar("MTG_IPV6_PORT").
 		Uint16()
-
-	statsIP = app.Flag("stats-ip",
+	proxyStatsIP = proxyCommand.Flag("stats-ip",
 		"Which IP bind stats server to.").
 		Short('t').
 		Envar("MTG_STATS_IP").
 		Default("127.0.0.1").
 		IP()
-	statsPort = app.Flag("stats-port",
+	proxyStatsPort = proxyCommand.Flag("stats-port",
 		"Which port bind stats to.").
 		Short('q').
 		Envar("MTG_STATS_PORT").
 		Default("3129").
 		Uint16()
-
-	statsdIP = app.Flag("statsd-ip",
+	proxyStatsdIP = proxyCommand.Flag("statsd-ip",
 		"Which IP should we use for working with statsd.").
 		Envar("MTG_STATSD_IP").
-		String()
-	statsdPort = app.Flag("statsd-port",
+		IP()
+	proxyStatsdPort = proxyCommand.Flag("statsd-port",
 		"Which port should we use for working with statsd.").
 		Envar("MTG_STATSD_PORT").
 		Default("8125").
 		Uint16()
-	statsdNetwork = app.Flag("statsd-network",
+	proxyStatsdNetwork = proxyCommand.Flag("statsd-network",
 		"Which network is used to work with statsd. Only 'tcp' and 'udp' are supported.").
 		Envar("MTG_STATSD_NETWORK").
 		Default("udp").
-		String()
-	statsdPrefix = app.Flag("statsd-prefix",
+		Enum("udp", "tcp")
+	proxyStatsdPrefix = proxyCommand.Flag("statsd-prefix",
 		"Which bucket prefix should we use for sending stats to statsd.").
 		Envar("MTG_STATSD_PREFIX").
 		Default("mtg").
 		String()
-	statsdTagsFormat = app.Flag("statsd-tags-format",
+	proxyStatsdTagsFormat = proxyCommand.Flag("statsd-tags-format",
 		"Which tag format should we use to send stats metrics. Valid options are 'datadog' and 'influxdb'.").
 		Envar("MTG_STATSD_TAGS_FORMAT").
-		String()
-	statsdTags = app.Flag("statsd-tags",
+		Default("influxdb").
+		Enum("datadog", "influxdb")
+	proxyStatsdTags = proxyCommand.Flag("statsd-tags",
 		"Tags to use for working with statsd (specified as 'key=value').").
 		Envar("MTG_STATSD_TAGS").
 		StringMap()
-
-	prometheusPrefix = app.Flag("prometheus-prefix",
+	proxyPrometheusPrefix = proxyCommand.Flag("prometheus-prefix",
 		"Which namespace to use to send stats to Prometheus.").
 		Envar("MTG_PROMETHEUS_PREFIX").
 		Default("mtg").
 		String()
-
-	writeBufferSize = app.Flag("write-buffer",
+	proxyWriteBufferSize = proxyCommand.Flag("write-buffer",
 		"Write buffer size in bytes. You can think about it as a buffer from client to Telegram.").
 		Short('w').
 		Envar("MTG_BUFFER_WRITE").
 		Default("65536").
 		Uint32()
-	readBufferSize = app.Flag("read-buffer",
+	proxyReadBufferSize = proxyCommand.Flag("read-buffer",
 		"Read buffer size in bytes. You can think about it as a buffer from Telegram to client.").
 		Short('r').
 		Envar("MTG_BUFFER_READ").
 		Default("131072").
 		Uint32()
-	secureOnly = app.Flag("secure-only",
-		"Support clients with dd-secrets only.").
-		Short('s').
-		Envar("MTG_SECURE_ONLY").
-		Bool()
-
-	antiReplayMaxSize = app.Flag("anti-replay-max-size",
+	proxyAntiReplayMaxSize = proxyCommand.Flag("anti-replay-max-size",
 		"Max size of antireplay cache in megabytes.").
 		Envar("MTG_ANTIREPLAY_MAXSIZE").
 		Default("128").
 		Int()
-	antiReplayEvictionTime = app.Flag("anti-replay-eviction-time",
+	proxyAntiReplayEvictionTime = proxyCommand.Flag("anti-replay-eviction-time",
 		"Eviction time period for obfuscated2 handshakes").
 		Envar("MTG_ANTIREPLAY_EVICTIONTIME").
 		Default("168h").
 		Duration()
-
-	secret = app.Arg("secret", "Secret of this proxy.").Required().HexBytes()
-	adtag  = app.Arg("adtag", "ADTag of the proxy.").HexBytes()
+	proxySecret = proxyCommand.Arg("secret", "Secret of this proxy.").Required().HexBytes()
+	proxyAdtag  = proxyCommand.Arg("adtag", "ADTag of the proxy.").HexBytes()
 )
 
-func main() { // nolint: gocyclo
+func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
 	app.Version(version)
 	app.HelpFlag.Short('h')
 
-	kingpin.MustParse(app.Parse(os.Args[1:]))
-
-	err := setRLimit()
-	if err != nil {
-		usage(err.Error())
+	if err := setRLimit(); err != nil {
+		newcli.Fatal(err.Error())
 	}
 
-	conf, err := config.NewConfig(*debug, *verbose,
-		*writeBufferSize, *readBufferSize,
-		*bindIP, *publicIPv4, *publicIPv6, *statsIP,
-		*bindPort, *publicIPv4Port, *publicIPv6Port, *statsPort, *statsdPort,
-		*statsdIP, *statsdNetwork, *statsdPrefix, *statsdTagsFormat,
-		*statsdTags, *prometheusPrefix, *secureOnly,
-		*antiReplayMaxSize, *antiReplayEvictionTime,
-		*secret, *adtag,
-	)
-	if err != nil {
-		usage(err.Error())
-	}
+	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
+	case generateSecretCommand.FullCommand():
+		newcli.Generate(*generateSecretType)
 
-	atom := zap.NewAtomicLevel()
-	switch {
-	case conf.Debug:
-		atom.SetLevel(zapcore.DebugLevel)
-	case conf.Verbose:
-		atom.SetLevel(zapcore.InfoLevel)
-	default:
-		atom.SetLevel(zapcore.ErrorLevel)
-	}
-	encoderCfg := zap.NewProductionEncoderConfig()
-	logger := zap.New(zapcore.NewCore(
-		zapcore.NewJSONEncoder(encoderCfg),
-		zapcore.Lock(os.Stderr),
-		atom,
-	))
-	zap.ReplaceGlobals(logger)
-	defer logger.Sync() // nolint: errcheck
-
-	printURLs(conf.GetURLs())
-	zap.S().Debugw("Configuration", "config", conf)
-
-	if conf.UseMiddleProxy() {
-		zap.S().Infow("Use middle proxy connection to Telegram")
-		if diff, err := ntp.Fetch(); err != nil {
-			zap.S().Warnw("Could not fetch time data from NTP")
-		} else {
-			if diff >= time.Second {
-				usage(fmt.Sprintf("You choose to use middle proxy but your clock drift (%s) "+
-					"is bigger than 1 second. Please, sync your time", diff))
-			}
-			go ntp.AutoUpdate()
+	case proxyCommand.FullCommand():
+		err := newconfig.Init(
+			newconfig.ConfigOpt{Option: newconfig.OptionTypeDebug, Value: *proxyDebug},
+			newconfig.ConfigOpt{Option: newconfig.OptionTypeVerbose, Value: *proxyVerbose},
+			newconfig.ConfigOpt{Option: newconfig.OptionTypeBindIP, Value: *proxyBindIP},
+			newconfig.ConfigOpt{Option: newconfig.OptionTypeBindPort, Value: *proxyBindPort},
+			newconfig.ConfigOpt{Option: newconfig.OptionTypePublicIPv4, Value: *proxyPublicIPv4},
+			newconfig.ConfigOpt{Option: newconfig.OptionTypePublicIPv4Port, Value: *proxyPublicIPv4Port},
+			newconfig.ConfigOpt{Option: newconfig.OptionTypePublicIPv6, Value: *proxyPublicIPv6},
+			newconfig.ConfigOpt{Option: newconfig.OptionTypePublicIPv6Port, Value: *proxyPublicIPv6Port},
+			newconfig.ConfigOpt{Option: newconfig.OptionTypeStatsIP, Value: *proxyStatsIP},
+			newconfig.ConfigOpt{Option: newconfig.OptionTypeStatsPort, Value: *proxyStatsPort},
+			newconfig.ConfigOpt{Option: newconfig.OptionTypeStatsdIP, Value: *proxyStatsdIP},
+			newconfig.ConfigOpt{Option: newconfig.OptionTypeStatsdPort, Value: *proxyStatsdPort},
+			newconfig.ConfigOpt{Option: newconfig.OptionTypeStatsdNetwork, Value: *proxyStatsdNetwork},
+			newconfig.ConfigOpt{Option: newconfig.OptionTypeStatsdPrefix, Value: *proxyStatsdPrefix},
+			newconfig.ConfigOpt{Option: newconfig.OptionTypeStatsdTagsFormat, Value: *proxyStatsdTagsFormat},
+			newconfig.ConfigOpt{Option: newconfig.OptionTypeStatsdTags, Value: *proxyStatsdTags},
+			newconfig.ConfigOpt{Option: newconfig.OptionTypePrometheusPrefix, Value: *proxyPrometheusPrefix},
+			newconfig.ConfigOpt{Option: newconfig.OptionTypeWriteBufferSize, Value: *proxyWriteBufferSize},
+			newconfig.ConfigOpt{Option: newconfig.OptionTypeReadBufferSize, Value: *proxyReadBufferSize},
+			newconfig.ConfigOpt{Option: newconfig.OptionTypeAntiReplayMaxSize, Value: *proxyAntiReplayMaxSize},
+			newconfig.ConfigOpt{Option: newconfig.OptionTypeAntiReplayEvictionTime, Value: *proxyAntiReplayEvictionTime},
+			newconfig.ConfigOpt{Option: newconfig.OptionTypeSecret, Value: *proxySecret},
+			newconfig.ConfigOpt{Option: newconfig.OptionTypeAdtag, Value: *proxyAdtag},
+		)
+		if err != nil {
+			newcli.Fatal(err.Error())
 		}
-	} else {
-		zap.S().Infow("Use direct connection to Telegram")
-	}
 
-	if err := stats.Init(conf); err != nil {
-		panic(err)
-	}
-
-	server, err := proxy.NewProxy(conf)
-	if err != nil {
-		panic(err)
-	}
-	if err := server.Serve(); err != nil {
-		zap.S().Fatalw("Server stopped", "error", err)
+		if err := newcli.Proxy(); err != nil {
+			newcli.Fatal(err.Error())
+		}
 	}
 }
 
@@ -238,20 +202,4 @@ func setRLimit() (err error) {
 	}
 
 	return
-}
-
-func printURLs(data interface{}) {
-	encoder := json.NewEncoder(os.Stdout)
-	encoder.SetEscapeHTML(false)
-	encoder.SetIndent("", "  ")
-
-	err := encoder.Encode(data)
-	if err != nil {
-		panic(err)
-	}
-}
-
-func usage(msg string) {
-	io.WriteString(os.Stderr, msg+"\n") // nolint: errcheck, gosec
-	os.Exit(1)
 }

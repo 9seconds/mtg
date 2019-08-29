@@ -1,4 +1,4 @@
-package config2
+package newconfig
 
 import (
 	"context"
@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/juju/errors"
-	"go.uber.org/zap"
 )
 
 const (
@@ -18,27 +17,23 @@ const (
 	ifconfigTimeout = 10 * time.Second
 )
 
-func getGlobalIPv4(ctx context.Context, cancel context.CancelFunc) {
-	ip, err := fetchIP(ctx, "tcp4")
+func getGlobalIPv4() (net.IP, error) {
+	ip, err := fetchIP("tcp4")
 	if err != nil || ip.To4() == nil {
-		cancel()
-		zap.S().Errorw("Cannot find public ipv4 address", "error", err)
-		return
+		return nil, errors.Annotate(err, "Cannot find public ipv4 address")
 	}
-	C.PublicIPv4Addr.IP = ip
+	return ip, nil
 }
 
-func getGlobalIPv6(ctx context.Context, cancel context.CancelFunc) {
-	ip, err := fetchIP(ctx, "tcp6")
+func getGlobalIPv6() (net.IP, error) {
+	ip, err := fetchIP("tcp6")
 	if err != nil || ip.To4() != nil {
-		cancel()
-		zap.S().Errorw("Cannot find public ipv6 address", "error", err)
-		return
+		return nil, errors.Annotate(err, "Cannot find public ipv6 address")
 	}
-	C.PublicIPv6Addr.IP = ip
+	return ip, nil
 }
 
-func fetchIP(ctx context.Context, network string) (net.IP, error) {
+func fetchIP(network string) (net.IP, error) {
 	dialer := &net.Dialer{FallbackDelay: -1}
 	client := &http.Client{
 		Jar:     nil,
@@ -50,14 +45,9 @@ func fetchIP(ctx context.Context, network string) (net.IP, error) {
 		},
 	}
 
-	req, err := http.NewRequest("GET", ifconfigAddress, nil)
+	resp, err := client.Get(ifconfigAddress)
 	if err != nil {
-		panic(err)
-	}
-
-	resp, err := client.Do(req.WithContext(ctx))
-	if err != nil {
-		if resp.Body != nil {
+		if resp != nil {
 			io.Copy(ioutil.Discard, resp.Body) // nolint: errcheck
 		}
 		return nil, errors.Annotate(err, "Cannot perform a request")

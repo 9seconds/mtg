@@ -1,4 +1,4 @@
-package config2
+package newconfig
 
 import (
 	"encoding/hex"
@@ -20,12 +20,11 @@ type IPURLs struct {
 
 func GetURLs() (urls IPURLs) {
 	secret := ""
-	switch C.SecretType {
-	case SecretTypeMain, SecretTypeSecured:
+	switch C.SecretMode {
+	case SecretModeSimple:
 		secret = hex.EncodeToString(C.Secret)
-		if C.SecureOnly {
-			secret = "dd" + secret
-		}
+	case SecretModeSecured:
+		secret = "dd" + hex.EncodeToString(C.Secret)
 	}
 
 	urls.IPv4 = makeURLs(&C.PublicIPv4Addr, secret)

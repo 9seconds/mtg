@@ -11,7 +11,7 @@ import (
 
 const autoUpdatePeriod = time.Minute
 
-var ntpEndpoints = []string{
+var ntpEndpoints = [...]string{
 	"0.pool.ntp.org",
 	"1.pool.ntp.org",
 	"2.pool.ntp.org",
