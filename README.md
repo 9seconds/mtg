@@ -251,13 +251,13 @@ This tool will listen on port 3128 by default with the given secret.
 # One-line runner
 
 ```console
-docker run --name mtg --restart=unless-stopped -p 3128:3128 -p 3129:3129 -d nineseconds/mtg:stable $(openssl rand -hex 16)
+docker run --name mtg --restart=unless-stopped -p 3128:3128 -p 127.0.0.1:3129:3129 -d nineseconds/mtg:stable $(openssl rand -hex 16)
 ```
 
 or in secret mode:
 
 ```console
-docker run --name mtg --restart=unless-stopped -p 3128:3128 -p 3129:3129 -d nineseconds/mtg:stable dd$(openssl rand -hex 16)
+docker run --name mtg --restart=unless-stopped -p 3128:3128 -p 127.0.0.1:3129:3129 -d nineseconds/mtg:stable dd$(openssl rand -hex 16)
 ```
 
 You will have this tool up and running on port 3128. Now curl
