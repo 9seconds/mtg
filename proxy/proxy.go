@@ -20,17 +20,25 @@ const directPipeBufferSize = 1024 * 1024
 
 type Proxy struct {
 	Logger                *zap.SugaredLogger
+	Context               context.Context
 	ClientProtocolMaker   protocol.ClientProtocolMaker
 	TelegramProtocolMaker protocol.TelegramProtocolMaker
 	TelegramDialer        telegram.Telegram
 }
 
 func (p *Proxy) Serve(listener net.Listener) {
+	doneChan := p.Context.Done()
+
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			p.Logger.Errorw("Cannot allocate incoming connection", "error", err)
-			continue
+			select {
+			case <-doneChan:
+				return
+			default:
+				p.Logger.Errorw("Cannot allocate incoming connection", "error", err)
+				continue
+			}
 		}
 		go p.accept(conn)
 	}
@@ -53,7 +61,7 @@ func (p *Proxy) accept(conn net.Conn) {
 		return
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(p.Context)
 	defer cancel()
 
 	wrappedConn := wrappers.NewClientConn(ctx, cancel, conn, connID)

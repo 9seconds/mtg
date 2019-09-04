@@ -2,6 +2,7 @@ package config
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net"
 	"strconv"
@@ -140,14 +141,14 @@ func (c Config) String() string {
 	return string(data)
 }
 
-type ConfigOpt struct {
+type Opt struct {
 	Option OptionType
 	Value  interface{}
 }
 
 var C = Config{}
 
-func Init(options ...ConfigOpt) error { // nolint: gocyclo
+func Init(options ...Opt) error { // nolint: gocyclo
 	for _, opt := range options {
 		switch opt.Option {
 		case OptionTypeDebug:
@@ -222,7 +223,7 @@ func Init(options ...ConfigOpt) error { // nolint: gocyclo
 	return nil
 }
 
-func InitPublicAddress() error {
+func InitPublicAddress(ctx context.Context) error {
 	if C.PublicIPv4Addr.Port == 0 {
 		C.PublicIPv4Addr.Port = C.ListenAddr.Port
 	}
@@ -232,7 +233,7 @@ func InitPublicAddress() error {
 
 	foundAddress := C.PublicIPv4Addr.IP != nil || C.PublicIPv6Addr.IP != nil
 	if C.PublicIPv4Addr.IP == nil {
-		ip, err := getGlobalIPv4()
+		ip, err := getGlobalIPv4(ctx)
 		if err != nil {
 			zap.S().Warnw("Cannot resolve public address", "error", err)
 		} else {
@@ -241,7 +242,7 @@ func InitPublicAddress() error {
 		}
 	}
 	if C.PublicIPv6Addr.IP == nil {
-		ip, err := getGlobalIPv6()
+		ip, err := getGlobalIPv6(ctx)
 		if err != nil {
 			zap.S().Warnw("Cannot resolve public address", "error", err)
 		} else {

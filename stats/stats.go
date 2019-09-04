@@ -1,6 +1,7 @@
 package stats
 
 import (
+	"context"
 	"net"
 	"net/http"
 
@@ -59,7 +60,7 @@ func (m multiStats) AntiReplayDetected() {
 
 var S Stats
 
-func Init() error {
+func Init(ctx context.Context) error {
 	mux := http.NewServeMux()
 
 	instanceJSON := newStatsJSON(mux)
@@ -86,6 +87,10 @@ func Init() error {
 		Handler: mux,
 	}
 	go srv.Serve(listener) // nolint: errcheck
+	go func() {
+		<-ctx.Done()
+		srv.Shutdown(context.Background()) // nolint: errcheck
+	}()
 
 	S = multiStats(stats)
 

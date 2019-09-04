@@ -17,23 +17,23 @@ const (
 	ifconfigTimeout = 10 * time.Second
 )
 
-func getGlobalIPv4() (net.IP, error) {
-	ip, err := fetchIP("tcp4")
+func getGlobalIPv4(ctx context.Context) (net.IP, error) {
+	ip, err := fetchIP(ctx, "tcp4")
 	if err != nil || ip.To4() == nil {
 		return nil, errors.Annotate(err, "Cannot find public ipv4 address")
 	}
 	return ip, nil
 }
 
-func getGlobalIPv6() (net.IP, error) {
-	ip, err := fetchIP("tcp6")
+func getGlobalIPv6(ctx context.Context) (net.IP, error) {
+	ip, err := fetchIP(ctx, "tcp6")
 	if err != nil || ip.To4() != nil {
 		return nil, errors.Annotate(err, "Cannot find public ipv6 address")
 	}
 	return ip, nil
 }
 
-func fetchIP(network string) (net.IP, error) {
+func fetchIP(ctx context.Context, network string) (net.IP, error) {
 	dialer := &net.Dialer{FallbackDelay: -1}
 	client := &http.Client{
 		Jar:     nil,
@@ -45,7 +45,12 @@ func fetchIP(network string) (net.IP, error) {
 		},
 	}
 
-	resp, err := client.Get(ifconfigAddress)
+	req, err := http.NewRequest("GET", ifconfigAddress, nil)
+	if err != nil {
+		return nil, errors.Annotate(err, "Cannot create a request")
+	}
+
+	resp, err := client.Do(req.WithContext(ctx))
 	if err != nil {
 		if resp != nil {
 			io.Copy(ioutil.Discard, resp.Body) // nolint: errcheck

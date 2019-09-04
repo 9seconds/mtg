@@ -15,9 +15,12 @@ import (
 	"github.com/9seconds/mtg/proxy"
 	"github.com/9seconds/mtg/stats"
 	"github.com/9seconds/mtg/telegram"
+	"github.com/9seconds/mtg/utils"
 )
 
 func Proxy() error {
+	ctx := utils.GetSignalContext()
+
 	atom := zap.NewAtomicLevel()
 	switch {
 	case config.C.Debug:
@@ -37,7 +40,7 @@ func Proxy() error {
 	zap.ReplaceGlobals(logger)
 	defer logger.Sync() // nolint: errcheck
 
-	if err := config.InitPublicAddress(); err != nil {
+	if err := config.InitPublicAddress(ctx); err != nil {
 		Fatal(err.Error())
 	}
 	zap.S().Debugw("Configuration", "config", config.C)
@@ -61,16 +64,21 @@ func Proxy() error {
 	if err := antireplay.Init(); err != nil {
 		Fatal(err.Error())
 	}
-	if err := stats.Init(); err != nil {
+	if err := stats.Init(ctx); err != nil {
 		Fatal(err.Error())
 	}
 	proxyListener, err := net.Listen("tcp", config.C.ListenAddr.String())
 	if err != nil {
 		Fatal(err.Error())
 	}
+	go func() {
+		<-ctx.Done()
+		proxyListener.Close()
+	}()
 
 	app := &proxy.Proxy{
-		Logger: zap.S().Named("proxy"),
+		Logger:  zap.S().Named("proxy"),
+		Context: ctx,
 	}
 	if len(config.C.AdTag) == 0 {
 		app.TelegramProtocolMaker = obfuscated2.MakeTelegramProtocol
