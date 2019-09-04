@@ -1,175 +1,93 @@
 package stats
 
 import (
-	"encoding/json"
-	"fmt"
-	"strconv"
-	"time"
+	"net"
+	"net/http"
 
-	humanize "github.com/dustin/go-humanize"
+	"github.com/juju/errors"
 
 	"github.com/9seconds/mtg/config"
-	"github.com/9seconds/mtg/mtproto"
+	"github.com/9seconds/mtg/conntypes"
 )
 
-type uptime time.Time
-
-func (u uptime) MarshalJSON() ([]byte, error) {
-	duration := time.Since(time.Time(u))
-	value := map[string]string{
-		"seconds": strconv.Itoa(int(duration.Seconds())),
-		"human":   humanize.Time(time.Time(u)),
-	}
-
-	return json.Marshal(value)
+type Stats interface {
+	IngressTraffic(int)
+	EgressTraffic(int)
+	ClientConnected(conntypes.ConnectionType, *net.TCPAddr)
+	ClientDisconnected(conntypes.ConnectionType, *net.TCPAddr)
+	Crash()
+	AntiReplayDetected()
 }
 
-type connectionType struct {
-	IPv6 uint32 `json:"ipv6"`
-	IPv4 uint32 `json:"ipv4"`
-}
+type multiStats []Stats
 
-type baseConnections struct {
-	All          connectionType `json:"all"`
-	Abridged     connectionType `json:"abridged"`
-	Intermediate connectionType `json:"intermediate"`
-	Secure       connectionType `json:"secure"`
-}
-
-type connections struct {
-	baseConnections
-}
-
-func (c connections) MarshalJSON() ([]byte, error) {
-	c.All.IPv4 = c.Abridged.IPv4 + c.Intermediate.IPv4 + c.Secure.IPv4
-	c.All.IPv6 = c.Abridged.IPv6 + c.Intermediate.IPv6 + c.Secure.IPv6
-
-	return json.Marshal(c.baseConnections)
-}
-
-type traffic struct {
-	ingress uint64
-	egress  uint64
-}
-
-func (t *traffic) dumpValue(value uint64) map[string]interface{} {
-	return map[string]interface{}{
-		"bytes": value,
-		"human": humanize.Bytes(value),
+func (m multiStats) IngressTraffic(traffic int) {
+	for i := range m {
+		go m[i].IngressTraffic(traffic)
 	}
 }
 
-func (t traffic) MarshalJSON() ([]byte, error) {
-	value := map[string]map[string]interface{}{
-		"ingress": t.dumpValue(t.ingress),
-		"egress":  t.dumpValue(t.egress),
-	}
-
-	return json.Marshal(value)
-}
-
-type speed struct {
-	ingress uint64
-	egress  uint64
-}
-
-func (s *speed) dumpValue(value uint64) map[string]interface{} {
-	return map[string]interface{}{
-		"bytes/s": value,
-		"human":   fmt.Sprintf("%s/s", humanize.Bytes(value)),
+func (m multiStats) EgressTraffic(traffic int) {
+	for i := range m {
+		go m[i].EgressTraffic(traffic)
 	}
 }
 
-func (s speed) MarshalJSON() ([]byte, error) {
-	value := map[string]map[string]interface{}{
-		"ingress": s.dumpValue(s.ingress),
-		"egress":  s.dumpValue(s.egress),
+func (m multiStats) ClientConnected(connectionType conntypes.ConnectionType, addr *net.TCPAddr) {
+	for i := range m {
+		go m[i].ClientConnected(connectionType, addr)
+	}
+}
+
+func (m multiStats) ClientDisconnected(connectionType conntypes.ConnectionType, addr *net.TCPAddr) {
+	for i := range m {
+		go m[i].ClientDisconnected(connectionType, addr)
+	}
+}
+
+func (m multiStats) Crash() {
+	for i := range m {
+		go m[i].Crash()
+	}
+}
+
+func (m multiStats) AntiReplayDetected() {
+	for i := range m {
+		go m[i].AntiReplayDetected()
+	}
+}
+
+var S Stats
+
+func Init() error {
+	mux := http.NewServeMux()
+
+	instanceJSON := newStatsJSON(mux)
+	instancePrometheus, err := newStatsPrometheus(mux)
+	if err != nil {
+		return errors.Annotate(err, "Cannot initialize Prometheus")
 	}
 
-	return json.Marshal(value)
-}
-
-// Stats represents a statistics of the proxy.
-type Stats struct {
-	URLs        config.IPURLs `json:"urls"`
-	Connections connections   `json:"connections"`
-	Traffic     traffic       `json:"traffic"`
-	Speed       speed         `json:"speed"`
-	Uptime      uptime        `json:"uptime"`
-	Crashes     uint32        `json:"crashes"`
-
-	previousTraffic traffic
-}
-
-func (s *Stats) start() {
-	speedChan := time.Tick(time.Second)
-
-	for {
-		select {
-		case <-speedChan:
-			s.handleSpeed()
-		case event := <-trafficChan:
-			s.handleTraffic(event)
-		case event := <-connectionsChan:
-			s.handleConnection(event)
-		case getStatsChan := <-statsChan:
-			s.handleGetStats(getStatsChan)
-		case <-crashesChan:
-			s.handleCrash()
+	stats := []Stats{instanceJSON, instancePrometheus}
+	if config.C.StatsdStats.Addr.IP != nil {
+		instanceStatsd, err := newStatsStatsd()
+		if err != nil {
+			return errors.Annotate(err, "Cannot initialize StatsD")
 		}
-	}
-}
-
-func (s *Stats) handleTraffic(evt trafficData) {
-	if evt.ingress {
-		s.Traffic.ingress += uint64(evt.traffic)
-	} else {
-		s.Traffic.egress += uint64(evt.traffic)
-	}
-}
-
-func (s *Stats) handleSpeed() {
-	s.Speed.ingress = s.Traffic.ingress - s.previousTraffic.ingress
-	s.Speed.egress = s.Traffic.egress - s.previousTraffic.egress
-	s.previousTraffic.ingress = s.Traffic.ingress
-	s.previousTraffic.egress = s.Traffic.egress
-}
-
-func (s *Stats) handleConnection(evt connectionData) {
-	var inc uint32 = 1
-	if !evt.connected {
-		inc = ^uint32(0)
+		stats = append(stats, instanceStatsd)
 	}
 
-	var conn *connectionType
-	switch evt.connectionType {
-	case mtproto.ConnectionTypeAbridged:
-		conn = &s.Connections.Abridged
-	case mtproto.ConnectionTypeSecure:
-		conn = &s.Connections.Secure
-	default:
-		conn = &s.Connections.Intermediate
+	listener, err := net.Listen("tcp", config.C.StatsAddr.String())
+	if err != nil {
+		return errors.Annotate(err, "Cannot initialize stats server")
 	}
 
-	if evt.addr.IP.To4() != nil {
-		conn.IPv4 += inc
-	} else {
-		conn.IPv6 += inc
+	srv := http.Server{
+		Handler: mux,
 	}
-}
+	go srv.Serve(listener) // nolint: errcheck
 
-func (s *Stats) handleGetStats(getStatsChan chan<- Stats) {
-	getStatsChan <- *s
-}
+	S = multiStats(stats)
 
-func (s *Stats) handleCrash() {
-	s.Crashes++
-}
-
-// NewStats creates a new instance of Stats structure.
-func NewStats(conf *config.Config) *Stats {
-	return &Stats{
-		URLs:   conf.GetURLs(),
-		Uptime: uptime(time.Now()),
-	}
+	return nil
 }

@@ -2,36 +2,29 @@ package antireplay
 
 import (
 	"github.com/allegro/bigcache"
-	"github.com/juju/errors"
 
 	"github.com/9seconds/mtg/config"
 )
 
-// Cache defines storage for obfuscated2 handshake frames.
-type Cache struct {
-	cache *bigcache.BigCache
+var cache *bigcache.BigCache
+
+func Add(data []byte) {
+	cache.Set(string(data), nil) // nolint: errcheck
 }
 
-func (a Cache) Add(frame []byte) {
-	a.cache.Set(string(frame), nil) // nolint: errcheck
-}
-
-func (a Cache) Has(frame []byte) bool {
-	_, err := a.cache.Get(string(frame))
-
+func Has(data []byte) bool {
+	_, err := cache.Get(string(data))
 	return err == nil
 }
 
-func NewCache(config *config.Config) (Cache, error) {
-	cache, err := bigcache.NewBigCache(bigcache.Config{
+func Init() error {
+	c, err := bigcache.NewBigCache(bigcache.Config{
 		Shards:           1024,
-		LifeWindow:       config.AntiReplayEvictionTime,
+		LifeWindow:       config.C.AntiReplay.EvictionTime,
 		Hasher:           hasher{},
-		HardMaxCacheSize: config.AntiReplayMaxSize,
+		HardMaxCacheSize: config.C.AntiReplay.MaxSize,
 	})
-	if err != nil {
-		return Cache{}, errors.Annotate(err, "Cannot make cache")
-	}
+	cache = c
 
-	return Cache{cache}, nil
+	return err
 }

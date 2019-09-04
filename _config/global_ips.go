@@ -2,42 +2,28 @@ package config
 
 import (
 	"context"
-	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/juju/errors"
 )
 
-const (
-	ifconfigAddress = "https://ifconfig.co/ip"
-	ifconfigTimeout = 10 * time.Second
-)
+const ifconfigAddress = "https://ifconfig.co/ip"
 
 func getGlobalIPv4() (net.IP, error) {
-	ip, err := fetchIP("tcp4")
-	if err != nil || ip.To4() == nil {
-		return nil, errors.Annotate(err, "Cannot find public ipv4 address")
-	}
-	return ip, nil
+	return fetchIP("tcp4")
 }
 
 func getGlobalIPv6() (net.IP, error) {
-	ip, err := fetchIP("tcp6")
-	if err != nil || ip.To4() != nil {
-		return nil, errors.Annotate(err, "Cannot find public ipv6 address")
-	}
-	return ip, nil
+	return fetchIP("tcp6")
 }
 
 func fetchIP(network string) (net.IP, error) {
 	dialer := &net.Dialer{FallbackDelay: -1}
 	client := &http.Client{
-		Jar:     nil,
-		Timeout: ifconfigTimeout,
+		Jar: nil,
 		Transport: &http.Transport{
 			DialContext: func(ctx context.Context, _, addr string) (net.Conn, error) {
 				return dialer.DialContext(ctx, network, addr)
@@ -47,16 +33,13 @@ func fetchIP(network string) (net.IP, error) {
 
 	resp, err := client.Get(ifconfigAddress)
 	if err != nil {
-		if resp != nil {
-			io.Copy(ioutil.Discard, resp.Body) // nolint: errcheck
-		}
-		return nil, errors.Annotate(err, "Cannot perform a request")
+		return nil, err
 	}
 	defer resp.Body.Close() // nolint: errcheck
 
 	respDataBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, errors.Annotate(err, "Cannot read response body")
+		return nil, err
 	}
 	respData := strings.TrimSpace(string(respDataBytes))
 

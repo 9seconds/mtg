@@ -9,8 +9,8 @@ import (
 	"github.com/juju/errors"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
-	"github.com/9seconds/mtg/newcli"
-	"github.com/9seconds/mtg/newconfig"
+	"github.com/9seconds/mtg/cli"
+	"github.com/9seconds/mtg/config"
 )
 
 var version = "dev" // this has to be set by build ld flags
@@ -144,45 +144,45 @@ func main() {
 	app.HelpFlag.Short('h')
 
 	if err := setRLimit(); err != nil {
-		newcli.Fatal(err.Error())
+		cli.Fatal(err.Error())
 	}
 
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 	case generateSecretCommand.FullCommand():
-		newcli.Generate(*generateSecretType)
+		cli.Generate(*generateSecretType)
 
 	case proxyCommand.FullCommand():
-		err := newconfig.Init(
-			newconfig.ConfigOpt{Option: newconfig.OptionTypeDebug, Value: *proxyDebug},
-			newconfig.ConfigOpt{Option: newconfig.OptionTypeVerbose, Value: *proxyVerbose},
-			newconfig.ConfigOpt{Option: newconfig.OptionTypeBindIP, Value: *proxyBindIP},
-			newconfig.ConfigOpt{Option: newconfig.OptionTypeBindPort, Value: *proxyBindPort},
-			newconfig.ConfigOpt{Option: newconfig.OptionTypePublicIPv4, Value: *proxyPublicIPv4},
-			newconfig.ConfigOpt{Option: newconfig.OptionTypePublicIPv4Port, Value: *proxyPublicIPv4Port},
-			newconfig.ConfigOpt{Option: newconfig.OptionTypePublicIPv6, Value: *proxyPublicIPv6},
-			newconfig.ConfigOpt{Option: newconfig.OptionTypePublicIPv6Port, Value: *proxyPublicIPv6Port},
-			newconfig.ConfigOpt{Option: newconfig.OptionTypeStatsIP, Value: *proxyStatsIP},
-			newconfig.ConfigOpt{Option: newconfig.OptionTypeStatsPort, Value: *proxyStatsPort},
-			newconfig.ConfigOpt{Option: newconfig.OptionTypeStatsdIP, Value: *proxyStatsdIP},
-			newconfig.ConfigOpt{Option: newconfig.OptionTypeStatsdPort, Value: *proxyStatsdPort},
-			newconfig.ConfigOpt{Option: newconfig.OptionTypeStatsdNetwork, Value: *proxyStatsdNetwork},
-			newconfig.ConfigOpt{Option: newconfig.OptionTypeStatsdPrefix, Value: *proxyStatsdPrefix},
-			newconfig.ConfigOpt{Option: newconfig.OptionTypeStatsdTagsFormat, Value: *proxyStatsdTagsFormat},
-			newconfig.ConfigOpt{Option: newconfig.OptionTypeStatsdTags, Value: *proxyStatsdTags},
-			newconfig.ConfigOpt{Option: newconfig.OptionTypePrometheusPrefix, Value: *proxyPrometheusPrefix},
-			newconfig.ConfigOpt{Option: newconfig.OptionTypeWriteBufferSize, Value: *proxyWriteBufferSize},
-			newconfig.ConfigOpt{Option: newconfig.OptionTypeReadBufferSize, Value: *proxyReadBufferSize},
-			newconfig.ConfigOpt{Option: newconfig.OptionTypeAntiReplayMaxSize, Value: *proxyAntiReplayMaxSize},
-			newconfig.ConfigOpt{Option: newconfig.OptionTypeAntiReplayEvictionTime, Value: *proxyAntiReplayEvictionTime},
-			newconfig.ConfigOpt{Option: newconfig.OptionTypeSecret, Value: *proxySecret},
-			newconfig.ConfigOpt{Option: newconfig.OptionTypeAdtag, Value: *proxyAdtag},
+		err := config.Init(
+			config.ConfigOpt{Option: config.OptionTypeDebug, Value: *proxyDebug},
+			config.ConfigOpt{Option: config.OptionTypeVerbose, Value: *proxyVerbose},
+			config.ConfigOpt{Option: config.OptionTypeBindIP, Value: *proxyBindIP},
+			config.ConfigOpt{Option: config.OptionTypeBindPort, Value: *proxyBindPort},
+			config.ConfigOpt{Option: config.OptionTypePublicIPv4, Value: *proxyPublicIPv4},
+			config.ConfigOpt{Option: config.OptionTypePublicIPv4Port, Value: *proxyPublicIPv4Port},
+			config.ConfigOpt{Option: config.OptionTypePublicIPv6, Value: *proxyPublicIPv6},
+			config.ConfigOpt{Option: config.OptionTypePublicIPv6Port, Value: *proxyPublicIPv6Port},
+			config.ConfigOpt{Option: config.OptionTypeStatsIP, Value: *proxyStatsIP},
+			config.ConfigOpt{Option: config.OptionTypeStatsPort, Value: *proxyStatsPort},
+			config.ConfigOpt{Option: config.OptionTypeStatsdIP, Value: *proxyStatsdIP},
+			config.ConfigOpt{Option: config.OptionTypeStatsdPort, Value: *proxyStatsdPort},
+			config.ConfigOpt{Option: config.OptionTypeStatsdNetwork, Value: *proxyStatsdNetwork},
+			config.ConfigOpt{Option: config.OptionTypeStatsdPrefix, Value: *proxyStatsdPrefix},
+			config.ConfigOpt{Option: config.OptionTypeStatsdTagsFormat, Value: *proxyStatsdTagsFormat},
+			config.ConfigOpt{Option: config.OptionTypeStatsdTags, Value: *proxyStatsdTags},
+			config.ConfigOpt{Option: config.OptionTypePrometheusPrefix, Value: *proxyPrometheusPrefix},
+			config.ConfigOpt{Option: config.OptionTypeWriteBufferSize, Value: *proxyWriteBufferSize},
+			config.ConfigOpt{Option: config.OptionTypeReadBufferSize, Value: *proxyReadBufferSize},
+			config.ConfigOpt{Option: config.OptionTypeAntiReplayMaxSize, Value: *proxyAntiReplayMaxSize},
+			config.ConfigOpt{Option: config.OptionTypeAntiReplayEvictionTime, Value: *proxyAntiReplayEvictionTime},
+			config.ConfigOpt{Option: config.OptionTypeSecret, Value: *proxySecret},
+			config.ConfigOpt{Option: config.OptionTypeAdtag, Value: *proxyAdtag},
 		)
 		if err != nil {
-			newcli.Fatal(err.Error())
+			cli.Fatal(err.Error())
 		}
 
-		if err := newcli.Proxy(); err != nil {
-			newcli.Fatal(err.Error())
+		if err := cli.Proxy(); err != nil {
+			cli.Fatal(err.Error())
 		}
 	}
 }
