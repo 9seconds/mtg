@@ -3,14 +3,13 @@ package main
 import (
 	"math/rand"
 	"os"
-	"syscall"
 	"time"
 
-	"github.com/juju/errors"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/9seconds/mtg/cli"
 	"github.com/9seconds/mtg/config"
+	"github.com/9seconds/mtg/utils"
 )
 
 var version = "dev" // this has to be set by build ld flags
@@ -143,7 +142,7 @@ func main() {
 	app.Version(version)
 	app.HelpFlag.Short('h')
 
-	if err := setRLimit(); err != nil {
+	if err := utils.SetLimits(); err != nil {
 		cli.Fatal(err.Error())
 	}
 
@@ -185,21 +184,4 @@ func main() {
 			cli.Fatal(err.Error())
 		}
 	}
-}
-
-func setRLimit() (err error) {
-	rLimit := syscall.Rlimit{}
-	err = syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
-	if err != nil {
-		err = errors.Annotate(err, "Cannot get rlimit")
-		return
-	}
-	rLimit.Cur = rLimit.Max
-
-	err = syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit)
-	if err != nil {
-		err = errors.Annotate(err, "Cannot set rlimit")
-	}
-
-	return
 }
