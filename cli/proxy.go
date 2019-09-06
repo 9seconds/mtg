@@ -41,7 +41,7 @@ func Proxy() error {
 	defer logger.Sync() // nolint: errcheck
 
 	if err := config.InitPublicAddress(ctx); err != nil {
-		Fatal(err.Error())
+		Fatal(err)
 	}
 	zap.S().Debugw("Configuration", "config", config.C)
 
@@ -62,14 +62,14 @@ func Proxy() error {
 	PrintJSONStdout(config.GetURLs())
 
 	if err := antireplay.Init(); err != nil {
-		Fatal(err.Error())
+		Fatal(err)
 	}
 	if err := stats.Init(ctx); err != nil {
-		Fatal(err.Error())
+		Fatal(err)
 	}
 	proxyListener, err := net.Listen("tcp", config.C.ListenAddr.String())
 	if err != nil {
-		Fatal(err.Error())
+		Fatal(err)
 	}
 	go func() {
 		<-ctx.Done()

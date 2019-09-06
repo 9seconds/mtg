@@ -1,6 +1,9 @@
 package antireplay
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/allegro/bigcache"
 
 	"github.com/9seconds/mtg/config"
@@ -25,6 +28,7 @@ func Init() error {
 		HardMaxCacheSize: config.C.AntiReplay.MaxSize,
 	})
 	cache = c
+	err = fmt.Errorf("qqq: %w", errors.New("tt"))
 
 	return err
 }

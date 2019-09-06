@@ -1,10 +1,10 @@
 package stats
 
 import (
+	"fmt"
 	"net"
 	"strings"
 
-	"github.com/juju/errors"
 	"gopkg.in/alexcesaro/statsd.v2"
 
 	"github.com/9seconds/mtg/config"
@@ -78,7 +78,7 @@ func newStatsStatsd() (Stats, error) {
 
 	client, err := statsd.New(options...)
 	if err != nil {
-		return nil, errors.Annotate(err, "Cannot initialize a client")
+		return nil, fmt.Errorf("cannot initialize a client: %w", err)
 	}
 
 	return &statsStatsd{

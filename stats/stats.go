@@ -2,10 +2,9 @@ package stats
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"net/http"
-
-	"github.com/juju/errors"
 
 	"github.com/9seconds/mtg/config"
 	"github.com/9seconds/mtg/conntypes"
@@ -66,21 +65,21 @@ func Init(ctx context.Context) error {
 	instanceJSON := newStatsJSON(mux)
 	instancePrometheus, err := newStatsPrometheus(mux)
 	if err != nil {
-		return errors.Annotate(err, "Cannot initialize Prometheus")
+		return fmt.Errorf("cannot initialize prometheus: %w", err)
 	}
 
 	stats := []Stats{instanceJSON, instancePrometheus}
 	if config.C.StatsdStats.Addr.IP != nil {
 		instanceStatsd, err := newStatsStatsd()
 		if err != nil {
-			return errors.Annotate(err, "Cannot initialize StatsD")
+			return fmt.Errorf("cannot inialize statsd: %w", err)
 		}
 		stats = append(stats, instanceStatsd)
 	}
 
 	listener, err := net.Listen("tcp", config.C.StatsAddr.String())
 	if err != nil {
-		return errors.Annotate(err, "Cannot initialize stats server")
+		return fmt.Errorf("cannot initialize stats server: %w", err)
 	}
 
 	srv := http.Server{

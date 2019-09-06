@@ -4,10 +4,10 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"fmt"
 	"net"
 	"time"
 
-	"github.com/juju/errors"
 	"go.uber.org/zap"
 
 	"github.com/9seconds/mtg/config"
@@ -47,12 +47,12 @@ func (w *wrapperConn) WriteTimeout(p []byte, timeout time.Duration) (int, error)
 	select {
 	case <-w.ctx.Done():
 		w.Close()
-		return 0, errors.Annotate(w.ctx.Err(), "Cannot write because context was closed")
+		return 0, fmt.Errorf("cannot write because context was closed: %w", w.ctx.Err())
 
 	default:
 		if err := w.parent.SetWriteDeadline(time.Now().Add(timeout)); err != nil {
 			w.Close() // nolint: gosec
-			return 0, errors.Annotate(err, "Cannot set write deadline to the socket")
+			return 0, fmt.Errorf("cannot set write deadline to the socket: %w", err)
 		}
 
 		n, err := w.parent.Write(p)
@@ -73,12 +73,12 @@ func (w *wrapperConn) ReadTimeout(p []byte, timeout time.Duration) (int, error) 
 	select {
 	case <-w.ctx.Done():
 		w.Close()
-		return 0, errors.Annotate(w.ctx.Err(), "Cannot read because context was closed")
+		return 0, fmt.Errorf("cannot read because context was closed: %w", w.ctx.Err())
 
 	default:
 		if err := w.parent.SetReadDeadline(time.Now().Add(timeout)); err != nil {
 			w.Close()
-			return 0, errors.Annotate(err, "Cannot set read deadline to the socket")
+			return 0, fmt.Errorf("cannot set read deadline to the socket: %w", err)
 		}
 
 		n, err := w.parent.Read(p)

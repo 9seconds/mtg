@@ -1,10 +1,10 @@
 package stats
 
 import (
+	"fmt"
 	"net"
 	"net/http"
 
-	"github.com/juju/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
@@ -91,16 +91,16 @@ func newStatsPrometheus(mux *http.ServeMux) (Stats, error) {
 	}
 
 	if err := registry.Register(instance.connections); err != nil {
-		return nil, errors.Annotate(err, "Cannot register metrics for connections")
+		return nil, fmt.Errorf("cannot register metrics for connections: %w", err)
 	}
 	if err := registry.Register(instance.traffic); err != nil {
-		return nil, errors.Annotate(err, "Cannot register metrics for traffic")
+		return nil, fmt.Errorf("cannot register metrics for traffic: %w", err)
 	}
 	if err := registry.Register(instance.crashes); err != nil {
-		return nil, errors.Annotate(err, "Cannot register metrics for crashes")
+		return nil, fmt.Errorf("cannot register metrics for crashes: %w", err)
 	}
 	if err := registry.Register(instance.antiReplays); err != nil {
-		return nil, errors.Annotate(err, "Cannot register metrics for anti replays")
+		return nil, fmt.Errorf("cannot register metrics for anti replays: %w", err)
 	}
 
 	handler := promhttp.HandlerFor(registry, promhttp.HandlerOpts{})

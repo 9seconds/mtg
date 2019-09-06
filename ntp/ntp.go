@@ -1,11 +1,11 @@
 package ntp
 
 import (
+	"fmt"
 	"math/rand"
 	"time"
 
 	"github.com/beevik/ntp"
-	"github.com/juju/errors"
 	"go.uber.org/zap"
 )
 
@@ -23,7 +23,7 @@ func Fetch() (time.Duration, error) {
 	url := ntpEndpoints[rand.Intn(len(ntpEndpoints))]
 	resp, err := ntp.Query(url)
 	if err != nil {
-		return 0, errors.Annotatef(err, "Cannot fetch NTP server %s", url)
+		return 0, fmt.Errorf("Cannot fetch NTP server %s: %w", url, err)
 	}
 
 	offsetInt := int64(resp.ClockOffset)

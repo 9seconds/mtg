@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/binary"
+	"errors"
+	"fmt"
 	"io"
 	"time"
-
-	"github.com/juju/errors"
 
 	"github.com/9seconds/mtg/antireplay"
 	"github.com/9seconds/mtg/config"
@@ -26,7 +26,7 @@ type ClientProtocol struct {
 func (c *ClientProtocol) Handshake(socket wrappers.StreamReadWriteCloser) (wrappers.StreamReadWriteCloser, error) {
 	fm, err := c.ReadFrame(socket)
 	if err != nil {
-		return nil, errors.Annotate(err, "Cannot make client handshake")
+		return nil, fmt.Errorf("cannot make a client handshake: %w", err)
 	}
 
 	decHasher := sha256.New()
@@ -76,7 +76,7 @@ func (c *ClientProtocol) Handshake(socket wrappers.StreamReadWriteCloser) (wrapp
 
 func (c *ClientProtocol) ReadFrame(socket wrappers.StreamReader) (fm Frame, err error) {
 	if _, err = io.ReadFull(handshakeReader{socket}, fm.Bytes()); err != nil {
-		err = errors.Annotate(err, "Cannot extract obfuscated2 frame")
+		err = fmt.Errorf("cannot extract obfuscated2 frame: %w", err)
 	}
 	return
 }

@@ -2,8 +2,7 @@ package obfuscated2
 
 import (
 	"crypto/rand"
-
-	"github.com/juju/errors"
+	"fmt"
 
 	"github.com/9seconds/mtg/protocol"
 	"github.com/9seconds/mtg/telegram"
@@ -23,7 +22,7 @@ func (t *TelegramProtocol) Handshake(req *protocol.TelegramRequest) (wrappers.Wr
 		req.ClientProtocol.GetDC(),
 		req.ClientProtocol.GetConnectionProtocol())
 	if err != nil {
-		return nil, errors.Annotate(err, "Cannot dial to Telegram")
+		return nil, fmt.Errorf("cannot dial to telegram: %w", err)
 	}
 	fm := generateFrame(req.ClientProtocol)
 	data := fm.Bytes()
@@ -38,7 +37,7 @@ func (t *TelegramProtocol) Handshake(req *protocol.TelegramRequest) (wrappers.Wr
 	copy(data[:frameOffsetIV], copyFrame[:frameOffsetIV])
 
 	if _, err := socket.Write(data); err != nil {
-		return nil, errors.Annotate(err, "Cannot write handshate frame to Telegram")
+		return nil, fmt.Errorf("cannot write handshake frame to telegram: %w", err)
 	}
 
 	return wrappers.NewObfuscated2(socket, encryptor, decryptor), nil

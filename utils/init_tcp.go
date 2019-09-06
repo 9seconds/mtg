@@ -1,9 +1,8 @@
 package utils
 
 import (
+	"fmt"
 	"net"
-
-	"github.com/juju/errors"
 
 	"github.com/9seconds/mtg/config"
 )
@@ -12,13 +11,13 @@ func InitTCP(conn net.Conn) error {
 	tcpConn := conn.(*net.TCPConn)
 
 	if err := tcpConn.SetNoDelay(true); err != nil {
-		return errors.Annotate(err, "Cannot set NO_DELAY")
+		return fmt.Errorf("cannot set TCP_NO_DELAY: %w", err)
 	}
 	if err := tcpConn.SetReadBuffer(config.C.BufferSize.Read); err != nil {
-		return errors.Annotate(err, "Cannot set read buffer size")
+		return fmt.Errorf("cannot set read buffer size: %w", err)
 	}
 	if err := tcpConn.SetWriteBuffer(config.C.BufferSize.Write); err != nil {
-		return errors.Annotate(err, "Cannot set write buffer size")
+		return fmt.Errorf("cannot set write buffer size: %w", err)
 	}
 
 	return nil

@@ -2,10 +2,10 @@ package wrappers
 
 import (
 	"crypto/cipher"
+	"fmt"
 	"net"
 	"time"
 
-	"github.com/juju/errors"
 	"go.uber.org/zap"
 )
 
@@ -18,7 +18,7 @@ type wrapperObfuscated2 struct {
 func (w *wrapperObfuscated2) ReadTimeout(p []byte, timeout time.Duration) (int, error) {
 	n, err := w.parent.ReadTimeout(p, timeout)
 	if err != nil {
-		return 0, errors.Annotate(err, "Cannot read stream ciphered data")
+		return 0, fmt.Errorf("cannot read stream ciphered data: %w", err)
 	}
 	w.decryptor.XORKeyStream(p, p[:n])
 
@@ -28,7 +28,7 @@ func (w *wrapperObfuscated2) ReadTimeout(p []byte, timeout time.Duration) (int, 
 func (w *wrapperObfuscated2) Read(p []byte) (int, error) {
 	n, err := w.parent.Read(p)
 	if err != nil {
-		return 0, errors.Annotate(err, "Cannot read stream ciphered data")
+		return n, err
 	}
 	w.decryptor.XORKeyStream(p, p[:n])
 

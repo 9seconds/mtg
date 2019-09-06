@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net"
 	"strconv"
 	"time"
 
-	"github.com/juju/errors"
 	"go.uber.org/zap"
 	statsd "gopkg.in/alexcesaro/statsd.v2"
 )
@@ -187,7 +188,7 @@ func Init(options ...Opt) error { // nolint: gocyclo
 			case "influxdb":
 				C.StatsdStats.TagsFormat = statsd.InfluxDB
 			default:
-				return errors.Errorf("Incorrect statsd tag %s", value)
+				return fmt.Errorf("Incorrect statsd tag %s", value)
 			}
 		case OptionTypeStatsdTags:
 			C.StatsdStats.Tags = opt.Value.(map[string]string)
@@ -206,7 +207,7 @@ func Init(options ...Opt) error { // nolint: gocyclo
 		case OptionTypeAdtag:
 			C.AdTag = opt.Value.([]byte)
 		default:
-			return errors.Errorf("Unknown tag %v", opt.Option)
+			return fmt.Errorf("Unknown tag %v", opt.Option)
 		}
 	}
 

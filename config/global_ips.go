@@ -2,14 +2,13 @@ package config
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"strings"
 	"time"
-
-	"github.com/juju/errors"
 )
 
 const (
@@ -20,7 +19,7 @@ const (
 func getGlobalIPv4(ctx context.Context) (net.IP, error) {
 	ip, err := fetchIP(ctx, "tcp4")
 	if err != nil || ip.To4() == nil {
-		return nil, errors.Annotate(err, "Cannot find public ipv4 address")
+		return nil, fmt.Errorf("cannot find public ipv4 address: %w", err)
 	}
 	return ip, nil
 }
@@ -28,7 +27,7 @@ func getGlobalIPv4(ctx context.Context) (net.IP, error) {
 func getGlobalIPv6(ctx context.Context) (net.IP, error) {
 	ip, err := fetchIP(ctx, "tcp6")
 	if err != nil || ip.To4() != nil {
-		return nil, errors.Annotate(err, "Cannot find public ipv6 address")
+		return nil, fmt.Errorf("cannot find public ipv6 address: %w", err)
 	}
 	return ip, nil
 }
@@ -47,7 +46,7 @@ func fetchIP(ctx context.Context, network string) (net.IP, error) {
 
 	req, err := http.NewRequest("GET", ifconfigAddress, nil)
 	if err != nil {
-		return nil, errors.Annotate(err, "Cannot create a request")
+		return nil, fmt.Errorf("cannot create a request: %w", err)
 	}
 
 	resp, err := client.Do(req.WithContext(ctx))
@@ -55,19 +54,19 @@ func fetchIP(ctx context.Context, network string) (net.IP, error) {
 		if resp != nil {
 			io.Copy(ioutil.Discard, resp.Body) // nolint: errcheck
 		}
-		return nil, errors.Annotate(err, "Cannot perform a request")
+		return nil, fmt.Errorf("cannot perform a request: %w", err)
 	}
 	defer resp.Body.Close() // nolint: errcheck
 
 	respDataBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, errors.Annotate(err, "Cannot read response body")
+		return nil, fmt.Errorf("cannot read response body: %w", err)
 	}
 	respData := strings.TrimSpace(string(respDataBytes))
 
 	ip := net.ParseIP(respData)
 	if ip == nil {
-		return nil, errors.Errorf("ifconfig.co returns incorrect IP %s", respData)
+		return nil, fmt.Errorf("ifconfig.co returns incorrect IP %s", respData)
 	}
 
 	return ip, nil

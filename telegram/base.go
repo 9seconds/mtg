@@ -2,11 +2,10 @@ package telegram
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
 	"net"
 	"time"
-
-	"github.com/juju/errors"
 
 	"github.com/9seconds/mtg/conntypes"
 	"github.com/9seconds/mtg/utils"
@@ -29,11 +28,11 @@ func (b *baseTelegram) dialToAddress(ctx context.Context,
 	addr string) (wrappers.StreamReadWriteCloser, error) {
 	conn, err := b.dialer.Dial("tcp", addr)
 	if err != nil {
-		return nil, errors.Annotate(err, "Dial has failed")
+		return nil, fmt.Errorf("dial has failed: %w", err)
 	}
 
 	if err := utils.InitTCP(conn); err != nil {
-		return nil, errors.Annotate(err, "Cannot initialize TCP socket")
+		return nil, fmt.Errorf("cannot initialize tcp socket: %w", err)
 	}
 
 	return wrappers.NewTelegramConn(ctx, cancel, conn), nil

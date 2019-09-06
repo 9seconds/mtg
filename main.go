@@ -143,7 +143,7 @@ func main() {
 	app.HelpFlag.Short('h')
 
 	if err := utils.SetLimits(); err != nil {
-		cli.Fatal(err.Error())
+		cli.Fatal(err)
 	}
 
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
@@ -177,11 +177,11 @@ func main() {
 			config.Opt{Option: config.OptionTypeAdtag, Value: *proxyAdtag},
 		)
 		if err != nil {
-			cli.Fatal(err.Error())
+			cli.Fatal(err)
 		}
 
 		if err := cli.Proxy(); err != nil {
-			cli.Fatal(err.Error())
+			cli.Fatal(err)
 		}
 	}
 }
