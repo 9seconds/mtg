@@ -12,7 +12,6 @@ import (
 	"github.com/9seconds/mtg/conntypes"
 	"github.com/9seconds/mtg/protocol"
 	"github.com/9seconds/mtg/stats"
-	"github.com/9seconds/mtg/telegram"
 	"github.com/9seconds/mtg/utils"
 	"github.com/9seconds/mtg/wrappers"
 )
@@ -24,7 +23,6 @@ type Proxy struct {
 	Context               context.Context
 	ClientProtocolMaker   protocol.ClientProtocolMaker
 	TelegramProtocolMaker protocol.TelegramProtocolMaker
-	TelegramDialer        telegram.Telegram
 }
 
 func (p *Proxy) Serve(listener net.Listener) {
@@ -77,8 +75,8 @@ func (p *Proxy) accept(conn net.Conn) {
 	}
 	defer wrappedConn.Close()
 
-	stats.S.ClientConnected(clientProtocol.GetConnectionType(), wrappedConn.RemoteAddr())
-	defer stats.S.ClientDisconnected(clientProtocol.GetConnectionType(), wrappedConn.RemoteAddr())
+	stats.S.ClientConnected(clientProtocol.ConnectionType(), wrappedConn.RemoteAddr())
+	defer stats.S.ClientDisconnected(clientProtocol.ConnectionType(), wrappedConn.RemoteAddr())
 	logger.Infow("Client connected", "addr", conn.RemoteAddr())
 
 	req := &protocol.TelegramRequest{
@@ -100,7 +98,7 @@ func (p *Proxy) accept(conn net.Conn) {
 }
 
 func (p *Proxy) acceptDirectConnection(request *protocol.TelegramRequest) error {
-	telegramProtocol := p.TelegramProtocolMaker(p.TelegramDialer)
+	telegramProtocol := p.TelegramProtocolMaker()
 	telegramConnRaw, err := telegramProtocol.Handshake(request)
 	if err != nil {
 		return err

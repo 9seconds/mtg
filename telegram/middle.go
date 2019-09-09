@@ -16,6 +16,8 @@ import (
 
 const middleTelegramBackgroundUpdateEvery = time.Hour
 
+var Middle = NewMiddleTelegram()
+
 type middleTelegram struct {
 	baseTelegram
 

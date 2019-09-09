@@ -14,7 +14,6 @@ import (
 	"github.com/9seconds/mtg/obfuscated2"
 	"github.com/9seconds/mtg/proxy"
 	"github.com/9seconds/mtg/stats"
-	"github.com/9seconds/mtg/telegram"
 	"github.com/9seconds/mtg/utils"
 )
 
@@ -79,14 +78,15 @@ func Proxy() error {
 	app := &proxy.Proxy{
 		Logger:  zap.S().Named("proxy"),
 		Context: ctx,
+		ClientProtocolMaker: obfuscated2.MakeClientProtocol,
+		TelegramProtocolMaker: obfuscated2.MakeTelegramProtocol,
 	}
-	if len(config.C.AdTag) == 0 {
-		app.TelegramProtocolMaker = obfuscated2.MakeTelegramProtocol
-		app.TelegramDialer = telegram.NewDirectTelegram()
-	}
-	if config.C.SecretMode != config.SecretModeTLS {
-		app.ClientProtocolMaker = obfuscated2.MakeClientProtocol
-	}
+	// if len(config.C.AdTag) == 0 {
+	// 	app.TelegramProtocolMaker = obfuscated2.MakeTelegramProtocol
+	// }
+	// if config.C.SecretMode != config.SecretModeTLS {
+	// 	app.ClientProtocolMaker = obfuscated2.MakeClientProtocol
+	// }
 
 	app.Serve(proxyListener)
 

@@ -20,7 +20,21 @@ import (
 const clientProtocolHandshakeTimeout = 10 * time.Second
 
 type ClientProtocol struct {
-	protocol.BaseProtocol
+	connectionType     conntypes.ConnectionType
+	connectionProtocol conntypes.ConnectionProtocol
+	dc                 conntypes.DC
+}
+
+func (c *ClientProtocol) ConnectionType() conntypes.ConnectionType {
+	return c.connectionType
+}
+
+func (c *ClientProtocol) ConnectionProtocol() conntypes.ConnectionProtocol {
+	return c.connectionProtocol
+}
+
+func (c *ClientProtocol) DC() conntypes.DC {
+	return c.dc
 }
 
 func (c *ClientProtocol) Handshake(socket wrappers.StreamReadWriteCloser) (wrappers.StreamReadWriteCloser, error) {
@@ -46,23 +60,23 @@ func (c *ClientProtocol) Handshake(socket wrappers.StreamReadWriteCloser) (wrapp
 	magic := decryptedFrame.Magic()
 	switch {
 	case bytes.Equal(magic, conntypes.ConnectionTagAbridged):
-		c.ConnectionType = conntypes.ConnectionTypeAbridged
+		c.connectionType = conntypes.ConnectionTypeAbridged
 	case bytes.Equal(magic, conntypes.ConnectionTagIntermediate):
-		c.ConnectionType = conntypes.ConnectionTypeIntermediate
+		c.connectionType = conntypes.ConnectionTypeIntermediate
 	case bytes.Equal(magic, conntypes.ConnectionTagSecure):
-		c.ConnectionType = conntypes.ConnectionTypeSecure
+		c.connectionType = conntypes.ConnectionTypeSecure
 	default:
 		return nil, errors.New("Unknown connection type")
 	}
 
-	c.ConnectionProtocol = conntypes.ConnectionProtocolIPv4
+	c.connectionProtocol = conntypes.ConnectionProtocolIPv4
 	if socket.LocalAddr().IP.To4() == nil {
-		c.ConnectionProtocol = conntypes.ConnectionProtocolIPv6
+		c.connectionProtocol = conntypes.ConnectionProtocolIPv6
 	}
 
 	buf := bytes.NewReader(decryptedFrame.DC())
-	if err := binary.Read(buf, binary.LittleEndian, &c.DC); err != nil {
-		c.DC = conntypes.DCDefaultIdx
+	if err := binary.Read(buf, binary.LittleEndian, &c.dc); err != nil {
+		c.dc = conntypes.DCDefaultIdx
 	}
 
 	antiReplayKey := decryptedFrame.Unique()

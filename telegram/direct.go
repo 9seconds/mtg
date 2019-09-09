@@ -8,6 +8,8 @@ import (
 	"github.com/9seconds/mtg/wrappers"
 )
 
+var Direct = newDirectTelegram()
+
 const (
 	directV4DefaultIdx conntypes.DC = 1
 	directV6DefaultIdx conntypes.DC = 1
@@ -48,7 +50,7 @@ func (d *directTelegram) Dial(ctx context.Context,
 	return d.baseTelegram.dial(ctx, cancel, dc-1, protocol)
 }
 
-func NewDirectTelegram() Telegram {
+func newDirectTelegram() Telegram {
 	return &directTelegram{
 		baseTelegram: baseTelegram{
 			dialer:      net.Dialer{Timeout: telegramDialTimeout},
