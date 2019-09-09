@@ -14,13 +14,13 @@ import (
 const telegramDialTimeout = 10 * time.Second
 
 type tgDialer struct {
-	net.Dialer
+	dialFunc func(network, address string) (net.Conn, error)
 
 	conf *config.Config
 }
 
 func (t *tgDialer) dial(addr string) (net.Conn, error) {
-	conn, err := t.Dialer.Dial("tcp", addr)
+	conn, err := t.dialFunc("tcp", addr)
 	if err != nil {
 		return nil, errors.Annotate(err, "Cannot connect to Telegram")
 	}

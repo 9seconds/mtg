@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/juju/errors"
+	"golang.org/x/net/proxy"
 
 	"github.com/9seconds/mtg/config"
 	"github.com/9seconds/mtg/mtproto"
@@ -114,12 +115,13 @@ func (t *middleTelegram) receiveRPCHandshakeResponse(conn wrappers.PacketReader,
 // NewMiddleTelegram creates new instance of Telegram which works with
 // middle proxies.
 func NewMiddleTelegram(conf *config.Config) Telegram {
+	dialer := proxy.FromEnvironmentUsing(&net.Dialer{Timeout: telegramDialTimeout})
 	tg := &middleTelegram{
 		middleTelegramCaller: middleTelegramCaller{
 			baseTelegram: baseTelegram{
 				dialer: tgDialer{
-					Dialer: net.Dialer{Timeout: telegramDialTimeout},
-					conf:   conf,
+					dialFunc: dialer.Dial,
+					conf:     conf,
 				},
 			},
 			httpClient: &http.Client{

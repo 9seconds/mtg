@@ -5,6 +5,7 @@ import (
 	"net"
 
 	"github.com/juju/errors"
+	"golang.org/x/net/proxy"
 
 	"github.com/9seconds/mtg/config"
 	"github.com/9seconds/mtg/mtproto"
@@ -64,11 +65,12 @@ func (t *directTelegram) Init(connOpts *mtproto.ConnectionOpts,
 // NewDirectTelegram returns Telegram instance which connects directly
 // to Telegram bypassing middleproxies.
 func NewDirectTelegram(conf *config.Config) Telegram {
+	dialer := proxy.FromEnvironmentUsing(&net.Dialer{Timeout: telegramDialTimeout})
 	return &directTelegram{
 		baseTelegram: baseTelegram{
 			dialer: tgDialer{
-				Dialer: net.Dialer{Timeout: telegramDialTimeout},
-				conf:   conf,
+				dialFunc: dialer.Dial,
+				conf:     conf,
 			},
 			v4DefaultIdx: directV4DefaultIdx,
 			v6DefaultIdx: directV6DefaultIdx,
