@@ -9,6 +9,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/9seconds/mtg/config"
+	"github.com/9seconds/mtg/conntypes"
 	"github.com/9seconds/mtg/protocol"
 	"github.com/9seconds/mtg/stats"
 	"github.com/9seconds/mtg/telegram"
@@ -53,7 +54,7 @@ func (p *Proxy) accept(conn net.Conn) {
 		}
 	}()
 
-	connID := wrappers.NewConnID()
+	connID := conntypes.NewConnID()
 	logger := p.Logger.With("connection_id", connID)
 
 	if err := utils.InitTCP(conn); err != nil {

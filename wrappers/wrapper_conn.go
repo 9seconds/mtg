@@ -2,8 +2,6 @@ package wrappers
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/hex"
 	"fmt"
 	"net"
 	"time"
@@ -11,15 +9,8 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/9seconds/mtg/config"
+	"github.com/9seconds/mtg/conntypes"
 )
-
-const ConnIDLength = 8
-
-type ConnID [ConnIDLength]byte
-
-func (c ConnID) String() string {
-	return hex.EncodeToString(c[:])
-}
 
 type connPurpose uint8
 
@@ -37,7 +28,7 @@ type wrapperConn struct {
 	parent     net.Conn
 	ctx        context.Context
 	cancel     context.CancelFunc
-	connID     ConnID
+	connID     conntypes.ConnID
 	logger     *zap.SugaredLogger
 	localAddr  *net.TCPAddr
 	remoteAddr *net.TCPAddr
@@ -121,7 +112,7 @@ func (w *wrapperConn) RemoteAddr() *net.TCPAddr {
 func newConn(ctx context.Context,
 	cancel context.CancelFunc,
 	parent net.Conn,
-	connID ConnID,
+	connID conntypes.ConnID,
 	purpose connPurpose) StreamReadWriteCloser {
 	localAddr := *parent.LocalAddr().(*net.TCPAddr)
 
@@ -156,22 +147,12 @@ func newConn(ctx context.Context,
 func NewClientConn(ctx context.Context,
 	cancel context.CancelFunc,
 	parent net.Conn,
-	connID ConnID) StreamReadWriteCloser {
+	connID conntypes.ConnID) StreamReadWriteCloser {
 	return newConn(ctx, cancel, parent, connID, connPurposeClient)
 }
 
 func NewTelegramConn(ctx context.Context,
 	cancel context.CancelFunc,
 	parent net.Conn) StreamReadWriteCloser {
-	return newConn(ctx, cancel, parent, ConnID{}, connPurposeTelegram)
-}
-
-func NewConnID() ConnID {
-	var id ConnID
-
-	if _, err := rand.Read(id[:]); err != nil {
-		panic(err)
-	}
-
-	return id
+	return newConn(ctx, cancel, parent, conntypes.ConnID{}, connPurposeTelegram)
 }

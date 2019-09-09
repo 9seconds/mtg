@@ -9,6 +9,7 @@ require (
 	github.com/allegro/bigcache v1.2.1
 	github.com/beevik/ntp v0.2.0
 	github.com/cespare/xxhash v1.1.0
+	github.com/juju/errors v0.0.0-20190806202954-0232dcc7464d
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/pkg/errors v0.8.1 // indirect
 	github.com/prometheus/client_golang v1.1.0
