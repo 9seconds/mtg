@@ -11,7 +11,7 @@ require (
 	github.com/cespare/xxhash v1.1.0
 	github.com/juju/errors v0.0.0-20190806202954-0232dcc7464d
 	github.com/kr/pretty v0.1.0 // indirect
-	github.com/pkg/errors v0.8.1 // indirect
+	github.com/pkg/errors v0.8.1
 	github.com/prometheus/client_golang v1.1.0
 	github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
