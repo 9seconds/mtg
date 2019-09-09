@@ -1,4 +1,4 @@
-package mtproto
+package rpc
 
 import (
 	"encoding/binary"

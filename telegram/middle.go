@@ -3,12 +3,18 @@ package telegram
 import (
 	"context"
 	"fmt"
+	"net"
 	"sync"
+	"time"
+
+	"go.uber.org/zap"
 
 	"github.com/9seconds/mtg/conntypes"
 	"github.com/9seconds/mtg/telegram/api"
 	"github.com/9seconds/mtg/wrappers"
 )
+
+const middleTelegramBackgroundUpdateEvery = time.Hour
 
 type middleTelegram struct {
 	baseTelegram
@@ -44,6 +50,15 @@ func (m *middleTelegram) update() error {
 	return nil
 }
 
+func (m *middleTelegram) backgroundUpdate() {
+	logger := zap.S().Named("telegram")
+	for range time.Tick(middleTelegramBackgroundUpdateEvery) {
+		if err := m.update(); err != nil {
+			logger.Warnw("Cannot update Telegram proxies", "error", err)
+		}
+	}
+}
+
 func (m *middleTelegram) Dial(ctx context.Context,
 	cancel context.CancelFunc,
 	dc conntypes.DC,
@@ -52,5 +67,22 @@ func (m *middleTelegram) Dial(ctx context.Context,
 		dc = conntypes.DCDefaultIdx
 	}
 
+	m.mutex.RLock()
+	defer m.mutex.RUnlock()
+
 	return m.baseTelegram.dial(ctx, cancel, dc, protocol)
+}
+
+func NewMiddleTelegram() Telegram {
+	tg := &middleTelegram{
+		baseTelegram: baseTelegram{
+			dialer: net.Dialer{Timeout: telegramDialTimeout},
+		},
+	}
+	if err := tg.update(); err != nil {
+		panic(err)
+	}
+	go tg.backgroundUpdate()
+
+	return tg
 }

@@ -25,8 +25,4 @@ var (
 
 	HandshakeSenderPID = []byte("IPIPPRPDTIME")
 	HandshakePeerPID   = []byte("IPIPPRPDTIME")
-
-	HandshakeRequest = append(TagHandshake,
-		append(HandshakeFlags,
-			append(HandshakeSenderPID, HandshakePeerPID...)...)...)
 )
