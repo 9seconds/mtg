@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-
-	"github.com/9seconds/mtg/mtproto"
 )
 
 type NonceResponse struct {
@@ -29,10 +27,10 @@ func (r *NonceResponse) Bytes() []byte {
 }
 
 func (r *NonceResponse) Valid(req *NonceRequest) error {
-	if !bytes.Equal(r.Type, mtproto.TagNonce) {
+	if !bytes.Equal(r.Type, TagNonce) {
 		return errors.New("Unexpected RPC type")
 	}
-	if !bytes.Equal(r.Crypto, mtproto.NonceCryptoAES) {
+	if !bytes.Equal(r.Crypto, NonceCryptoAES) {
 		return errors.New("Unexpected crypto type")
 	}
 	if !bytes.Equal(r.KeySelector, req.KeySelector) {

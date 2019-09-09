@@ -6,8 +6,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"time"
-
-	"github.com/9seconds/mtg/mtproto"
 )
 
 type NonceRequest struct {
@@ -20,11 +18,11 @@ type NonceRequest struct {
 func (r *NonceRequest) Bytes() []byte {
 	buf := &bytes.Buffer{}
 
-	buf.Write(mtproto.TagNonce)       // nolint: gosec
-	buf.Write(r.KeySelector)          // nolint: gosec
-	buf.Write(mtproto.NonceCryptoAES) // nolint: gosec
-	buf.Write(r.CryptoTS)             // nolint: gosec
-	buf.Write(r.Nonce)                // nolint: gosec
+	buf.Write(TagNonce)
+	buf.Write(r.KeySelector)
+	buf.Write(NonceCryptoAES)
+	buf.Write(r.CryptoTS)
+	buf.Write(r.Nonce)
 
 	return buf.Bytes()
 }

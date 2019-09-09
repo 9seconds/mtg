@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-
-	"github.com/9seconds/mtg/mtproto"
 )
 
 type HandshakeResponse struct {
@@ -29,10 +27,10 @@ func (r *HandshakeResponse) Bytes() []byte {
 
 // Valid checks that handshake response compliments request.
 func (r *HandshakeResponse) Valid() error {
-	if !bytes.Equal(r.Type, mtproto.TagHandshake) {
+	if !bytes.Equal(r.Type, TagHandshake) {
 		return errors.New("Unexpected handshake tag")
 	}
-	if !bytes.Equal(r.PeerPID, mtproto.HandshakeSenderPID) {
+	if !bytes.Equal(r.PeerPID, HandshakeSenderPID) {
 		return errors.New("Incorrect sender PID")
 	}
 

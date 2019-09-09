@@ -1,4 +1,4 @@
-package mtproto
+package rpc
 
 // SeqNo* is the number of the sequence which have special meaning for
 // the Telegram.
