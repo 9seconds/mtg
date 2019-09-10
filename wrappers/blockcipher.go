@@ -148,7 +148,7 @@ func (w *wrapperBlockCipher) RemoteAddr() *net.TCPAddr {
 	return w.parent.RemoteAddr()
 }
 
-func NewBlockCipher(parent StreamReadWriteCloser, encryptor, decryptor cipher.BlockMode) StreamReadWriteCloser {
+func newBlockCipher(parent StreamReadWriteCloser, encryptor, decryptor cipher.BlockMode) StreamReadWriteCloser {
 	return &wrapperBlockCipher{
 		parent:    parent,
 		encryptor: encryptor,

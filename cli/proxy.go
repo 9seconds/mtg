@@ -76,10 +76,9 @@ func Proxy() error {
 	}()
 
 	app := &proxy.Proxy{
-		Logger:  zap.S().Named("proxy"),
-		Context: ctx,
+		Logger:              zap.S().Named("proxy"),
+		Context:             ctx,
 		ClientProtocolMaker: obfuscated2.MakeClientProtocol,
-		TelegramProtocolMaker: obfuscated2.MakeTelegramProtocol,
 	}
 	// if len(config.C.AdTag) == 0 {
 	// 	app.TelegramProtocolMaker = obfuscated2.MakeTelegramProtocol

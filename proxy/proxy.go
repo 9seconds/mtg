@@ -10,6 +10,7 @@ import (
 
 	"github.com/9seconds/mtg/config"
 	"github.com/9seconds/mtg/conntypes"
+	"github.com/9seconds/mtg/obfuscated2"
 	"github.com/9seconds/mtg/protocol"
 	"github.com/9seconds/mtg/stats"
 	"github.com/9seconds/mtg/utils"
@@ -19,10 +20,9 @@ import (
 const directPipeBufferSize = 1024 * 1024
 
 type Proxy struct {
-	Logger                *zap.SugaredLogger
-	Context               context.Context
-	ClientProtocolMaker   protocol.ClientProtocolMaker
-	TelegramProtocolMaker protocol.TelegramProtocolMaker
+	Logger              *zap.SugaredLogger
+	Context             context.Context
+	ClientProtocolMaker protocol.ClientProtocolMaker
 }
 
 func (p *Proxy) Serve(listener net.Listener) {
@@ -98,8 +98,7 @@ func (p *Proxy) accept(conn net.Conn) {
 }
 
 func (p *Proxy) acceptDirectConnection(request *protocol.TelegramRequest) error {
-	telegramProtocol := p.TelegramProtocolMaker()
-	telegramConnRaw, err := telegramProtocol.Handshake(request)
+	telegramConnRaw, err := obfuscated2.TelegramProtocol(request)
 	if err != nil {
 		return err
 	}

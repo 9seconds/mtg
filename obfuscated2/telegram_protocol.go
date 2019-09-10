@@ -10,9 +10,7 @@ import (
 	"github.com/9seconds/mtg/wrappers"
 )
 
-type TelegramProtocol struct{}
-
-func (t *TelegramProtocol) Handshake(req *protocol.TelegramRequest) (wrappers.Wrap, error) {
+func TelegramProtocol(req *protocol.TelegramRequest) (wrappers.Wrap, error) {
 	socket, err := telegram.Direct.Dial(req.Ctx,
 		req.Cancel,
 		req.ClientProtocol.DC(),
@@ -37,10 +35,6 @@ func (t *TelegramProtocol) Handshake(req *protocol.TelegramRequest) (wrappers.Wr
 	}
 
 	return wrappers.NewObfuscated2(socket, encryptor, decryptor), nil
-}
-
-func MakeTelegramProtocol() protocol.TelegramProtocol {
-	return &TelegramProtocol{}
 }
 
 func generateFrame(cp protocol.ClientProtocol) (fm Frame) {

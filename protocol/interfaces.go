@@ -12,9 +12,5 @@ type ClientProtocol interface {
 	DC() conntypes.DC
 }
 
-type TelegramProtocol interface {
-	Handshake(*TelegramRequest) (wrappers.Wrap, error)
-}
-
+type TelegramProtocol func(*TelegramRequest) (wrappers.Wrap, error)
 type ClientProtocolMaker func() ClientProtocol
-type TelegramProtocolMaker func() TelegramProtocol
