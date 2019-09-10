@@ -17,10 +17,15 @@ const telegramDialTimeout = 10 * time.Second
 type baseTelegram struct {
 	dialer net.Dialer
 
+	secret      []byte
 	v4DefaultDC conntypes.DC
 	V6DefaultDC conntypes.DC
 	v4Addresses map[conntypes.DC][]string
 	v6Addresses map[conntypes.DC][]string
+}
+
+func (b *baseTelegram) Secret() []byte {
+	return b.secret
 }
 
 func (b *baseTelegram) dialToAddress(ctx context.Context,

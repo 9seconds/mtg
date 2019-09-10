@@ -12,4 +12,5 @@ type Telegram interface {
 		context.CancelFunc,
 		conntypes.DC,
 		conntypes.ConnectionProtocol) (wrappers.StreamReadWriteCloser, error)
+	Secret() []byte
 }

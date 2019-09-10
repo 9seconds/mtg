@@ -21,7 +21,6 @@ var Middle = NewMiddleTelegram()
 type middleTelegram struct {
 	baseTelegram
 
-	secret []byte
 	mutex  sync.RWMutex
 }
 
