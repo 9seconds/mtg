@@ -16,12 +16,19 @@ import (
 
 const middleTelegramBackgroundUpdateEvery = time.Hour
 
-var Middle = NewMiddleTelegram()
+var Middle Telegram
 
 type middleTelegram struct {
 	baseTelegram
 
-	mutex  sync.RWMutex
+	mutex sync.RWMutex
+}
+
+func (m *middleTelegram) Secret() []byte {
+	m.mutex.RLock()
+	defer m.mutex.RUnlock()
+
+	return m.baseTelegram.Secret()
 }
 
 func (m *middleTelegram) update() error {
@@ -74,7 +81,7 @@ func (m *middleTelegram) Dial(ctx context.Context,
 	return m.baseTelegram.dial(ctx, cancel, dc, protocol)
 }
 
-func NewMiddleTelegram() Telegram {
+func MiddleInit() {
 	tg := &middleTelegram{
 		baseTelegram: baseTelegram{
 			dialer: net.Dialer{Timeout: telegramDialTimeout},
@@ -85,5 +92,5 @@ func NewMiddleTelegram() Telegram {
 	}
 	go tg.backgroundUpdate()
 
-	return tg
+	Middle = tg
 }

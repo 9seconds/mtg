@@ -14,6 +14,7 @@ import (
 	"github.com/9seconds/mtg/obfuscated2"
 	"github.com/9seconds/mtg/proxy"
 	"github.com/9seconds/mtg/stats"
+	"github.com/9seconds/mtg/telegram"
 	"github.com/9seconds/mtg/utils"
 )
 
@@ -64,6 +65,8 @@ func Proxy() error {
 	if err := stats.Init(ctx); err != nil {
 		Fatal(err)
 	}
+	telegram.MiddleInit()
+
 	proxyListener, err := net.Listen("tcp", config.C.ListenAddr.String())
 	if err != nil {
 		Fatal(err)
