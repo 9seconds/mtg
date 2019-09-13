@@ -42,7 +42,7 @@ func Proxy() error {
 	if err := config.InitPublicAddress(ctx); err != nil {
 		Fatal(err)
 	}
-	zap.S().Debugw("Configuration", "config", config.C)
+	zap.S().Debugw("Configuration", "config", config.C.Printable())
 
 	if len(config.C.AdTag) > 0 {
 		zap.S().Infow("Use middle proxy connection to Telegram")

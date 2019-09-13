@@ -137,6 +137,20 @@ type Config struct {
 	AdTag      []byte     `json:"adtag"`
 }
 
+func (c Config) Printable() interface{} {
+	data, err := json.Marshal(c)
+	if err != nil {
+		panic(err)
+	}
+
+	rv := map[string]interface{}{}
+	if err := json.Unmarshal(data, &rv); err != nil {
+		panic(err)
+	}
+
+	return rv
+}
+
 func (c Config) String() string {
 	data, _ := json.Marshal(c)
 	return string(data)
