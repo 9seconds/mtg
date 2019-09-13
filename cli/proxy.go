@@ -60,9 +60,7 @@ func Proxy() error {
 
 	PrintJSONStdout(config.GetURLs())
 
-	if err := antireplay.Init(); err != nil {
-		Fatal(err)
-	}
+	antireplay.Init()
 	if err := stats.Init(ctx); err != nil {
 		Fatal(err)
 	}

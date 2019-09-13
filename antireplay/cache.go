@@ -1,9 +1,6 @@
 package antireplay
 
 import (
-	"errors"
-	"fmt"
-
 	"github.com/allegro/bigcache"
 
 	"github.com/9seconds/mtg/config"
@@ -20,15 +17,15 @@ func Has(data []byte) bool {
 	return err == nil
 }
 
-func Init() error {
+func Init() {
 	c, err := bigcache.NewBigCache(bigcache.Config{
 		Shards:           1024,
 		LifeWindow:       config.C.AntiReplay.EvictionTime,
 		Hasher:           hasher{},
 		HardMaxCacheSize: config.C.AntiReplay.MaxSize,
 	})
+	if err != nil {
+		panic(err)
+	}
 	cache = c
-	err = fmt.Errorf("qqq: %w", errors.New("tt"))
-
-	return err
 }
