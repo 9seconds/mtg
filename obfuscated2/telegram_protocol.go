@@ -4,20 +4,21 @@ import (
 	"crypto/rand"
 	"fmt"
 
+	"github.com/9seconds/mtg/conntypes"
 	"github.com/9seconds/mtg/protocol"
 	"github.com/9seconds/mtg/telegram"
 	"github.com/9seconds/mtg/utils"
 	"github.com/9seconds/mtg/wrappers"
 )
 
-func TelegramProtocol(req *protocol.TelegramRequest) (wrappers.Wrap, error) {
-	socket, err := telegram.Direct.Dial(req.Ctx,
-		req.Cancel,
-		req.ClientProtocol.DC(),
+func TelegramProtocol(req *protocol.TelegramRequest) (conntypes.StreamReadWriteCloser, error) {
+	conn, err := telegram.Direct.Dial(req.ClientProtocol.DC(),
 		req.ClientProtocol.ConnectionProtocol())
 	if err != nil {
 		return nil, fmt.Errorf("cannot dial to telegram: %w", err)
 	}
+	conn = wrappers.NewTimeout(conn)
+	conn = wrappers.NewCtx(req.Ctx, req.Cancel, conn)
 	fm := generateFrame(req.ClientProtocol)
 	data := fm.Bytes()
 
@@ -30,11 +31,11 @@ func TelegramProtocol(req *protocol.TelegramRequest) (wrappers.Wrap, error) {
 	encryptor.XORKeyStream(data, data)
 	copy(data[:frameOffsetIV], copyFrame[:frameOffsetIV])
 
-	if _, err := socket.Write(data); err != nil {
+	if _, err := conn.Write(data); err != nil {
 		return nil, fmt.Errorf("cannot write handshake frame to telegram: %w", err)
 	}
 
-	return wrappers.NewObfuscated2(socket, encryptor, decryptor), nil
+	return wrappers.NewObfuscated2(conn, encryptor, decryptor), nil
 }
 
 func generateFrame(cp protocol.ClientProtocol) (fm Frame) {

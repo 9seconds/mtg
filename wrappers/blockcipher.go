@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+
+	"github.com/9seconds/mtg/conntypes"
 )
 
 const blockCipherReadCurrentDataBufferSize = 1024 + 1 // +1 because telegram operates with blocks mod 4
@@ -17,7 +19,7 @@ const blockCipherReadCurrentDataBufferSize = 1024 + 1 // +1 because telegram ope
 type wrapperBlockCipher struct {
 	buf bytes.Buffer
 
-	parent    StreamReadWriteCloser
+	parent    conntypes.StreamReadWriteCloser
 	encryptor cipher.BlockMode
 	decryptor cipher.BlockMode
 }
@@ -47,7 +49,8 @@ func (w *wrapperBlockCipher) ReadTimeout(p []byte, timeout time.Duration) (int, 
 	return w.read(p, readAllTimeout(timeout))
 }
 
-func (w *wrapperBlockCipher) read(p []byte, reader func(StreamReadWriteCloser) ([]byte, error)) (int, error) {
+func (w *wrapperBlockCipher) read(p []byte,
+	reader func(conntypes.StreamReadWriteCloser) ([]byte, error)) (int, error) {
 	if w.buf.Len() > 0 {
 		return w.flush(p)
 	}
@@ -90,7 +93,7 @@ func (w *wrapperBlockCipher) encrypt(p []byte) ([]byte, error) {
 	return encrypted, nil
 }
 
-func readAll(src StreamReadWriteCloser) (rv []byte, err error) {
+func readAll(src conntypes.StreamReadWriteCloser) (rv []byte, err error) {
 	buf := make([]byte, blockCipherReadCurrentDataBufferSize)
 	n := blockCipherReadCurrentDataBufferSize
 
@@ -105,8 +108,8 @@ func readAll(src StreamReadWriteCloser) (rv []byte, err error) {
 	return rv, nil
 }
 
-func readAllTimeout(timeout time.Duration) func(StreamReadWriteCloser) ([]byte, error) {
-	return func(src StreamReadWriteCloser) (rv []byte, err error) {
+func readAllTimeout(timeout time.Duration) func(conntypes.StreamReadWriteCloser) ([]byte, error) {
+	return func(src conntypes.StreamReadWriteCloser) (rv []byte, err error) {
 		tmo := timeout
 		buf := make([]byte, blockCipherReadCurrentDataBufferSize)
 		n := blockCipherReadCurrentDataBufferSize
@@ -148,7 +151,8 @@ func (w *wrapperBlockCipher) RemoteAddr() *net.TCPAddr {
 	return w.parent.RemoteAddr()
 }
 
-func newBlockCipher(parent StreamReadWriteCloser, encryptor, decryptor cipher.BlockMode) StreamReadWriteCloser {
+func newBlockCipher(parent conntypes.StreamReadWriteCloser,
+	encryptor, decryptor cipher.BlockMode) conntypes.StreamReadWriteCloser {
 	return &wrapperBlockCipher{
 		parent:    parent,
 		encryptor: encryptor,

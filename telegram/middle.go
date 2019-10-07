@@ -1,7 +1,6 @@
 package telegram
 
 import (
-	"context"
 	"fmt"
 	"net"
 	"sync"
@@ -11,7 +10,6 @@ import (
 
 	"github.com/9seconds/mtg/conntypes"
 	"github.com/9seconds/mtg/telegram/api"
-	"github.com/9seconds/mtg/wrappers"
 )
 
 const middleTelegramBackgroundUpdateEvery = time.Hour
@@ -67,10 +65,8 @@ func (m *middleTelegram) backgroundUpdate() {
 	}
 }
 
-func (m *middleTelegram) Dial(ctx context.Context,
-	cancel context.CancelFunc,
-	dc conntypes.DC,
-	protocol conntypes.ConnectionProtocol) (wrappers.StreamReadWriteCloser, error) {
+func (m *middleTelegram) Dial(dc conntypes.DC,
+	protocol conntypes.ConnectionProtocol) (conntypes.StreamReadWriteCloser, error) {
 	if dc == 0 {
 		dc = conntypes.DCDefaultIdx
 	}
@@ -78,7 +74,7 @@ func (m *middleTelegram) Dial(ctx context.Context,
 	m.mutex.RLock()
 	defer m.mutex.RUnlock()
 
-	return m.baseTelegram.dial(ctx, cancel, dc, protocol)
+	return m.baseTelegram.dial(dc, protocol)
 }
 
 func MiddleInit() {

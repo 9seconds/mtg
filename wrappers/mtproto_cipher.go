@@ -9,6 +9,7 @@ import (
 	"encoding/binary"
 	"net"
 
+	"github.com/9seconds/mtg/conntypes"
 	"github.com/9seconds/mtg/mtproto/rpc"
 	"github.com/9seconds/mtg/utils"
 )
@@ -22,10 +23,10 @@ const (
 
 var mtprotoEmptyIP = [4]byte{0x00, 0x00, 0x00, 0x00}
 
-func NewMiddleProxyCipher(parent StreamReadWriteCloser,
+func NewMiddleProxyCipher(parent conntypes.StreamReadWriteCloser,
 	req *rpc.NonceRequest,
 	resp *rpc.NonceResponse,
-	secret []byte) StreamReadWriteCloser {
+	secret []byte) conntypes.StreamReadWriteCloser {
 	localAddr := parent.LocalAddr()
 	remoteAddr := parent.RemoteAddr()
 

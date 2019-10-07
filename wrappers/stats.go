@@ -6,11 +6,12 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/9seconds/mtg/conntypes"
 	"github.com/9seconds/mtg/stats"
 )
 
 type wrapperStats struct {
-	parent StreamReadWriteCloser
+	parent conntypes.StreamReadWriteCloser
 }
 
 func (w *wrapperStats) Write(p []byte) (int, error) {
@@ -61,6 +62,6 @@ func (w *wrapperStats) Close() error {
 	return w.parent.Close()
 }
 
-func NewTraffic(parent StreamReadWriteCloser) StreamReadWriteCloser {
+func NewTraffic(parent conntypes.StreamReadWriteCloser) conntypes.StreamReadWriteCloser {
 	return &wrapperStats{parent}
 }

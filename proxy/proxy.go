@@ -63,25 +63,26 @@ func (p *Proxy) accept(conn net.Conn) {
 	ctx, cancel := context.WithCancel(p.Context)
 	defer cancel()
 
-	wrappedConn := wrappers.NewClientConn(ctx, cancel, conn, connID)
-	wrappedConn = wrappers.NewTraffic(wrappedConn)
-	defer wrappedConn.Close()
+	clientConn := wrappers.NewClientConn(conn, connID)
+	clientConn = wrappers.NewCtx(ctx, cancel, clientConn)
+	clientConn = wrappers.NewTimeout(clientConn)
+	clientConn = wrappers.NewTraffic(clientConn)
+	defer clientConn.Close()
 
 	clientProtocol := p.ClientProtocolMaker()
-	wrappedConn, err := clientProtocol.Handshake(wrappedConn)
+	clientConn, err := clientProtocol.Handshake(clientConn)
 	if err != nil {
 		logger.Warnw("Cannot perform client handshake", "error", err)
 		return
 	}
-	defer wrappedConn.Close()
 
-	stats.S.ClientConnected(clientProtocol.ConnectionType(), wrappedConn.RemoteAddr())
-	defer stats.S.ClientDisconnected(clientProtocol.ConnectionType(), wrappedConn.RemoteAddr())
+	stats.S.ClientConnected(clientProtocol.ConnectionType(), clientConn.RemoteAddr())
+	defer stats.S.ClientDisconnected(clientProtocol.ConnectionType(), clientConn.RemoteAddr())
 	logger.Infow("Client connected", "addr", conn.RemoteAddr())
 
 	req := &protocol.TelegramRequest{
 		Logger:         logger,
-		ClientConn:     wrappedConn,
+		ClientConn:     clientConn,
 		ConnID:         connID,
 		Ctx:            ctx,
 		Cancel:         cancel,
@@ -102,7 +103,7 @@ func (p *Proxy) acceptDirectConnection(request *protocol.TelegramRequest) error 
 	if err != nil {
 		return err
 	}
-	telegramConn := telegramConnRaw.(wrappers.StreamReadWriteCloser)
+	telegramConn := telegramConnRaw.(conntypes.StreamReadWriteCloser)
 	defer telegramConn.Close()
 
 	wg := &sync.WaitGroup{}

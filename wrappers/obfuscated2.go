@@ -7,12 +7,14 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+
+	"github.com/9seconds/mtg/conntypes"
 )
 
 type wrapperObfuscated2 struct {
 	encryptor cipher.Stream
 	decryptor cipher.Stream
-	parent    StreamReadWriteCloser
+	parent    conntypes.StreamReadWriteCloser
 }
 
 func (w *wrapperObfuscated2) ReadTimeout(p []byte, timeout time.Duration) (int, error) {
@@ -71,7 +73,8 @@ func (w *wrapperObfuscated2) Close() error {
 	return w.parent.Close()
 }
 
-func NewObfuscated2(socket StreamReadWriteCloser, encryptor, decryptor cipher.Stream) StreamReadWriteCloser {
+func NewObfuscated2(socket conntypes.StreamReadWriteCloser,
+	encryptor, decryptor cipher.Stream) conntypes.StreamReadWriteCloser {
 	return &wrapperObfuscated2{
 		parent:    socket,
 		encryptor: encryptor,

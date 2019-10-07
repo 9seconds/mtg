@@ -37,7 +37,7 @@ func (c *ClientProtocol) DC() conntypes.DC {
 	return c.dc
 }
 
-func (c *ClientProtocol) Handshake(socket wrappers.StreamReadWriteCloser) (wrappers.StreamReadWriteCloser, error) {
+func (c *ClientProtocol) Handshake(socket conntypes.StreamReadWriteCloser) (conntypes.StreamReadWriteCloser, error) {
 	fm, err := c.ReadFrame(socket)
 	if err != nil {
 		return nil, fmt.Errorf("cannot make a client handshake: %w", err)
@@ -88,7 +88,7 @@ func (c *ClientProtocol) Handshake(socket wrappers.StreamReadWriteCloser) (wrapp
 	return wrappers.NewObfuscated2(socket, encryptor, decryptor), nil
 }
 
-func (c *ClientProtocol) ReadFrame(socket wrappers.StreamReader) (fm Frame, err error) {
+func (c *ClientProtocol) ReadFrame(socket conntypes.StreamReader) (fm Frame, err error) {
 	if _, err = io.ReadFull(handshakeReader{socket}, fm.Bytes()); err != nil {
 		err = fmt.Errorf("cannot extract obfuscated2 frame: %w", err)
 	}
@@ -96,7 +96,7 @@ func (c *ClientProtocol) ReadFrame(socket wrappers.StreamReader) (fm Frame, err 
 }
 
 type handshakeReader struct {
-	parent wrappers.StreamReader
+	parent conntypes.StreamReader
 }
 
 func (h handshakeReader) Read(p []byte) (int, error) {

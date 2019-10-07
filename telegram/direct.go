@@ -1,14 +1,10 @@
 package telegram
 
 import (
-	"context"
 	"net"
 
 	"github.com/9seconds/mtg/conntypes"
-	"github.com/9seconds/mtg/wrappers"
 )
-
-var Direct = newDirectTelegram()
 
 const (
 	directV4DefaultIdx conntypes.DC = 1
@@ -36,10 +32,8 @@ type directTelegram struct {
 	baseTelegram
 }
 
-func (d *directTelegram) Dial(ctx context.Context,
-	cancel context.CancelFunc,
-	dc conntypes.DC,
-	protocol conntypes.ConnectionProtocol) (wrappers.StreamReadWriteCloser, error) {
+func (d *directTelegram) Dial(dc conntypes.DC,
+	protocol conntypes.ConnectionProtocol) (conntypes.StreamReadWriteCloser, error) {
 	switch {
 	case dc < 0:
 		dc = -dc
@@ -47,17 +41,15 @@ func (d *directTelegram) Dial(ctx context.Context,
 		dc = conntypes.DCDefaultIdx
 	}
 
-	return d.baseTelegram.dial(ctx, cancel, dc-1, protocol)
+	return d.baseTelegram.dial(dc-1, protocol)
 }
 
-func newDirectTelegram() Telegram {
-	return &directTelegram{
-		baseTelegram: baseTelegram{
-			dialer:      net.Dialer{Timeout: telegramDialTimeout},
-			v4DefaultDC: directV4DefaultIdx,
-			V6DefaultDC: directV6DefaultIdx,
-			v4Addresses: directV4Addresses,
-			v6Addresses: directV6Addresses,
-		},
-	}
+var Direct = &directTelegram{
+	baseTelegram: baseTelegram{
+		dialer:      net.Dialer{Timeout: telegramDialTimeout},
+		v4DefaultDC: directV4DefaultIdx,
+		V6DefaultDC: directV6DefaultIdx,
+		v4Addresses: directV4Addresses,
+		v6Addresses: directV6Addresses,
+	},
 }

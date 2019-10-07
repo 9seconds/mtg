@@ -3,16 +3,15 @@ package mtproto
 import (
 	"fmt"
 
+	"github.com/9seconds/mtg/conntypes"
 	"github.com/9seconds/mtg/mtproto/rpc"
 	"github.com/9seconds/mtg/protocol"
 	"github.com/9seconds/mtg/telegram"
 	"github.com/9seconds/mtg/wrappers"
 )
 
-func TelegramProtocol(req *protocol.TelegramRequest) (wrappers.Wrap, error) {
-	conn, err := telegram.Middle.Dial(req.Ctx,
-		req.Cancel,
-		req.ClientProtocol.DC(),
+func TelegramProtocol(req *protocol.TelegramRequest) (conntypes.PacketReadWriteCloser, error) {
+	conn, err := telegram.Middle.Dial(req.ClientProtocol.DC(),
 		req.ClientProtocol.ConnectionProtocol())
 	if err != nil {
 		return nil, fmt.Errorf("cannot connect to telegram: %w", err)
@@ -42,7 +41,7 @@ func TelegramProtocol(req *protocol.TelegramRequest) (wrappers.Wrap, error) {
 	return frameConn, nil
 }
 
-func doRPCNonceRequest(conn wrappers.PacketWriter) (*rpc.NonceRequest, error) {
+func doRPCNonceRequest(conn conntypes.PacketWriter) (*rpc.NonceRequest, error) {
 	rpcNonceReq, err := rpc.NewNonceRequest(telegram.Middle.Secret())
 	if err != nil {
 		panic(err)
@@ -54,7 +53,7 @@ func doRPCNonceRequest(conn wrappers.PacketWriter) (*rpc.NonceRequest, error) {
 	return rpcNonceReq, nil
 }
 
-func getRPCNonceResponse(conn wrappers.PacketReader, req *rpc.NonceRequest) (*rpc.NonceResponse, error) {
+func getRPCNonceResponse(conn conntypes.PacketReader, req *rpc.NonceRequest) (*rpc.NonceResponse, error) {
 	packet, err := conn.Read()
 	if err != nil {
 		return nil, fmt.Errorf("cannot read from connection: %w", err)
@@ -71,14 +70,14 @@ func getRPCNonceResponse(conn wrappers.PacketReader, req *rpc.NonceRequest) (*rp
 	return resp, nil
 }
 
-func doRPCHandshakeRequest(conn wrappers.PacketWriter) error {
+func doRPCHandshakeRequest(conn conntypes.PacketWriter) error {
 	if err := conn.Write(rpc.HandshakeRequest); err != nil {
 		return fmt.Errorf("cannot make a request: %w", err)
 	}
 	return nil
 }
 
-func getRPCHandshakeResponse(conn wrappers.PacketReader) error {
+func getRPCHandshakeResponse(conn conntypes.PacketReader) error {
 	packet, err := conn.Read()
 	if err != nil {
 		return fmt.Errorf("cannot read a response: %w", err)

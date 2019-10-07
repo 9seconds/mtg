@@ -1,4 +1,4 @@
-package wrappers
+package conntypes
 
 import (
 	"io"
@@ -7,8 +7,6 @@ import (
 
 	"go.uber.org/zap"
 )
-
-type Packet []byte
 
 // Wrap is a base interface for all wrappers in this package.
 type Wrap interface {

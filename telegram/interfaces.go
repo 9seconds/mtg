@@ -1,16 +1,8 @@
 package telegram
 
-import (
-	"context"
-
-	"github.com/9seconds/mtg/conntypes"
-	"github.com/9seconds/mtg/wrappers"
-)
+import  "github.com/9seconds/mtg/conntypes"
 
 type Telegram interface {
-	Dial(context.Context,
-		context.CancelFunc,
-		conntypes.DC,
-		conntypes.ConnectionProtocol) (wrappers.StreamReadWriteCloser, error)
+	Dial(conntypes.DC, conntypes.ConnectionProtocol) (conntypes.StreamReadWriteCloser, error)
 	Secret() []byte
 }

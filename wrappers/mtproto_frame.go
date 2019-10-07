@@ -11,6 +11,8 @@ import (
 	"net"
 
 	"go.uber.org/zap"
+
+	"github.com/9seconds/mtg/conntypes"
 )
 
 const (
@@ -33,13 +35,13 @@ var mtprotoFramePadding = []byte{0x04, 0x00, 0x00, 0x00}
 // PADDING is custom padding schema to complete frame length to such that
 //    len(frame) % 16 == 0
 type wrapperMtprotoFrame struct {
-	parent     StreamReadWriteCloser
+	parent     conntypes.StreamReadWriteCloser
 	logger     *zap.SugaredLogger
 	readSeqNo  int32
 	writeSeqNo int32
 }
 
-func (w *wrapperMtprotoFrame) Read() (Packet, error) {
+func (w *wrapperMtprotoFrame) Read() (conntypes.Packet, error) {
 	buf := &bytes.Buffer{}
 	sum := crc32.NewIEEE()
 	writer := io.MultiWriter(buf, sum)
@@ -101,7 +103,7 @@ func (w *wrapperMtprotoFrame) Read() (Packet, error) {
 	return data, nil
 }
 
-func (w *wrapperMtprotoFrame) Write(p Packet) error {
+func (w *wrapperMtprotoFrame) Write(p conntypes.Packet) error {
 	messageLength := 4 + 4 + len(p) + 4
 	paddingLength := (aes.BlockSize - messageLength%aes.BlockSize) % aes.BlockSize
 
@@ -149,7 +151,7 @@ func (w *wrapperMtprotoFrame) RemoteAddr() *net.TCPAddr {
 	return w.parent.RemoteAddr()
 }
 
-func NewMtprotoFrame(parent StreamReadWriteCloser, seqNo int32) PacketReadWriteCloser {
+func NewMtprotoFrame(parent conntypes.StreamReadWriteCloser, seqNo int32) conntypes.PacketReadWriteCloser {
 	return &wrapperMtprotoFrame{
 		parent:     parent,
 		logger:     parent.Logger().Named("mtproto-frame"),

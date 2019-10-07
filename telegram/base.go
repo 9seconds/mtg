@@ -1,7 +1,6 @@
 package telegram
 
 import (
-	"context"
 	"fmt"
 	"math/rand"
 	"net"
@@ -28,25 +27,8 @@ func (b *baseTelegram) Secret() []byte {
 	return b.secret
 }
 
-func (b *baseTelegram) dialToAddress(ctx context.Context,
-	cancel context.CancelFunc,
-	addr string) (wrappers.StreamReadWriteCloser, error) {
-	conn, err := b.dialer.Dial("tcp", addr)
-	if err != nil {
-		return nil, fmt.Errorf("dial has failed: %w", err)
-	}
-
-	if err := utils.InitTCP(conn); err != nil {
-		return nil, fmt.Errorf("cannot initialize tcp socket: %w", err)
-	}
-
-	return wrappers.NewTelegramConn(ctx, cancel, conn), nil
-}
-
-func (b *baseTelegram) dial(ctx context.Context,
-	cancel context.CancelFunc,
-	dc conntypes.DC,
-	protocol conntypes.ConnectionProtocol) (wrappers.StreamReadWriteCloser, error) {
+func (b *baseTelegram) dial(dc conntypes.DC,
+	protocol conntypes.ConnectionProtocol) (conntypes.StreamReadWriteCloser, error) {
 	addr := ""
 
 	switch protocol {
@@ -56,7 +38,16 @@ func (b *baseTelegram) dial(ctx context.Context,
 		addr = b.chooseAddress(b.v6Addresses, dc, b.V6DefaultDC)
 	}
 
-	return b.dialToAddress(ctx, cancel, addr)
+	conn, err := b.dialer.Dial("tcp", addr)
+	if err != nil {
+		return nil, fmt.Errorf("dial has failed: %w", err)
+	}
+
+	if err := utils.InitTCP(conn); err != nil {
+		return nil, fmt.Errorf("cannot initialize tcp socket: %w", err)
+	}
+
+	return wrappers.NewTelegramConn(conn), nil
 }
 
 func (b *baseTelegram) chooseAddress(addresses map[conntypes.DC][]string,
@@ -66,7 +57,10 @@ func (b *baseTelegram) chooseAddress(addresses map[conntypes.DC][]string,
 		addrs, _ = addresses[defaultDC]
 	}
 
-	if len(addrs) > 0 {
+	switch {
+	case len(addrs) == 1:
+		return addrs[0]
+	case len(addrs) > 1:
 		return addrs[rand.Intn(len(addrs))]
 	}
 

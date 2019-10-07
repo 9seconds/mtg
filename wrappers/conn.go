@@ -1,7 +1,6 @@
 package wrappers
 
 import (
-	"context"
 	"fmt"
 	"net"
 	"time"
@@ -19,15 +18,8 @@ const (
 	connPurposeTelegram
 )
 
-const (
-	connTimeoutRead  = 2 * time.Minute
-	connTimeoutWrite = 2 * time.Minute
-)
-
 type wrapperConn struct {
 	parent     net.Conn
-	ctx        context.Context
-	cancel     context.CancelFunc
 	connID     conntypes.ConnID
 	logger     *zap.SugaredLogger
 	localAddr  *net.TCPAddr
@@ -35,61 +27,45 @@ type wrapperConn struct {
 }
 
 func (w *wrapperConn) WriteTimeout(p []byte, timeout time.Duration) (int, error) {
-	select {
-	case <-w.ctx.Done():
+	if err := w.parent.SetWriteDeadline(time.Now().Add(timeout)); err != nil {
 		w.Close()
-		return 0, fmt.Errorf("cannot write because context was closed: %w", w.ctx.Err())
-
-	default:
-		if err := w.parent.SetWriteDeadline(time.Now().Add(timeout)); err != nil {
-			w.Close() // nolint: gosec
-			return 0, fmt.Errorf("cannot set write deadline to the socket: %w", err)
-		}
-
-		n, err := w.parent.Write(p)
-		w.logger.Debugw("Write to stream", "bytes", n, "error", err)
-		if err != nil {
-			w.Close() // nolint: gosec
-		}
-
-		return n, err
+		return 0, fmt.Errorf("cannot set write deadline to the socket: %w", err)
 	}
+
+	return w.Write(p)
 }
 
 func (w *wrapperConn) Write(p []byte) (int, error) {
-	return w.WriteTimeout(p, connTimeoutWrite)
+	n, err := w.parent.Write(p)
+	w.logger.Debugw("write to stream", "bytes", n, "error", err)
+	if err != nil {
+		w.Close() // nolint: gosec
+	}
+
+	return n, err
 }
 
 func (w *wrapperConn) ReadTimeout(p []byte, timeout time.Duration) (int, error) {
-	select {
-	case <-w.ctx.Done():
+	if err := w.parent.SetReadDeadline(time.Now().Add(timeout)); err != nil {
 		w.Close()
-		return 0, fmt.Errorf("cannot read because context was closed: %w", w.ctx.Err())
-
-	default:
-		if err := w.parent.SetReadDeadline(time.Now().Add(timeout)); err != nil {
-			w.Close()
-			return 0, fmt.Errorf("cannot set read deadline to the socket: %w", err)
-		}
-
-		n, err := w.parent.Read(p)
-		w.logger.Debugw("Read from stream", "bytes", n, "error", err)
-		if err != nil {
-			w.Close()
-		}
-
-		return n, err
+		return 0, fmt.Errorf("cannot set read deadline to the socket: %w", err)
 	}
+
+	return w.Read(p)
 }
 
 func (w *wrapperConn) Read(p []byte) (int, error) {
-	return w.ReadTimeout(p, connTimeoutRead)
+	n, err := w.parent.Read(p)
+	w.logger.Debugw("Read from stream", "bytes", n, "error", err)
+	if err != nil {
+		w.Close()
+	}
+
+	return n, err
 }
 
 func (w *wrapperConn) Close() error {
 	w.logger.Debugw("Close connection")
-	w.cancel()
-
 	return w.parent.Close()
 }
 
@@ -109,11 +85,9 @@ func (w *wrapperConn) RemoteAddr() *net.TCPAddr {
 	return w.remoteAddr
 }
 
-func newConn(ctx context.Context,
-	cancel context.CancelFunc,
-	parent net.Conn,
+func newConn(parent net.Conn,
 	connID conntypes.ConnID,
-	purpose connPurpose) StreamReadWriteCloser {
+	purpose connPurpose) conntypes.StreamReadWriteCloser {
 	localAddr := *parent.LocalAddr().(*net.TCPAddr)
 
 	if parent.RemoteAddr().(*net.TCPAddr).IP.To4() != nil {
@@ -135,8 +109,6 @@ func newConn(ctx context.Context,
 
 	return &wrapperConn{
 		parent:     parent,
-		ctx:        ctx,
-		cancel:     cancel,
 		connID:     connID,
 		logger:     logger,
 		remoteAddr: parent.RemoteAddr().(*net.TCPAddr),
@@ -144,15 +116,11 @@ func newConn(ctx context.Context,
 	}
 }
 
-func NewClientConn(ctx context.Context,
-	cancel context.CancelFunc,
-	parent net.Conn,
-	connID conntypes.ConnID) StreamReadWriteCloser {
-	return newConn(ctx, cancel, parent, connID, connPurposeClient)
+func NewClientConn(parent net.Conn,
+	connID conntypes.ConnID) conntypes.StreamReadWriteCloser {
+	return newConn(parent, connID, connPurposeClient)
 }
 
-func NewTelegramConn(ctx context.Context,
-	cancel context.CancelFunc,
-	parent net.Conn) StreamReadWriteCloser {
-	return newConn(ctx, cancel, parent, conntypes.ConnID{}, connPurposeTelegram)
+func NewTelegramConn(parent net.Conn) conntypes.StreamReadWriteCloser {
+	return newConn(parent, conntypes.ConnID{}, connPurposeTelegram)
 }
