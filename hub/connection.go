@@ -10,34 +10,17 @@ import (
 	"github.com/9seconds/mtg/protocol"
 )
 
-type connectionID int
-
 type connection struct {
-	conn    conntypes.PacketReadWriteCloser
-	mutex   sync.RWMutex
-	id      connectionID
-	hub     *connectionHub
-	pending uint
-	closing bool
+	conn         conntypes.PacketReadWriteCloser
+	mutex        sync.RWMutex
+	shutdownOnce sync.Once
+	hub          *connectionHub
+	id           int
+	pending      uint
+	done         chan struct{}
 }
 
-func (c *connection) Write(packet conntypes.Packet) error {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-
-	err := c.conn.Write(packet)
-	if err != nil {
-		// if we tried to write into a socket and it was broken, it is
-		// a time to reconsider the prescence of this socket at all.
-		//
-		// probably we need to remove it completely because it seems
-		// that connection is broken.
-		c.pending = 0
-	}
-	return err
-}
-
-func (c *connection) Read() (conntypes.Packet, error) {
+func (c *connection) read() (conntypes.Packet, error) {
 	packet, err := c.conn.Read()
 
 	c.mutex.Lock()
@@ -51,39 +34,59 @@ func (c *connection) Read() (conntypes.Packet, error) {
 	return packet, err
 }
 
-func (c *connection) Stats() (bool, uint) {
+func (c *connection) write(packet conntypes.Packet) error {
+	err := c.conn.Write(packet)
+	if err != nil {
+		// if we tried to write into a socket and it was broken, it is
+		// a time to reconsider the prescence of this socket at all.
+		//
+		// probably we need to remove it completely because it seems
+		// that connection is broken.
+		c.mutex.Lock()
+		c.pending = 0
+		c.mutex.Unlock()
+	}
+	return err
+}
+
+func (c *connection) shutdown() {
+	c.shutdownOnce.Do(func() {
+		close(c.done)
+			c.hub.channelBrokenSockets <- c.id
+	})
+}
+
+func (c *connection) closed() bool {
+	select {
+	case <-c.done:
+		return true
+	default:
+		return false
+	}
+}
+
+func (c *connection) idle() bool {
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
 
-	return c.closing, c.pending
-}
-
-func (c *connection) Close() error {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-
-	c.closing = true
-	return c.conn.Close()
+	return c.pending == 0
 }
 
 func (c *connection) run() {
 	for {
-		packet, err := c.conn.Read()
+		packet, err := c.read()
 		if err != nil {
-			c.Close()
-			c.hub.brokenSocketsChan <- c.id
-			c.hub = nil
+			c.shutdown()
 			return
 		}
 
-		// TODO
 		if channel, ok := Registry.getChannel(conntypes.ConnID{}); ok {
 			go channel.write(packet) // nolint: errcheck
 		}
 	}
 }
 
-func newConnection(hub *connectionHub, req *protocol.TelegramRequest) (*connection, error) {
+func newConnection(req *protocol.TelegramRequest, hub *connectionHub) (*connection, error) {
 	conn, err := mtproto.TelegramProtocol(req)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create a new connection: %w", err)
@@ -92,7 +95,7 @@ func newConnection(hub *connectionHub, req *protocol.TelegramRequest) (*connecti
 	rv := &connection{
 		conn: conn,
 		hub:  hub,
-		id:   connectionID(rand.Int()),
+		id:   rand.Int(),
 	}
 	go rv.run()
 

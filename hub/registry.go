@@ -7,16 +7,14 @@ import (
 	"github.com/9seconds/mtg/conntypes"
 )
 
-var Registry *RegistryStruct
-
-type RegistryStruct struct {
-	conns map[string]*closeableChannel
+type registry struct {
+	conns map[string]*ctxChannel
 	ctx   context.Context
 	mutex sync.RWMutex
 }
 
-func (r *RegistryStruct) Register(id conntypes.ConnID) ChannelReadCloser {
-	channel := newCloseableChannel(r.ctx)
+func (r *registry) Register(id conntypes.ConnID) ChannelReadCloser {
+	channel := newCtxChannel(r.ctx)
 
 	r.mutex.Lock()
 	r.conns[string(id[:])] = channel
@@ -25,7 +23,7 @@ func (r *RegistryStruct) Register(id conntypes.ConnID) ChannelReadCloser {
 	return channel
 }
 
-func (r *RegistryStruct) Unregister(id conntypes.ConnID) {
+func (r *registry) Unregister(id conntypes.ConnID) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
@@ -35,7 +33,7 @@ func (r *RegistryStruct) Unregister(id conntypes.ConnID) {
 	}
 }
 
-func (r *RegistryStruct) getChannel(id conntypes.ConnID) (*closeableChannel, bool) {
+func (r *registry) getChannel(id conntypes.ConnID) (*ctxChannel, bool) {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 
@@ -46,8 +44,8 @@ func (r *RegistryStruct) getChannel(id conntypes.ConnID) (*closeableChannel, boo
 }
 
 func InitRegistry(ctx context.Context) {
-	Registry = &RegistryStruct{
+	Registry = &registry{
 		ctx:   ctx,
-		conns: map[string]*closeableChannel{},
+		conns: map[string]*ctxChannel{},
 	}
 }
