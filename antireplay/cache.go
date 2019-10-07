@@ -1,31 +1,16 @@
 package antireplay
 
-import (
-	"github.com/allegro/bigcache"
+import "github.com/allegro/bigcache"
 
-	"github.com/9seconds/mtg/config"
-)
-
-var cache *bigcache.BigCache
-
-func Add(data []byte) {
-	cache.Set(string(data), nil) // nolint: errcheck
+type cache struct {
+	cache *bigcache.BigCache
 }
 
-func Has(data []byte) bool {
-	_, err := cache.Get(string(data))
+func (c *cache) Add(data []byte) {
+	c.cache.Set(string(data), nil) // nolint: errcheck
+}
+
+func (c *cache) Has(data []byte) bool {
+	_, err := c.cache.Get(string(data))
 	return err == nil
-}
-
-func Init() {
-	c, err := bigcache.NewBigCache(bigcache.Config{
-		Shards:           1024,
-		LifeWindow:       config.C.AntiReplay.EvictionTime,
-		Hasher:           hasher{},
-		HardMaxCacheSize: config.C.AntiReplay.MaxSize,
-	})
-	if err != nil {
-		panic(err)
-	}
-	cache = c
 }
