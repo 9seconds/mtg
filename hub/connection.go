@@ -95,7 +95,7 @@ func newConnection(req *protocol.TelegramRequest, hub *connectionHub) (*connecti
 	rv := &connection{
 		conn: conn,
 		hub:  hub,
-		id:   rand.Int(),
+		id:   rand.Int(), // nolint: gosec
 	}
 	go rv.run()
 
