@@ -1,10 +1,6 @@
 package telegram
 
-import (
-	"net"
-
-	"github.com/9seconds/mtg/conntypes"
-)
+import "github.com/9seconds/mtg/conntypes"
 
 const (
 	directV4DefaultIdx conntypes.DC = 1
@@ -42,14 +38,4 @@ func (d *directTelegram) Dial(dc conntypes.DC,
 	}
 
 	return d.baseTelegram.dial(dc-1, protocol)
-}
-
-var Direct = &directTelegram{
-	baseTelegram: baseTelegram{
-		dialer:      net.Dialer{Timeout: telegramDialTimeout},
-		v4DefaultDC: directV4DefaultIdx,
-		V6DefaultDC: directV6DefaultIdx,
-		v4Addresses: directV4Addresses,
-		v6Addresses: directV6Addresses,
-	},
 }

@@ -65,7 +65,7 @@ func Proxy() error {
 	if err := stats.Init(ctx); err != nil {
 		Fatal(err)
 	}
-	telegram.MiddleInit()
+	telegram.Init()
 
 	proxyListener, err := net.Listen("tcp", config.C.Bind.String())
 	if err != nil {

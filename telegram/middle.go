@@ -2,7 +2,6 @@ package telegram
 
 import (
 	"fmt"
-	"net"
 	"sync"
 	"time"
 
@@ -13,8 +12,6 @@ import (
 )
 
 const middleTelegramBackgroundUpdateEvery = time.Hour
-
-var Middle Telegram
 
 type middleTelegram struct {
 	baseTelegram
@@ -75,18 +72,4 @@ func (m *middleTelegram) Dial(dc conntypes.DC,
 	defer m.mutex.RUnlock()
 
 	return m.baseTelegram.dial(dc, protocol)
-}
-
-func MiddleInit() {
-	tg := &middleTelegram{
-		baseTelegram: baseTelegram{
-			dialer: net.Dialer{Timeout: telegramDialTimeout},
-		},
-	}
-	if err := tg.update(); err != nil {
-		panic(err)
-	}
-	go tg.backgroundUpdate()
-
-	Middle = tg
 }

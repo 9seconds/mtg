@@ -4,14 +4,11 @@ import (
 	"fmt"
 	"math/rand"
 	"net"
-	"time"
 
 	"github.com/9seconds/mtg/conntypes"
 	"github.com/9seconds/mtg/utils"
 	"github.com/9seconds/mtg/wrappers"
 )
-
-const telegramDialTimeout = 10 * time.Second
 
 type baseTelegram struct {
 	dialer net.Dialer
