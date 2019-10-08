@@ -47,7 +47,7 @@ func (b *baseTelegram) dial(dc conntypes.DC,
 		return nil, fmt.Errorf("cannot initialize tcp socket: %w", err)
 	}
 
-	return wrappers.NewTelegramConn(conn), nil
+	return wrappers.NewTelegramConn(dc, conn), nil
 }
 
 func (b *baseTelegram) chooseAddress(addresses map[conntypes.DC][]string,

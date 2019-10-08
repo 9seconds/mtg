@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/hex"
+	"fmt"
 	"net/url"
 )
 
@@ -27,14 +28,14 @@ func GetURLs() (urls IPURLs) {
 		secret = "dd" + hex.EncodeToString(C.Secret)
 	}
 
-	urls.IPv4 = makeURLs(&C.PublicIPv4Addr, secret)
-	urls.IPv6 = makeURLs(&C.PublicIPv6Addr, secret)
+	urls.IPv4 = makeURLs(C.PublicIPv4, secret)
+	urls.IPv6 = makeURLs(C.PublicIPv6, secret)
 	urls.BotSecret = secret
 
 	return urls
 }
 
-func makeURLs(addr *Addr, secret string) (urls URLs) {
+func makeURLs(addr fmt.Stringer, secret string) (urls URLs) {
 	values := url.Values{}
 	values.Set("address", addr.String())
 	values.Set("secret", secret)

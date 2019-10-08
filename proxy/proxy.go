@@ -47,7 +47,7 @@ func (p *Proxy) accept(conn net.Conn) {
 	defer func() {
 		conn.Close()
 		if err := recover(); err != nil {
-			stats.S.Crash()
+			stats.Stats.Crash()
 			p.Logger.Errorw("Crash of accept handler", "error", err)
 		}
 	}()
@@ -66,7 +66,6 @@ func (p *Proxy) accept(conn net.Conn) {
 	clientConn := wrappers.NewClientConn(conn, connID)
 	clientConn = wrappers.NewCtx(ctx, cancel, clientConn)
 	clientConn = wrappers.NewTimeout(clientConn)
-	clientConn = wrappers.NewTraffic(clientConn)
 	defer clientConn.Close()
 
 	clientProtocol := p.ClientProtocolMaker()
@@ -76,8 +75,8 @@ func (p *Proxy) accept(conn net.Conn) {
 		return
 	}
 
-	stats.S.ClientConnected(clientProtocol.ConnectionType(), clientConn.RemoteAddr())
-	defer stats.S.ClientDisconnected(clientProtocol.ConnectionType(), clientConn.RemoteAddr())
+	stats.Stats.ClientConnected(clientProtocol.ConnectionType(), clientConn.RemoteAddr())
+	defer stats.Stats.ClientDisconnected(clientProtocol.ConnectionType(), clientConn.RemoteAddr())
 	logger.Infow("Client connected", "addr", conn.RemoteAddr())
 
 	req := &protocol.TelegramRequest{

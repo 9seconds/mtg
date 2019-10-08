@@ -2,7 +2,6 @@ package hub
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/9seconds/mtg/conntypes"

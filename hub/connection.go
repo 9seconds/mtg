@@ -52,7 +52,7 @@ func (c *connection) write(packet conntypes.Packet) error {
 func (c *connection) shutdown() {
 	c.shutdownOnce.Do(func() {
 		close(c.done)
-			c.hub.channelBrokenSockets <- c.id
+		c.hub.channelBrokenSockets <- c.id
 	})
 }
 

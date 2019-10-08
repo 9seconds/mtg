@@ -3,6 +3,7 @@ package stats
 import (
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 
 	"gopkg.in/alexcesaro/statsd.v2"
@@ -32,19 +33,41 @@ func (s *statsStatsd) ClientDisconnected(connectionType conntypes.ConnectionType
 }
 
 func (s *statsStatsd) changeConnections(connectionType conntypes.ConnectionType, addr *net.TCPAddr, value int) {
-	var labels [3]string
+	labels := [...]string{
+		"connections",
+		"intermediate",
+		"ipv4",
+	}
 
-	labels[0] = "connections"
 	switch connectionType {
 	case conntypes.ConnectionTypeAbridged:
 		labels[1] = "abridged"
 	case conntypes.ConnectionTypeSecure:
 		labels[1] = "secured"
-	default:
-		labels[1] = "intermediate"
 	}
 
-	labels[2] = "ipv4"
+	if addr.IP.To4() == nil {
+		labels[2] = "ipv6"
+	}
+
+	s.client.Count(strings.Join(labels[:], "."), value)
+}
+
+func (s *statsStatsd) TelegramConnected(dc conntypes.DC, addr *net.TCPAddr) {
+	s.changeTelegramConnections(dc, addr, 1)
+}
+
+func (s *statsStatsd) TelegramDisconnected(dc conntypes.DC, addr *net.TCPAddr) {
+	s.changeTelegramConnections(dc, addr, -1)
+}
+
+func (s *statsStatsd) changeTelegramConnections(dc conntypes.DC, addr *net.TCPAddr, value int) {
+	labels := [...]string{
+		"telegram",
+		strconv.Itoa(int(dc)),
+		"ipv4",
+	}
+
 	if addr.IP.To4() == nil {
 		labels[2] = "ipv6"
 	}
@@ -60,17 +83,17 @@ func (s *statsStatsd) AntiReplayDetected() {
 	s.client.Increment("anti_replays")
 }
 
-func newStatsStatsd() (Stats, error) {
+func newStatsStatsd() (Interface, error) {
 	options := []statsd.Option{
-		statsd.Prefix(config.C.StatsdStats.Prefix),
-		statsd.Network(config.C.StatsdStats.Addr.Network()),
-		statsd.Address(config.C.StatsdStats.Addr.String()),
-		statsd.TagsFormat(config.C.StatsdStats.TagsFormat),
+		statsd.Prefix(config.C.StatsNamespace),
+		statsd.Network(config.C.StatsdNetwork),
+		statsd.Address(config.C.StatsBind.String()),
+		statsd.TagsFormat(config.C.StatsdTagsFormat),
 	}
 
-	if len(config.C.StatsdStats.Tags) > 0 {
-		tags := make([]string, len(config.C.StatsdStats.Tags)*2)
-		for k, v := range config.C.StatsdStats.Tags {
+	if len(config.C.StatsdTags) > 0 {
+		tags := make([]string, len(config.C.StatsdTags)*2)
+		for k, v := range config.C.StatsdTags {
 			tags = append(tags, k, v)
 		}
 		options = append(options, statsd.Tags(tags...))

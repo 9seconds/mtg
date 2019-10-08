@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"strconv"
 	"time"
 
 	"go.uber.org/zap"
@@ -40,22 +39,16 @@ const (
 	OptionTypeDebug OptionType = iota
 	OptionTypeVerbose
 
-	OptionTypeBindIP
-	OptionTypeBindPort
+	OptionTypeBind
 	OptionTypePublicIPv4
-	OptionTypePublicIPv4Port
 	OptionTypePublicIPv6
-	OptionTypePublicIPv6Port
-	OptionTypeStatsIP
-	OptionTypeStatsPort
 
-	OptionTypeStatsdIP
-	OptionTypeStatsdPort
+	OptionTypeStatsBind
+	OptionTypeStatsNamespace
+	OptionTypeStatsdAddress
 	OptionTypeStatsdNetwork
-	OptionTypeStatsdPrefix
 	OptionTypeStatsdTagsFormat
 	OptionTypeStatsdTags
-	OptionTypePrometheusPrefix
 
 	OptionTypeWriteBufferSize
 	OptionTypeReadBufferSize
@@ -67,93 +60,30 @@ const (
 	OptionTypeAdtag
 )
 
-type BufferSize struct {
-	Read  int `json:"read"`
-	Write int `json:"write"`
-}
-
-type AntiReplay struct {
-	MaxSize      int           `json:"max_size"`
-	EvictionTime time.Duration `json:"duration"`
-}
-
-type Stats struct {
-	Prefix string `json:"prefix"`
-}
-
-type StatsdStats struct {
-	Stats
-
-	Addr       Addr              `json:"addr"`
-	Tags       map[string]string `json:"tags"`
-	TagsFormat statsd.TagFormat  `json:"format"`
-}
-
-type PrometheusStats struct {
-	Stats
-}
-
-type Addr struct {
-	IP   net.IP `json:"ip"`
-	Port int    `json:"port"`
-	net  string
-}
-
-func (a Addr) Network() string {
-	if a.net == "" {
-		return "tcp"
-	}
-	return a.net
-}
-
-func (a Addr) String() string {
-	return net.JoinHostPort(a.IP.String(), strconv.Itoa(a.Port))
-}
-
-func (a Addr) MarshalJSON() ([]byte, error) {
-	data := map[string]string{
-		"network": a.Network(),
-		"addr":    a.String(),
-	}
-	return json.Marshal(data)
-}
-
 type Config struct {
-	BufferSize BufferSize `json:"buffer_size"`
-	AntiReplay AntiReplay `json:"anti_replay"`
+	Bind       *net.TCPAddr `json:"bind"`
+	PublicIPv4 *net.TCPAddr `json:"public_ipv4"`
+	PublicIPv6 *net.TCPAddr `json:"public_ipv6"`
+	StatsBind  *net.TCPAddr `json:"stats_bind"`
+	StatsdAddr *net.TCPAddr `json:"stats_addr"`
 
-	ListenAddr     Addr `json:"listen_addr"`
-	PublicIPv4Addr Addr `json:"public_ipv4_addr"`
-	PublicIPv6Addr Addr `json:"public_ipv6_addr"`
-	StatsAddr      Addr `json:"stats_addr"`
+	StatsNamespace string            `json:"stats_namespace"`
+	StatsdNetwork  string            `json:"statsd_network"`
+	StatsdTags     map[string]string `json:"statsd_tags"`
 
-	StatsdStats     StatsdStats     `json:"stats_statsd"`
-	PrometheusStats PrometheusStats `json:"stats_prometheus"`
+	WriteBuffer int `json:"write_buffer"`
+	ReadBuffer  int `json:"read_buffer"`
 
-	Debug      bool       `json:"debug"`
-	Verbose    bool       `json:"verbose"`
-	SecretMode SecretMode `json:"secret_mode"`
-	Secret     []byte     `json:"secret"`
-	AdTag      []byte     `json:"adtag"`
-}
+	AntiReplayMaxSize      int           `json:"anti_replay_max_size"`
+	AntiReplayEvictionTime time.Duration `json:"anti_replay_eviction_time"`
 
-func (c Config) Printable() interface{} {
-	data, err := json.Marshal(c)
-	if err != nil {
-		panic(err)
-	}
+	Debug            bool             `json:"debug"`
+	Verbose          bool             `json:"verbose"`
+	StatsdTagsFormat statsd.TagFormat `json:"statsd_tags_format"`
+	SecretMode       SecretMode       `json:"secret_mode"`
 
-	rv := map[string]interface{}{}
-	if err := json.Unmarshal(data, &rv); err != nil {
-		panic(err)
-	}
-
-	return rv
-}
-
-func (c Config) String() string {
-	data, _ := json.Marshal(c)
-	return string(data)
+	Secret []byte `json:"secret"`
+	AdTag  []byte `json:"adtag"`
 }
 
 type Opt struct {
@@ -163,59 +93,53 @@ type Opt struct {
 
 var C = Config{}
 
-func Init(options ...Opt) error { // nolint: gocyclo
+func Init(options ...Opt) error { // nolint: gocyclo, funlen
 	for _, opt := range options {
 		switch opt.Option {
 		case OptionTypeDebug:
 			C.Debug = opt.Value.(bool)
 		case OptionTypeVerbose:
 			C.Verbose = opt.Value.(bool)
-		case OptionTypeBindIP:
-			C.ListenAddr.IP = opt.Value.(net.IP)
-		case OptionTypeBindPort:
-			C.ListenAddr.Port = int(opt.Value.(uint16))
+		case OptionTypeBind:
+			C.Bind = opt.Value.(*net.TCPAddr)
 		case OptionTypePublicIPv4:
-			C.PublicIPv4Addr.IP = opt.Value.(net.IP)
-		case OptionTypePublicIPv4Port:
-			C.PublicIPv4Addr.Port = int(opt.Value.(uint16))
+			C.PublicIPv4 = opt.Value.(*net.TCPAddr)
 		case OptionTypePublicIPv6:
-			C.PublicIPv6Addr.IP = opt.Value.(net.IP)
-		case OptionTypePublicIPv6Port:
-			C.PublicIPv6Addr.Port = int(opt.Value.(uint16))
-		case OptionTypeStatsIP:
-			C.StatsAddr.IP = opt.Value.(net.IP)
-		case OptionTypeStatsPort:
-			C.StatsAddr.Port = int(opt.Value.(uint16))
-		case OptionTypeStatsdIP:
-			C.StatsdStats.Addr.IP = opt.Value.(net.IP)
-		case OptionTypeStatsdPort:
-			C.StatsdStats.Addr.Port = int(opt.Value.(uint16))
+			C.PublicIPv6 = opt.Value.(*net.TCPAddr)
+		case OptionTypeStatsBind:
+			C.StatsBind = opt.Value.(*net.TCPAddr)
+		case OptionTypeStatsNamespace:
+			C.StatsNamespace = opt.Value.(string)
+		case OptionTypeStatsdAddress:
+			C.StatsdAddr = opt.Value.(*net.TCPAddr)
 		case OptionTypeStatsdNetwork:
-			C.StatsdStats.Addr.net = opt.Value.(string)
-		case OptionTypeStatsdPrefix:
-			C.StatsdStats.Prefix = opt.Value.(string)
+			value := opt.Value.(string)
+			switch value {
+			case "udp", "tcp":
+				C.StatsdNetwork = value
+			default:
+				return fmt.Errorf("unknown statsd network %v", value)
+			}
 		case OptionTypeStatsdTagsFormat:
 			value := opt.Value.(string)
 			switch value {
 			case "datadog":
-				C.StatsdStats.TagsFormat = statsd.Datadog
+				C.StatsdTagsFormat = statsd.Datadog
 			case "influxdb":
-				C.StatsdStats.TagsFormat = statsd.InfluxDB
+				C.StatsdTagsFormat = statsd.InfluxDB
 			default:
 				return fmt.Errorf("Incorrect statsd tag %s", value)
 			}
 		case OptionTypeStatsdTags:
-			C.StatsdStats.Tags = opt.Value.(map[string]string)
-		case OptionTypePrometheusPrefix:
-			C.PrometheusStats.Prefix = opt.Value.(string)
+			C.StatsdTags = opt.Value.(map[string]string)
 		case OptionTypeWriteBufferSize:
-			C.BufferSize.Write = int(opt.Value.(uint32))
+			C.WriteBuffer = int(opt.Value.(uint32))
 		case OptionTypeReadBufferSize:
-			C.BufferSize.Read = int(opt.Value.(uint32))
+			C.ReadBuffer = int(opt.Value.(uint32))
 		case OptionTypeAntiReplayMaxSize:
-			C.AntiReplay.MaxSize = opt.Value.(int)
+			C.AntiReplayMaxSize = opt.Value.(int)
 		case OptionTypeAntiReplayEvictionTime:
-			C.AntiReplay.EvictionTime = opt.Value.(time.Duration)
+			C.AntiReplayEvictionTime = opt.Value.(time.Duration)
 		case OptionTypeSecret:
 			C.Secret = opt.Value.([]byte)
 		case OptionTypeAdtag:
@@ -239,29 +163,29 @@ func Init(options ...Opt) error { // nolint: gocyclo
 }
 
 func InitPublicAddress(ctx context.Context) error {
-	if C.PublicIPv4Addr.Port == 0 {
-		C.PublicIPv4Addr.Port = C.ListenAddr.Port
+	if C.PublicIPv4.Port == 0 {
+		C.PublicIPv4.Port = C.Bind.Port
 	}
-	if C.PublicIPv6Addr.Port == 0 {
-		C.PublicIPv6Addr.Port = C.ListenAddr.Port
+	if C.PublicIPv6.Port == 0 {
+		C.PublicIPv6.Port = C.Bind.Port
 	}
 
-	foundAddress := C.PublicIPv4Addr.IP != nil || C.PublicIPv6Addr.IP != nil
-	if C.PublicIPv4Addr.IP == nil {
+	foundAddress := C.PublicIPv4.IP != nil || C.PublicIPv6.IP != nil
+	if C.PublicIPv4.IP == nil {
 		ip, err := getGlobalIPv4(ctx)
 		if err != nil {
 			zap.S().Warnw("Cannot resolve public address", "error", err)
 		} else {
-			C.PublicIPv4Addr.IP = ip
+			C.PublicIPv4.IP = ip
 			foundAddress = true
 		}
 	}
-	if C.PublicIPv6Addr.IP == nil {
+	if C.PublicIPv6.IP == nil {
 		ip, err := getGlobalIPv6(ctx)
 		if err != nil {
 			zap.S().Warnw("Cannot resolve public address", "error", err)
 		} else {
-			C.PublicIPv6Addr.IP = ip
+			C.PublicIPv6.IP = ip
 			foundAddress = true
 		}
 	}
@@ -271,4 +195,23 @@ func InitPublicAddress(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func Printable() interface{} {
+	data, err := json.Marshal(C)
+	if err != nil {
+		panic(err)
+	}
+
+	rv := map[string]interface{}{}
+	if err := json.Unmarshal(data, &rv); err != nil {
+		panic(err)
+	}
+
+	rrv, err := json.Marshal(rv)
+	if err != nil {
+		panic(err)
+	}
+
+	return rrv
 }

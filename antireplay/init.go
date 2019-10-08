@@ -16,9 +16,9 @@ func Init() {
 	initOnce.Do(func() {
 		c, err := bigcache.NewBigCache(bigcache.Config{
 			Shards:           1024,
-			LifeWindow:       config.C.AntiReplay.EvictionTime,
+			LifeWindow:       config.C.AntiReplayEvictionTime,
 			Hasher:           hasher{},
-			HardMaxCacheSize: config.C.AntiReplay.MaxSize,
+			HardMaxCacheSize: config.C.AntiReplayMaxSize,
 		})
 		if err != nil {
 			panic(err)

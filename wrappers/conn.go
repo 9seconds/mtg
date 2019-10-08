@@ -91,11 +91,11 @@ func newConn(parent net.Conn,
 	localAddr := *parent.LocalAddr().(*net.TCPAddr)
 
 	if parent.RemoteAddr().(*net.TCPAddr).IP.To4() != nil {
-		if config.C.PublicIPv4Addr.IP != nil {
-			localAddr.IP = config.C.PublicIPv4Addr.IP
+		if config.C.PublicIPv4.IP != nil {
+			localAddr.IP = config.C.PublicIPv4.IP
 		}
-	} else if config.C.PublicIPv6Addr.IP != nil {
-		localAddr.IP = config.C.PublicIPv6Addr.IP
+	} else if config.C.PublicIPv6.IP != nil {
+		localAddr.IP = config.C.PublicIPv6.IP
 	}
 
 	logger := zap.S().With(
@@ -114,13 +114,4 @@ func newConn(parent net.Conn,
 		remoteAddr: parent.RemoteAddr().(*net.TCPAddr),
 		localAddr:  &localAddr,
 	}
-}
-
-func NewClientConn(parent net.Conn,
-	connID conntypes.ConnID) conntypes.StreamReadWriteCloser {
-	return newConn(parent, connID, connPurposeClient)
-}
-
-func NewTelegramConn(parent net.Conn) conntypes.StreamReadWriteCloser {
-	return newConn(parent, conntypes.ConnID{}, connPurposeTelegram)
 }

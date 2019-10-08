@@ -36,67 +36,42 @@ var (
 		Short('v').
 		Envar("MTG_VERBOSE").
 		Bool()
-	proxyBindIP = proxyCommand.Flag("bind-ip",
-		"Which IP to bind to.").
+	proxyBind = proxyCommand.Flag("bind",
+		"Host:Port to bind proxy to.").
 		Short('b').
-		Envar("MTG_IP").
-		Default("127.0.0.1").
-		IP()
-	proxyBindPort = proxyCommand.Flag("bind-port",
-		"Which port to bind to.").
-		Short('p').
-		Envar("MTG_PORT").
-		Default("3128").
-		Uint16()
+		Envar("MTG_BIND").
+		Default("0.0.0.0:3128").
+		TCP()
 	proxyPublicIPv4 = proxyCommand.Flag("public-ipv4",
-		"Which IPv4 address is public.").
+		"Which IPv4 host:port to use.").
 		Short('4').
 		Envar("MTG_IPV4").
-		IP()
-	proxyPublicIPv4Port = proxyCommand.Flag("public-ipv4-port",
-		"Which IPv4 port is public. Default is 'bind-port' value.").
-		Envar("MTG_IPV4_PORT").
-		Uint16()
+		TCP()
 	proxyPublicIPv6 = proxyCommand.Flag("public-ipv6",
-		"Which IPv6 address is public.").
+		"Which IPv6 host:port to use.").
 		Short('6').
 		Envar("MTG_IPV6").
-		IP()
-	proxyPublicIPv6Port = proxyCommand.Flag("public-ipv6-port",
-		"Which IPv6 port is public. Default is 'bind-port' value.").
-		Envar("MTG_IPV6_PORT").
-		Uint16()
-	proxyStatsIP = proxyCommand.Flag("stats-ip",
-		"Which IP bind stats server to.").
+		TCP()
+	proxyStatsBind = proxyCommand.Flag("stats-bind",
+		"Which Host:Port to bind stats server to.").
 		Short('t').
-		Envar("MTG_STATS_IP").
-		Default("127.0.0.1").
-		IP()
-	proxyStatsPort = proxyCommand.Flag("stats-port",
-		"Which port bind stats to.").
-		Short('q').
-		Envar("MTG_STATS_PORT").
-		Default("3129").
-		Uint16()
-	proxyStatsdIP = proxyCommand.Flag("statsd-ip",
-		"Which IP should we use for working with statsd.").
-		Envar("MTG_STATSD_IP").
-		IP()
-	proxyStatsdPort = proxyCommand.Flag("statsd-port",
-		"Which port should we use for working with statsd.").
-		Envar("MTG_STATSD_PORT").
-		Default("8125").
-		Uint16()
+		Envar("MTG_STATS_BIND").
+		Default("127.0.0.1:3129").
+		TCP()
+	proxyStatsNamespace = proxyCommand.Flag("prometheus-namespace",
+		"Which namespace to use for Prometheus.").
+		Envar("MTG_STATS_NAMESPACE").
+		Default("mtg").
+		String()
+	proxyStatsdAddress = proxyCommand.Flag("statsd-addr",
+		"Host:port of statsd server").
+		Envar("MTG_STATSD_ADDR").
+		TCP()
 	proxyStatsdNetwork = proxyCommand.Flag("statsd-network",
 		"Which network is used to work with statsd. Only 'tcp' and 'udp' are supported.").
 		Envar("MTG_STATSD_NETWORK").
 		Default("udp").
 		Enum("udp", "tcp")
-	proxyStatsdPrefix = proxyCommand.Flag("statsd-prefix",
-		"Which bucket prefix should we use for sending stats to statsd.").
-		Envar("MTG_STATSD_PREFIX").
-		Default("mtg").
-		String()
 	proxyStatsdTagsFormat = proxyCommand.Flag("statsd-tags-format",
 		"Which tag format should we use to send stats metrics. Valid options are 'datadog' and 'influxdb'.").
 		Envar("MTG_STATSD_TAGS_FORMAT").
@@ -106,23 +81,18 @@ var (
 		"Tags to use for working with statsd (specified as 'key=value').").
 		Envar("MTG_STATSD_TAGS").
 		StringMap()
-	proxyPrometheusPrefix = proxyCommand.Flag("prometheus-prefix",
-		"Which namespace to use to send stats to Prometheus.").
-		Envar("MTG_PROMETHEUS_PREFIX").
-		Default("mtg").
-		String()
 	proxyWriteBufferSize = proxyCommand.Flag("write-buffer",
 		"Write buffer size in bytes. You can think about it as a buffer from client to Telegram.").
 		Short('w').
 		Envar("MTG_BUFFER_WRITE").
-		Default("65536").
-		Uint32()
+		Default("65536KB").
+		Bytes()
 	proxyReadBufferSize = proxyCommand.Flag("read-buffer",
 		"Read buffer size in bytes. You can think about it as a buffer from Telegram to client.").
 		Short('r').
 		Envar("MTG_BUFFER_READ").
-		Default("131072").
-		Uint32()
+		Default("131072KB").
+		Bytes()
 	proxyAntiReplayMaxSize = proxyCommand.Flag("anti-replay-max-size",
 		"Max size of antireplay cache in megabytes.").
 		Envar("MTG_ANTIREPLAY_MAXSIZE").
@@ -154,21 +124,15 @@ func main() {
 		err := config.Init(
 			config.Opt{Option: config.OptionTypeDebug, Value: *proxyDebug},
 			config.Opt{Option: config.OptionTypeVerbose, Value: *proxyVerbose},
-			config.Opt{Option: config.OptionTypeBindIP, Value: *proxyBindIP},
-			config.Opt{Option: config.OptionTypeBindPort, Value: *proxyBindPort},
+			config.Opt{Option: config.OptionTypeBind, Value: *proxyBind},
 			config.Opt{Option: config.OptionTypePublicIPv4, Value: *proxyPublicIPv4},
-			config.Opt{Option: config.OptionTypePublicIPv4Port, Value: *proxyPublicIPv4Port},
 			config.Opt{Option: config.OptionTypePublicIPv6, Value: *proxyPublicIPv6},
-			config.Opt{Option: config.OptionTypePublicIPv6Port, Value: *proxyPublicIPv6Port},
-			config.Opt{Option: config.OptionTypeStatsIP, Value: *proxyStatsIP},
-			config.Opt{Option: config.OptionTypeStatsPort, Value: *proxyStatsPort},
-			config.Opt{Option: config.OptionTypeStatsdIP, Value: *proxyStatsdIP},
-			config.Opt{Option: config.OptionTypeStatsdPort, Value: *proxyStatsdPort},
+			config.Opt{Option: config.OptionTypeStatsBind, Value: *proxyStatsBind},
+			config.Opt{Option: config.OptionTypeStatsNamespace, Value: *proxyStatsNamespace},
+			config.Opt{Option: config.OptionTypeStatsdAddress, Value: *proxyStatsdAddress},
 			config.Opt{Option: config.OptionTypeStatsdNetwork, Value: *proxyStatsdNetwork},
-			config.Opt{Option: config.OptionTypeStatsdPrefix, Value: *proxyStatsdPrefix},
 			config.Opt{Option: config.OptionTypeStatsdTagsFormat, Value: *proxyStatsdTagsFormat},
 			config.Opt{Option: config.OptionTypeStatsdTags, Value: *proxyStatsdTags},
-			config.Opt{Option: config.OptionTypePrometheusPrefix, Value: *proxyPrometheusPrefix},
 			config.Opt{Option: config.OptionTypeWriteBufferSize, Value: *proxyWriteBufferSize},
 			config.Opt{Option: config.OptionTypeReadBufferSize, Value: *proxyReadBufferSize},
 			config.Opt{Option: config.OptionTypeAntiReplayMaxSize, Value: *proxyAntiReplayMaxSize},
