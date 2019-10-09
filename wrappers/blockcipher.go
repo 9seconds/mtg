@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
-	"errors"
 	"fmt"
 	"net"
 	"time"
@@ -12,9 +11,8 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/9seconds/mtg/conntypes"
+	"github.com/9seconds/mtg/utils"
 )
-
-const blockCipherReadCurrentDataBufferSize = 1024 + 1 // +1 because telegram operates with blocks mod 4
 
 type wrapperBlockCipher struct {
 	buf bytes.Buffer
@@ -41,33 +39,27 @@ func (w *wrapperBlockCipher) WriteTimeout(p []byte, timeout time.Duration) (int,
 }
 
 func (w *wrapperBlockCipher) Read(p []byte) (int, error) {
-	return w.read(p, readAll)
-
-}
-
-func (w *wrapperBlockCipher) ReadTimeout(p []byte, timeout time.Duration) (int, error) {
-	return w.read(p, readAllTimeout(timeout))
-}
-
-func (w *wrapperBlockCipher) read(p []byte,
-	reader func(conntypes.StreamReadWriteCloser) ([]byte, error)) (int, error) {
 	if w.buf.Len() > 0 {
 		return w.flush(p)
 	}
 
-	var buf []byte
-	for len(buf) == 0 || len(buf)%aes.BlockSize != 0 {
-		rv, err := reader(w.parent)
+	var currentBuffer []byte
+	for len(currentBuffer) == 0 || len(currentBuffer)%aes.BlockSize != 0 {
+		rv, err := utils.ReadFull(w.parent)
 		if err != nil {
-			return 0, fmt.Errorf("cannot read from socket: %w", err)
+			return 0, fmt.Errorf("cannot read data: %w", err)
 		}
-		buf = append(buf, rv...)
+		currentBuffer = append(currentBuffer, rv...)
 	}
 
-	w.decryptor.CryptBlocks(buf, buf)
-	w.buf.Write(buf)
+	w.decryptor.CryptBlocks(currentBuffer, currentBuffer)
+	w.buf.Write(currentBuffer)
 
 	return w.flush(p)
+}
+
+func (w *wrapperBlockCipher) ReadTimeout(p []byte, timeout time.Duration) (int, error) {
+	return w.Read(p)
 }
 
 func (w *wrapperBlockCipher) flush(p []byte) (int, error) {
@@ -91,44 +83,6 @@ func (w *wrapperBlockCipher) encrypt(p []byte) ([]byte, error) {
 	w.encryptor.CryptBlocks(encrypted, p)
 
 	return encrypted, nil
-}
-
-func readAll(src conntypes.StreamReadWriteCloser) (rv []byte, err error) {
-	buf := make([]byte, blockCipherReadCurrentDataBufferSize)
-	n := blockCipherReadCurrentDataBufferSize
-
-	for n == len(buf) {
-		n, err = src.Read(buf)
-		if err != nil {
-			return nil, err
-		}
-		rv = append(rv, buf[:n]...)
-	}
-
-	return rv, nil
-}
-
-func readAllTimeout(timeout time.Duration) func(conntypes.StreamReadWriteCloser) ([]byte, error) {
-	return func(src conntypes.StreamReadWriteCloser) (rv []byte, err error) {
-		tmo := timeout
-		buf := make([]byte, blockCipherReadCurrentDataBufferSize)
-		n := blockCipherReadCurrentDataBufferSize
-
-		for n == len(buf) {
-			if tmo <= 0 {
-				return nil, errors.New("timeout")
-			}
-			startTime := time.Now()
-			n, err = src.ReadTimeout(buf, tmo)
-			if err != nil {
-				return nil, err
-			}
-			rv = append(rv, buf[:n]...)
-			tmo -= time.Since(startTime)
-		}
-
-		return rv, nil
-	}
 }
 
 func (w *wrapperBlockCipher) Close() error {
