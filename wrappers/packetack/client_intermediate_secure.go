@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"math/rand"
 
+	"go.uber.org/zap"
+
 	"github.com/9seconds/mtg/conntypes"
 )
 
@@ -43,6 +45,10 @@ func (w *wrapperClientIntermediateSecure) Write(packet conntypes.Packet, acks *c
 		return fmt.Errorf("cannot send packet: %w", err)
 	}
 	return nil
+}
+
+func (w *wrapperClientIntermediateSecure) Logger() *zap.SugaredLogger {
+	return w.parent.Logger().Named("client-intermediate-secure")
 }
 
 func NewClientIntermediateSecure(parent conntypes.StreamReadWriteCloser) conntypes.PacketAckFullReadWriteCloser {
