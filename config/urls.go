@@ -2,8 +2,9 @@ package config
 
 import (
 	"encoding/hex"
-	"fmt"
+	"net"
 	"net/url"
+	"strconv"
 )
 
 type URLs struct {
@@ -35,9 +36,10 @@ func GetURLs() (urls IPURLs) {
 	return urls
 }
 
-func makeURLs(addr fmt.Stringer, secret string) (urls URLs) {
+func makeURLs(addr *net.TCPAddr, secret string) (urls URLs) {
 	values := url.Values{}
-	values.Set("address", addr.String())
+	values.Set("server", addr.IP.String())
+	values.Set("port", strconv.Itoa(addr.Port))
 	values.Set("secret", secret)
 
 	urls.TG = makeTGURL(values)
