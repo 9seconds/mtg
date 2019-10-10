@@ -6,13 +6,16 @@ import (
 	"strings"
 	"sync"
 
+	"go.uber.org/zap"
+
 	"github.com/9seconds/mtg/conntypes"
 	"github.com/9seconds/mtg/protocol"
 )
 
 type hub struct {
-	subs  map[string]*connectionHub
-	mutex sync.RWMutex
+	logger *zap.SugaredLogger
+	subs   map[string]*connectionHub
+	mutex  sync.RWMutex
 }
 
 func (h *hub) Write(packet conntypes.Packet, req *protocol.TelegramRequest) error {
@@ -51,7 +54,10 @@ func (h *hub) getHub(req *protocol.TelegramRequest) *connectionHub {
 
 		rv, ok = h.subs[key]
 		if !ok {
-			rv = newConnectionHub()
+			rv = newConnectionHub(h.logger.With(
+				"dc", req.ClientProtocol.DC(),
+				"protocol", req.ClientProtocol.ConnectionProtocol(),
+			))
 			h.subs[key] = rv
 		}
 	}

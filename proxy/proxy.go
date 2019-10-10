@@ -14,7 +14,7 @@ import (
 	"github.com/9seconds/mtg/protocol"
 	"github.com/9seconds/mtg/stats"
 	"github.com/9seconds/mtg/utils"
-	"github.com/9seconds/mtg/wrappers"
+	"github.com/9seconds/mtg/wrappers/stream"
 )
 
 const directPipeBufferSize = 1024 * 1024
@@ -63,9 +63,9 @@ func (p *Proxy) accept(conn net.Conn) {
 	ctx, cancel := context.WithCancel(p.Context)
 	defer cancel()
 
-	clientConn := wrappers.NewClientConn(conn, connID)
-	clientConn = wrappers.NewCtx(ctx, cancel, clientConn)
-	clientConn = wrappers.NewTimeout(clientConn)
+	clientConn := stream.NewClientConn(conn, connID)
+	clientConn = stream.NewCtx(ctx, cancel, clientConn)
+	clientConn = stream.NewTimeout(clientConn)
 	defer clientConn.Close()
 
 	clientProtocol := p.ClientProtocolMaker()

@@ -4,23 +4,23 @@ import (
 	"context"
 	"time"
 
-	"github.com/9seconds/mtg/conntypes"
+	"github.com/9seconds/mtg/mtproto/rpc"
 )
 
 const closeableChannelReadTimeout = 2 * time.Minute
 
 type ChannelReadCloser interface {
-	Read() (conntypes.Packet, error)
+	Read() (*rpc.ProxyResponse, error)
 	Close() error
 }
 
 type ctxChannel struct {
-	channel chan conntypes.Packet
+	channel chan *rpc.ProxyResponse
 	ctx     context.Context
 	cancel  context.CancelFunc
 }
 
-func (c *ctxChannel) Read() (conntypes.Packet, error) {
+func (c *ctxChannel) Read() (*rpc.ProxyResponse, error) {
 	timer := time.NewTimer(closeableChannelReadTimeout)
 	defer timer.Stop()
 
@@ -34,11 +34,11 @@ func (c *ctxChannel) Read() (conntypes.Packet, error) {
 	}
 }
 
-func (c *ctxChannel) write(packet conntypes.Packet) error {
+func (c *ctxChannel) sendBack(response *rpc.ProxyResponse) error {
 	select {
 	case <-c.ctx.Done():
 		return ErrClosed
-	case c.channel <- packet:
+	case c.channel <- response:
 		return nil
 	}
 }
@@ -52,7 +52,7 @@ func (c *ctxChannel) Close() error {
 func newCtxChannel(ctx context.Context) *ctxChannel {
 	ctx, cancel := context.WithCancel(ctx)
 	return &ctxChannel{
-		channel: make(chan conntypes.Packet),
+		channel: make(chan *rpc.ProxyResponse),
 		ctx:     ctx,
 		cancel:  cancel,
 	}

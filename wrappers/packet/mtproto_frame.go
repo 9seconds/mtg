@@ -1,4 +1,4 @@
-package wrappers
+package packet
 
 import (
 	"bytes"

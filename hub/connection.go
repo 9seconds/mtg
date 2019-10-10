@@ -7,6 +7,7 @@ import (
 
 	"github.com/9seconds/mtg/conntypes"
 	"github.com/9seconds/mtg/mtproto"
+	"github.com/9seconds/mtg/mtproto/rpc"
 	"github.com/9seconds/mtg/protocol"
 )
 
@@ -73,6 +74,8 @@ func (c *connection) idle() bool {
 }
 
 func (c *connection) run() {
+	logger := c.hub.logger.Named("connection").With("id", c.id)
+
 	for {
 		packet, err := c.read()
 		if err != nil {
@@ -80,8 +83,18 @@ func (c *connection) run() {
 			return
 		}
 
-		if channel, ok := Registry.getChannel(conntypes.ConnID{}); ok {
-			go channel.write(packet) // nolint: errcheck
+		response, err := rpc.ParseProxyResponse(packet)
+		if err != nil {
+			logger.Debugw("Failed response", "error", err)
+			continue
+		}
+		if response.Type == rpc.ProxyResponseTypeCloseExt {
+			logger.Debugw("Proxy has closed connection")
+			return
+		}
+
+		if channel, ok := Registry.getChannel(response.ConnID); ok {
+			go channel.sendBack(response) // nolint: errcheck
 		}
 	}
 }

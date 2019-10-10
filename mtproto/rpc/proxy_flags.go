@@ -5,53 +5,53 @@ import (
 	"strings"
 )
 
-type proxyRequestFlags uint32
+type ProxyRequestFlags uint32
 
 const (
-	proxyRequestFlagsHasAdTag     proxyRequestFlags = 0x8
-	proxyRequestFlagsEncrypted    proxyRequestFlags = 0x2
-	proxyRequestFlagsMagic        proxyRequestFlags = 0x1000
-	proxyRequestFlagsExtMode2     proxyRequestFlags = 0x20000
-	proxyRequestFlagsIntermediate proxyRequestFlags = 0x20000000
-	proxyRequestFlagsAbdridged    proxyRequestFlags = 0x40000000
-	proxyRequestFlagsQuickAck     proxyRequestFlags = 0x80000000
-	proxyRequestFlagsPad          proxyRequestFlags = 0x8000000
+	ProxyRequestFlagsHasAdTag     ProxyRequestFlags = 0x8
+	ProxyRequestFlagsEncrypted    ProxyRequestFlags = 0x2
+	ProxyRequestFlagsMagic        ProxyRequestFlags = 0x1000
+	ProxyRequestFlagsExtMode2     ProxyRequestFlags = 0x20000
+	ProxyRequestFlagsIntermediate ProxyRequestFlags = 0x20000000
+	ProxyRequestFlagsAbdridged    ProxyRequestFlags = 0x40000000
+	ProxyRequestFlagsQuickAck     ProxyRequestFlags = 0x80000000
+	ProxyRequestFlagsPad          ProxyRequestFlags = 0x8000000
 )
 
-var proxyRequestFlagsEncryptedPrefix [8]byte
+var ProxyRequestFlagsEncryptedPrefix [8]byte
 
-func (r proxyRequestFlags) Bytes() []byte {
+func (r ProxyRequestFlags) Bytes() []byte {
 	converted := make([]byte, 4)
 	binary.LittleEndian.PutUint32(converted, uint32(r))
 
 	return converted
 }
 
-func (r proxyRequestFlags) String() string {
+func (r ProxyRequestFlags) String() string {
 	flags := make([]string, 0, 7)
 
-	if r&proxyRequestFlagsHasAdTag != 0 {
+	if r&ProxyRequestFlagsHasAdTag != 0 {
 		flags = append(flags, "HAS_AD_TAG")
 	}
-	if r&proxyRequestFlagsEncrypted != 0 {
+	if r&ProxyRequestFlagsEncrypted != 0 {
 		flags = append(flags, "ENCRYPTED")
 	}
-	if r&proxyRequestFlagsMagic != 0 {
+	if r&ProxyRequestFlagsMagic != 0 {
 		flags = append(flags, "MAGIC")
 	}
-	if r&proxyRequestFlagsExtMode2 != 0 {
+	if r&ProxyRequestFlagsExtMode2 != 0 {
 		flags = append(flags, "EXT_MODE_2")
 	}
-	if r&proxyRequestFlagsIntermediate != 0 {
+	if r&ProxyRequestFlagsIntermediate != 0 {
 		flags = append(flags, "INTERMEDIATE")
 	}
-	if r&proxyRequestFlagsAbdridged != 0 {
+	if r&ProxyRequestFlagsAbdridged != 0 {
 		flags = append(flags, "ABRIDGED")
 	}
-	if r&proxyRequestFlagsQuickAck != 0 {
+	if r&ProxyRequestFlagsQuickAck != 0 {
 		flags = append(flags, "QUICK_ACK")
 	}
-	if r&proxyRequestFlagsPad != 0 {
+	if r&ProxyRequestFlagsPad != 0 {
 		flags = append(flags, "PAD")
 	}
 

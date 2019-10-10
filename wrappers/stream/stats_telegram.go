@@ -1,13 +1,14 @@
-package wrappers
+package stream
 
 import (
 	"net"
 	"sync"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/9seconds/mtg/conntypes"
 	"github.com/9seconds/mtg/stats"
-	"go.uber.org/zap"
 )
 
 type wrapperTelegramStats struct {

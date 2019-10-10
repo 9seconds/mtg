@@ -7,7 +7,8 @@ import (
 	"github.com/9seconds/mtg/mtproto/rpc"
 	"github.com/9seconds/mtg/protocol"
 	"github.com/9seconds/mtg/telegram"
-	"github.com/9seconds/mtg/wrappers"
+	"github.com/9seconds/mtg/wrappers/packet"
+	"github.com/9seconds/mtg/wrappers/stream"
 )
 
 func TelegramProtocol(req *protocol.TelegramRequest) (conntypes.PacketReadWriteCloser, error) {
@@ -17,7 +18,7 @@ func TelegramProtocol(req *protocol.TelegramRequest) (conntypes.PacketReadWriteC
 		return nil, fmt.Errorf("cannot connect to telegram: %w", err)
 	}
 
-	rpcNonceConn := wrappers.NewMtprotoFrame(conn, rpc.SeqNoNonce)
+	rpcNonceConn := packet.NewMtprotoFrame(conn, rpc.SeqNoNonce)
 	rpcNonceReq, err := doRPCNonceRequest(rpcNonceConn)
 	if err != nil {
 		return nil, fmt.Errorf("cannot do nonce request: %w", err)
@@ -28,8 +29,8 @@ func TelegramProtocol(req *protocol.TelegramRequest) (conntypes.PacketReadWriteC
 		return nil, fmt.Errorf("cannot get nonce response: %w", err)
 	}
 
-	secureConn := wrappers.NewMiddleProxyCipher(conn, rpcNonceReq, rpcNonceResp, telegram.Middle.Secret())
-	frameConn := wrappers.NewMtprotoFrame(secureConn, rpc.SeqNoHandshake)
+	secureConn := stream.NewMiddleProxyCipher(conn, rpcNonceReq, rpcNonceResp, telegram.Middle.Secret())
+	frameConn := packet.NewMtprotoFrame(secureConn, rpc.SeqNoHandshake)
 
 	if err := doRPCHandshakeRequest(frameConn); err != nil {
 		return nil, fmt.Errorf("cannot do handshake request: %w", err)

@@ -14,7 +14,7 @@ import (
 	"github.com/9seconds/mtg/conntypes"
 	"github.com/9seconds/mtg/protocol"
 	"github.com/9seconds/mtg/utils"
-	"github.com/9seconds/mtg/wrappers"
+	"github.com/9seconds/mtg/wrappers/stream"
 )
 
 const clientProtocolHandshakeTimeout = 10 * time.Second
@@ -85,7 +85,7 @@ func (c *ClientProtocol) Handshake(socket conntypes.StreamReadWriteCloser) (conn
 	}
 	antireplay.Cache.Add(antiReplayKey)
 
-	return wrappers.NewObfuscated2(socket, encryptor, decryptor), nil
+	return stream.NewObfuscated2(socket, encryptor, decryptor), nil
 }
 
 func (c *ClientProtocol) ReadFrame(socket conntypes.StreamReader) (fm Frame, err error) {

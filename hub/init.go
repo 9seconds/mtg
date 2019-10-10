@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"sync"
+
+	"go.uber.org/zap"
 )
 
 var (
@@ -24,7 +26,8 @@ func Init(ctx context.Context) {
 			ctx:   ctx,
 		}
 		Hub = &hub{
-			subs: map[string]*connectionHub{},
+			subs:   map[string]*connectionHub{},
+			logger: zap.S().Named("hub"),
 		}
 	})
 }

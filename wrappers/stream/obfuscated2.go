@@ -1,4 +1,4 @@
-package wrappers
+package stream
 
 import (
 	"crypto/cipher"

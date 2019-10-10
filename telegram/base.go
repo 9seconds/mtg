@@ -7,7 +7,7 @@ import (
 
 	"github.com/9seconds/mtg/conntypes"
 	"github.com/9seconds/mtg/utils"
-	"github.com/9seconds/mtg/wrappers"
+	"github.com/9seconds/mtg/wrappers/stream"
 )
 
 type baseTelegram struct {
@@ -44,7 +44,7 @@ func (b *baseTelegram) dial(dc conntypes.DC,
 		return nil, fmt.Errorf("cannot initialize tcp socket: %w", err)
 	}
 
-	return wrappers.NewTelegramConn(dc, conn), nil
+	return stream.NewTelegramConn(dc, conn), nil
 }
 
 func (b *baseTelegram) chooseAddress(addresses map[conntypes.DC][]string,

@@ -3,6 +3,8 @@ package hub
 import (
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/9seconds/mtg/protocol"
 )
 
@@ -15,6 +17,7 @@ type connectionHubRequest struct {
 
 type connectionHub struct {
 	sockets map[int]*connection
+	logger  *zap.SugaredLogger
 
 	channelBrokenSockets      chan int
 	channelConnectionRequests chan *connectionHubRequest
@@ -76,8 +79,9 @@ func (c *connectionHub) runReturnConnection(conn *connection) {
 	c.sockets[conn.id] = conn
 }
 
-func newConnectionHub() *connectionHub {
+func newConnectionHub(logger *zap.SugaredLogger) *connectionHub {
 	rv := &connectionHub{
+		logger:                    logger.Named("connection-hub"),
 		sockets:                   map[int]*connection{},
 		channelBrokenSockets:      make(chan int, 1),
 		channelConnectionRequests: make(chan *connectionHubRequest),

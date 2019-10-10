@@ -8,7 +8,7 @@ import (
 	"github.com/9seconds/mtg/protocol"
 	"github.com/9seconds/mtg/telegram"
 	"github.com/9seconds/mtg/utils"
-	"github.com/9seconds/mtg/wrappers"
+	"github.com/9seconds/mtg/wrappers/stream"
 )
 
 func TelegramProtocol(req *protocol.TelegramRequest) (conntypes.StreamReadWriteCloser, error) {
@@ -17,8 +17,8 @@ func TelegramProtocol(req *protocol.TelegramRequest) (conntypes.StreamReadWriteC
 	if err != nil {
 		return nil, fmt.Errorf("cannot dial to telegram: %w", err)
 	}
-	conn = wrappers.NewTimeout(conn)
-	conn = wrappers.NewCtx(req.Ctx, req.Cancel, conn)
+	conn = stream.NewTimeout(conn)
+	conn = stream.NewCtx(req.Ctx, req.Cancel, conn)
 	fm := generateFrame(req.ClientProtocol)
 	data := fm.Bytes()
 
@@ -35,7 +35,7 @@ func TelegramProtocol(req *protocol.TelegramRequest) (conntypes.StreamReadWriteC
 		return nil, fmt.Errorf("cannot write handshake frame to telegram: %w", err)
 	}
 
-	return wrappers.NewObfuscated2(conn, encryptor, decryptor), nil
+	return stream.NewObfuscated2(conn, encryptor, decryptor), nil
 }
 
 func generateFrame(cp protocol.ClientProtocol) (fm Frame) {

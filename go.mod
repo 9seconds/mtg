@@ -11,7 +11,10 @@ require (
 	github.com/cespare/xxhash v1.1.0
 	github.com/dustin/go-humanize v1.0.0
 	github.com/gammazero/deque v0.0.0-20190521012701-46e4ffb7a622
+	github.com/gofrs/uuid v3.2.0+incompatible
 	github.com/juju/errors v0.0.0-20190806202954-0232dcc7464d
+	github.com/juju/loggo v0.0.0-20190526231331-6e530bcce5d8 // indirect
+	github.com/juju/testing v0.0.0-20191001232224-ce9dec17d28b // indirect
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/prometheus/client_golang v1.1.0
@@ -26,6 +29,7 @@ require (
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 	gopkg.in/alexcesaro/statsd.v2 v2.0.0
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
+	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22 // indirect
 )
 
 go 1.13
