@@ -58,7 +58,7 @@ var (
 		Envar("MTG_STATS_BIND").
 		Default("127.0.0.1:3129").
 		TCP()
-	proxyStatsNamespace = proxyCommand.Flag("prometheus-namespace",
+	proxyStatsNamespace = proxyCommand.Flag("stats-namespace",
 		"Which namespace to use for Prometheus.").
 		Envar("MTG_STATS_NAMESPACE").
 		Default("mtg").
