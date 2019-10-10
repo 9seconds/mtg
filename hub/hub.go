@@ -54,6 +54,9 @@ func (h *hub) getHub(req *protocol.TelegramRequest) *connectionHub {
 
 		rv, ok = h.subs[key]
 		if !ok {
+			h.logger.Debugw("Create new connection hub",
+				"dc", req.ClientProtocol.DC(),
+				"protocol", req.ClientProtocol.ConnectionProtocol())
 			rv = newConnectionHub(h.logger.With(
 				"dc", req.ClientProtocol.DC(),
 				"protocol", req.ClientProtocol.ConnectionProtocol(),

@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
+	"sync"
 
 	"github.com/9seconds/mtg/config"
 	"github.com/9seconds/mtg/conntypes"
@@ -19,6 +20,7 @@ type wrapperProxy struct {
 	clientIPPort []byte
 	ourIPPort    []byte
 	channelRead  hub.ChannelReadCloser
+	closeOnce    sync.Once
 }
 
 func (w *wrapperProxy) Write(packet conntypes.Packet, acks *conntypes.ConnectionAcks) error {
@@ -61,7 +63,11 @@ func (w *wrapperProxy) Read(acks *conntypes.ConnectionAcks) (conntypes.Packet, e
 }
 
 func (w *wrapperProxy) Close() error {
-	return w.channelRead.Close()
+	w.closeOnce.Do(func() {
+		w.channelRead.Close()
+		hub.Registry.Unregister(w.request.ConnID)
+	})
+	return nil
 }
 
 func NewProxy(request *protocol.TelegramRequest) conntypes.PacketAckReadWriteCloser {
