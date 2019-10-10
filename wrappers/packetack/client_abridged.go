@@ -25,6 +25,7 @@ type wrapperClientAbridged struct {
 func (w *wrapperClientAbridged) Read(acks *conntypes.ConnectionAcks) (conntypes.Packet, error) {
 	buf := bytes.Buffer{}
 
+	buf.Grow(1)
 	if _, err := io.CopyN(&buf, w.parent, 1); err != nil {
 		return nil, fmt.Errorf("cannot read message length: %w", err)
 	}
@@ -37,6 +38,7 @@ func (w *wrapperClientAbridged) Read(acks *conntypes.ConnectionAcks) (conntypes.
 	}
 
 	if msgLength == clientAbridgedSmallPacketLength {
+		buf.Grow(3)
 		if _, err := io.CopyN(&buf, w.parent, 3); err != nil {
 			return nil, fmt.Errorf("cannot read correct message length: %w", err)
 		}
@@ -47,6 +49,7 @@ func (w *wrapperClientAbridged) Read(acks *conntypes.ConnectionAcks) (conntypes.
 	msgLength *= 4
 
 	buf.Reset()
+	buf.Grow(int(msgLength))
 	if _, err := io.CopyN(&buf, w.parent, int64(msgLength)); err != nil {
 		return nil, fmt.Errorf("cannot read message: %w", err)
 	}
