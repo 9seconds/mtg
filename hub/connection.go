@@ -109,6 +109,7 @@ func newConnection(req *protocol.TelegramRequest, hub *connectionHub) (*connecti
 		conn: conn,
 		hub:  hub,
 		id:   rand.Int(), // nolint: gosec
+		done: make(chan struct{}),
 	}
 	go rv.run()
 

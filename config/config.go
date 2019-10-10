@@ -9,6 +9,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/alecthomas/units"
 	"go.uber.org/zap"
 	statsd "gopkg.in/alexcesaro/statsd.v2"
 )
@@ -104,8 +105,14 @@ func Init(options ...Opt) error { // nolint: gocyclo, funlen
 			C.Bind = opt.Value.(*net.TCPAddr)
 		case OptionTypePublicIPv4:
 			C.PublicIPv4 = opt.Value.(*net.TCPAddr)
+			if C.PublicIPv4 == nil {
+				C.PublicIPv4 = &net.TCPAddr{}
+			}
 		case OptionTypePublicIPv6:
 			C.PublicIPv6 = opt.Value.(*net.TCPAddr)
+			if C.PublicIPv6 == nil {
+				C.PublicIPv6 = &net.TCPAddr{}
+			}
 		case OptionTypeStatsBind:
 			C.StatsBind = opt.Value.(*net.TCPAddr)
 		case OptionTypeStatsNamespace:
@@ -133,9 +140,9 @@ func Init(options ...Opt) error { // nolint: gocyclo, funlen
 		case OptionTypeStatsdTags:
 			C.StatsdTags = opt.Value.(map[string]string)
 		case OptionTypeWriteBufferSize:
-			C.WriteBuffer = int(opt.Value.(uint32))
+			C.WriteBuffer = int(opt.Value.(units.Base2Bytes))
 		case OptionTypeReadBufferSize:
-			C.ReadBuffer = int(opt.Value.(uint32))
+			C.ReadBuffer = int(opt.Value.(units.Base2Bytes))
 		case OptionTypeAntiReplayMaxSize:
 			C.AntiReplayMaxSize = opt.Value.(int)
 		case OptionTypeAntiReplayEvictionTime:

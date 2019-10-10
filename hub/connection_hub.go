@@ -43,11 +43,16 @@ func (c *connectionHub) run() {
 }
 
 func (c *connectionHub) runGC() {
+	logger := c.logger.Named("gc")
+
 	for key, conn := range c.sockets {
 		switch {
 		case conn.closed():
+			logger.Debugw("Delete closed socket", "key", key)
 			delete(c.sockets, key)
+
 		case conn.idle():
+			logger.Debugw("Delete idle socket", "key", key)
 			conn.shutdown()
 			delete(c.sockets, key)
 			return
@@ -56,9 +61,14 @@ func (c *connectionHub) runGC() {
 }
 
 func (c *connectionHub) runConnectionRequest(req *connectionHubRequest) {
+	logger := c.logger.Named("request").With("connection-id", req.request.ConnID)
+
 	for key, conn := range c.sockets {
 		delete(c.sockets, key)
 		if !conn.closed() {
+			logger.Debugw("Choose connection",
+				"id", conn.id,
+				"remote_addr", conn.conn.RemoteAddr())
 			req.response <- conn
 			close(req.response)
 			return
@@ -66,16 +76,23 @@ func (c *connectionHub) runConnectionRequest(req *connectionHubRequest) {
 	}
 
 	if conn, err := newConnection(req.request, c); err == nil {
+		logger.Debugw("New connection",
+			"id", conn.id,
+			"remote_addr", conn.conn.RemoteAddr())
 		req.response <- conn
 	}
 	close(req.response)
 }
 
 func (c *connectionHub) runBrokenSocket(id int) {
+	c.logger.Named("broken-socket").Debugw("Delete broken socket", "id", id)
 	delete(c.sockets, id)
 }
 
 func (c *connectionHub) runReturnConnection(conn *connection) {
+	c.logger.Named("return-connection").Debugw("Return connection",
+		"id", conn.id,
+		"remote_addr", conn.conn.RemoteAddr())
 	c.sockets[conn.id] = conn
 }
 

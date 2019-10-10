@@ -42,10 +42,3 @@ func (r *registry) getChannel(id conntypes.ConnID) (*ctxChannel, bool) {
 	}
 	return nil, false
 }
-
-func InitRegistry(ctx context.Context) {
-	Registry = &registry{
-		ctx:   ctx,
-		conns: map[string]*ctxChannel{},
-	}
-}

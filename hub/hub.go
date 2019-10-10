@@ -32,8 +32,11 @@ func (h *hub) Write(packet conntypes.Packet, req *protocol.TelegramRequest) erro
 	}
 
 	if err := conn.write(packet); err != nil {
+		conn.shutdown()
 		return fmt.Errorf("cannot send packet: %w", err)
 	}
+	sub.channelReturnConnections <- conn
+
 	return nil
 }
 

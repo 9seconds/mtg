@@ -63,7 +63,7 @@ func (s *statsStatsd) TelegramDisconnected(dc conntypes.DC, addr *net.TCPAddr) {
 
 func (s *statsStatsd) changeTelegramConnections(dc conntypes.DC, addr *net.TCPAddr, value int) {
 	labels := [...]string{
-		"telegram",
+		"telegram_connections",
 		strconv.Itoa(int(dc)),
 		"ipv4",
 	}

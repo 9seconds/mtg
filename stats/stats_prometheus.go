@@ -77,7 +77,7 @@ func (s *statsPrometheus) changeTelegramConnections(dc conntypes.DC, addr *net.T
 		labels[1] = "ipv6"
 	}
 
-	s.connections.WithLabelValues(labels[:]...).Add(increment)
+	s.telegramConnections.WithLabelValues(labels[:]...).Add(increment)
 }
 
 func (s *statsPrometheus) Crash() {
@@ -121,6 +121,9 @@ func newStatsPrometheus(mux *http.ServeMux) (Interface, error) {
 
 	if err := registry.Register(instance.connections); err != nil {
 		return nil, fmt.Errorf("cannot register metrics for connections: %w", err)
+	}
+	if err := registry.Register(instance.telegramConnections); err != nil {
+		return nil, fmt.Errorf("cannot register metrics for telegram connections: %w", err)
 	}
 	if err := registry.Register(instance.traffic); err != nil {
 		return nil, fmt.Errorf("cannot register metrics for traffic: %w", err)

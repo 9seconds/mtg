@@ -10,6 +10,7 @@ import (
 
 	"github.com/9seconds/mtg/antireplay"
 	"github.com/9seconds/mtg/config"
+	"github.com/9seconds/mtg/hub"
 	"github.com/9seconds/mtg/ntp"
 	"github.com/9seconds/mtg/obfuscated2"
 	"github.com/9seconds/mtg/proxy"
@@ -66,6 +67,7 @@ func Proxy() error {
 		Fatal(err)
 	}
 	telegram.Init()
+	hub.Init(ctx)
 
 	proxyListener, err := net.Listen("tcp", config.C.Bind.String())
 	if err != nil {
