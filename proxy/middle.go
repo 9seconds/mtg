@@ -32,17 +32,20 @@ func middleConnection(request *protocol.TelegramRequest) error {
 	go middlePipe(telegramConn, clientConn, wg, request.Logger)
 	go middlePipe(clientConn, telegramConn, wg, request.Logger)
 
-	<-request.Ctx.Done()
 	wg.Wait()
 
-	return request.Ctx.Err()
+	return nil
 }
 
-func middlePipe(dst conntypes.PacketAckWriter,
-	src conntypes.PacketAckReader,
+func middlePipe(dst conntypes.PacketAckWriteCloser,
+	src conntypes.PacketAckReadCloser,
 	wg *sync.WaitGroup,
 	logger *zap.SugaredLogger) {
-	defer wg.Done()
+	defer func() {
+		dst.Close()
+		src.Close()
+		wg.Done()
+	}()
 
 	for {
 		acks := conntypes.ConnectionAcks{}

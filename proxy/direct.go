@@ -27,14 +27,17 @@ func directConnection(request *protocol.TelegramRequest) error {
 	go directPipe(telegramConn, request.ClientConn, wg, request.Logger)
 	go directPipe(request.ClientConn, telegramConn, wg, request.Logger)
 
-	<-request.Ctx.Done()
 	wg.Wait()
 
-	return request.Ctx.Err()
+	return nil
 }
 
-func directPipe(dst io.Writer, src io.Reader, wg *sync.WaitGroup, logger *zap.SugaredLogger) {
-	defer wg.Done()
+func directPipe(dst io.WriteCloser, src io.ReadCloser, wg *sync.WaitGroup, logger *zap.SugaredLogger) {
+	defer func() {
+		dst.Close()
+		src.Close()
+		wg.Done()
+	}()
 
 	buf := make([]byte, directPipeBufferSize)
 	if _, err := io.CopyBuffer(dst, src, buf); err != nil {
