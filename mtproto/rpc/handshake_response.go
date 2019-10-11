@@ -28,10 +28,11 @@ func (r *HandshakeResponse) Bytes() []byte {
 // Valid checks that handshake response compliments request.
 func (r *HandshakeResponse) Valid() error {
 	if !bytes.Equal(r.Type, TagHandshake) {
-		return errors.New("Unexpected handshake tag")
+		return errors.New("unexpected handshake tag")
 	}
+
 	if !bytes.Equal(r.PeerPID, HandshakeSenderPID) {
-		return errors.New("Incorrect sender PID")
+		return errors.New("incorrect sender PID")
 	}
 
 	return nil
@@ -41,7 +42,7 @@ func (r *HandshakeResponse) Valid() error {
 // data.
 func NewHandshakeResponse(data []byte) (*HandshakeResponse, error) {
 	if len(data) != 32 {
-		return nil, fmt.Errorf("Incorrect handshake response length %d", len(data))
+		return nil, fmt.Errorf("incorrect handshake response length %d", len(data))
 	}
 
 	return &HandshakeResponse{

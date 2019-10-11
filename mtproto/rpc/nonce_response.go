@@ -28,13 +28,15 @@ func (r *NonceResponse) Bytes() []byte {
 
 func (r *NonceResponse) Valid(req *NonceRequest) error {
 	if !bytes.Equal(r.Type, TagNonce) {
-		return errors.New("Unexpected RPC type")
+		return errors.New("unexpected RPC type")
 	}
+
 	if !bytes.Equal(r.Crypto, NonceCryptoAES) {
-		return errors.New("Unexpected crypto type")
+		return errors.New("unexpected crypto type")
 	}
+
 	if !bytes.Equal(r.KeySelector, req.KeySelector) {
-		return errors.New("Unexpected key selector")
+		return errors.New("unexpected key selector")
 	}
 
 	return nil
@@ -43,7 +45,7 @@ func (r *NonceResponse) Valid(req *NonceRequest) error {
 // NewNonceResponse build new nonce response based on the given data.
 func NewNonceResponse(data []byte) (*NonceResponse, error) {
 	if len(data) != 32 {
-		return nil, fmt.Errorf("Unexpected message length %d", len(data))
+		return nil, fmt.Errorf("unexpected message length %d", len(data))
 	}
 
 	return &NonceResponse{

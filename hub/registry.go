@@ -40,5 +40,6 @@ func (r *registry) getChannel(id conntypes.ConnID) (*ctxChannel, bool) {
 	if value, ok := r.conns[string(id[:])]; ok {
 		return value, true
 	}
+
 	return nil, false
 }

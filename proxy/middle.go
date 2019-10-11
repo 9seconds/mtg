@@ -10,11 +10,12 @@ import (
 	"github.com/9seconds/mtg/wrappers/packetack"
 )
 
-func middleConnection(request *protocol.TelegramRequest) error {
+func middleConnection(request *protocol.TelegramRequest) {
 	telegramConn := packetack.NewProxy(request)
 	defer telegramConn.Close()
 
 	var clientConn conntypes.PacketAckFullReadWriteCloser
+
 	switch request.ClientProtocol.ConnectionType() {
 	case conntypes.ConnectionTypeAbridged:
 		clientConn = packetack.NewClientAbridged(request.ClientConn)
@@ -30,11 +31,10 @@ func middleConnection(request *protocol.TelegramRequest) error {
 	wg.Add(2)
 
 	go middlePipe(telegramConn, clientConn, wg, request.Logger)
+
 	go middlePipe(clientConn, telegramConn, wg, request.Logger)
 
 	wg.Wait()
-
-	return nil
 }
 
 func middlePipe(dst conntypes.PacketAckWriteCloser,
@@ -50,6 +50,7 @@ func middlePipe(dst conntypes.PacketAckWriteCloser,
 	for {
 		acks := conntypes.ConnectionAcks{}
 		packet, err := src.Read(&acks)
+
 		if err != nil {
 			logger.Debugw("Cannot read packet", "error", err)
 			return

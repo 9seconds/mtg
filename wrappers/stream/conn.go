@@ -38,6 +38,7 @@ func (w *wrapperConn) WriteTimeout(p []byte, timeout time.Duration) (int, error)
 func (w *wrapperConn) Write(p []byte) (int, error) {
 	n, err := w.parent.Write(p)
 	w.logger.Debugw("write to stream", "bytes", n, "error", err)
+
 	if err != nil {
 		w.Close() // nolint: gosec
 	}
@@ -57,6 +58,7 @@ func (w *wrapperConn) ReadTimeout(p []byte, timeout time.Duration) (int, error) 
 func (w *wrapperConn) Read(p []byte) (int, error) {
 	n, err := w.parent.Read(p)
 	w.logger.Debugw("Read from stream", "bytes", n, "error", err)
+
 	if err != nil {
 		w.Close()
 	}

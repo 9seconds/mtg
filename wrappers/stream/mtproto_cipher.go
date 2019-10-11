@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
-	"crypto/md5"
-	"crypto/sha1"
+	"crypto/md5"  // nolint: gosec
+	"crypto/sha1" // nolint: gosec
 	"encoding/binary"
 	"net"
 
@@ -61,13 +61,16 @@ func mtprotoDeriveKeys(purpose mtprotoCipherPurpose,
 
 	clientIPv4 := mtprotoEmptyIP[:]
 	serverIPv4 := mtprotoEmptyIP[:]
+
 	if client.IP.To4() != nil {
 		clientIPv4 = utils.ReverseBytes(client.IP.To4())
 		serverIPv4 = utils.ReverseBytes(remote.IP.To4())
 	}
+
 	message.Write(serverIPv4) // nolint: gosec
 
 	var port [2]byte
+
 	binary.LittleEndian.PutUint16(port[:], uint16(client.Port))
 	message.Write(port[:]) // nolint: gosec
 
@@ -90,6 +93,7 @@ func mtprotoDeriveKeys(purpose mtprotoCipherPurpose,
 		message.Write(client.IP.To16()) // nolint: gosec
 		message.Write(remote.IP.To16()) // nolint: gosec
 	}
+
 	message.Write(req.Nonce) // nolint: gosec
 
 	data := message.Bytes()

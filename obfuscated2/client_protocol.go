@@ -58,6 +58,7 @@ func (c *ClientProtocol) Handshake(socket conntypes.StreamReadWriteCloser) (conn
 	decryptor.XORKeyStream(decryptedFrame.Bytes(), fm.Bytes())
 
 	magic := decryptedFrame.Magic()
+
 	switch {
 	case bytes.Equal(magic, conntypes.ConnectionTagAbridged):
 		c.connectionType = conntypes.ConnectionTypeAbridged
@@ -66,7 +67,7 @@ func (c *ClientProtocol) Handshake(socket conntypes.StreamReadWriteCloser) (conn
 	case bytes.Equal(magic, conntypes.ConnectionTagSecure):
 		c.connectionType = conntypes.ConnectionTypeSecure
 	default:
-		return nil, errors.New("Unknown connection type")
+		return nil, errors.New("unknown connection type")
 	}
 
 	c.connectionProtocol = conntypes.ConnectionProtocolIPv4
@@ -81,8 +82,9 @@ func (c *ClientProtocol) Handshake(socket conntypes.StreamReadWriteCloser) (conn
 
 	antiReplayKey := decryptedFrame.Unique()
 	if antireplay.Cache.Has(antiReplayKey) {
-		return nil, errors.New("Replay attack is detected")
+		return nil, errors.New("replay attack is detected")
 	}
+
 	antireplay.Cache.Add(antiReplayKey)
 
 	return stream.NewObfuscated2(socket, encryptor, decryptor), nil
@@ -92,6 +94,7 @@ func (c *ClientProtocol) ReadFrame(socket conntypes.StreamReader) (fm Frame, err
 	if _, err = io.ReadFull(handshakeReader{socket}, fm.Bytes()); err != nil {
 		err = fmt.Errorf("cannot extract obfuscated2 frame: %w", err)
 	}
+
 	return
 }
 

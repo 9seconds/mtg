@@ -65,6 +65,7 @@ func NewTelegramStats(dc conntypes.DC, parent conntypes.StreamReadWriteCloser) c
 		parent: parent,
 		dc:     dc,
 	}
+
 	stats.Stats.TelegramConnected(dc, parent.RemoteAddr())
 
 	return conn

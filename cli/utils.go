@@ -11,6 +11,7 @@ func Fatal(arg interface{}) {
 	if value, ok := arg.(error); ok {
 		arg = fmt.Errorf("fatal error: %+v", value)
 	}
+
 	PrintStderr(arg)
 	os.Exit(1)
 }

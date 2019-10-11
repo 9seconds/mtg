@@ -18,13 +18,16 @@ func directConnection(request *protocol.TelegramRequest) error {
 	if err != nil {
 		return err
 	}
+
 	telegramConn := telegramConnRaw.(conntypes.StreamReadWriteCloser)
+
 	defer telegramConn.Close()
 
 	wg := &sync.WaitGroup{}
 	wg.Add(2)
 
 	go directPipe(telegramConn, request.ClientConn, wg, request.Logger)
+
 	go directPipe(request.ClientConn, telegramConn, wg, request.Logger)
 
 	wg.Wait()

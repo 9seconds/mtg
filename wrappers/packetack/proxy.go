@@ -15,12 +15,12 @@ import (
 )
 
 type wrapperProxy struct {
-	flags        rpc.ProxyRequestFlags
 	request      *protocol.TelegramRequest
 	clientIPPort []byte
 	ourIPPort    []byte
 	channelRead  hub.ChannelReadCloser
 	closeOnce    sync.Once
+	flags        rpc.ProxyRequestFlags
 }
 
 func (w *wrapperProxy) Write(packet conntypes.Packet, acks *conntypes.ConnectionAcks) error {
@@ -30,6 +30,7 @@ func (w *wrapperProxy) Write(packet conntypes.Packet, acks *conntypes.Connection
 	if acks.Quick {
 		flags |= rpc.ProxyRequestFlagsQuickAck
 	}
+
 	if bytes.HasPrefix(packet, rpc.ProxyRequestFlagsEncryptedPrefix[:]) {
 		flags |= rpc.ProxyRequestFlagsEncrypted
 	}
@@ -67,6 +68,7 @@ func (w *wrapperProxy) Close() error {
 		w.channelRead.Close()
 		hub.Registry.Unregister(w.request.ConnID)
 	})
+
 	return nil
 }
 

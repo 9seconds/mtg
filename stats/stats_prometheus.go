@@ -122,15 +122,19 @@ func newStatsPrometheus(mux *http.ServeMux) (Interface, error) {
 	if err := registry.Register(instance.connections); err != nil {
 		return nil, fmt.Errorf("cannot register metrics for connections: %w", err)
 	}
+
 	if err := registry.Register(instance.telegramConnections); err != nil {
 		return nil, fmt.Errorf("cannot register metrics for telegram connections: %w", err)
 	}
+
 	if err := registry.Register(instance.traffic); err != nil {
 		return nil, fmt.Errorf("cannot register metrics for traffic: %w", err)
 	}
+
 	if err := registry.Register(instance.crashes); err != nil {
 		return nil, fmt.Errorf("cannot register metrics for crashes: %w", err)
 	}
+
 	if err := registry.Register(instance.antiReplays); err != nil {
 		return nil, fmt.Errorf("cannot register metrics for anti replays: %w", err)
 	}

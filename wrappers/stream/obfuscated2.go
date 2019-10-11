@@ -22,6 +22,7 @@ func (w *wrapperObfuscated2) ReadTimeout(p []byte, timeout time.Duration) (int, 
 	if err != nil {
 		return 0, fmt.Errorf("cannot read stream ciphered data: %w", err)
 	}
+
 	w.decryptor.XORKeyStream(p, p[:n])
 
 	return n, nil
@@ -32,6 +33,7 @@ func (w *wrapperObfuscated2) Read(p []byte) (int, error) {
 	if err != nil {
 		return n, err
 	}
+
 	w.decryptor.XORKeyStream(p, p[:n])
 
 	return n, nil

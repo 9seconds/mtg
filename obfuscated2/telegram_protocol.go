@@ -17,6 +17,7 @@ func TelegramProtocol(req *protocol.TelegramRequest) (conntypes.StreamReadWriteC
 	if err != nil {
 		return nil, fmt.Errorf("cannot dial to telegram: %w", err)
 	}
+
 	conn = stream.NewTimeout(conn)
 	conn = stream.NewCtx(req.Ctx, req.Cancel, conn)
 	fm := generateFrame(req.ClientProtocol)
@@ -45,6 +46,7 @@ func generateFrame(cp protocol.ClientProtocol) (fm Frame) {
 		if _, err := rand.Read(data); err != nil {
 			continue
 		}
+
 		if data[0] == 0xef {
 			continue
 		}

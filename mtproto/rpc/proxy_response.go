@@ -29,21 +29,23 @@ func ParseProxyResponse(packet conntypes.Packet) (*ProxyResponse, error) {
 	}
 
 	tag := packet[:4]
+
 	switch {
 	case bytes.Equal(tag, TagProxyAns):
 		response.Type = ProxyResponseTypeAns
 		copy(response.ConnID[:], packet[8:16])
 		response.Payload = packet[16:]
-		return &response, nil
 
+		return &response, nil
 	case bytes.Equal(tag, TagSimpleAck):
 		response.Type = ProxyResponseTypeSimpleAck
 		copy(response.ConnID[:], packet[4:12])
 		response.Payload = packet[12:]
-		return &response, nil
 
+		return &response, nil
 	case bytes.Equal(tag, TagCloseExt):
 		response.Type = ProxyResponseTypeCloseExt
+
 		return &response, nil
 	}
 

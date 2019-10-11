@@ -21,6 +21,7 @@ func getGlobalIPv4(ctx context.Context) (net.IP, error) {
 	if err != nil || ip.To4() == nil {
 		return nil, fmt.Errorf("cannot find public ipv4 address: %w", err)
 	}
+
 	return ip, nil
 }
 
@@ -29,6 +30,7 @@ func getGlobalIPv6(ctx context.Context) (net.IP, error) {
 	if err != nil || ip.To4() != nil {
 		return nil, fmt.Errorf("cannot find public ipv6 address: %w", err)
 	}
+
 	return ip, nil
 }
 
@@ -54,14 +56,17 @@ func fetchIP(ctx context.Context, network string) (net.IP, error) {
 		if resp != nil {
 			io.Copy(ioutil.Discard, resp.Body) // nolint: errcheck
 		}
+
 		return nil, fmt.Errorf("cannot perform a request: %w", err)
 	}
+
 	defer resp.Body.Close() // nolint: errcheck
 
 	respDataBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read response body: %w", err)
 	}
+
 	respData := strings.TrimSpace(string(respDataBytes))
 
 	ip := net.ParseIP(respData)

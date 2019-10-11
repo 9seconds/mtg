@@ -14,6 +14,7 @@ func GetSignalContext() context.Context {
 	sigChan := make(chan os.Signal, 1)
 
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
 	go func() {
 		for range sigChan {
 			cancel()

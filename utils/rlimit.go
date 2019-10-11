@@ -13,6 +13,7 @@ func SetLimits() error {
 	if err := unix.Getrlimit(unix.RLIMIT_NOFILE, &rLimit); err != nil {
 		return fmt.Errorf("cannot get rlimit: %w", err)
 	}
+
 	rLimit.Cur = rLimit.Max
 
 	if err := unix.Setrlimit(unix.RLIMIT_NOFILE, &rLimit); err != nil {

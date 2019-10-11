@@ -119,7 +119,6 @@ func main() {
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 	case generateSecretCommand.FullCommand():
 		cli.Generate(*generateSecretType)
-
 	case proxyCommand.FullCommand():
 		err := config.Init(
 			config.Opt{Option: config.OptionTypeDebug, Value: *proxyDebug},

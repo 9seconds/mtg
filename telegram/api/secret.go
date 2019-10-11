@@ -12,6 +12,7 @@ func Secret() ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot access telegram server: %w", err)
 	}
+
 	defer resp.Close()
 
 	secret, err := ioutil.ReadAll(resp)

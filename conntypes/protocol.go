@@ -9,6 +9,7 @@ func (c ConnectionProtocol) String() string {
 	case ConnectionProtocolIPv4:
 		return "ipv4"
 	}
+
 	return "ipv6"
 }
 

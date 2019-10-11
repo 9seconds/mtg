@@ -27,6 +27,7 @@ func (w *wrapperBlockCipher) Write(p []byte) (int, error) {
 	if err != nil {
 		return 0, err
 	}
+
 	return w.parent.Write(encrypted)
 }
 
@@ -35,6 +36,7 @@ func (w *wrapperBlockCipher) WriteTimeout(p []byte, timeout time.Duration) (int,
 	if err != nil {
 		return 0, err
 	}
+
 	return w.parent.WriteTimeout(encrypted, timeout)
 }
 
@@ -49,6 +51,7 @@ func (w *wrapperBlockCipher) Read(p []byte) (int, error) {
 		if err != nil {
 			return 0, fmt.Errorf("cannot read data: %w", err)
 		}
+
 		currentBuffer = append(currentBuffer, rv...)
 	}
 

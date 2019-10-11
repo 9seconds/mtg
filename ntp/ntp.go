@@ -21,15 +21,17 @@ var ntpEndpoints = [...]string{
 // Fetch fetches the data on time drift.
 func Fetch() (time.Duration, error) {
 	url := ntpEndpoints[rand.Intn(len(ntpEndpoints))]
+
 	resp, err := ntp.Query(url)
 	if err != nil {
-		return 0, fmt.Errorf("Cannot fetch NTP server %s: %w", url, err)
+		return 0, fmt.Errorf("cannot fetch NTP server %s: %w", url, err)
 	}
 
 	offsetInt := int64(resp.ClockOffset)
 	if offsetInt < 0 {
 		offsetInt = -offsetInt
 	}
+
 	offset := time.Duration(offsetInt)
 
 	return offset, nil

@@ -22,6 +22,7 @@ type IPURLs struct {
 
 func GetURLs() (urls IPURLs) {
 	secret := ""
+
 	switch C.SecretMode {
 	case SecretModeSimple:
 		secret = hex.EncodeToString(C.Secret)

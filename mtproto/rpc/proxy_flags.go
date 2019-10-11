@@ -33,24 +33,31 @@ func (r ProxyRequestFlags) String() string {
 	if r&ProxyRequestFlagsHasAdTag != 0 {
 		flags = append(flags, "HAS_AD_TAG")
 	}
+
 	if r&ProxyRequestFlagsEncrypted != 0 {
 		flags = append(flags, "ENCRYPTED")
 	}
+
 	if r&ProxyRequestFlagsMagic != 0 {
 		flags = append(flags, "MAGIC")
 	}
+
 	if r&ProxyRequestFlagsExtMode2 != 0 {
 		flags = append(flags, "EXT_MODE_2")
 	}
+
 	if r&ProxyRequestFlagsIntermediate != 0 {
 		flags = append(flags, "INTERMEDIATE")
 	}
+
 	if r&ProxyRequestFlagsAbdridged != 0 {
 		flags = append(flags, "ABRIDGED")
 	}
+
 	if r&ProxyRequestFlagsQuickAck != 0 {
 		flags = append(flags, "QUICK_ACK")
 	}
+
 	if r&ProxyRequestFlagsPad != 0 {
 		flags = append(flags, "PAD")
 	}

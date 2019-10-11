@@ -4,7 +4,7 @@ APP_NAME     := $(IMAGE_NAME)
 
 CC_BINARIES  := $(shell bash -c "echo -n $(APP_NAME)-{linux,freebsd,openbsd}-{386,amd64} $(APP_NAME)-linux-{arm,arm64}")
 
-GOLANGCI_LINT_VERSION := v1.15.0
+GOLANGCI_LINT_VERSION := v1.20.0
 
 VERSION_GO         := $(shell go version)
 VERSION_DATE       := $(shell date -Ru)
@@ -50,10 +50,6 @@ crosscompile: $(CC_BINARIES)
 .PHONY: crosscompile-dir
 crosscompile-dir:
 	@rm -rf "$(CC_DIR)" && mkdir -p "$(CC_DIR)"
-
-.PHONY: test
-test: vendor
-	@$(MOD_ON) go test -v ./...
 
 .PHONY: lint
 lint: vendor

@@ -23,6 +23,7 @@ func (s SecretMode) String() string {
 	case SecretModeSecured:
 		return "secured"
 	}
+
 	return "tls"
 }
 
@@ -135,7 +136,7 @@ func Init(options ...Opt) error { // nolint: gocyclo, funlen
 			case "influxdb":
 				C.StatsdTagsFormat = statsd.InfluxDB
 			default:
-				return fmt.Errorf("Incorrect statsd tag %s", value)
+				return fmt.Errorf("incorrect statsd tag %s", value)
 			}
 		case OptionTypeStatsdTags:
 			C.StatsdTags = opt.Value.(map[string]string)
@@ -152,7 +153,7 @@ func Init(options ...Opt) error { // nolint: gocyclo, funlen
 		case OptionTypeAdtag:
 			C.AdTag = opt.Value.([]byte)
 		default:
-			return fmt.Errorf("Unknown tag %v", opt.Option)
+			return fmt.Errorf("unknown tag %v", opt.Option)
 		}
 	}
 
@@ -163,7 +164,7 @@ func Init(options ...Opt) error { // nolint: gocyclo, funlen
 	case len(C.Secret) == SimpleSecretLength:
 		C.SecretMode = SecretModeSimple
 	default:
-		return errors.New("Incorrect secret")
+		return errors.New("incorrect secret")
 	}
 
 	return nil
@@ -173,11 +174,13 @@ func InitPublicAddress(ctx context.Context) error {
 	if C.PublicIPv4.Port == 0 {
 		C.PublicIPv4.Port = C.Bind.Port
 	}
+
 	if C.PublicIPv6.Port == 0 {
 		C.PublicIPv6.Port = C.Bind.Port
 	}
 
 	foundAddress := C.PublicIPv4.IP != nil || C.PublicIPv6.IP != nil
+
 	if C.PublicIPv4.IP == nil {
 		ip, err := getGlobalIPv4(ctx)
 		if err != nil {
@@ -187,6 +190,7 @@ func InitPublicAddress(ctx context.Context) error {
 			foundAddress = true
 		}
 	}
+
 	if C.PublicIPv6.IP == nil {
 		ip, err := getGlobalIPv6(ctx)
 		if err != nil {
@@ -198,7 +202,7 @@ func InitPublicAddress(ctx context.Context) error {
 	}
 
 	if !foundAddress {
-		return errors.New("Cannot resolve any public address")
+		return errors.New("cannot resolve any public address")
 	}
 
 	return nil

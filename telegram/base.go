@@ -51,7 +51,7 @@ func (b *baseTelegram) chooseAddress(addresses map[conntypes.DC][]string,
 	dc, defaultDC conntypes.DC) string {
 	addrs, ok := addresses[dc]
 	if !ok {
-		addrs, _ = addresses[defaultDC]
+		addrs = addresses[defaultDC]
 	}
 
 	switch {

@@ -12,6 +12,7 @@ func Generate(secretType string) {
 	if _, err := rand.Read(data); err != nil {
 		panic(err)
 	}
+
 	secret := hex.EncodeToString(data)
 
 	switch secretType {

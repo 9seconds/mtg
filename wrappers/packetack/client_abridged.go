@@ -26,9 +26,11 @@ func (w *wrapperClientAbridged) Read(acks *conntypes.ConnectionAcks) (conntypes.
 	buf := bytes.Buffer{}
 
 	buf.Grow(1)
+
 	if _, err := io.CopyN(&buf, w.parent, 1); err != nil {
 		return nil, fmt.Errorf("cannot read message length: %w", err)
 	}
+
 	msgLength := uint32(buf.Bytes()[0])
 	buf.Reset()
 
@@ -39,17 +41,21 @@ func (w *wrapperClientAbridged) Read(acks *conntypes.ConnectionAcks) (conntypes.
 
 	if msgLength == clientAbridgedSmallPacketLength {
 		buf.Grow(3)
+
 		if _, err := io.CopyN(&buf, w.parent, 3); err != nil {
 			return nil, fmt.Errorf("cannot read correct message length: %w", err)
 		}
+
 		number := utils.Uint24{}
 		copy(number[:], buf.Bytes())
 		msgLength = utils.FromUint24(number)
 	}
+
 	msgLength *= 4
 
 	buf.Reset()
 	buf.Grow(int(msgLength))
+
 	if _, err := io.CopyN(&buf, w.parent, int64(msgLength)); err != nil {
 		return nil, fmt.Errorf("cannot read message: %w", err)
 	}
@@ -66,18 +72,20 @@ func (w *wrapperClientAbridged) Write(packet conntypes.Packet, acks *conntypes.C
 		if _, err := w.parent.Write(utils.ReverseBytes(packet)); err != nil {
 			return fmt.Errorf("cannot send a simpleacked packet: %w", err)
 		}
+
 		return nil
 	}
 
 	packetLength := len(packet) / 4
+
 	switch {
 	case packetLength < clientAbridgedSmallPacketLength:
 		data := append([]byte{byte(packetLength)}, packet...)
 		if _, err := w.parent.Write(data); err != nil {
 			return fmt.Errorf("cannot send small packet: %w", err)
 		}
-		return nil
 
+		return nil
 	case packetLength < clientAbridgedLargePacketLength:
 		length24 := utils.ToUint24(uint32(packetLength))
 		buf := bytes.Buffer{}
@@ -89,6 +97,7 @@ func (w *wrapperClientAbridged) Write(packet conntypes.Packet, acks *conntypes.C
 		if _, err := w.parent.Write(buf.Bytes()); err != nil {
 			return fmt.Errorf("cannot send large packet: %w", err)
 		}
+
 		return nil
 	}
 

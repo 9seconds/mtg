@@ -55,6 +55,7 @@ func (m *middleTelegram) update() error {
 
 func (m *middleTelegram) backgroundUpdate() {
 	logger := zap.S().Named("telegram")
+
 	for range time.Tick(middleTelegramBackgroundUpdateEvery) {
 		if err := m.update(); err != nil {
 			logger.Warnw("Cannot update Telegram proxies", "error", err)

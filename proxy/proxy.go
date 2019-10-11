@@ -34,6 +34,7 @@ func (p *Proxy) Serve(listener net.Listener) {
 				continue
 			}
 		}
+
 		go p.accept(conn)
 	}
 }
@@ -61,10 +62,12 @@ func (p *Proxy) accept(conn net.Conn) {
 	clientConn := stream.NewClientConn(conn, connID)
 	clientConn = stream.NewCtx(ctx, cancel, clientConn)
 	clientConn = stream.NewTimeout(clientConn)
+
 	defer clientConn.Close()
 
 	clientProtocol := p.ClientProtocolMaker()
 	clientConn, err := clientProtocol.Handshake(clientConn)
+
 	if err != nil {
 		logger.Warnw("Cannot perform client handshake", "error", err)
 		return
@@ -83,8 +86,10 @@ func (p *Proxy) accept(conn net.Conn) {
 		ClientProtocol: clientProtocol,
 	}
 
+	err = nil
+
 	if len(config.C.AdTag) > 0 {
-		err = middleConnection(req)
+		middleConnection(req)
 	} else {
 		err = directConnection(req)
 	}

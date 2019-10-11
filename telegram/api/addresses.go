@@ -31,34 +31,36 @@ func getAddresses(url string) (map[conntypes.DC][]string, conntypes.DC, error) {
 	if err != nil {
 		return nil, 0, fmt.Errorf("cannot get http response: %w", err)
 	}
+
 	defer resp.Close()
 
 	scanner := bufio.NewScanner(resp)
 	data := map[conntypes.DC][]string{}
+	defaultDC := conntypes.DCDefaultIdx
 
-	var defaultDC = conntypes.DCDefaultIdx
 	for scanner.Scan() {
 		text := strings.TrimSpace(scanner.Text())
+
 		switch {
 		case strings.HasPrefix(text, "#"):
 			continue
-
 		case strings.HasPrefix(text, "proxy_for"):
 			addr, idx, err := addressesParseProxyFor(text)
 			if err != nil {
 				return nil, 0, fmt.Errorf("cannot parse 'proxy_for' section: %w", err)
 			}
+
 			if addresses, ok := data[idx]; ok {
 				data[idx] = append(addresses, addr)
 			} else {
 				data[idx] = []string{addr}
 			}
-
 		case strings.HasPrefix(text, "default"):
 			idx, err := addressesParseDefault(text)
 			if err != nil {
 				return nil, 0, fmt.Errorf("cannot parse 'default' section: %w", err)
 			}
+
 			defaultDC = idx
 		}
 	}
@@ -97,6 +99,7 @@ func addressesParseDefault(text string) (conntypes.DC, error) {
 	}
 
 	dcString := strings.TrimRight(chunks[1], ";")
+
 	dc, err := strconv.ParseInt(dcString, 10, 16)
 	if err != nil {
 		return 0, fmt.Errorf("incorrect config '%s': %w", text, err)

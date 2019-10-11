@@ -13,6 +13,7 @@ func ReadFull(src io.Reader) (rv []byte, err error) {
 		if err != nil {
 			return nil, err
 		}
+
 		rv = append(rv, buf[:n]...)
 	}
 

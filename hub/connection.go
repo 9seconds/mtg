@@ -47,6 +47,7 @@ func (c *connection) write(packet conntypes.Packet) error {
 		c.pending = 0
 		c.mutex.Unlock()
 	}
+
 	return err
 }
 
@@ -89,6 +90,7 @@ func (c *connection) run() {
 			logger.Debugw("Failed response", "error", err)
 			continue
 		}
+
 		if response.Type == rpc.ProxyResponseTypeCloseExt {
 			logger.Debugw("Proxy has closed connection")
 			return

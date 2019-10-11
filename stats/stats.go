@@ -20,11 +20,13 @@ func Init(ctx context.Context) error {
 	}
 
 	stats := []Interface{instancePrometheus}
+
 	if config.C.StatsdAddr != nil {
 		instanceStatsd, err := newStatsStatsd()
 		if err != nil {
 			return fmt.Errorf("cannot inialize statsd: %w", err)
 		}
+
 		stats = append(stats, instanceStatsd)
 	}
 
@@ -36,7 +38,9 @@ func Init(ctx context.Context) error {
 	srv := http.Server{
 		Handler: mux,
 	}
+
 	go srv.Serve(listener) // nolint: errcheck
+
 	go func() {
 		<-ctx.Done()
 		srv.Shutdown(context.Background()) // nolint: errcheck

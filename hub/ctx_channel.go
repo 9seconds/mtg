@@ -46,11 +46,13 @@ func (c *ctxChannel) sendBack(response *rpc.ProxyResponse) error {
 func (c *ctxChannel) Close() error {
 	c.cancel()
 	c.channel = nil
+
 	return nil
 }
 
 func newCtxChannel(ctx context.Context) *ctxChannel {
 	ctx, cancel := context.WithCancel(ctx)
+
 	return &ctxChannel{
 		channel: make(chan *rpc.ProxyResponse),
 		ctx:     ctx,

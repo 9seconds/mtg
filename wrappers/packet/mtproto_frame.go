@@ -41,7 +41,7 @@ type wrapperMtprotoFrame struct {
 	writeSeqNo int32
 }
 
-func (w *wrapperMtprotoFrame) Read() (conntypes.Packet, error) {
+func (w *wrapperMtprotoFrame) Read() (conntypes.Packet, error) { // nolint: funlen
 	buf := &bytes.Buffer{}
 	sum := crc32.NewIEEE()
 	writer := io.MultiWriter(buf, sum)
@@ -49,9 +49,11 @@ func (w *wrapperMtprotoFrame) Read() (conntypes.Packet, error) {
 	for {
 		buf.Reset()
 		sum.Reset()
+
 		if _, err := io.CopyN(writer, w.parent, 4); err != nil {
 			return nil, fmt.Errorf("cannot read frame padding: %w", err)
 		}
+
 		if !bytes.Equal(buf.Bytes(), mtprotoFramePadding) {
 			break
 		}
@@ -62,19 +64,23 @@ func (w *wrapperMtprotoFrame) Read() (conntypes.Packet, error) {
 		"messageLength", messageLength,
 		"sequence_number", w.readSeqNo,
 	)
+
 	if messageLength%4 != 0 || messageLength < mtprotoFrameMinMessageLength ||
 		messageLength > mtprotoFrameMaxMessageLength {
-		return nil, fmt.Errorf("Incorrect frame message length %d", messageLength)
+		return nil, fmt.Errorf("incorrect frame message length %d", messageLength)
 	}
 
 	buf.Reset()
 	buf.Grow(int(messageLength) - 4 - 4)
+
 	if _, err := io.CopyN(writer, w.parent, int64(messageLength)-4-4); err != nil {
 		return nil, fmt.Errorf("cannot read the message frame: %w", err)
 	}
 
 	var seqNo int32
-	binary.Read(buf, binary.LittleEndian, &seqNo) // nolint: errcheck, gosec
+
+	binary.Read(buf, binary.LittleEndian, &seqNo) // nolint: errcheck
+
 	if seqNo != w.readSeqNo {
 		return nil, fmt.Errorf("unexpected sequence number %d (wait for %d)", seqNo, w.readSeqNo)
 	}
@@ -110,12 +116,12 @@ func (w *wrapperMtprotoFrame) Write(p conntypes.Packet) error {
 	buf := &bytes.Buffer{}
 	buf.Grow(messageLength + paddingLength)
 
-	binary.Write(buf, binary.LittleEndian, uint32(messageLength))
-	binary.Write(buf, binary.LittleEndian, w.writeSeqNo)
+	binary.Write(buf, binary.LittleEndian, uint32(messageLength)) // nolint: errcheck
+	binary.Write(buf, binary.LittleEndian, w.writeSeqNo)          // nolint: errcheck
 	buf.Write(p)
 
 	checksum := crc32.ChecksumIEEE(buf.Bytes())
-	binary.Write(buf, binary.LittleEndian, checksum)
+	binary.Write(buf, binary.LittleEndian, checksum) // nolint: errcheck
 	buf.Write(bytes.Repeat(mtprotoFramePadding, paddingLength/4))
 
 	w.logger.Debugw("Write MTProto frame",

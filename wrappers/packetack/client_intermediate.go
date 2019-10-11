@@ -22,9 +22,11 @@ func (w *wrapperClientIntermediate) Read(acks *conntypes.ConnectionAcks) (connty
 	buf := bytes.Buffer{}
 
 	buf.Grow(4)
+
 	if _, err := io.CopyN(&buf, w.parent, 4); err != nil {
 		return nil, fmt.Errorf("cannot read message length: %w", err)
 	}
+
 	length := binary.LittleEndian.Uint32(buf.Bytes())
 
 	if length > clientIntermediateQuickAckLength {
@@ -34,6 +36,7 @@ func (w *wrapperClientIntermediate) Read(acks *conntypes.ConnectionAcks) (connty
 
 	buf.Reset()
 	buf.Grow(int(length))
+
 	if _, err := io.CopyN(&buf, w.parent, int64(length)); err != nil {
 		return nil, fmt.Errorf("cannot read the message: %w", err)
 	}
@@ -46,6 +49,7 @@ func (w *wrapperClientIntermediate) Write(packet conntypes.Packet, acks *conntyp
 		if _, err := w.parent.Write(packet); err != nil {
 			return fmt.Errorf("cannot send simpleacked packet: %w", err)
 		}
+
 		return nil
 	}
 
@@ -55,6 +59,7 @@ func (w *wrapperClientIntermediate) Write(packet conntypes.Packet, acks *conntyp
 	if _, err := w.parent.Write(append(length[:], packet...)); err != nil {
 		return fmt.Errorf("cannot send packet: %w", err)
 	}
+
 	return nil
 }
 

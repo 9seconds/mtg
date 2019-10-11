@@ -42,9 +42,9 @@ func (h *hub) Write(packet conntypes.Packet, req *protocol.TelegramRequest) erro
 
 func (h *hub) getHub(req *protocol.TelegramRequest) *connectionHub {
 	keyBuilder := strings.Builder{}
-	binary.Write(&keyBuilder, binary.LittleEndian, int16(req.ClientProtocol.DC()))
+	binary.Write(&keyBuilder, binary.LittleEndian, int16(req.ClientProtocol.DC())) // nolint: errcheck
 	keyBuilder.WriteRune('_')
-	binary.Write(&keyBuilder, binary.LittleEndian, uint8(req.ClientProtocol.ConnectionProtocol()))
+	binary.Write(&keyBuilder, binary.LittleEndian, uint8(req.ClientProtocol.ConnectionProtocol())) // nolint: errcheck
 	key := keyBuilder.String()
 
 	h.mutex.RLock()
@@ -60,6 +60,7 @@ func (h *hub) getHub(req *protocol.TelegramRequest) *connectionHub {
 			h.logger.Debugw("Create new connection hub",
 				"dc", req.ClientProtocol.DC(),
 				"protocol", req.ClientProtocol.ConnectionProtocol())
+
 			rv = newConnectionHub(h.logger.With(
 				"dc", req.ClientProtocol.DC(),
 				"protocol", req.ClientProtocol.ConnectionProtocol(),

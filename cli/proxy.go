@@ -19,10 +19,11 @@ import (
 	"github.com/9seconds/mtg/utils"
 )
 
-func Proxy() error {
+func Proxy() error { // nolint: funlen
 	ctx := utils.GetSignalContext()
 
 	atom := zap.NewAtomicLevel()
+
 	switch {
 	case config.C.Debug:
 		atom.SetLevel(zapcore.DebugLevel)
@@ -38,23 +39,28 @@ func Proxy() error {
 		zapcore.Lock(os.Stderr),
 		atom,
 	))
+
 	zap.ReplaceGlobals(logger)
 	defer logger.Sync() // nolint: errcheck
 
 	if err := config.InitPublicAddress(ctx); err != nil {
 		Fatal(err)
 	}
+
 	zap.S().Debugw("Configuration", "config", config.Printable())
 
 	if len(config.C.AdTag) > 0 {
 		zap.S().Infow("Use middle proxy connection to Telegram")
+
 		diff, err := ntp.Fetch()
 		if err != nil {
 			Fatal("Cannot fetch time data from NTP")
 		}
+
 		if diff > time.Second {
 			Fatal("Your local time is skewed and drift is bigger than a second. Please sync your time.")
 		}
+
 		go ntp.AutoUpdate()
 	} else {
 		zap.S().Infow("Use direct connection to Telegram")
@@ -62,10 +68,11 @@ func Proxy() error {
 
 	PrintJSONStdout(config.GetURLs())
 
-	antireplay.Init()
 	if err := stats.Init(ctx); err != nil {
 		Fatal(err)
 	}
+
+	antireplay.Init()
 	telegram.Init()
 	hub.Init(ctx)
 
@@ -73,6 +80,7 @@ func Proxy() error {
 	if err != nil {
 		Fatal(err)
 	}
+
 	go func() {
 		<-ctx.Done()
 		proxyListener.Close()

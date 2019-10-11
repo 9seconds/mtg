@@ -36,6 +36,7 @@ func NewNonceRequest(proxySecret []byte) (*NonceRequest, error) {
 	if _, err := rand.Read(nonce); err != nil {
 		return nil, fmt.Errorf("cannot generate nonce: %w", err)
 	}
+
 	copy(keySelector, proxySecret)
 
 	timestamp := time.Now().Truncate(time.Second).Unix() % 4294967296 // 256 ^ 4 - do not know how to name

@@ -96,6 +96,7 @@ func newStatsStatsd() (Interface, error) {
 		for k, v := range config.C.StatsdTags {
 			tags = append(tags, k, v)
 		}
+
 		options = append(options, statsd.Tags(tags...))
 	}
 
