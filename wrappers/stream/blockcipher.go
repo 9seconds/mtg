@@ -1,7 +1,6 @@
 package stream
 
 import (
-	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
 	"fmt"
@@ -15,7 +14,7 @@ import (
 )
 
 type wrapperBlockCipher struct {
-	buf bytes.Buffer
+	bufferedReader
 
 	parent    conntypes.StreamReadWriteCloser
 	encryptor cipher.BlockMode
@@ -38,43 +37,6 @@ func (w *wrapperBlockCipher) WriteTimeout(p []byte, timeout time.Duration) (int,
 	}
 
 	return w.parent.WriteTimeout(encrypted, timeout)
-}
-
-func (w *wrapperBlockCipher) Read(p []byte) (int, error) {
-	if w.buf.Len() > 0 {
-		return w.flush(p)
-	}
-
-	var currentBuffer []byte
-	for len(currentBuffer) == 0 || len(currentBuffer)%aes.BlockSize != 0 {
-		rv, err := utils.ReadFull(w.parent)
-		if err != nil {
-			return 0, fmt.Errorf("cannot read data: %w", err)
-		}
-
-		currentBuffer = append(currentBuffer, rv...)
-	}
-
-	w.decryptor.CryptBlocks(currentBuffer, currentBuffer)
-	w.buf.Write(currentBuffer)
-
-	return w.flush(p)
-}
-
-func (w *wrapperBlockCipher) ReadTimeout(p []byte, timeout time.Duration) (int, error) {
-	return w.Read(p)
-}
-
-func (w *wrapperBlockCipher) flush(p []byte) (int, error) {
-	if w.buf.Len() > len(p) {
-		return w.buf.Read(p)
-	}
-
-	sizeToReturn := w.buf.Len()
-	copy(p, w.buf.Bytes())
-	w.buf.Reset()
-
-	return sizeToReturn, nil
 }
 
 func (w *wrapperBlockCipher) encrypt(p []byte) ([]byte, error) {
@@ -110,9 +72,25 @@ func (w *wrapperBlockCipher) RemoteAddr() *net.TCPAddr {
 
 func newBlockCipher(parent conntypes.StreamReadWriteCloser,
 	encryptor, decryptor cipher.BlockMode) conntypes.StreamReadWriteCloser {
-	return &wrapperBlockCipher{
+	cipher := &wrapperBlockCipher{
 		parent:    parent,
 		encryptor: encryptor,
 		decryptor: decryptor,
 	}
+
+	cipher.readFunc = func() ([]byte, error) {
+		var currentBuffer []byte
+		for len(currentBuffer) == 0 || len(currentBuffer)%aes.BlockSize != 0 {
+			rv, err := utils.ReadFull(cipher.parent)
+			if err != nil {
+				return nil, fmt.Errorf("cannot read data: %w", err)
+			}
+			currentBuffer = append(currentBuffer, rv...)
+		}
+		cipher.decryptor.CryptBlocks(currentBuffer, currentBuffer)
+
+		return currentBuffer, nil
+	}
+
+	return cipher
 }
