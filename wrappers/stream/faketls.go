@@ -19,7 +19,11 @@ var (
 	fakeTLSWritePrefix = []byte{0x17, 0x03, 0x03}
 )
 
-const faketlsMaxChunkSize = 16384 + 24
+const (
+	faketlsMaxChunkSize              = 16384 + 24
+	faketlsRecordTypeApplicationData = 0x17
+	faketlsRecordTypeCCS             = 0x14
+)
 
 type wrapperFakeTLS struct {
 	bufferedReader
@@ -106,15 +110,15 @@ func NewFakeTLS(socket conntypes.StreamReadWriteCloser) conntypes.StreamReadWrit
 	faketls.readFunc = func() ([]byte, error) {
 		data := &bytes.Buffer{}
 		buf := [2]byte{}
-		recordType := byte(0x14)
+		recordType := byte(faketlsRecordTypeCCS)
 
-		for recordType == 0x14 {
+		for recordType == faketlsRecordTypeCCS {
 			if _, err := io.ReadFull(faketls.parent, buf[:1]); err != nil {
 				return nil, fmt.Errorf("cannot read record type: %w", err)
 			}
 
 			switch buf[0] {
-			case 0x14, 0x17:
+			case faketlsRecordTypeCCS, faketlsRecordTypeApplicationData:
 				recordType = buf[0]
 			default:
 				return nil, fmt.Errorf("incorrect record type %v", buf[0])
