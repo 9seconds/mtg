@@ -167,15 +167,26 @@ func Init(options ...Opt) error { // nolint: gocyclo, funlen
 	case len(C.Secret) == 1+SimpleSecretLength && bytes.HasPrefix(C.Secret, []byte{0xdd}):
 		C.SecretMode = SecretModeSecured
 		C.Secret = bytes.TrimPrefix(C.Secret, []byte{0xdd})
-	case len(C.Secret) == SimpleSecretLength:
-		C.SecretMode = SecretModeSimple
-	case bytes.HasPrefix(C.Secret, []byte{0xee}):
+	case len(C.Secret) > SimpleSecretLength && bytes.HasPrefix(C.Secret, []byte{0xee}):
 		C.SecretMode = SecretModeTLS
 		secret := bytes.TrimPrefix(C.Secret, []byte{0xee})
 		C.Secret = secret[:SimpleSecretLength]
 		C.CloakHost = string(secret[SimpleSecretLength:])
+	case len(C.Secret) == SimpleSecretLength:
+		C.SecretMode = SecretModeSimple
 	default:
 		return errors.New("incorrect secret")
+	}
+
+	if C.CloakHost != "" {
+		addrs, err := net.LookupHost(C.CloakHost)
+		if err != nil {
+			return fmt.Errorf("cannot resolve address of %s host: %w", C.CloakHost, err)
+		}
+
+		if len(addrs) == 0 {
+			return fmt.Errorf("no known ip addresses for the host %s", C.CloakHost)
+		}
 	}
 
 	return nil
