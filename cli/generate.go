@@ -7,7 +7,7 @@ import (
 	"github.com/9seconds/mtg/config"
 )
 
-func Generate(secretType string) {
+func Generate(secretType, hostname string) {
 	data := make([]byte, config.SimpleSecretLength)
 	if _, err := rand.Read(data); err != nil {
 		panic(err)
@@ -21,6 +21,6 @@ func Generate(secretType string) {
 	case "secured":
 		PrintStdout("dd" + secret)
 	default:
-		Fatal("Unknown secret type " + secret)
+		PrintStdout("ee" + secret + hex.EncodeToString([]byte(hostname)))
 	}
 }

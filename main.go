@@ -19,6 +19,11 @@ var (
 
 	generateSecretCommand = app.Command("generate-secret",
 		"Generate new secret")
+	generateCloakHost = generateSecretCommand.Flag("cloak-host",
+		"A host to use for TLS cloaking.").
+		Short('c').
+		Default("storage.googleapis.com").
+		String()
 	generateSecretType = generateSecretCommand.Arg("type",
 		"A type of secret to generate. Valid options are 'simple', 'secured' and 'tls'").
 		Required().
@@ -123,7 +128,7 @@ func main() {
 
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 	case generateSecretCommand.FullCommand():
-		cli.Generate(*generateSecretType)
+		cli.Generate(*generateSecretType, *generateCloakHost)
 	case proxyCommand.FullCommand():
 		err := config.Init(
 			config.Opt{Option: config.OptionTypeDebug, Value: *proxyDebug},

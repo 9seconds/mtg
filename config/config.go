@@ -169,6 +169,11 @@ func Init(options ...Opt) error { // nolint: gocyclo, funlen
 		C.Secret = bytes.TrimPrefix(C.Secret, []byte{0xdd})
 	case len(C.Secret) == SimpleSecretLength:
 		C.SecretMode = SecretModeSimple
+	case bytes.HasPrefix(C.Secret, []byte{0xee}):
+		C.SecretMode = SecretModeTLS
+		secret := bytes.TrimPrefix(C.Secret, []byte{0xee})
+		C.Secret = secret[:SimpleSecretLength]
+		C.CloakHost = string(secret[SimpleSecretLength:])
 	default:
 		return errors.New("incorrect secret")
 	}
@@ -225,10 +230,5 @@ func Printable() interface{} {
 		panic(err)
 	}
 
-	rrv, err := json.Marshal(rv)
-	if err != nil {
-		panic(err)
-	}
-
-	return rrv
+	return rv
 }
