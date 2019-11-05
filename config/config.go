@@ -55,6 +55,8 @@ const (
 	OptionTypeWriteBufferSize
 	OptionTypeReadBufferSize
 
+	OptionTypeCloakPort
+
 	OptionTypeAntiReplayMaxSize
 	OptionTypeAntiReplayEvictionTime
 
@@ -71,10 +73,12 @@ type Config struct {
 
 	StatsNamespace string            `json:"stats_namespace"`
 	StatsdNetwork  string            `json:"statsd_network"`
+	CloakHost      string            `json:"cloak_host"`
 	StatsdTags     map[string]string `json:"statsd_tags"`
 
 	WriteBuffer int `json:"write_buffer"`
 	ReadBuffer  int `json:"read_buffer"`
+	CloakPort   int `json:"cloak_port"`
 
 	AntiReplayMaxSize      int           `json:"anti_replay_max_size"`
 	AntiReplayEvictionTime time.Duration `json:"anti_replay_eviction_time"`
@@ -144,6 +148,8 @@ func Init(options ...Opt) error { // nolint: gocyclo, funlen
 			C.WriteBuffer = int(opt.Value.(units.Base2Bytes))
 		case OptionTypeReadBufferSize:
 			C.ReadBuffer = int(opt.Value.(units.Base2Bytes))
+		case OptionTypeCloakPort:
+			C.CloakPort = int(opt.Value.(uint16))
 		case OptionTypeAntiReplayMaxSize:
 			C.AntiReplayMaxSize = opt.Value.(int)
 		case OptionTypeAntiReplayEvictionTime:

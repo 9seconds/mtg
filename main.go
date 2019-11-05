@@ -93,6 +93,11 @@ var (
 		Envar("MTG_BUFFER_READ").
 		Default("131072KB").
 		Bytes()
+	proxyTLSCloakPort = proxyCommand.Flag("cloak-port",
+		"Port which should be used for host cloaking.").
+		Envar("MTG_CLOAK_PORT").
+		Default("443").
+		Uint16()
 	proxyAntiReplayMaxSize = proxyCommand.Flag("anti-replay-max-size",
 		"Max size of antireplay cache in megabytes.").
 		Envar("MTG_ANTIREPLAY_MAXSIZE").
@@ -134,6 +139,7 @@ func main() {
 			config.Opt{Option: config.OptionTypeStatsdTags, Value: *proxyStatsdTags},
 			config.Opt{Option: config.OptionTypeWriteBufferSize, Value: *proxyWriteBufferSize},
 			config.Opt{Option: config.OptionTypeReadBufferSize, Value: *proxyReadBufferSize},
+			config.Opt{Option: config.OptionTypeCloakPort, Value: *proxyTLSCloakPort},
 			config.Opt{Option: config.OptionTypeAntiReplayMaxSize, Value: *proxyAntiReplayMaxSize},
 			config.Opt{Option: config.OptionTypeAntiReplayEvictionTime, Value: *proxyAntiReplayEvictionTime},
 			config.Opt{Option: config.OptionTypeSecret, Value: *proxySecret},
