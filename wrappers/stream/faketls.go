@@ -1,28 +1,15 @@
 package stream
 
 import (
-	"bytes"
-	"encoding/binary"
 	"errors"
 	"fmt"
-	"io"
 	"net"
 	"time"
 
 	"go.uber.org/zap"
 
 	"github.com/9seconds/mtg/conntypes"
-)
-
-var (
-	errFakeTLSTimeout  = errors.New("timeout")
-	fakeTLSWritePrefix = []byte{0x17, 0x03, 0x03}
-)
-
-const (
-	faketlsMaxChunkSize              = 16384 + 24
-	faketlsRecordTypeApplicationData = 0x17
-	faketlsRecordTypeCCS             = 0x14
+	"github.com/9seconds/mtg/tlstypes"
 )
 
 type wrapperFakeTLS struct {
@@ -45,38 +32,20 @@ func (w *wrapperFakeTLS) WriteTimeout(p []byte, timeout time.Duration) (int, err
 		if elapsed > timeout {
 			return w.parent.WriteTimeout(b, timeout-elapsed)
 		}
-		return 0, errFakeTLSTimeout
+		return 0, errors.New("timeout")
 	})
 }
 
 func (w *wrapperFakeTLS) write(p []byte, writeFunc func([]byte) (int, error)) (int, error) {
 	sum := 0
-	size := [2]byte{}
 
-	for len(p) > 0 {
-		chunkSize := faketlsMaxChunkSize
-		if chunkSize > len(p) {
-			chunkSize = len(p)
-		}
-
-		if _, err := writeFunc(fakeTLSWritePrefix); err != nil {
-			return sum, err
-		}
-
-		binary.BigEndian.PutUint16(size[:], uint16(chunkSize))
-
-		if _, err := writeFunc(size[:]); err != nil {
-			return sum, err
-		}
-
-		n, err := writeFunc(p[:chunkSize])
-		sum += n
-
+	for _, v := range tlstypes.MakeRecords(p) {
+		_, err := writeFunc(v.Bytes())
 		if err != nil {
 			return sum, err
 		}
 
-		p = p[chunkSize:]
+		sum += len(v.Data.Bytes())
 	}
 
 	return sum, nil
@@ -108,41 +77,20 @@ func NewFakeTLS(socket conntypes.StreamReadWriteCloser) conntypes.StreamReadWrit
 	}
 
 	faketls.readFunc = func() ([]byte, error) {
-		data := &bytes.Buffer{}
-		buf := [2]byte{}
-		recordType := byte(faketlsRecordTypeCCS)
-
-		for recordType == faketlsRecordTypeCCS {
-			if _, err := io.ReadFull(faketls.parent, buf[:1]); err != nil {
-				return nil, fmt.Errorf("cannot read record type: %w", err)
+		for {
+			rec, err := tlstypes.ReadRecord(faketls.parent)
+			if err != nil {
+				return nil, err
 			}
 
-			switch buf[0] {
-			case faketlsRecordTypeCCS, faketlsRecordTypeApplicationData:
-				recordType = buf[0]
+			switch rec.Type {
+			case tlstypes.RecordTypeChangeCipherSpec:
+			case tlstypes.RecordTypeApplicationData:
+				return rec.Data.Bytes(), nil
 			default:
-				return nil, fmt.Errorf("incorrect record type %v", buf[0])
-			}
-
-			if _, err := io.ReadFull(faketls.parent, buf[:]); err != nil {
-				return nil, fmt.Errorf("cannot read version: %w", err)
-			}
-
-			if !bytes.Equal(buf[:], []byte{0x03, 0x03}) {
-				return nil, fmt.Errorf("unknown tls version %v", buf)
-			}
-
-			if _, err := io.ReadFull(faketls.parent, buf[:]); err != nil {
-				return nil, fmt.Errorf("cannot read data length: %w", err)
-			}
-
-			dataLength := binary.BigEndian.Uint16(buf[:])
-			if _, err := io.CopyN(data, faketls.parent, int64(dataLength)); err != nil {
-				return nil, fmt.Errorf("cannot copy frame data: %w", err)
+				return nil, fmt.Errorf("unsupported record type %v", rec.Type)
 			}
 		}
-
-		return data.Bytes(), nil
 	}
 
 	return faketls

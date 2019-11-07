@@ -2,9 +2,18 @@ package faketls
 
 import (
 	"bufio"
+	"encoding/binary"
+	"errors"
+	"fmt"
+	"io"
+	"time"
 
+	"github.com/9seconds/mtg/antireplay"
 	"github.com/9seconds/mtg/conntypes"
 	"github.com/9seconds/mtg/obfuscated2"
+	"github.com/9seconds/mtg/protocol"
+	"github.com/9seconds/mtg/stats"
+	"github.com/9seconds/mtg/tlstypes"
 	"github.com/9seconds/mtg/wrappers/stream"
 )
 
@@ -18,18 +27,77 @@ func (c *ClientProtocol) Handshake(socket conntypes.StreamReadWriteCloser) (conn
 
 	for _, expected := range faketlsStartBytes {
 		if actual, err := bufferedReader.ReadByte(); err != nil || actual != expected {
-			return nil, c.simulateWebsite(rewinded)
+			fmt.Println("!!!!!!!!!!!! ERROR !!!!!!!!!!!!", err)
+			return nil, errors.New("qqq")
 		}
 	}
 
+	rewinded.Rewind()
+	rewinded = stream.NewRewind(rewinded)
+
 	if err := c.tlsHandshake(rewinded); err != nil {
-		return nil, c.simulateWebsite(rewinded)
+		fmt.Println("!!!!!!!!!!!! ERROR !!!!!!!!!!!!", err)
+		return nil, errors.New("qqq")
 	}
 
-	conn, err := c.ClientProtocol.Handshake(socket)
+	conn := stream.NewFakeTLS(socket)
+	conn, err := c.ClientProtocol.Handshake(conn)
+
 	if err != nil {
 		return nil, err
 	}
 
 	return conn, err
+}
+
+func (c *ClientProtocol) tlsHandshake(conn io.ReadWriter) error {
+	helloRecord, err := tlstypes.ReadRecord(conn)
+	if err != nil {
+		return fmt.Errorf("cannot read initial record: %w", err)
+	}
+
+	clientHello, err := tlstypes.ParseClientHello(helloRecord.Data.Bytes())
+	if err != nil {
+		return fmt.Errorf("cannot parse client hello: %w", err)
+	}
+
+	digest := clientHello.Digest()
+	for i := 0; i < len(digest)-4; i++ {
+		if digest[i] != 0 {
+			return errBadDigest
+		}
+	}
+
+	timestamp := int64(binary.LittleEndian.Uint32(digest[len(digest)-4:]))
+	createdAt := time.Unix(timestamp, 0)
+	timeDiff := time.Since(createdAt)
+
+	if (timeDiff > TimeSkew || timeDiff < -TimeSkew) && timestamp > TimeFromBoot {
+		return errBadTime
+	}
+
+	if antireplay.Cache.HasTLS(clientHello.Random[:]) {
+		stats.Stats.AntiReplayDetected()
+		return errors.New("antireplay detected")
+	}
+
+	antireplay.Cache.AddTLS(clientHello.Random[:])
+
+	hostCert, err := connectionServerInstance.get()
+	if err != nil {
+		return fmt.Errorf("cannot get host certificate: %w", err)
+	}
+
+	serverHello := tlstypes.NewServerHello(clientHello)
+	serverHelloPacket := serverHello.WelcomePacket(hostCert)
+
+	if _, err := conn.Write(serverHelloPacket); err != nil {
+		return fmt.Errorf("cannot send welcome packet: %w", err)
+	}
+
+	return nil
+}
+
+func MakeClientProtocol() protocol.ClientProtocol {
+	return &ClientProtocol{}
 }

@@ -14,7 +14,17 @@ var (
 
 func Init() {
 	initOnce.Do(func() {
-		c, err := bigcache.NewBigCache(bigcache.Config{
+		c1, err := bigcache.NewBigCache(bigcache.Config{
+			Shards:           1024,
+			LifeWindow:       config.C.AntiReplayEvictionTime,
+			Hasher:           hasher{},
+			HardMaxCacheSize: config.C.AntiReplayMaxSize,
+		})
+		if err != nil {
+			panic(err)
+		}
+
+		c2, err := bigcache.NewBigCache(bigcache.Config{
 			Shards:           1024,
 			LifeWindow:       config.C.AntiReplayEvictionTime,
 			Hasher:           hasher{},
@@ -25,7 +35,8 @@ func Init() {
 		}
 
 		Cache = &cache{
-			cache: c,
+			obfuscated2: c1,
+			tls:         c2,
 		}
 	})
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/9seconds/mtg/config"
 	"github.com/9seconds/mtg/conntypes"
 	"github.com/9seconds/mtg/protocol"
+	"github.com/9seconds/mtg/stats"
 	"github.com/9seconds/mtg/utils"
 	"github.com/9seconds/mtg/wrappers/stream"
 )
@@ -81,11 +82,12 @@ func (c *ClientProtocol) Handshake(socket conntypes.StreamReadWriteCloser) (conn
 	}
 
 	antiReplayKey := decryptedFrame.Unique()
-	if antireplay.Cache.Has(antiReplayKey) {
+	if antireplay.Cache.HasObfuscated2(antiReplayKey) {
+		stats.Stats.AntiReplayDetected()
 		return nil, errors.New("replay attack is detected")
 	}
 
-	antireplay.Cache.Add(antiReplayKey)
+	antireplay.Cache.AddObfuscated2(antiReplayKey)
 
 	return stream.NewObfuscated2(socket, encryptor, decryptor), nil
 }

@@ -28,11 +28,13 @@ func GetURLs() (urls IPURLs) {
 		secret = hex.EncodeToString(C.Secret)
 	case SecretModeSecured:
 		secret = "dd" + hex.EncodeToString(C.Secret)
+	case SecretModeTLS:
+		secret = "ee" + hex.EncodeToString(C.Secret) + hex.EncodeToString([]byte(C.CloakHost))
 	}
 
 	urls.IPv4 = makeURLs(C.PublicIPv4, secret)
 	urls.IPv6 = makeURLs(C.PublicIPv6, secret)
-	urls.BotSecret = secret
+	urls.BotSecret = hex.EncodeToString(C.Secret)
 
 	return urls
 }

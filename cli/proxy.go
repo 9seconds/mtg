@@ -10,6 +10,7 @@ import (
 
 	"github.com/9seconds/mtg/antireplay"
 	"github.com/9seconds/mtg/config"
+	"github.com/9seconds/mtg/faketls"
 	"github.com/9seconds/mtg/hub"
 	"github.com/9seconds/mtg/ntp"
 	"github.com/9seconds/mtg/obfuscated2"
@@ -75,6 +76,7 @@ func Proxy() error { // nolint: funlen
 	antireplay.Init()
 	telegram.Init()
 	hub.Init(ctx)
+	faketls.Init(ctx)
 
 	proxyListener, err := net.Listen("tcp", config.C.Bind.String())
 	if err != nil {
@@ -91,12 +93,9 @@ func Proxy() error { // nolint: funlen
 		Context:             ctx,
 		ClientProtocolMaker: obfuscated2.MakeClientProtocol,
 	}
-	// if len(config.C.AdTag) == 0 {
-	// 	app.TelegramProtocolMaker = obfuscated2.MakeTelegramProtocol
-	// }
-	// if config.C.SecretMode != config.SecretModeTLS {
-	// 	app.ClientProtocolMaker = obfuscated2.MakeClientProtocol
-	// }
+	if config.C.SecretMode == config.SecretModeTLS {
+		app.ClientProtocolMaker = faketls.MakeClientProtocol
+	}
 
 	app.Serve(proxyListener)
 

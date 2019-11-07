@@ -3,14 +3,24 @@ package antireplay
 import "github.com/allegro/bigcache"
 
 type cache struct {
-	cache *bigcache.BigCache
+	obfuscated2 *bigcache.BigCache
+	tls         *bigcache.BigCache
 }
 
-func (c *cache) Add(data []byte) {
-	c.cache.Set(string(data), nil) // nolint: errcheck
+func (c *cache) AddObfuscated2(data []byte) {
+	c.obfuscated2.Set(string(data), nil) // nolint: errcheck
 }
 
-func (c *cache) Has(data []byte) bool {
-	_, err := c.cache.Get(string(data))
+func (c *cache) AddTLS(data []byte) {
+	c.tls.Set(string(data), nil) // nolint: errcheck
+}
+
+func (c *cache) HasObfuscated2(data []byte) bool {
+	_, err := c.obfuscated2.Get(string(data))
+	return err == nil
+}
+
+func (c *cache) HasTLS(data []byte) bool {
+	_, err := c.tls.Get(string(data))
 	return err == nil
 }

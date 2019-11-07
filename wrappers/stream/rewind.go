@@ -43,7 +43,10 @@ func (w *wrapperRewind) Read(p []byte) (int, error) {
 	}
 
 	n, err := w.parent.Read(p)
-	w.buf.Write(p[:n])
+
+	if !w.rewinded {
+		w.buf.Write(p[:n])
+	}
 
 	return n, err
 }
@@ -59,7 +62,10 @@ func (w *wrapperRewind) ReadTimeout(p []byte, timeout time.Duration) (int, error
 	}
 
 	n, err := w.parent.ReadTimeout(p, timeout)
-	w.buf.Write(p[:n])
+
+	if !w.rewinded {
+		w.buf.Write(p[:n])
+	}
 
 	return n, err
 }
