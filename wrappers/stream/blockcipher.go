@@ -85,6 +85,7 @@ func newBlockCipher(parent conntypes.StreamReadWriteCloser,
 			if err != nil {
 				return nil, fmt.Errorf("cannot read data: %w", err)
 			}
+
 			currentBuffer = append(currentBuffer, rv...)
 		}
 		cipher.decryptor.CryptBlocks(currentBuffer, currentBuffer)

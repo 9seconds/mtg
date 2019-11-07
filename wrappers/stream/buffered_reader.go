@@ -21,6 +21,7 @@ func (b *bufferedReader) Read(p []byte) (int, error) {
 	if err != nil {
 		return 0, err
 	}
+
 	b.buf.Write(res)
 
 	return b.flush(p)
