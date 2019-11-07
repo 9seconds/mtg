@@ -6,9 +6,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
+	"strconv"
+	"sync"
 	"time"
 
 	"github.com/9seconds/mtg/antireplay"
+	"github.com/9seconds/mtg/config"
 	"github.com/9seconds/mtg/conntypes"
 	"github.com/9seconds/mtg/obfuscated2"
 	"github.com/9seconds/mtg/protocol"
@@ -27,8 +31,10 @@ func (c *ClientProtocol) Handshake(socket conntypes.StreamReadWriteCloser) (conn
 
 	for _, expected := range faketlsStartBytes {
 		if actual, err := bufferedReader.ReadByte(); err != nil || actual != expected {
-			fmt.Println("!!!!!!!!!!!! ERROR !!!!!!!!!!!!", err)
-			return nil, errors.New("qqq")
+			rewinded.Rewind()
+			c.cloakHost(rewinded)
+
+			return nil, errors.New("failed first bytes of tls handshake")
 		}
 	}
 
@@ -36,8 +42,10 @@ func (c *ClientProtocol) Handshake(socket conntypes.StreamReadWriteCloser) (conn
 	rewinded = stream.NewRewind(rewinded)
 
 	if err := c.tlsHandshake(rewinded); err != nil {
-		fmt.Println("!!!!!!!!!!!! ERROR !!!!!!!!!!!!", err)
-		return nil, errors.New("qqq")
+		rewinded.Rewind()
+		c.cloakHost(rewinded)
+
+		return nil, fmt.Errorf("failed tls handshake: %w", err)
 	}
 
 	conn := stream.NewFakeTLS(socket)
@@ -96,6 +104,35 @@ func (c *ClientProtocol) tlsHandshake(conn io.ReadWriter) error {
 	}
 
 	return nil
+}
+
+func (c *ClientProtocol) cloakHost(clientConn io.ReadWriteCloser) {
+	addr := net.JoinHostPort(config.C.CloakHost, strconv.Itoa(config.C.CloakPort))
+	hostConn, err := net.Dial("tcp", addr)
+
+	if err != nil {
+		return
+	}
+
+	defer hostConn.Close()
+
+	wg := &sync.WaitGroup{}
+	wg.Add(2)
+
+	go c.pipe(hostConn, clientConn, wg)
+
+	go c.pipe(clientConn, hostConn, wg)
+
+	wg.Wait()
+}
+
+func (c *ClientProtocol) pipe(dst io.WriteCloser, src io.Reader, wg *sync.WaitGroup) {
+	defer func() {
+		wg.Done()
+		dst.Close()
+	}()
+
+	io.Copy(dst, src) // nolint: errcheck
 }
 
 func MakeClientProtocol() protocol.ClientProtocol {
