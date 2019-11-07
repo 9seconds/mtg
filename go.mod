@@ -8,21 +8,16 @@ require (
 	github.com/allegro/bigcache v1.2.1
 	github.com/beevik/ntp v0.2.0
 	github.com/cespare/xxhash v1.1.0
-	github.com/kr/pretty v0.1.0 // indirect
-	github.com/prometheus/client_golang v1.1.0
-	github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4 // indirect
-	github.com/prometheus/common v0.7.0 // indirect
-	github.com/prometheus/procfs v0.0.5 // indirect
+	github.com/prometheus/client_golang v1.2.1
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
-	go.uber.org/atomic v1.4.0 // indirect
-	go.uber.org/multierr v1.2.0 // indirect
-	go.uber.org/zap v1.10.0
-	golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
-	golang.org/x/net v0.0.0-20191009170851-d66e71096ffb // indirect
-	golang.org/x/sys v0.0.0-20191010194322-b09406accb47
+	go.uber.org/multierr v1.4.0 // indirect
+	go.uber.org/zap v1.12.0
+	golang.org/x/crypto v0.0.0-20191106202628-ed6320f186d4
+	golang.org/x/net v0.0.0-20191105084925-a882066a44e0 // indirect
+	golang.org/x/sys v0.0.0-20191105231009-c1f44814a5cd
+	golang.org/x/tools v0.0.0-20191107010934-f79515f33823 // indirect
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 	gopkg.in/alexcesaro/statsd.v2 v2.0.0
-	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 )
 
 go 1.13
