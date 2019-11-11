@@ -6,6 +6,8 @@ Bullshit-free MTPROTO proxy for Telegram
 [![Go Report Card](https://goreportcard.com/badge/github.com/9seconds/mtg)](https://goreportcard.com/report/github.com/9seconds/mtg)
 [![Docker Build Status](https://img.shields.io/docker/build/nineseconds/mtg.svg)](https://hub.docker.com/r/nineseconds/mtg/)
 
+**Please see a guide on upgrading to 1.0 at the end of this README.**
+
 # Rationale
 
 There are several available proxies for Telegram MTPROTO available. Here
@@ -238,7 +240,7 @@ All metrics are gauges. Here is the list of metrics and their meaning:
 | `crashes`                        | number  | An amount of crashes in client handlers                   |
 | `traffic.ingress`                | bytes   | Ingress traffic from the start of application (incoming)  |
 | `traffic.egress`                 | bytes   | Egress traffic from the start of application (outgoing)   |
-| `replay_attacks`                 | number  | A number of prevented replay attacks.                     |
+| `replay_attacks`                 | number  | The number of prevented replay attacks.                   |
 
 All metrics are prefixed with given prefix. Default prefix is `mtg`.
 With such prefix metric name `traffic.ingress`, for example, would be
@@ -249,3 +251,18 @@ With such prefix metric name `traffic.ingress`, for example, would be
 
 [Prometheus](https://prometheus.io) integration comes out of
 the box, you do not need to setup anything special.
+
+
+# Upgrade to 1.0
+
+Version 1.0 breaks compatibility with previous versions so please read
+this chapter carefully:
+
+1. mtg now uses subcommands. Please use `mtg run` instead of just `mtg` to run
+   a proxy.
+2. Options which set host and port separately were removed in a favor of fused
+   host:port options.
+3. Own stats server was removed. Prometheus endpoint is moved to default stats
+   endpoint.
+4. It is possible to connect to this proxy only with a secret which was used to
+   run it. So, no backward compatibility of clients.
