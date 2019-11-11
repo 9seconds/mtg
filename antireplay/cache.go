@@ -1,6 +1,6 @@
 package antireplay
 
-import "github.com/dgraph-io/ristretto"
+import "github.com/VictoriaMetrics/fastcache"
 
 var (
 	prefixObfuscated2 = []byte{0x00}
@@ -8,31 +8,29 @@ var (
 )
 
 type cache struct {
-	data *ristretto.Cache
+	data *fastcache.Cache
 }
 
 func (c *cache) AddObfuscated2(data []byte) {
-	c.data.Set(keyObfuscated2(data), nil, int64(len(data)))
+	c.data.Set(keyObfuscated2(data), nil)
 }
 
 func (c *cache) AddTLS(data []byte) {
-	c.data.Set(keyTLS(data), nil, int64(len(data)))
+	c.data.Set(keyTLS(data), nil)
 }
 
 func (c *cache) HasObfuscated2(data []byte) bool {
-	_, ok := c.data.Get(keyObfuscated2(data))
-	return ok
+	return c.data.Has(keyObfuscated2(data))
 }
 
 func (c *cache) HasTLS(data []byte) bool {
-	_, ok := c.data.Get(keyTLS(data))
-	return ok
+	return c.data.Has(keyTLS(data))
 }
 
-func keyObfuscated2(data []byte) string {
-	return string(append(prefixObfuscated2, data...))
+func keyObfuscated2(data []byte) []byte {
+	return append(prefixObfuscated2, data...)
 }
 
-func keyTLS(data []byte) string {
-	return string(append(prefixTLS, data...))
+func keyTLS(data []byte) []byte {
+	return append(prefixTLS, data...)
 }

@@ -80,7 +80,7 @@ type Config struct {
 	ReadBuffer  int `json:"read_buffer"`
 	CloakPort   int `json:"cloak_port"`
 
-	AntiReplayMaxSize int64 `json:"anti_replay_max_size"`
+	AntiReplayMaxSize int `json:"anti_replay_max_size"`
 
 	MultiplexPerConnection int `json:"multiplex_per_connection"`
 
@@ -152,7 +152,7 @@ func Init(options ...Opt) error { // nolint: gocyclo, funlen
 		case OptionTypeCloakPort:
 			C.CloakPort = int(opt.Value.(uint16))
 		case OptionTypeAntiReplayMaxSize:
-			C.AntiReplayMaxSize = int64(opt.Value.(units.Base2Bytes))
+			C.AntiReplayMaxSize = int(opt.Value.(units.Base2Bytes))
 		case OptionTypeMultiplexPerConnection:
 			C.MultiplexPerConnection = int(opt.Value.(uint))
 		case OptionTypeSecret:
