@@ -35,7 +35,7 @@ mtg is an implementation in golang which is intended to be:
   software. I also believe that in the case of throwout proxies, this
   feature is a useless luxury.
 * **Minimum docker image size**
-  Official image is less than 3 megabytes. Literally.
+  Official image is less than 3.5 megabytes. Literally.
 * **No management WebUI**
   This is an implementation of a simple lightweight proxy. I won't do that.
 
