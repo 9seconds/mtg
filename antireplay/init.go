@@ -1,42 +1,33 @@
 package antireplay
 
 import (
+	"math"
 	"sync"
 
 	"github.com/9seconds/mtg/config"
-	"github.com/allegro/bigcache"
+	"github.com/dgraph-io/ristretto"
 )
 
 var (
-	Cache    *cache
+	Cache    cache
 	initOnce sync.Once
 )
 
 func Init() {
 	initOnce.Do(func() {
-		c1, err := bigcache.NewBigCache(bigcache.Config{
-			Shards:           1024,
-			LifeWindow:       config.C.AntiReplayEvictionTime,
-			Hasher:           hasher{},
-			HardMaxCacheSize: config.C.AntiReplayMaxSize,
+		cost := float64(config.C.AntiReplayMaxSize) / 32.0
+		cost = math.Ceil(cost)
+
+		c, err := ristretto.NewCache(&ristretto.Config{
+			NumCounters: int64(cost) * 10,
+			MaxCost:     config.C.AntiReplayMaxSize,
+			BufferItems: 64,
+			Metrics:     false,
 		})
 		if err != nil {
 			panic(err)
 		}
 
-		c2, err := bigcache.NewBigCache(bigcache.Config{
-			Shards:           1024,
-			LifeWindow:       config.C.AntiReplayEvictionTime,
-			Hasher:           hasher{},
-			HardMaxCacheSize: config.C.AntiReplayMaxSize,
-		})
-		if err != nil {
-			panic(err)
-		}
-
-		Cache = &cache{
-			obfuscated2: c1,
-			tls:         c2,
-		}
+		Cache.data = c
 	})
 }

@@ -3,13 +3,10 @@ module github.com/9seconds/mtg
 replace github.com/golang/lint => github.com/golang/lint v0.0.0-20190227174305-8f45f776aaf1
 
 require (
-	github.com/OneOfOne/xxhash v1.2.5 // indirect
 	github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d
-	github.com/allegro/bigcache v1.2.1
 	github.com/beevik/ntp v0.2.0
-	github.com/cespare/xxhash v1.1.0
+	github.com/dgraph-io/ristretto v0.0.0-20191108194154-8d6a8a75b4ca
 	github.com/prometheus/client_golang v1.2.1
-	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	go.uber.org/multierr v1.4.0 // indirect
 	go.uber.org/zap v1.12.0
 	golang.org/x/crypto v0.0.0-20191106202628-ed6320f186d4

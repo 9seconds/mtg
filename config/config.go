@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"time"
 
 	"github.com/alecthomas/units"
 	"go.uber.org/zap"
@@ -58,7 +57,6 @@ const (
 	OptionTypeCloakPort
 
 	OptionTypeAntiReplayMaxSize
-	OptionTypeAntiReplayEvictionTime
 
 	OptionTypeSecret
 	OptionTypeAdtag
@@ -80,8 +78,7 @@ type Config struct {
 	ReadBuffer  int `json:"read_buffer"`
 	CloakPort   int `json:"cloak_port"`
 
-	AntiReplayMaxSize      int           `json:"anti_replay_max_size"`
-	AntiReplayEvictionTime time.Duration `json:"anti_replay_eviction_time"`
+	AntiReplayMaxSize int64 `json:"anti_replay_max_size"`
 
 	Debug            bool             `json:"debug"`
 	Verbose          bool             `json:"verbose"`
@@ -151,9 +148,7 @@ func Init(options ...Opt) error { // nolint: gocyclo, funlen
 		case OptionTypeCloakPort:
 			C.CloakPort = int(opt.Value.(uint16))
 		case OptionTypeAntiReplayMaxSize:
-			C.AntiReplayMaxSize = opt.Value.(int)
-		case OptionTypeAntiReplayEvictionTime:
-			C.AntiReplayEvictionTime = opt.Value.(time.Duration)
+			C.AntiReplayMaxSize = int64(opt.Value.(units.Base2Bytes))
 		case OptionTypeSecret:
 			C.Secret = opt.Value.([]byte)
 		case OptionTypeAdtag:
