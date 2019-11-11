@@ -4,8 +4,9 @@ import (
 	"math"
 	"sync"
 
-	"mtg/config"
 	"github.com/dgraph-io/ristretto"
+
+	"mtg/config"
 )
 
 var (
