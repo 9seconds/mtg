@@ -79,8 +79,8 @@ func (s *statsStatsd) Crash() {
 	s.client.Increment("crashes")
 }
 
-func (s *statsStatsd) AntiReplayDetected() {
-	s.client.Increment("anti_replays")
+func (s *statsStatsd) ReplayDetected() {
+	s.client.Increment("replay_attacks")
 }
 
 func newStatsStatsd() (Interface, error) {

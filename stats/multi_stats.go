@@ -50,8 +50,8 @@ func (m multiStats) Crash() {
 	}
 }
 
-func (m multiStats) AntiReplayDetected() {
+func (m multiStats) ReplayDetected() {
 	for i := range m {
-		go m[i].AntiReplayDetected()
+		go m[i].ReplayDetected()
 	}
 }

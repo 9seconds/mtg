@@ -29,92 +29,92 @@ var (
 		Required().
 		Enum("simple", "secured", "tls")
 
-	proxyCommand = app.Command("proxy",
+	runCommand = app.Command("run",
 		"Run new proxy instance")
-	proxyDebug = proxyCommand.Flag("debug",
+	runDebug = runCommand.Flag("debug",
 		"Run in debug mode.").
 		Short('d').
 		Envar("MTG_DEBUG").
 		Bool()
-	proxyVerbose = proxyCommand.Flag("verbose",
+	runVerbose = runCommand.Flag("verbose",
 		"Run in verbose mode.").
 		Short('v').
 		Envar("MTG_VERBOSE").
 		Bool()
-	proxyBind = proxyCommand.Flag("bind",
+	runBind = runCommand.Flag("bind",
 		"Host:Port to bind proxy to.").
 		Short('b').
 		Envar("MTG_BIND").
 		Default("0.0.0.0:3128").
 		TCP()
-	proxyPublicIPv4 = proxyCommand.Flag("public-ipv4",
+	runPublicIPv4 = runCommand.Flag("public-ipv4",
 		"Which IPv4 host:port to use.").
 		Short('4').
 		Envar("MTG_IPV4").
 		TCP()
-	proxyPublicIPv6 = proxyCommand.Flag("public-ipv6",
+	runPublicIPv6 = runCommand.Flag("public-ipv6",
 		"Which IPv6 host:port to use.").
 		Short('6').
 		Envar("MTG_IPV6").
 		TCP()
-	proxyStatsBind = proxyCommand.Flag("stats-bind",
+	runStatsBind = runCommand.Flag("stats-bind",
 		"Which Host:Port to bind stats server to.").
 		Short('t').
 		Envar("MTG_STATS_BIND").
 		Default("127.0.0.1:3129").
 		TCP()
-	proxyStatsNamespace = proxyCommand.Flag("stats-namespace",
+	runStatsNamespace = runCommand.Flag("stats-namespace",
 		"Which namespace to use for Prometheus.").
 		Envar("MTG_STATS_NAMESPACE").
 		Default("mtg").
 		String()
-	proxyStatsdAddress = proxyCommand.Flag("statsd-addr",
+	runStatsdAddress = runCommand.Flag("statsd-addr",
 		"Host:port of statsd server").
 		Envar("MTG_STATSD_ADDR").
 		TCP()
-	proxyStatsdNetwork = proxyCommand.Flag("statsd-network",
+	runStatsdNetwork = runCommand.Flag("statsd-network",
 		"Which network is used to work with statsd. Only 'tcp' and 'udp' are supported.").
 		Envar("MTG_STATSD_NETWORK").
 		Default("udp").
 		Enum("udp", "tcp")
-	proxyStatsdTagsFormat = proxyCommand.Flag("statsd-tags-format",
+	runStatsdTagsFormat = runCommand.Flag("statsd-tags-format",
 		"Which tag format should we use to send stats metrics. Valid options are 'datadog' and 'influxdb'.").
 		Envar("MTG_STATSD_TAGS_FORMAT").
 		Default("influxdb").
 		Enum("datadog", "influxdb")
-	proxyStatsdTags = proxyCommand.Flag("statsd-tags",
+	runStatsdTags = runCommand.Flag("statsd-tags",
 		"Tags to use for working with statsd (specified as 'key=value').").
 		Envar("MTG_STATSD_TAGS").
 		StringMap()
-	proxyWriteBufferSize = proxyCommand.Flag("write-buffer",
+	runWriteBufferSize = runCommand.Flag("write-buffer",
 		"Write buffer size in bytes. You can think about it as a buffer from client to Telegram.").
 		Short('w').
 		Envar("MTG_BUFFER_WRITE").
 		Default("65536KB").
 		Bytes()
-	proxyReadBufferSize = proxyCommand.Flag("read-buffer",
+	runReadBufferSize = runCommand.Flag("read-buffer",
 		"Read buffer size in bytes. You can think about it as a buffer from Telegram to client.").
 		Short('r').
 		Envar("MTG_BUFFER_READ").
 		Default("131072KB").
 		Bytes()
-	proxyTLSCloakPort = proxyCommand.Flag("cloak-port",
+	runTLSCloakPort = runCommand.Flag("cloak-port",
 		"Port which should be used for host cloaking.").
 		Envar("MTG_CLOAK_PORT").
 		Default("443").
 		Uint16()
-	proxyAntiReplayMaxSize = proxyCommand.Flag("anti-replay-max-size",
+	runAntiReplayMaxSize = runCommand.Flag("anti-replay-max-size",
 		"Max size of antireplay cache in megabytes.").
 		Envar("MTG_ANTIREPLAY_MAXSIZE").
 		Default("128").
 		Int()
-	proxyAntiReplayEvictionTime = proxyCommand.Flag("anti-replay-eviction-time",
+	runAntiReplayEvictionTime = runCommand.Flag("anti-replay-eviction-time",
 		"Eviction time period for obfuscated2 handshakes").
 		Envar("MTG_ANTIREPLAY_EVICTIONTIME").
 		Default("168h").
 		Duration()
-	proxySecret = proxyCommand.Arg("secret", "Secret of this proxy.").Required().HexBytes()
-	proxyAdtag  = proxyCommand.Arg("adtag", "ADTag of the proxy.").HexBytes()
+	runSecret = runCommand.Arg("secret", "Secret of this proxy.").Required().HexBytes()
+	runAdtag  = runCommand.Arg("adtag", "ADTag of the proxy.").HexBytes()
 )
 
 func main() {
@@ -129,26 +129,26 @@ func main() {
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 	case generateSecretCommand.FullCommand():
 		cli.Generate(*generateSecretType, *generateCloakHost)
-	case proxyCommand.FullCommand():
+	case runCommand.FullCommand():
 		err := config.Init(
-			config.Opt{Option: config.OptionTypeDebug, Value: *proxyDebug},
-			config.Opt{Option: config.OptionTypeVerbose, Value: *proxyVerbose},
-			config.Opt{Option: config.OptionTypeBind, Value: *proxyBind},
-			config.Opt{Option: config.OptionTypePublicIPv4, Value: *proxyPublicIPv4},
-			config.Opt{Option: config.OptionTypePublicIPv6, Value: *proxyPublicIPv6},
-			config.Opt{Option: config.OptionTypeStatsBind, Value: *proxyStatsBind},
-			config.Opt{Option: config.OptionTypeStatsNamespace, Value: *proxyStatsNamespace},
-			config.Opt{Option: config.OptionTypeStatsdAddress, Value: *proxyStatsdAddress},
-			config.Opt{Option: config.OptionTypeStatsdNetwork, Value: *proxyStatsdNetwork},
-			config.Opt{Option: config.OptionTypeStatsdTagsFormat, Value: *proxyStatsdTagsFormat},
-			config.Opt{Option: config.OptionTypeStatsdTags, Value: *proxyStatsdTags},
-			config.Opt{Option: config.OptionTypeWriteBufferSize, Value: *proxyWriteBufferSize},
-			config.Opt{Option: config.OptionTypeReadBufferSize, Value: *proxyReadBufferSize},
-			config.Opt{Option: config.OptionTypeCloakPort, Value: *proxyTLSCloakPort},
-			config.Opt{Option: config.OptionTypeAntiReplayMaxSize, Value: *proxyAntiReplayMaxSize},
-			config.Opt{Option: config.OptionTypeAntiReplayEvictionTime, Value: *proxyAntiReplayEvictionTime},
-			config.Opt{Option: config.OptionTypeSecret, Value: *proxySecret},
-			config.Opt{Option: config.OptionTypeAdtag, Value: *proxyAdtag},
+			config.Opt{Option: config.OptionTypeDebug, Value: *runDebug},
+			config.Opt{Option: config.OptionTypeVerbose, Value: *runVerbose},
+			config.Opt{Option: config.OptionTypeBind, Value: *runBind},
+			config.Opt{Option: config.OptionTypePublicIPv4, Value: *runPublicIPv4},
+			config.Opt{Option: config.OptionTypePublicIPv6, Value: *runPublicIPv6},
+			config.Opt{Option: config.OptionTypeStatsBind, Value: *runStatsBind},
+			config.Opt{Option: config.OptionTypeStatsNamespace, Value: *runStatsNamespace},
+			config.Opt{Option: config.OptionTypeStatsdAddress, Value: *runStatsdAddress},
+			config.Opt{Option: config.OptionTypeStatsdNetwork, Value: *runStatsdNetwork},
+			config.Opt{Option: config.OptionTypeStatsdTagsFormat, Value: *runStatsdTagsFormat},
+			config.Opt{Option: config.OptionTypeStatsdTags, Value: *runStatsdTags},
+			config.Opt{Option: config.OptionTypeWriteBufferSize, Value: *runWriteBufferSize},
+			config.Opt{Option: config.OptionTypeReadBufferSize, Value: *runReadBufferSize},
+			config.Opt{Option: config.OptionTypeCloakPort, Value: *runTLSCloakPort},
+			config.Opt{Option: config.OptionTypeAntiReplayMaxSize, Value: *runAntiReplayMaxSize},
+			config.Opt{Option: config.OptionTypeAntiReplayEvictionTime, Value: *runAntiReplayEvictionTime},
+			config.Opt{Option: config.OptionTypeSecret, Value: *runSecret},
+			config.Opt{Option: config.OptionTypeAdtag, Value: *runAdtag},
 		)
 		if err != nil {
 			cli.Fatal(err)

@@ -1,73 +1,40 @@
 package hub
 
 import (
-	"encoding/binary"
-	"fmt"
-	"strings"
+	"context"
 	"sync"
 
-	"go.uber.org/zap"
-
-	"github.com/9seconds/mtg/conntypes"
 	"github.com/9seconds/mtg/protocol"
 )
 
 type hub struct {
-	logger *zap.SugaredLogger
-	subs   map[string]*connectionHub
-	mutex  sync.RWMutex
+	muxes map[int32]*mux
+	mutex sync.RWMutex
+	ctx   context.Context
 }
 
-func (h *hub) Write(packet conntypes.Packet, req *protocol.TelegramRequest) error {
-	sub := h.getHub(req)
-	connections := make(chan *connection)
-	sub.channelConnectionRequests <- &connectionHubRequest{
-		request:  req,
-		response: connections,
-	}
-
-	conn, ok := <-connections
-	if !ok {
-		return ErrCannotCreateConnection
-	}
-
-	if err := conn.write(packet); err != nil {
-		conn.shutdown()
-		return fmt.Errorf("cannot send packet: %w", err)
-	}
-	sub.channelReturnConnections <- conn
-
-	return nil
+func (h *hub) Register(req *protocol.TelegramRequest) (*ProxyConn, error) {
+	return h.getMux(req).Get(req)
 }
 
-func (h *hub) getHub(req *protocol.TelegramRequest) *connectionHub {
-	keyBuilder := strings.Builder{}
-	binary.Write(&keyBuilder, binary.LittleEndian, int16(req.ClientProtocol.DC())) // nolint: errcheck
-	keyBuilder.WriteRune('_')
-	binary.Write(&keyBuilder, binary.LittleEndian, uint8(req.ClientProtocol.ConnectionProtocol())) // nolint: errcheck
-	key := keyBuilder.String()
+func (h *hub) getMux(req *protocol.TelegramRequest) *mux {
+	var key int32 = 32767 + int32(req.ClientProtocol.DC()) + 100000*int32(req.ClientProtocol.ConnectionProtocol())
 
 	h.mutex.RLock()
-	rv, ok := h.subs[key]
+	m, ok := h.muxes[key]
 	h.mutex.RUnlock()
 
 	if !ok {
 		h.mutex.Lock()
-		defer h.mutex.Unlock()
+		m, ok = h.muxes[key]
 
-		rv, ok = h.subs[key]
 		if !ok {
-			h.logger.Debugw("Create new connection hub",
-				"dc", req.ClientProtocol.DC(),
-				"protocol", req.ClientProtocol.ConnectionProtocol())
-
-			rv = newConnectionHub(h.logger.With(
-				"dc", req.ClientProtocol.DC(),
-				"protocol", req.ClientProtocol.ConnectionProtocol(),
-			))
-			h.subs[key] = rv
+			m = newMux(h.ctx)
+			h.muxes[key] = m
 		}
+
+		h.mutex.Unlock()
 	}
 
-	return rv
+	return m
 }

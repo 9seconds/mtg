@@ -11,7 +11,11 @@ import (
 )
 
 func middleConnection(request *protocol.TelegramRequest) {
-	telegramConn := packetack.NewProxy(request)
+	telegramConn, err := packetack.NewProxy(request)
+	if err != nil {
+		request.Logger.Debugw("Cannot dial to Telegram", "error", err)
+		return
+	}
 	defer telegramConn.Close()
 
 	var clientConn conntypes.PacketAckFullReadWriteCloser

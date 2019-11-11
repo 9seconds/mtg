@@ -34,8 +34,8 @@ type CrashInterface interface {
 	Crash()
 }
 
-type AntiReplayDetectedInterface interface {
-	AntiReplayDetected()
+type ReplayDetectedInterface interface {
+	ReplayDetected()
 }
 
 type Interface interface {
@@ -46,5 +46,5 @@ type Interface interface {
 	TelegramConnectedInterface
 	TelegramDisconnectedInterface
 	CrashInterface
-	AntiReplayDetectedInterface
+	ReplayDetectedInterface
 }

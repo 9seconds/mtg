@@ -5,6 +5,8 @@ import (
 	"math/rand"
 	"sync"
 
+	"go.uber.org/zap"
+
 	"github.com/9seconds/mtg/conntypes"
 	"github.com/9seconds/mtg/mtproto"
 	"github.com/9seconds/mtg/mtproto/rpc"
@@ -12,108 +14,149 @@ import (
 )
 
 type connection struct {
-	conn         conntypes.PacketReadWriteCloser
-	mutex        sync.RWMutex
-	shutdownOnce sync.Once
-	hub          *connectionHub
-	id           int
-	pending      uint
-	done         chan struct{}
-}
+	conn            conntypes.PacketReadWriteCloser
+	proxyConns      map[string]*ProxyConn
+	closeOnce       sync.Once
+	proxyConnsMutex sync.RWMutex
+	id              int
+	logger          *zap.SugaredLogger
 
-func (c *connection) read() (conntypes.Packet, error) {
-	packet, err := c.conn.Read()
-
-	c.mutex.Lock()
-	if err != nil {
-		c.pending--
-	} else {
-		c.pending = 0
-	}
-	c.mutex.Unlock()
-
-	return packet, err
-}
-
-func (c *connection) write(packet conntypes.Packet) error {
-	err := c.conn.Write(packet)
-	if err != nil {
-		// if we tried to write into a socket and it was broken, it is
-		// a time to reconsider the prescence of this socket at all.
-		//
-		// probably we need to remove it completely because it seems
-		// that connection is broken.
-		c.mutex.Lock()
-		c.pending = 0
-		c.mutex.Unlock()
-	}
-
-	return err
-}
-
-func (c *connection) shutdown() {
-	c.shutdownOnce.Do(func() {
-		c.conn.Close()
-		close(c.done)
-		c.hub.channelBrokenSockets <- c.id
-	})
-}
-
-func (c *connection) closed() bool {
-	select {
-	case <-c.done:
-		return true
-	default:
-		return false
-	}
-}
-
-func (c *connection) idle() bool {
-	c.mutex.RLock()
-	defer c.mutex.RUnlock()
-
-	return c.pending == 0
+	channelDone       chan struct{}
+	channelWrite      chan conntypes.Packet
+	channelRead       chan *rpc.ProxyResponse
+	channelConnAttach chan *ProxyConn
+	channelConnDetach chan conntypes.ConnID
 }
 
 func (c *connection) run() {
-	logger := c.hub.logger.Named("connection").With("id", c.id)
+	defer c.Close()
 
 	for {
-		packet, err := c.read()
+		select {
+		case <-c.channelDone:
+			for _, v := range c.proxyConns {
+				v.Close()
+			}
+
+			return
+		case resp := <-c.channelRead:
+			if channel, ok := c.proxyConns[string(resp.ConnID[:])]; ok {
+				if resp.Type == rpc.ProxyResponseTypeCloseExt {
+					channel.Close()
+				} else {
+					channel.put(resp)
+				}
+			}
+		case packet := <-c.channelWrite:
+			if err := c.conn.Write(packet); err != nil {
+				c.logger.Debugw("Cannot write packet", "error", err)
+				c.Close()
+			}
+		case conn := <-c.channelConnAttach:
+			c.proxyConnsMutex.Lock()
+			c.proxyConns[string(conn.req.ConnID[:])] = conn
+			c.proxyConnsMutex.Unlock()
+			conn.channelWrite = c.channelWrite
+		case connID := <-c.channelConnDetach:
+			if conn, ok := c.proxyConns[string(connID[:])]; ok {
+				c.proxyConnsMutex.Lock()
+				delete(c.proxyConns, string(connID[:]))
+				c.proxyConnsMutex.Unlock()
+				conn.Close()
+			}
+		}
+	}
+}
+
+func (c *connection) readLoop() {
+	for {
+		packet, err := c.conn.Read()
 		if err != nil {
-			c.shutdown()
+			c.logger.Debugw("Cannot read packet", "error", err)
+			c.Close()
+
 			return
 		}
 
 		response, err := rpc.ParseProxyResponse(packet)
 		if err != nil {
-			logger.Debugw("Failed response", "error", err)
+			c.logger.Debugw("Failed response", "error", err)
 			continue
 		}
 
-		if response.Type == rpc.ProxyResponseTypeCloseExt {
-			logger.Debugw("Proxy has closed connection")
+		select {
+		case <-c.channelDone:
 			return
-		}
-
-		if channel, ok := Registry.getChannel(response.ConnID); ok {
-			go channel.sendBack(response) // nolint: errcheck
+		case c.channelRead <- response:
 		}
 	}
 }
 
-func newConnection(req *protocol.TelegramRequest, hub *connectionHub) (*connection, error) {
+func (c *connection) Close() {
+	c.closeOnce.Do(func() {
+		c.logger.Debugw("Closing connection")
+
+		close(c.channelDone)
+		c.conn.Close()
+	})
+}
+
+func (c *connection) Done() bool {
+	select {
+	case <-c.channelDone:
+		return true
+	default:
+		return c.Len() == 0
+	}
+}
+
+func (c *connection) Len() int {
+	c.proxyConnsMutex.RLock()
+	defer c.proxyConnsMutex.RUnlock()
+
+	return len(c.proxyConns)
+}
+
+func (c *connection) Attach(conn *ProxyConn) error {
+	select {
+	case <-c.channelDone:
+		return ErrClosed
+	case c.channelConnAttach <- conn:
+		return nil
+	}
+}
+
+func (c *connection) Detach(connID conntypes.ConnID) {
+	select {
+	case <-c.channelDone:
+	case c.channelConnDetach <- connID:
+	}
+}
+
+func newConnection(req *protocol.TelegramRequest) (*connection, error) {
 	conn, err := mtproto.TelegramProtocol(req)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create a new connection: %w", err)
 	}
 
+	id := rand.Int() // nolint: gosec
 	rv := &connection{
 		conn: conn,
-		hub:  hub,
-		id:   rand.Int(), // nolint: gosec
-		done: make(chan struct{}),
+		id:   id,
+		logger: zap.S().Named("hub-connection").With("id", id,
+			"dc", req.ClientProtocol.DC(),
+			"protocol", req.ClientProtocol.ConnectionProtocol()),
+		proxyConns: make(map[string]*ProxyConn),
+
+		channelRead:       make(chan *rpc.ProxyResponse, 1),
+		channelDone:       make(chan struct{}),
+		channelWrite:      make(chan conntypes.Packet),
+		channelConnAttach: make(chan *ProxyConn),
+		channelConnDetach: make(chan conntypes.ConnID),
 	}
+
+	go rv.readLoop()
+
 	go rv.run()
 
 	return rv, nil

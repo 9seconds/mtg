@@ -11,12 +11,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/9seconds/mtg/antireplay"
 	"github.com/9seconds/mtg/config"
 	"github.com/9seconds/mtg/conntypes"
 	"github.com/9seconds/mtg/obfuscated2"
 	"github.com/9seconds/mtg/protocol"
-	"github.com/9seconds/mtg/stats"
 	"github.com/9seconds/mtg/tlstypes"
 	"github.com/9seconds/mtg/wrappers/stream"
 )
@@ -83,13 +81,6 @@ func (c *ClientProtocol) tlsHandshake(conn io.ReadWriter) error {
 	if (timeDiff > TimeSkew || timeDiff < -TimeSkew) && timestamp > TimeFromBoot {
 		return errBadTime
 	}
-
-	if antireplay.Cache.HasTLS(clientHello.Random[:]) {
-		stats.Stats.AntiReplayDetected()
-		return errors.New("antireplay detected")
-	}
-
-	antireplay.Cache.AddTLS(clientHello.Random[:])
 
 	hostCert, err := connectionServerInstance.get()
 	if err != nil {

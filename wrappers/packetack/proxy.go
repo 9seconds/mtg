@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
-	"sync"
 
 	"github.com/9seconds/mtg/config"
 	"github.com/9seconds/mtg/conntypes"
@@ -16,10 +15,9 @@ import (
 
 type wrapperProxy struct {
 	request      *protocol.TelegramRequest
+	proxy        *hub.ProxyConn
 	clientIPPort []byte
 	ourIPPort    []byte
-	channelRead  hub.ChannelReadCloser
-	closeOnce    sync.Once
 	flags        rpc.ProxyRequestFlags
 }
 
@@ -47,11 +45,11 @@ func (w *wrapperProxy) Write(packet conntypes.Packet, acks *conntypes.Connection
 	buf.Write(make([]byte, (4-buf.Len()%4)%4))
 	buf.Write(packet)
 
-	return hub.Hub.Write(buf.Bytes(), w.request)
+	return w.proxy.Write(buf.Bytes())
 }
 
 func (w *wrapperProxy) Read(acks *conntypes.ConnectionAcks) (conntypes.Packet, error) {
-	resp, err := w.channelRead.Read()
+	resp, err := w.proxy.Read()
 	if err != nil {
 		return nil, fmt.Errorf("cannot read a response: %w", err)
 	}
@@ -64,15 +62,11 @@ func (w *wrapperProxy) Read(acks *conntypes.ConnectionAcks) (conntypes.Packet, e
 }
 
 func (w *wrapperProxy) Close() error {
-	w.closeOnce.Do(func() {
-		w.channelRead.Close()
-		hub.Registry.Unregister(w.request.ConnID)
-	})
-
+	w.proxy.Close()
 	return nil
 }
 
-func NewProxy(request *protocol.TelegramRequest) conntypes.PacketAckReadWriteCloser {
+func NewProxy(request *protocol.TelegramRequest) (conntypes.PacketAckReadWriteCloser, error) {
 	flags := rpc.ProxyRequestFlagsHasAdTag | rpc.ProxyRequestFlagsMagic | rpc.ProxyRequestFlagsExtMode2
 
 	switch request.ClientProtocol.ConnectionType() {
@@ -86,13 +80,18 @@ func NewProxy(request *protocol.TelegramRequest) conntypes.PacketAckReadWriteClo
 		panic("unknown connection type")
 	}
 
+	proxy, err := hub.Hub.Register(request)
+	if err != nil {
+		return nil, fmt.Errorf("cannot make a new proxy wrapper: %w", err)
+	}
+
 	return &wrapperProxy{
 		flags:        flags,
 		request:      request,
-		channelRead:  hub.Registry.Register(request.ConnID),
+		proxy:        proxy,
 		clientIPPort: proxyGetIPPort(request.ClientConn.RemoteAddr()),
 		ourIPPort:    proxyGetIPPort(request.ClientConn.LocalAddr()),
-	}
+	}, nil
 }
 
 func proxyGetIPPort(addr *net.TCPAddr) []byte {

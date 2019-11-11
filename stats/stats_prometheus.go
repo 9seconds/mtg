@@ -18,7 +18,7 @@ type statsPrometheus struct {
 	telegramConnections *prometheus.GaugeVec
 	traffic             *prometheus.GaugeVec
 	crashes             prometheus.Gauge
-	antiReplays         prometheus.Counter
+	replayAttacks       prometheus.Counter
 }
 
 func (s *statsPrometheus) IngressTraffic(traffic int) {
@@ -84,8 +84,8 @@ func (s *statsPrometheus) Crash() {
 	s.crashes.Inc()
 }
 
-func (s *statsPrometheus) AntiReplayDetected() {
-	s.antiReplays.Inc()
+func (s *statsPrometheus) ReplayDetected() {
+	s.replayAttacks.Inc()
 }
 
 func newStatsPrometheus(mux *http.ServeMux) (Interface, error) {
@@ -112,10 +112,10 @@ func newStatsPrometheus(mux *http.ServeMux) (Interface, error) {
 			Name:      "crashes",
 			Help:      "How many crashes happened.",
 		}),
-		antiReplays: prometheus.NewCounter(prometheus.CounterOpts{
+		replayAttacks: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: config.C.StatsNamespace,
-			Name:      "anti_replays",
-			Help:      "How many anti replay attacks were prevented.",
+			Name:      "replay_attacks",
+			Help:      "How many replay attacks were prevented.",
 		}),
 	}
 
@@ -135,8 +135,8 @@ func newStatsPrometheus(mux *http.ServeMux) (Interface, error) {
 		return nil, fmt.Errorf("cannot register metrics for crashes: %w", err)
 	}
 
-	if err := registry.Register(instance.antiReplays); err != nil {
-		return nil, fmt.Errorf("cannot register metrics for anti replays: %w", err)
+	if err := registry.Register(instance.replayAttacks); err != nil {
+		return nil, fmt.Errorf("cannot register metrics for replays: %w", err)
 	}
 
 	handler := promhttp.HandlerFor(registry, promhttp.HandlerOpts{})
