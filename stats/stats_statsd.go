@@ -87,7 +87,7 @@ func newStatsStatsd() (Interface, error) {
 	options := []statsd.Option{
 		statsd.Prefix(config.C.StatsNamespace),
 		statsd.Network(config.C.StatsdNetwork),
-		statsd.Address(config.C.StatsBind.String()),
+		statsd.Address(config.C.StatsdAddr.String()),
 		statsd.TagsFormat(config.C.StatsdTagsFormat),
 	}
 
