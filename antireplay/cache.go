@@ -1,37 +1,36 @@
 package antireplay
 
-import (
-	"github.com/allegro/bigcache"
-	"github.com/juju/errors"
+import "github.com/VictoriaMetrics/fastcache"
 
-	"github.com/9seconds/mtg/config"
+var (
+	prefixObfuscated2 = []byte{0x00}
+	prefixTLS         = []byte{0x01}
 )
 
-// Cache defines storage for obfuscated2 handshake frames.
-type Cache struct {
-	cache *bigcache.BigCache
+type cache struct {
+	data *fastcache.Cache
 }
 
-func (a Cache) Add(frame []byte) {
-	a.cache.Set(string(frame), nil) // nolint: errcheck
+func (c *cache) AddObfuscated2(data []byte) {
+	c.data.Set(keyObfuscated2(data), nil)
 }
 
-func (a Cache) Has(frame []byte) bool {
-	_, err := a.cache.Get(string(frame))
-
-	return err == nil
+func (c *cache) AddTLS(data []byte) {
+	c.data.Set(keyTLS(data), nil)
 }
 
-func NewCache(config *config.Config) (Cache, error) {
-	cache, err := bigcache.NewBigCache(bigcache.Config{
-		Shards:           1024,
-		LifeWindow:       config.AntiReplayEvictionTime,
-		Hasher:           hasher{},
-		HardMaxCacheSize: config.AntiReplayMaxSize,
-	})
-	if err != nil {
-		return Cache{}, errors.Annotate(err, "Cannot make cache")
-	}
+func (c *cache) HasObfuscated2(data []byte) bool {
+	return c.data.Has(keyObfuscated2(data))
+}
 
-	return Cache{cache}, nil
+func (c *cache) HasTLS(data []byte) bool {
+	return c.data.Has(keyTLS(data))
+}
+
+func keyObfuscated2(data []byte) []byte {
+	return append(prefixObfuscated2, data...)
+}
+
+func keyTLS(data []byte) []byte {
+	return append(prefixTLS, data...)
 }

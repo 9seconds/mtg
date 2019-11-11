@@ -1,17 +1,17 @@
 package ntp
 
 import (
+	"fmt"
 	"math/rand"
 	"time"
 
 	"github.com/beevik/ntp"
-	"github.com/juju/errors"
 	"go.uber.org/zap"
 )
 
 const autoUpdatePeriod = time.Minute
 
-var ntpEndpoints = []string{
+var ntpEndpoints = [...]string{
 	"0.pool.ntp.org",
 	"1.pool.ntp.org",
 	"2.pool.ntp.org",
@@ -21,15 +21,17 @@ var ntpEndpoints = []string{
 // Fetch fetches the data on time drift.
 func Fetch() (time.Duration, error) {
 	url := ntpEndpoints[rand.Intn(len(ntpEndpoints))]
+
 	resp, err := ntp.Query(url)
 	if err != nil {
-		return 0, errors.Annotatef(err, "Cannot fetch NTP server %s", url)
+		return 0, fmt.Errorf("cannot fetch NTP server %s: %w", url, err)
 	}
 
 	offsetInt := int64(resp.ClockOffset)
 	if offsetInt < 0 {
 		offsetInt = -offsetInt
 	}
+
 	offset := time.Duration(offsetInt)
 
 	return offset, nil

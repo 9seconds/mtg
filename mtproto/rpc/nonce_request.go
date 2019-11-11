@@ -4,13 +4,10 @@ import (
 	"bytes"
 	"crypto/rand"
 	"encoding/binary"
+	"fmt"
 	"time"
-
-	"github.com/juju/errors"
 )
 
-// NonceRequest is the data type which contains all the data for correct
-// nonce request.
 type NonceRequest struct {
 	KeySelector []byte
 	CryptoTS    []byte
@@ -21,11 +18,11 @@ type NonceRequest struct {
 func (r *NonceRequest) Bytes() []byte {
 	buf := &bytes.Buffer{}
 
-	buf.Write(TagNonce)       // nolint: gosec
-	buf.Write(r.KeySelector)  // nolint: gosec
-	buf.Write(NonceCryptoAES) // nolint: gosec
-	buf.Write(r.CryptoTS)     // nolint: gosec
-	buf.Write(r.Nonce)        // nolint: gosec
+	buf.Write(TagNonce)
+	buf.Write(r.KeySelector)
+	buf.Write(NonceCryptoAES)
+	buf.Write(r.CryptoTS)
+	buf.Write(r.Nonce)
 
 	return buf.Bytes()
 }
@@ -37,8 +34,9 @@ func NewNonceRequest(proxySecret []byte) (*NonceRequest, error) {
 	cryptoTS := make([]byte, 4)
 
 	if _, err := rand.Read(nonce); err != nil {
-		return nil, errors.Annotate(err, "Cannot generate nonce")
+		return nil, fmt.Errorf("cannot generate nonce: %w", err)
 	}
+
 	copy(keySelector, proxySecret)
 
 	timestamp := time.Now().Truncate(time.Second).Unix() % 4294967296 // 256 ^ 4 - do not know how to name

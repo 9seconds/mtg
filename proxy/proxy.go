@@ -2,177 +2,97 @@ package proxy
 
 import (
 	"context"
-	"io"
 	"net"
-	"sync"
 
-	"github.com/gofrs/uuid"
-	"github.com/juju/errors"
 	"go.uber.org/zap"
 
-	"github.com/9seconds/mtg/antireplay"
-	"github.com/9seconds/mtg/client"
-	"github.com/9seconds/mtg/config"
-	"github.com/9seconds/mtg/mtproto"
-	"github.com/9seconds/mtg/stats"
-	"github.com/9seconds/mtg/telegram"
-	"github.com/9seconds/mtg/wrappers"
+	"mtg/config"
+	"mtg/conntypes"
+	"mtg/protocol"
+	"mtg/stats"
+	"mtg/utils"
+	"mtg/wrappers/stream"
 )
 
-// Proxy is a core of this program.
 type Proxy struct {
-	antiReplayCache antireplay.Cache
-	clientInit      client.Init
-	tg              telegram.Telegram
-	conf            *config.Config
+	Logger              *zap.SugaredLogger
+	Context             context.Context
+	ClientProtocolMaker protocol.ClientProtocolMaker
 }
 
-// Serve runs TCP proxy server.
-func (p *Proxy) Serve() error {
-	lsock, err := net.Listen("tcp", p.conf.BindAddr())
-	if err != nil {
-		return errors.Annotate(err, "Cannot create listen socket")
-	}
+func (p *Proxy) Serve(listener net.Listener) {
+	doneChan := p.Context.Done()
 
 	for {
-		if conn, err := lsock.Accept(); err != nil {
-			zap.S().Errorw("Cannot allocate incoming connection", "error", err)
-		} else {
-			go p.accept(conn)
+		conn, err := listener.Accept()
+		if err != nil {
+			select {
+			case <-doneChan:
+				return
+			default:
+				p.Logger.Errorw("Cannot allocate incoming connection", "error", err)
+				continue
+			}
 		}
+
+		go p.accept(conn)
 	}
 }
 
 func (p *Proxy) accept(conn net.Conn) {
-	connID := uuid.Must(uuid.NewV4()).String()
-	log := zap.S().With("connection_id", connID).Named("main")
-	ctx, cancel := context.WithCancel(context.Background())
-
 	defer func() {
-		cancel()
-		conn.Close() // nolint: errcheck, gosec
-
+		conn.Close()
 		if err := recover(); err != nil {
-			stats.NewCrash()
-			log.Errorw("Crash of accept handler", "error", err)
+			stats.Stats.Crash()
+			p.Logger.Errorw("Crash of accept handler", "error", err)
 		}
 	}()
 
-	log.Infow("Client connected", "addr", conn.RemoteAddr())
+	connID := conntypes.NewConnID()
+	logger := p.Logger.With("connection_id", connID)
 
-	clientConn, opts, err := p.clientInit(ctx, cancel, conn, connID, p.antiReplayCache, p.conf)
+	if err := utils.InitTCP(conn); err != nil {
+		logger.Errorw("Cannot initialize client TCP connection", "error", err)
+		return
+	}
+
+	ctx, cancel := context.WithCancel(p.Context)
+	defer cancel()
+
+	clientConn := stream.NewClientConn(conn, connID)
+	clientConn = stream.NewCtx(ctx, cancel, clientConn)
+	clientConn = stream.NewTimeout(clientConn)
+
+	defer clientConn.Close()
+
+	clientProtocol := p.ClientProtocolMaker()
+	clientConn, err := clientProtocol.Handshake(clientConn)
+
 	if err != nil {
-		log.Errorw("Cannot initialize client connection", "error", err)
-		return
-	}
-	defer clientConn.(io.Closer).Close() // nolint: errcheck
-
-	if p.conf.SecureOnly && opts.ConnectionType != mtproto.ConnectionTypeSecure {
-		log.Errorw("Proxy supports only secure connections", "connection_type", opts.ConnectionType)
+		logger.Warnw("Cannot perform client handshake", "error", err)
 		return
 	}
 
-	stats.ClientConnected(opts.ConnectionType, clientConn.RemoteAddr())
-	defer stats.ClientDisconnected(opts.ConnectionType, clientConn.RemoteAddr())
+	stats.Stats.ClientConnected(clientProtocol.ConnectionType(), clientConn.RemoteAddr())
+	defer stats.Stats.ClientDisconnected(clientProtocol.ConnectionType(), clientConn.RemoteAddr())
+	logger.Infow("Client connected", "addr", conn.RemoteAddr())
 
-	serverConn, err := p.getTelegramConn(ctx, cancel, opts, connID)
-	if err != nil {
-		log.Errorw("Cannot initialize server connection", "error", err)
-		return
+	req := &protocol.TelegramRequest{
+		Logger:         logger,
+		ClientConn:     clientConn,
+		ConnID:         connID,
+		Ctx:            ctx,
+		Cancel:         cancel,
+		ClientProtocol: clientProtocol,
 	}
-	defer serverConn.(io.Closer).Close() // nolint: errcheck
 
-	go func() {
-		<-ctx.Done()
-		serverConn.(io.Closer).Close() // nolint: gosec
-		clientConn.(io.Closer).Close() // nolint: gosec
-	}()
+	err = nil
 
-	wait := &sync.WaitGroup{}
-	wait.Add(2)
-
-	if p.conf.UseMiddleProxy() {
-		clientPacket := clientConn.(wrappers.PacketReadWriteCloser)
-		serverPacket := serverConn.(wrappers.PacketReadWriteCloser)
-		go p.middlePipe(clientPacket, serverPacket, wait, &opts.ReadHacks)
-		p.middlePipe(serverPacket, clientPacket, wait, &opts.WriteHacks)
+	if len(config.C.AdTag) > 0 {
+		middleConnection(req)
 	} else {
-		clientStream := clientConn.(wrappers.StreamReadWriteCloser)
-		serverStream := serverConn.(wrappers.StreamReadWriteCloser)
-		go p.directPipe(clientStream, serverStream, wait, p.conf.ReadBufferSize)
-		p.directPipe(serverStream, clientStream, wait, p.conf.WriteBufferSize)
+		err = directConnection(req)
 	}
 
-	wait.Wait()
-
-	log.Infow("Client disconnected", "addr", conn.RemoteAddr())
-}
-
-func (p *Proxy) getTelegramConn(ctx context.Context, cancel context.CancelFunc,
-	opts *mtproto.ConnectionOpts, connID string) (wrappers.Wrap, error) {
-	streamConn, err := p.tg.Dial(ctx, cancel, connID, opts)
-	if err != nil {
-		return nil, errors.Annotate(err, "Cannot dial to Telegram")
-	}
-
-	packetConn, err := p.tg.Init(opts, streamConn)
-	if err != nil {
-		return nil, errors.Annotate(err, "Cannot handshake telegram")
-	}
-
-	return packetConn, nil
-}
-
-func (p *Proxy) middlePipe(src wrappers.PacketReadCloser, dst io.Writer, wait *sync.WaitGroup, hacks *mtproto.Hacks) {
-	defer wait.Done()
-
-	for {
-		hacks.SimpleAck = false
-		hacks.QuickAck = false
-
-		packet, err := src.Read()
-		if err != nil {
-			src.Logger().Warnw("Cannot read packet", "error", err)
-			return
-		}
-		if _, err = dst.Write(packet); err != nil {
-			src.Logger().Warnw("Cannot write packet", "error", err)
-			return
-		}
-	}
-}
-
-func (p *Proxy) directPipe(src wrappers.StreamReadCloser, dst io.Writer, wait *sync.WaitGroup, bufferSize int) {
-	defer wait.Done()
-
-	buffer := make([]byte, bufferSize)
-	if _, err := io.CopyBuffer(dst, src, buffer); err != nil {
-		src.Logger().Warnw("Cannot pump sockets", "error", err)
-	}
-}
-
-// NewProxy returns new proxy instance.
-func NewProxy(conf *config.Config) (*Proxy, error) {
-	var clientInit client.Init
-	var tg telegram.Telegram
-
-	cache, err := antireplay.NewCache(conf)
-	if err != nil {
-		return nil, errors.Annotate(err, "Cannot make proxy")
-	}
-
-	if conf.UseMiddleProxy() {
-		clientInit = client.MiddleInit
-		tg = telegram.NewMiddleTelegram(conf)
-	} else {
-		clientInit = client.DirectInit
-		tg = telegram.NewDirectTelegram(conf)
-	}
-
-	return &Proxy{
-		antiReplayCache: cache,
-		conf:            conf,
-		clientInit:      clientInit,
-		tg:              tg,
-	}, nil
+	logger.Infow("Client disconnected", "error", err, "addr", conn.RemoteAddr())
 }

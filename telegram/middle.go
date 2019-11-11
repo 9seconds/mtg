@@ -1,139 +1,76 @@
 package telegram
 
 import (
-	"io"
-	"net"
-	"net/http"
+	"fmt"
 	"sync"
+	"time"
 
-	"github.com/juju/errors"
+	"go.uber.org/zap"
 
-	"github.com/9seconds/mtg/config"
-	"github.com/9seconds/mtg/mtproto"
-	"github.com/9seconds/mtg/mtproto/rpc"
-	"github.com/9seconds/mtg/wrappers"
+	"mtg/conntypes"
+	"mtg/telegram/api"
 )
 
+const middleTelegramBackgroundUpdateEvery = time.Hour
+
 type middleTelegram struct {
-	middleTelegramCaller
+	baseTelegram
 
-	conf *config.Config
+	mutex sync.RWMutex
 }
 
-func (t *middleTelegram) Init(connOpts *mtproto.ConnectionOpts,
-	conn wrappers.StreamReadWriteCloser) (wrappers.Wrap, error) {
-	rpcNonceConn := wrappers.NewMTProtoFrame(conn, rpc.SeqNoNonce)
+func (m *middleTelegram) Secret() []byte {
+	m.mutex.RLock()
+	defer m.mutex.RUnlock()
 
-	rpcNonceReq, err := t.sendRPCNonceRequest(rpcNonceConn)
-	if err != nil {
-		return nil, err
-	}
-	rpcNonceResp, err := t.receiveRPCNonceResponse(rpcNonceConn, rpcNonceReq)
-	if err != nil {
-		return nil, err
-	}
-
-	secureConn := wrappers.NewMiddleProxyCipher(conn, rpcNonceReq, rpcNonceResp, t.proxySecret)
-	frameConn := wrappers.NewMTProtoFrame(secureConn, rpc.SeqNoHandshake)
-
-	rpcHandshakeReq, err := t.sendRPCHandshakeRequest(frameConn)
-	if err != nil {
-		return nil, err
-	}
-	_, err = t.receiveRPCHandshakeResponse(frameConn, rpcHandshakeReq)
-	if err != nil {
-		return nil, err
-	}
-
-	proxyConn, err := wrappers.NewMTProtoProxy(frameConn, connOpts, t.conf.AdTag)
-	if err != nil {
-		return nil, err
-	}
-	proxyConn.Logger().Infow("Telegram connection initialized")
-
-	return proxyConn, nil
+	return m.baseTelegram.Secret()
 }
 
-func (t *middleTelegram) sendRPCNonceRequest(conn io.Writer) (*rpc.NonceRequest, error) {
-	rpcNonceReq, err := rpc.NewNonceRequest(t.proxySecret)
+func (m *middleTelegram) update() error {
+	secret, err := api.Secret()
 	if err != nil {
-		return nil, errors.Annotate(err, "Cannot create RPC nonce request")
-	}
-	if _, err = conn.Write(rpcNonceReq.Bytes()); err != nil {
-		return nil, errors.Annotate(err, "Cannot send RPC nonce request")
+		return fmt.Errorf("cannot fetch secret: %w", err)
 	}
 
-	return rpcNonceReq, nil
+	v4Addresses, v4DefaultDC, err := api.AddressesV4()
+	if err != nil {
+		return fmt.Errorf("cannot fetch addresses for ipv4: %w", err)
+	}
+
+	v6Addresses, v6DefaultDC, err := api.AddressesV6()
+	if err != nil {
+		return fmt.Errorf("cannot fetch addresses for ipv6: %w", err)
+	}
+
+	m.mutex.Lock()
+	m.secret = secret
+	m.v4DefaultDC = v4DefaultDC
+	m.V6DefaultDC = v6DefaultDC
+	m.v4Addresses = v4Addresses
+	m.v6Addresses = v6Addresses
+	m.mutex.Unlock()
+
+	return nil
 }
 
-func (t *middleTelegram) receiveRPCNonceResponse(conn wrappers.PacketReader,
-	req *rpc.NonceRequest) (*rpc.NonceResponse, error) {
-	packet, err := conn.Read()
-	if err != nil {
-		return nil, errors.Annotate(err, "Cannot read RPC nonce response")
-	}
+func (m *middleTelegram) backgroundUpdate() {
+	logger := zap.S().Named("telegram")
 
-	rpcNonceResp, err := rpc.NewNonceResponse(packet)
-	if err != nil {
-		return nil, errors.Annotate(err, "Cannot initialize RPC nonce response")
+	for range time.Tick(middleTelegramBackgroundUpdateEvery) {
+		if err := m.update(); err != nil {
+			logger.Warnw("Cannot update Telegram proxies", "error", err)
+		}
 	}
-	if err = rpcNonceResp.Valid(req); err != nil {
-		return nil, errors.Annotate(err, "Invalid RPC nonce response")
-	}
-
-	return rpcNonceResp, nil
 }
 
-func (t *middleTelegram) sendRPCHandshakeRequest(conn io.Writer) (*rpc.HandshakeRequest, error) {
-	req := rpc.NewHandshakeRequest()
-	if _, err := conn.Write(req.Bytes()); err != nil {
-		return nil, errors.Annotate(err, "Cannot send RPC handshake request")
+func (m *middleTelegram) Dial(dc conntypes.DC,
+	protocol conntypes.ConnectionProtocol) (conntypes.StreamReadWriteCloser, error) {
+	if dc == 0 {
+		dc = conntypes.DCDefaultIdx
 	}
 
-	return req, nil
-}
+	m.mutex.RLock()
+	defer m.mutex.RUnlock()
 
-func (t *middleTelegram) receiveRPCHandshakeResponse(conn wrappers.PacketReader,
-	req *rpc.HandshakeRequest) (*rpc.HandshakeResponse, error) {
-	packet, err := conn.Read()
-	if err != nil {
-		return nil, errors.Annotate(err, "Cannot read RPC handshake response")
-	}
-
-	rpcHandshakeResp, err := rpc.NewHandshakeResponse(packet)
-	if err != nil {
-		return nil, errors.Annotate(err, "Cannot initialize RPC handshake response")
-	}
-	if err = rpcHandshakeResp.Valid(req); err != nil {
-		return nil, errors.Annotate(err, "Invalid RPC handshake response")
-	}
-
-	return rpcHandshakeResp, nil
-}
-
-// NewMiddleTelegram creates new instance of Telegram which works with
-// middle proxies.
-func NewMiddleTelegram(conf *config.Config) Telegram {
-	tg := &middleTelegram{
-		middleTelegramCaller: middleTelegramCaller{
-			baseTelegram: baseTelegram{
-				dialer: tgDialer{
-					Dialer: net.Dialer{Timeout: telegramDialTimeout},
-					conf:   conf,
-				},
-			},
-			httpClient: &http.Client{
-				Timeout: middleTelegramHTTPClientTimeout,
-			},
-			dialerMutex: &sync.RWMutex{},
-		},
-		conf: conf,
-	}
-
-	if err := tg.update(); err != nil {
-		panic(err)
-	}
-	go tg.autoUpdate()
-
-	return tg
+	return m.baseTelegram.dial(dc, protocol)
 }
