@@ -77,12 +77,11 @@ func makeTLSExtensions(buf io.Writer) {
 		0x00, 0x20, // 32 bytes of key
 	})
 
-	var dst, in, base [32]byte
+	var scalar [32]byte
 
-	rand.Read(in[:])   // nolint: errcheck
-	rand.Read(base[:]) // nolint: errcheck
-	curve25519.ScalarMult(&dst, &in, &base)
-	buf.Write(dst[:]) // nolint: errcheck
+	rand.Read(scalar[:]) // nolint: errcheck
+	curve, _ := curve25519.X25519(scalar[:], curve25519.Basepoint)
+	buf.Write(curve) // nolint: errcheck
 
 	buf.Write([]byte{ // nolint: errcheck
 		0x00, 0x2b, // Extension - Supported Versions
