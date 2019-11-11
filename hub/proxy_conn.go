@@ -4,9 +4,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/9seconds/mtg/conntypes"
-	"github.com/9seconds/mtg/mtproto/rpc"
-	"github.com/9seconds/mtg/protocol"
+	"mtg/conntypes"
+	"mtg/mtproto/rpc"
+	"mtg/protocol"
 )
 
 const (

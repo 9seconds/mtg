@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/9seconds/mtg/config"
+	"mtg/config"
 )
 
 func InitTCP(conn net.Conn) error {

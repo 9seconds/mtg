@@ -5,9 +5,9 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/9seconds/mtg/conntypes"
-	"github.com/9seconds/mtg/protocol"
-	"github.com/9seconds/mtg/wrappers/packetack"
+	"mtg/conntypes"
+	"mtg/protocol"
+	"mtg/wrappers/packetack"
 )
 
 func middleConnection(request *protocol.TelegramRequest) {

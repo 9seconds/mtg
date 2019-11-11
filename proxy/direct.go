@@ -6,9 +6,9 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/9seconds/mtg/conntypes"
-	"github.com/9seconds/mtg/obfuscated2"
-	"github.com/9seconds/mtg/protocol"
+	"mtg/conntypes"
+	"mtg/obfuscated2"
+	"mtg/protocol"
 )
 
 const directPipeBufferSize = 1024 * 1024

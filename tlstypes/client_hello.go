@@ -6,8 +6,8 @@ import (
 	"crypto/sha256"
 	"fmt"
 
-	"github.com/9seconds/mtg/config"
-	"github.com/9seconds/mtg/utils"
+	"mtg/config"
+	"mtg/utils"
 )
 
 type ClientHello struct {

@@ -7,8 +7,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/9seconds/mtg/conntypes"
-	"github.com/9seconds/mtg/stats"
+	"mtg/conntypes"
+	"mtg/stats"
 )
 
 type wrapperTelegramStats struct {

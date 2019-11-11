@@ -1,6 +1,6 @@
-module github.com/9seconds/mtg
+module mtg
 
-replace github.com/golang/lint => github.com/golang/lint v0.0.0-20190227174305-8f45f776aaf1
+go 1.13
 
 require (
 	github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d
@@ -16,5 +16,3 @@ require (
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 	gopkg.in/alexcesaro/statsd.v2 v2.0.0
 )
-
-go 1.13

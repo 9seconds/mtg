@@ -9,13 +9,13 @@ import (
 	"io"
 	"time"
 
-	"github.com/9seconds/mtg/antireplay"
-	"github.com/9seconds/mtg/config"
-	"github.com/9seconds/mtg/conntypes"
-	"github.com/9seconds/mtg/protocol"
-	"github.com/9seconds/mtg/stats"
-	"github.com/9seconds/mtg/utils"
-	"github.com/9seconds/mtg/wrappers/stream"
+	"mtg/antireplay"
+	"mtg/config"
+	"mtg/conntypes"
+	"mtg/protocol"
+	"mtg/stats"
+	"mtg/utils"
+	"mtg/wrappers/stream"
 )
 
 const clientProtocolHandshakeTimeout = 10 * time.Second

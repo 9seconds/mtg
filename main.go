@@ -7,9 +7,9 @@ import (
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
-	"github.com/9seconds/mtg/cli"
-	"github.com/9seconds/mtg/config"
-	"github.com/9seconds/mtg/utils"
+	"mtg/cli"
+	"mtg/config"
+	"mtg/utils"
 )
 
 var version = "dev" // this has to be set by build ld flags

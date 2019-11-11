@@ -8,8 +8,8 @@ import (
 
 	"gopkg.in/alexcesaro/statsd.v2"
 
-	"github.com/9seconds/mtg/config"
-	"github.com/9seconds/mtg/conntypes"
+	"mtg/config"
+	"mtg/conntypes"
 )
 
 type statsStatsd struct {

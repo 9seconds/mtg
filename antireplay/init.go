@@ -4,7 +4,7 @@ import (
 	"math"
 	"sync"
 
-	"github.com/9seconds/mtg/config"
+	"mtg/config"
 	"github.com/dgraph-io/ristretto"
 )
 

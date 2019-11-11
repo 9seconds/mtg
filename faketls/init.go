@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/9seconds/mtg/config"
+	"mtg/config"
 )
 
 var (

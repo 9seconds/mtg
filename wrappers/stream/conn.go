@@ -7,8 +7,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/9seconds/mtg/config"
-	"github.com/9seconds/mtg/conntypes"
+	"mtg/config"
+	"mtg/conntypes"
 )
 
 type connPurpose uint8

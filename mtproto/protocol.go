@@ -3,12 +3,12 @@ package mtproto
 import (
 	"fmt"
 
-	"github.com/9seconds/mtg/conntypes"
-	"github.com/9seconds/mtg/mtproto/rpc"
-	"github.com/9seconds/mtg/protocol"
-	"github.com/9seconds/mtg/telegram"
-	"github.com/9seconds/mtg/wrappers/packet"
-	"github.com/9seconds/mtg/wrappers/stream"
+	"mtg/conntypes"
+	"mtg/mtproto/rpc"
+	"mtg/protocol"
+	"mtg/telegram"
+	"mtg/wrappers/packet"
+	"mtg/wrappers/stream"
 )
 
 func TelegramProtocol(req *protocol.TelegramRequest) (conntypes.PacketReadWriteCloser, error) {

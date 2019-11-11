@@ -5,9 +5,9 @@ import (
 	"math/rand"
 	"net"
 
-	"github.com/9seconds/mtg/conntypes"
-	"github.com/9seconds/mtg/utils"
-	"github.com/9seconds/mtg/wrappers/stream"
+	"mtg/conntypes"
+	"mtg/utils"
+	"mtg/wrappers/stream"
 )
 
 type baseTelegram struct {

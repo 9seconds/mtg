@@ -11,14 +11,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/9seconds/mtg/antireplay"
-	"github.com/9seconds/mtg/config"
-	"github.com/9seconds/mtg/conntypes"
-	"github.com/9seconds/mtg/obfuscated2"
-	"github.com/9seconds/mtg/protocol"
-	"github.com/9seconds/mtg/stats"
-	"github.com/9seconds/mtg/tlstypes"
-	"github.com/9seconds/mtg/wrappers/stream"
+	"mtg/antireplay"
+	"mtg/config"
+	"mtg/conntypes"
+	"mtg/obfuscated2"
+	"mtg/protocol"
+	"mtg/stats"
+	"mtg/tlstypes"
+	"mtg/wrappers/stream"
 )
 
 type ClientProtocol struct {
