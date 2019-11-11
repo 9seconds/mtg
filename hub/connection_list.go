@@ -3,9 +3,9 @@ package hub
 import (
 	"fmt"
 	"sort"
-)
 
-const connectionListMaxClientsPerConnection = 2
+	"github.com/9seconds/mtg/config"
+)
 
 type connectionList struct {
 	connections []*connection
@@ -16,7 +16,7 @@ func (c *connectionList) Get(conn *ProxyConn) (*connection, error) {
 		c.gc()
 	}
 
-	if len(c.connections) > 0 && c.connections[0].Len() < connectionListMaxClientsPerConnection {
+	if len(c.connections) > 0 && c.connections[0].Len() < config.C.MultiplexPerConnection {
 		if err := c.connections[0].Attach(conn); err == nil {
 			return c.connections[0], nil
 		}

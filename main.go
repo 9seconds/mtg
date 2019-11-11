@@ -108,6 +108,11 @@ var (
 		Envar("MTG_ANTIREPLAY_MAXSIZE").
 		Default("128MB").
 		Bytes()
+	runMultiplexPerConnection = runCommand.Flag("multiplex-per-connection",
+		"How many clients can share a single connection to Telegram.").
+		Envar("MTG_MULTIPLEX_PERCONNECTION").
+		Default("50").
+		Uint()
 	runSecret = runCommand.Arg("secret", "Secret of this proxy.").Required().HexBytes()
 	runAdtag  = runCommand.Arg("adtag", "ADTag of the proxy.").HexBytes()
 )
@@ -141,6 +146,7 @@ func main() {
 			config.Opt{Option: config.OptionTypeReadBufferSize, Value: *runReadBufferSize},
 			config.Opt{Option: config.OptionTypeCloakPort, Value: *runTLSCloakPort},
 			config.Opt{Option: config.OptionTypeAntiReplayMaxSize, Value: *runAntiReplayMaxSize},
+			config.Opt{Option: config.OptionTypeMultiplexPerConnection, Value: *runMultiplexPerConnection},
 			config.Opt{Option: config.OptionTypeSecret, Value: *runSecret},
 			config.Opt{Option: config.OptionTypeAdtag, Value: *runAdtag},
 		)

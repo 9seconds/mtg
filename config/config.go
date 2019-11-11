@@ -58,6 +58,8 @@ const (
 
 	OptionTypeAntiReplayMaxSize
 
+	OptionTypeMultiplexPerConnection
+
 	OptionTypeSecret
 	OptionTypeAdtag
 )
@@ -79,6 +81,8 @@ type Config struct {
 	CloakPort   int `json:"cloak_port"`
 
 	AntiReplayMaxSize int64 `json:"anti_replay_max_size"`
+
+	MultiplexPerConnection int `json:"multiplex_per_connection"`
 
 	Debug            bool             `json:"debug"`
 	Verbose          bool             `json:"verbose"`
@@ -149,6 +153,8 @@ func Init(options ...Opt) error { // nolint: gocyclo, funlen
 			C.CloakPort = int(opt.Value.(uint16))
 		case OptionTypeAntiReplayMaxSize:
 			C.AntiReplayMaxSize = int64(opt.Value.(units.Base2Bytes))
+		case OptionTypeMultiplexPerConnection:
+			C.MultiplexPerConnection = int(opt.Value.(uint))
 		case OptionTypeSecret:
 			C.Secret = opt.Value.([]byte)
 		case OptionTypeAdtag:
@@ -171,6 +177,10 @@ func Init(options ...Opt) error { // nolint: gocyclo, funlen
 		C.SecretMode = SecretModeSimple
 	default:
 		return errors.New("incorrect secret")
+	}
+
+	if C.MultiplexPerConnection == 0 {
+		return errors.New("cannot use 0 clients per connection for multiplexing")
 	}
 
 	if C.CloakHost != "" {
