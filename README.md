@@ -17,33 +17,33 @@ are the most notable:
 * [Python](https://github.com/alexbers/mtprotoproxy)
 * [Erlang](https://github.com/seriyps/mtproto_proxy)
 
-Almost all of them follow the way how official proxy was build. This
-includes support of multiple secrets, support of promoted channels etc.
+Almost all of them follow the way how official proxy was built. This
+includes support of multiple secrets, support of promoted channels, etc.
 
 mtg is an implementation in golang which is intended to be:
 
 * **Lightweight**
-  It has to consume as less resources as possible but not by losing
+  It has to consume as few resources as possible but not by losing
   maintainability.
 * **Easily deployable**
   I strongly believe that Telegram proxies should follow the way of
   ShadowSocks: promoted channels is a strange way of doing business
   I suppose. I think the only viable way is to have a proxy with
   minimum configuration which should work everywhere.
-* **Single secret**
-  I think that multiple secrets solves no problems and just complexify
-  software. I also believe that in case of throwout proxies, this feature
-  is useless luxury.
+* **A single secret**
+  I think that multiple secrets solve no problems and just complexify
+  software. I also believe that in the case of throwout proxies, this
+  feature is a useless luxury.
 * **Minimum docker image size**
   Official image is less than 3 megabytes. Literally.
 * **No management WebUI**
-  This is an implementation of simple lightweight proxy. I won't do that.
+  This is an implementation of a simple lightweight proxy. I won't do that.
 
 This proxy supports 2 modes of work: direct connection to Telegram and
 promoted channel mode. If you do not need promoted channels, I would
 recommend you to go with direct mode: this way is more robust.
 
-To run proxy in direct mode, all you need to do is just provide a
+To run a proxy in direct mode, all you need to do is just provide a
 secret. If you do not provide ADTag as a second parameter, promoted
 channels mode won't be activated.
 
@@ -104,7 +104,7 @@ Also, there is another project on Ansible Galaxy: https://galaxy.ansible.com/iva
 
 # Configuration
 
-Basically, to run this tool you need to configure as less as possible. Telegram
+To run this tool you need to configure as less as possible. Telegram
 clients support 3 different secret types:
 
 * Simple - basically, it is just a flow of frames ciphered by AES-CTR stream
@@ -146,22 +146,22 @@ ee852380f362a09343efb4690c4e17862e676f6f676c652e636f6d
 
 ## Antireplay cache
 
-In order to prevent replay attacks, we have internal storage of first
-frames messages for connected clients. These frames are generated
-randomly by design and we have negligible possibility of duplication
-(probability is 1/(2^64)) but it could be quite effective in order to
-prevent replays.
+To prevent replay attacks, we have internal storage of first frames
+messages for connected clients. These frames are generated randomly
+by design and we have the negligible possibility of duplication
+(probability is 1/(2^64)) but it could be quite effective to prevent
+replays.
 
 
 ## FakeTLS
 
 If you run this a proxy in faketls mode, this proxy will try to hide
-itself cloaking a host provided as a part of generated secret. It means
-that if you cloak google.com then you can curl this proxy and you'll get
-a google.com response back.
+itself cloaking a host provided as a part of the generated secret. It
+means that if you cloak google.com then you can curl this proxy and
+you'll get a google.com response back.
 
-mtg proxifies L3 traffic. In other words, only TCP, without interfering
-in TLS, HTTP or any other high-level protocol.
+mtg proxies L3 traffic. In other words, only TCP, without interfering in
+TLS, HTTP or any other high-level protocol.
 
 
 ## Environment variables
@@ -258,11 +258,14 @@ the box, you do not need to setup anything special.
 Version 1.0 breaks compatibility with previous versions so please read
 this chapter carefully:
 
-1. mtg now uses subcommands. Please use `mtg run` instead of just `mtg` to run
-   a proxy.
-2. Options which set host and port separately were removed in a favor of fused
-   host:port options.
-3. Own stats server was removed. Prometheus endpoint is moved to default stats
-   endpoint.
-4. It is possible to connect to this proxy only with a secret which was used to
-   run it. So, no backward compatibility of clients.
+1. mtg now uses subcommands. Please use `mtg run` instead of just
+   `mtg` to run a proxy.
+2. Options which set host and port separately were removed in a
+   favor of fused `host:port` options.
+3. Own stats server was removed. Prometheus endpoint is moved to
+   default stats endpoint.
+4. It is possible to connect to this proxy only with a secret which
+   was used to run it. So, no backward compatibility of clients.
+5. Multiplexing involves connectivity with middle proxies and involves
+   the most complex code path of this proxy. To avoid potential bugs,
+   we still recommend using direct mode.
