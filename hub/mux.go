@@ -62,6 +62,7 @@ func (m *mux) Get(req *protocol.TelegramRequest) (*ProxyConn, error) {
 		req:  req,
 		resp: resp,
 	}
+
 	rv := <-resp
 
 	return rv.conn, rv.err
