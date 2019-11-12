@@ -57,7 +57,7 @@ type statsStatsdLogger struct {
 	log *zap.SugaredLogger
 }
 
-func (s *statsStatsdLogger) Printf(msg string, args ...interface{}) {
+func (s statsStatsdLogger) Printf(msg string, args ...interface{}) {
 	s.log.Debugw(fmt.Sprintf(msg, args...))
 }
 
@@ -177,7 +177,7 @@ func (s *statsStatsd) initGauge(metric, key string, tags []statsd.Tag) {
 
 func newStatsStatsd() Interface {
 	prefix := strings.TrimSuffix(config.C.StatsNamespace, ".") + "."
-	logger := &statsStatsdLogger{
+	logger := statsStatsdLogger{
 		log: zap.S().Named("stats").Named("statsd"),
 	}
 

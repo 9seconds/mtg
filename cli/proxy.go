@@ -76,7 +76,6 @@ func Proxy() error { // nolint: funlen
 	antireplay.Init()
 	telegram.Init()
 	hub.Init(ctx)
-	faketls.Init(ctx)
 
 	proxyListener, err := net.Listen("tcp", config.C.Bind.String())
 	if err != nil {

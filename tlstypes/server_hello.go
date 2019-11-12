@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"io"
+	mrand "math/rand"
 
 	"golang.org/x/crypto/curve25519"
 
@@ -18,7 +19,7 @@ type ServerHello struct {
 	clientHello *ClientHello
 }
 
-func (s ServerHello) WelcomePacket(hostCert []byte) []byte {
+func (s ServerHello) WelcomePacket() []byte {
 	s.Random = [32]byte{}
 	rec := Record{
 		Type:    RecordTypeHandshake,
@@ -33,6 +34,9 @@ func (s ServerHello) WelcomePacket(hostCert []byte) []byte {
 		Data:    RawBytes([]byte{0x01}),
 	}
 	buf.Write(recChangeCipher.Bytes())
+
+	hostCert := make([]byte, 1024+mrand.Intn(3092))
+	rand.Read(hostCert) // nolint: errcheck
 
 	recData := Record{
 		Type:    RecordTypeApplicationData,

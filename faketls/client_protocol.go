@@ -90,14 +90,8 @@ func (c *ClientProtocol) tlsHandshake(conn io.ReadWriter) error {
 	}
 
 	antireplay.Cache.AddTLS(clientHello.Random[:])
-
-	hostCert, err := connectionServerInstance.get()
-	if err != nil {
-		return fmt.Errorf("cannot get host certificate: %w", err)
-	}
-
 	serverHello := tlstypes.NewServerHello(clientHello)
-	serverHelloPacket := serverHello.WelcomePacket(hostCert)
+	serverHelloPacket := serverHello.WelcomePacket()
 
 	if _, err := conn.Write(serverHelloPacket); err != nil {
 		return fmt.Errorf("cannot send welcome packet: %w", err)
