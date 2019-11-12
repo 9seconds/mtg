@@ -14,20 +14,9 @@ var Stats Interface
 func Init(ctx context.Context) error {
 	mux := http.NewServeMux()
 
-	instancePrometheus, err := newStatsPrometheus(mux)
-	if err != nil {
-		return fmt.Errorf("cannot initialize prometheus: %w", err)
-	}
-
-	stats := []Interface{instancePrometheus}
-
+	stats := []Interface{newStatsPrometheus(mux)}
 	if config.C.StatsdAddr != nil {
-		instanceStatsd, err := newStatsStatsd()
-		if err != nil {
-			return fmt.Errorf("cannot inialize statsd: %w", err)
-		}
-
-		stats = append(stats, instanceStatsd)
+		stats = append(stats, newStatsStatsd())
 	}
 
 	listener, err := net.Listen("tcp", config.C.StatsBind.String())

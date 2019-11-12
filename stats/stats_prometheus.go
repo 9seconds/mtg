@@ -1,7 +1,6 @@
 package stats
 
 import (
-	"fmt"
 	"net"
 	"net/http"
 	"strconv"
@@ -17,7 +16,7 @@ type statsPrometheus struct {
 	connections         *prometheus.GaugeVec
 	telegramConnections *prometheus.GaugeVec
 	traffic             *prometheus.GaugeVec
-	crashes             prometheus.Gauge
+	crashes             prometheus.Counter
 	replayAttacks       prometheus.Counter
 }
 
@@ -88,7 +87,7 @@ func (s *statsPrometheus) ReplayDetected() {
 	s.replayAttacks.Inc()
 }
 
-func newStatsPrometheus(mux *http.ServeMux) (Interface, error) {
+func newStatsPrometheus(mux *http.ServeMux) Interface {
 	registry := prometheus.NewPedanticRegistry()
 
 	instance := &statsPrometheus{
@@ -107,7 +106,7 @@ func newStatsPrometheus(mux *http.ServeMux) (Interface, error) {
 			Name:      "traffic",
 			Help:      "Traffic passed through the proxy in bytes.",
 		}, []string{"direction"}),
-		crashes: prometheus.NewGauge(prometheus.GaugeOpts{
+		crashes: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: config.C.StatsNamespace,
 			Name:      "crashes",
 			Help:      "How many crashes happened.",
@@ -119,28 +118,14 @@ func newStatsPrometheus(mux *http.ServeMux) (Interface, error) {
 		}),
 	}
 
-	if err := registry.Register(instance.connections); err != nil {
-		return nil, fmt.Errorf("cannot register metrics for connections: %w", err)
-	}
-
-	if err := registry.Register(instance.telegramConnections); err != nil {
-		return nil, fmt.Errorf("cannot register metrics for telegram connections: %w", err)
-	}
-
-	if err := registry.Register(instance.traffic); err != nil {
-		return nil, fmt.Errorf("cannot register metrics for traffic: %w", err)
-	}
-
-	if err := registry.Register(instance.crashes); err != nil {
-		return nil, fmt.Errorf("cannot register metrics for crashes: %w", err)
-	}
-
-	if err := registry.Register(instance.replayAttacks); err != nil {
-		return nil, fmt.Errorf("cannot register metrics for replays: %w", err)
-	}
+	registry.MustRegister(instance.connections)
+	registry.MustRegister(instance.telegramConnections)
+	registry.MustRegister(instance.traffic)
+	registry.MustRegister(instance.crashes)
+	registry.MustRegister(instance.replayAttacks)
 
 	handler := promhttp.HandlerFor(registry, promhttp.HandlerOpts{})
 	mux.Handle("/", handler)
 
-	return instance, nil
+	return instance
 }

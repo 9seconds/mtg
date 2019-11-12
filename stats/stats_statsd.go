@@ -5,23 +5,74 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
-	"gopkg.in/alexcesaro/statsd.v2"
+	statsd "github.com/smira/go-statsd"
+	"go.uber.org/zap"
 
 	"mtg/config"
 	"mtg/conntypes"
 )
 
+var (
+	tagTrafficIngress = &statsStatsdTag{
+		name: "ingress",
+		tag:  statsd.StringTag("type", "ingress"),
+	}
+	tagTrafficEgress = &statsStatsdTag{
+		name: "egress",
+		tag:  statsd.StringTag("type", "egress"),
+	}
+
+	tagConnectionTypeAbridged = &statsStatsdTag{
+		name: "abridged",
+		tag:  statsd.StringTag("type", "abridged"),
+	}
+	tagConnectionTypeIntermediate = &statsStatsdTag{
+		name: "intermediate",
+		tag:  statsd.StringTag("type", "intermediate"),
+	}
+	tagConnectionTypeSecured = &statsStatsdTag{
+		name: "secured",
+		tag:  statsd.StringTag("type", "secured"),
+	}
+
+	tagConnectionProtocol4 = &statsStatsdTag{
+		name: "ipv4",
+		tag:  statsd.StringTag("protocol", "ipv4"),
+	}
+	tagConnectionProtocol6 = &statsStatsdTag{
+		name: "ipv6",
+		tag:  statsd.StringTag("protocol", "ipv6"),
+	}
+)
+
+type statsStatsdTag struct {
+	tag  statsd.Tag
+	name string
+}
+
+type statsStatsdLogger struct {
+	log *zap.SugaredLogger
+}
+
+func (s *statsStatsdLogger) Printf(msg string, args ...interface{}) {
+	s.log.Debugw(fmt.Sprintf(msg, args...))
+}
+
 type statsStatsd struct {
-	client *statsd.Client
+	seen      map[string]struct{}
+	seenMutex sync.RWMutex
+	client    *statsd.Client
 }
 
 func (s *statsStatsd) IngressTraffic(traffic int) {
-	s.client.Count("traffic.ingress", traffic)
+	s.gauge("traffic", int64(traffic), tagTrafficIngress)
 }
 
 func (s *statsStatsd) EgressTraffic(traffic int) {
-	s.client.Count("traffic.egress", traffic)
+	s.gauge("traffic", int64(traffic), tagTrafficEgress)
 }
 
 func (s *statsStatsd) ClientConnected(connectionType conntypes.ConnectionType, addr *net.TCPAddr) {
@@ -32,25 +83,25 @@ func (s *statsStatsd) ClientDisconnected(connectionType conntypes.ConnectionType
 	s.changeConnections(connectionType, addr, -1)
 }
 
-func (s *statsStatsd) changeConnections(connectionType conntypes.ConnectionType, addr *net.TCPAddr, value int) {
-	labels := [...]string{
-		"connections",
-		"intermediate",
-		"ipv4",
-	}
+func (s *statsStatsd) changeConnections(connectionType conntypes.ConnectionType, addr *net.TCPAddr, increment int64) {
+	tags := make([]*statsStatsdTag, 0, 2)
 
 	switch connectionType {
 	case conntypes.ConnectionTypeAbridged:
-		labels[1] = "abridged"
-	case conntypes.ConnectionTypeSecure:
-		labels[1] = "secured"
+		tags = append(tags, tagConnectionTypeAbridged)
+	case conntypes.ConnectionTypeIntermediate:
+		tags = append(tags, tagConnectionTypeIntermediate)
+	default:
+		tags = append(tags, tagConnectionTypeSecured)
 	}
 
 	if addr.IP.To4() == nil {
-		labels[2] = "ipv6"
+		tags = append(tags, tagConnectionProtocol6)
+	} else {
+		tags = append(tags, tagConnectionProtocol4)
 	}
 
-	s.client.Count(strings.Join(labels[:], "."), value)
+	s.gauge("connections", increment, tags...)
 }
 
 func (s *statsStatsd) TelegramConnected(dc conntypes.DC, addr *net.TCPAddr) {
@@ -61,51 +112,83 @@ func (s *statsStatsd) TelegramDisconnected(dc conntypes.DC, addr *net.TCPAddr) {
 	s.changeTelegramConnections(dc, addr, -1)
 }
 
-func (s *statsStatsd) changeTelegramConnections(dc conntypes.DC, addr *net.TCPAddr, value int) {
-	labels := [...]string{
-		"telegram_connections",
-		strconv.Itoa(int(dc)),
-		"ipv4",
+func (s *statsStatsd) changeTelegramConnections(dc conntypes.DC, addr *net.TCPAddr, increment int64) {
+	tags := []*statsStatsdTag{
+		{
+			name: "dc" + strconv.Itoa(int(dc)),
+			tag:  statsd.IntTag("dc", int(dc)),
+		},
 	}
 
 	if addr.IP.To4() == nil {
-		labels[2] = "ipv6"
+		tags = append(tags, tagConnectionProtocol6)
+	} else {
+		tags = append(tags, tagConnectionProtocol4)
 	}
 
-	s.client.Count(strings.Join(labels[:], "."), value)
+	s.gauge("telegram_connections", increment, tags...)
 }
 
 func (s *statsStatsd) Crash() {
-	s.client.Increment("crashes")
+	s.gauge("crashes", 1)
 }
 
 func (s *statsStatsd) ReplayDetected() {
-	s.client.Increment("replay_attacks")
+	s.gauge("replay_attacks", 1)
 }
 
-func newStatsStatsd() (Interface, error) {
-	options := []statsd.Option{
-		statsd.Prefix(config.C.StatsNamespace),
-		statsd.Network(config.C.StatsdNetwork),
-		statsd.Address(config.C.StatsdAddr.String()),
-		statsd.TagsFormat(config.C.StatsdTagsFormat),
+func (s *statsStatsd) gauge(metric string, value int64, tags ...*statsStatsdTag) {
+	key, tagList := s.prepareVals(metric, tags)
+	s.initGauge(metric, key, tagList)
+	s.client.GaugeDelta(metric, value, tagList...)
+}
+
+func (s *statsStatsd) prepareVals(metric string, tags []*statsStatsdTag) (string, []statsd.Tag) {
+	tagList := make([]statsd.Tag, len(tags))
+	builder := strings.Builder{}
+	builder.WriteString(metric)
+
+	for i, v := range tags {
+		builder.WriteRune('.')
+		builder.WriteString(v.name)
+		tagList[i] = v.tag
 	}
 
-	if len(config.C.StatsdTags) > 0 {
-		tags := make([]string, len(config.C.StatsdTags)*2)
-		for k, v := range config.C.StatsdTags {
-			tags = append(tags, k, v)
-		}
+	return builder.String(), tagList
+}
 
-		options = append(options, statsd.Tags(tags...))
+func (s *statsStatsd) initGauge(metric, key string, tags []statsd.Tag) {
+	s.seenMutex.RLock()
+	_, ok := s.seen[key]
+	s.seenMutex.RUnlock()
+
+	if ok {
+		return
 	}
 
-	client, err := statsd.New(options...)
-	if err != nil {
-		return nil, fmt.Errorf("cannot initialize a client: %w", err)
+	s.seenMutex.Lock()
+	defer s.seenMutex.Unlock()
+
+	if _, ok = s.seen[key]; !ok {
+		s.seen[key] = struct{}{}
+		s.client.Gauge(metric, 0, tags...)
+	}
+}
+
+func newStatsStatsd() Interface {
+	prefix := strings.TrimSuffix(config.C.StatsNamespace, ".") + "."
+	logger := &statsStatsdLogger{
+		log: zap.S().Named("stats").Named("statsd"),
 	}
 
 	return &statsStatsd{
-		client: client,
-	}, nil
+		seen: make(map[string]struct{}),
+		client: statsd.NewClient(config.C.StatsdAddr.String(),
+			statsd.SendLoopCount(2),
+			statsd.ReconnectInterval(10*time.Second),
+			statsd.Logger(logger),
+			statsd.MetricPrefix(prefix),
+			statsd.TagStyle(config.C.StatsdTagsFormat),
+		),
+	}
 }

@@ -72,11 +72,6 @@ var (
 		"Host:port of statsd server").
 		Envar("MTG_STATSD_ADDR").
 		TCP()
-	runStatsdNetwork = runCommand.Flag("statsd-network",
-		"Which network is used to work with statsd. Only 'tcp' and 'udp' are supported.").
-		Envar("MTG_STATSD_NETWORK").
-		Default("udp").
-		Enum("udp", "tcp")
 	runStatsdTagsFormat = runCommand.Flag("statsd-tags-format",
 		"Which tag format should we use to send stats metrics. Valid options are 'datadog' and 'influxdb'.").
 		Envar("MTG_STATSD_TAGS_FORMAT").
@@ -139,7 +134,6 @@ func main() {
 			config.Opt{Option: config.OptionTypeStatsBind, Value: *runStatsBind},
 			config.Opt{Option: config.OptionTypeStatsNamespace, Value: *runStatsNamespace},
 			config.Opt{Option: config.OptionTypeStatsdAddress, Value: *runStatsdAddress},
-			config.Opt{Option: config.OptionTypeStatsdNetwork, Value: *runStatsdNetwork},
 			config.Opt{Option: config.OptionTypeStatsdTagsFormat, Value: *runStatsdTagsFormat},
 			config.Opt{Option: config.OptionTypeStatsdTags, Value: *runStatsdTags},
 			config.Opt{Option: config.OptionTypeWriteBufferSize, Value: *runWriteBufferSize},

@@ -9,8 +9,8 @@ import (
 	"net"
 
 	"github.com/alecthomas/units"
+	statsd "github.com/smira/go-statsd"
 	"go.uber.org/zap"
-	statsd "gopkg.in/alexcesaro/statsd.v2"
 )
 
 type SecretMode uint8
@@ -47,7 +47,6 @@ const (
 	OptionTypeStatsBind
 	OptionTypeStatsNamespace
 	OptionTypeStatsdAddress
-	OptionTypeStatsdNetwork
 	OptionTypeStatsdTagsFormat
 	OptionTypeStatsdTags
 
@@ -65,14 +64,14 @@ const (
 )
 
 type Config struct {
-	Bind       *net.TCPAddr `json:"bind"`
-	PublicIPv4 *net.TCPAddr `json:"public_ipv4"`
-	PublicIPv6 *net.TCPAddr `json:"public_ipv6"`
-	StatsBind  *net.TCPAddr `json:"stats_bind"`
-	StatsdAddr *net.TCPAddr `json:"stats_addr"`
+	Bind             *net.TCPAddr      `json:"bind"`
+	PublicIPv4       *net.TCPAddr      `json:"public_ipv4"`
+	PublicIPv6       *net.TCPAddr      `json:"public_ipv6"`
+	StatsBind        *net.TCPAddr      `json:"stats_bind"`
+	StatsdAddr       *net.TCPAddr      `json:"stats_addr"`
+	StatsdTagsFormat *statsd.TagFormat `json:"statsd_tags_format"`
 
 	StatsNamespace string            `json:"stats_namespace"`
-	StatsdNetwork  string            `json:"statsd_network"`
 	CloakHost      string            `json:"cloak_host"`
 	StatsdTags     map[string]string `json:"statsd_tags"`
 
@@ -84,10 +83,9 @@ type Config struct {
 
 	MultiplexPerConnection int `json:"multiplex_per_connection"`
 
-	Debug            bool             `json:"debug"`
-	Verbose          bool             `json:"verbose"`
-	StatsdTagsFormat statsd.TagFormat `json:"statsd_tags_format"`
-	SecretMode       SecretMode       `json:"secret_mode"`
+	Debug      bool       `json:"debug"`
+	Verbose    bool       `json:"verbose"`
+	SecretMode SecretMode `json:"secret_mode"`
 
 	Secret []byte `json:"secret"`
 	AdTag  []byte `json:"adtag"`
@@ -125,21 +123,13 @@ func Init(options ...Opt) error { // nolint: gocyclo, funlen
 			C.StatsNamespace = opt.Value.(string)
 		case OptionTypeStatsdAddress:
 			C.StatsdAddr = opt.Value.(*net.TCPAddr)
-		case OptionTypeStatsdNetwork:
-			value := opt.Value.(string)
-			switch value {
-			case "udp", "tcp":
-				C.StatsdNetwork = value
-			default:
-				return fmt.Errorf("unknown statsd network %v", value)
-			}
 		case OptionTypeStatsdTagsFormat:
 			value := opt.Value.(string)
 			switch value {
 			case "datadog":
-				C.StatsdTagsFormat = statsd.Datadog
+				C.StatsdTagsFormat = statsd.TagFormatDatadog
 			case "influxdb":
-				C.StatsdTagsFormat = statsd.InfluxDB
+				C.StatsdTagsFormat = statsd.TagFormatInfluxDB
 			default:
 				return fmt.Errorf("incorrect statsd tag %s", value)
 			}
