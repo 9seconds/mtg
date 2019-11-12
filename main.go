@@ -82,16 +82,16 @@ var (
 		Envar("MTG_STATSD_TAGS").
 		StringMap()
 	runWriteBufferSize = runCommand.Flag("write-buffer",
-		"Write buffer size in bytes. You can think about it as a buffer from client to Telegram.").
+		"Write buffer size. You can think about it as a buffer from client to Telegram.").
 		Short('w').
 		Envar("MTG_BUFFER_WRITE").
-		Default("65536KB").
+		Default("64KB").
 		Bytes()
 	runReadBufferSize = runCommand.Flag("read-buffer",
-		"Read buffer size in bytes. You can think about it as a buffer from Telegram to client.").
+		"Read buffer size. You can think about it as a buffer from Telegram to client.").
 		Short('r').
 		Envar("MTG_BUFFER_READ").
-		Default("131072KB").
+		Default("1MB").
 		Bytes()
 	runTLSCloakPort = runCommand.Flag("cloak-port",
 		"Port which should be used for host cloaking.").
