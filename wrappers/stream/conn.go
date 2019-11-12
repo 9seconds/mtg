@@ -106,7 +106,9 @@ func newConn(parent net.Conn,
 	).Named("conn")
 
 	if purpose == connPurposeClient {
-		logger = logger.With("connection_id", connID.String())
+		logger = logger.Named("client").With("connection_id", connID.String())
+	} else {
+		logger = logger.Named("telegram")
 	}
 
 	return &wrapperConn{
