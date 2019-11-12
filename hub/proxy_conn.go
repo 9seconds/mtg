@@ -12,6 +12,8 @@ import (
 const (
 	proxyConnWriteTimeout = 2 * time.Minute
 	proxyConnReadTimeout  = 2 * time.Minute
+
+	proxyConnBackpressureAfter = 10
 )
 
 type ProxyConn struct {
@@ -69,7 +71,7 @@ func (p *ProxyConn) Close() {
 
 func newProxyConn(req *protocol.TelegramRequest, channelClosed chan<- conntypes.ConnID) *ProxyConn {
 	return &ProxyConn{
-		channelResponse: make(chan *rpc.ProxyResponse),
+		channelResponse: make(chan *rpc.ProxyResponse, proxyConnBackpressureAfter),
 		channelDone:     make(chan struct{}),
 		channelClosed:   channelClosed,
 		req:             req,
