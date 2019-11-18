@@ -226,24 +226,16 @@ and [Datadog](https://docs.datadoghq.com/developers/dogstatsd/).
 
 All metrics are gauges. Here is the list of metrics and their meaning:
 
-| Metric name                      | Unit    | Description                                               |
-|----------------------------------|---------|-----------------------------------------------------------|
-| `connections.abridged.ipv4`      | number  | The number of active abridged IPv4 connections            |
-| `connections.abridged.ipv6`      | number  | The number of active abridged IPv6 connections            |
-| `connections.intermediate.ipv4`  | number  | The number of active intermediate IPv4 connections        |
-| `connections.intermediate.ipv6`  | number  | The number of active intermediate IPv6 connections        |
-| `connections.secure.ipv4`        | number  | The number of active secure intermediate IPv4 connections |
-| `connections.secure.ipv6`        | number  | The number of active secure intermediate IPv6 connections |
-| `telegram_connections.[dc].ipv4` | number  | The number of active abridged IPv4 connections            |
-| `telegram_connections.[dc].ipv6` | number  | The number of active abridged IPv6 connections            |
-| `crashes`                        | number  | An amount of crashes in client handlers                   |
-| `traffic.ingress`                | bytes   | Ingress traffic from the start of application (incoming)  |
-| `traffic.egress`                 | bytes   | Egress traffic from the start of application (outgoing)   |
-| `replay_attacks`                 | number  | The number of prevented replay attacks.                   |
+| Metric name            | Unit    | Description                                |
+|------------------------|---------|--------------------------------------------|
+| `connections`          | number  | The number of active connections.          |
+| `telegram_connections` | number  | The number of active telegram connections. |
+| `crashes`              | number  | An amount of crashes in client handlers.   |
+| `traffic.egress`       | bytes   | Traffic from the start of application.     |
+| `replay_attacks`       | number  | The number of prevented replay attacks.    |
 
 All metrics are prefixed with given prefix. Default prefix is `mtg`.
-With such prefix metric name `traffic.ingress`, for example, would be
-`mtg.traffic.ingress`.
+Also, metrics provide tags (ipv4/ipv6, dc indexes etc).
 
 
 # Prometheus integration
