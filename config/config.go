@@ -174,13 +174,8 @@ func Init(options ...Opt) error { // nolint: gocyclo, funlen
 	}
 
 	if C.CloakHost != "" {
-		addrs, err := net.LookupHost(C.CloakHost)
-		if err != nil {
-			return fmt.Errorf("cannot resolve address of %s host: %w", C.CloakHost, err)
-		}
-
-		if len(addrs) == 0 {
-			return fmt.Errorf("no known ip addresses for the host %s", C.CloakHost)
+		if _, err := net.LookupHost(C.CloakHost); err != nil {
+			zap.S().Warnw("Cannot resolve address of host", "hostname", C.CloakHost, "error", err)
 		}
 	}
 

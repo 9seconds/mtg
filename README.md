@@ -144,6 +144,13 @@ $ mtg generate-secret -c google.com tls
 ee852380f362a09343efb4690c4e17862e676f6f676c652e636f6d
 ```
 
+Or, if you prefer docker:
+
+```console
+$ docker run --rm nineseconds/mtg generate-secret tls -c bing.com
+eedf71035a8ed48a623d8e83e66aec4d0562696e672e636f6d
+```
+
 ## Antireplay cache
 
 To prevent replay attacks, we have internal storage of first frames
@@ -213,6 +220,15 @@ $ mtg run <secret> <adtag>
 ```
 
 This tool will listen on port 3128 by default with the given secret.
+
+
+# oneliner to run this proxy
+
+Please ensure that docker is installed. After that just execute
+
+```console
+curl -sfL https:// | bash
+```
 
 
 # statsd integration
