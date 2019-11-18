@@ -44,7 +44,9 @@ if [ ! -f "$MTG_SECRET" ]; then
     > "$MTG_SECRET"
 fi
 
+echo
 echo "Proxy secret is $(cat "$MTG_SECRET"). Port is $MTG_PORT."
+echo
 
 docker ps --filter "Name=$MTG_CONTAINER" -aq | xargs -r docker rm -fv
 docker run \
