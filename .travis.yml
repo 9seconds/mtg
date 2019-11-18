@@ -5,8 +5,7 @@ sudo: false
 dist: trusty
 
 go:
-  - "1.11.x"
-  - 1.12.x
+  - 1.13.x
   - master
 
 before_script: make prepare
@@ -14,7 +13,6 @@ before_script: make prepare
 script:
   - make all
   - make lint
-  - make test
 
 matrix:
   allow_failures:

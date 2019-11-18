@@ -6,6 +6,8 @@ Bullshit-free MTPROTO proxy for Telegram
 [![Go Report Card](https://goreportcard.com/badge/github.com/9seconds/mtg)](https://goreportcard.com/report/github.com/9seconds/mtg)
 [![Docker Build Status](https://img.shields.io/docker/build/nineseconds/mtg.svg)](https://hub.docker.com/r/nineseconds/mtg/)
 
+**Please see a guide on upgrading to 1.0 at the end of this README.**
+
 # Rationale
 
 There are several available proxies for Telegram MTPROTO available. Here
@@ -15,33 +17,33 @@ are the most notable:
 * [Python](https://github.com/alexbers/mtprotoproxy)
 * [Erlang](https://github.com/seriyps/mtproto_proxy)
 
-Almost all of them follow the way how official proxy was build. This
-includes support of multiple secrets, support of promoted channels etc.
+Almost all of them follow the way how official proxy was built. This
+includes support of multiple secrets, support of promoted channels, etc.
 
 mtg is an implementation in golang which is intended to be:
 
 * **Lightweight**
-  It has to consume as less resources as possible but not by losing
+  It has to consume as few resources as possible but not by losing
   maintainability.
 * **Easily deployable**
   I strongly believe that Telegram proxies should follow the way of
   ShadowSocks: promoted channels is a strange way of doing business
   I suppose. I think the only viable way is to have a proxy with
   minimum configuration which should work everywhere.
-* **Single secret**
-  I think that multiple secrets solves no problems and just complexify
-  software. I also believe that in case of throwout proxies, this feature
-  is useless luxury.
+* **A single secret**
+  I think that multiple secrets solve no problems and just complexify
+  software. I also believe that in the case of throwout proxies, this
+  feature is a useless luxury.
 * **Minimum docker image size**
-  Official image is less than 3 megabytes. Literally.
+  Official image is less than 3.5 megabytes. Literally.
 * **No management WebUI**
-  This is an implementation of simple lightweight proxy. I won't do that.
+  This is an implementation of a simple lightweight proxy. I won't do that.
 
 This proxy supports 2 modes of work: direct connection to Telegram and
 promoted channel mode. If you do not need promoted channels, I would
-recommend you to go with direct mode: this is way more robust.
+recommend you to go with direct mode: this way is more robust.
 
-To run proxy in direct mode, all you need to do is just provide a
+To run a proxy in direct mode, all you need to do is just provide a
 secret. If you do not provide ADTag as a second parameter, promoted
 channels mode won't be activated.
 
@@ -102,95 +104,71 @@ Also, there is another project on Ansible Galaxy: https://galaxy.ansible.com/iva
 
 # Configuration
 
-Basically, to run this tool you need to configure as less as possible.
+To run this tool you need to configure as less as possible. Telegram
+clients support 3 different secret types:
+
+* Simple - basically, it is just a flow of frames ciphered by AES-CTR stream
+  cipher.
+* Secured - the same stream as simple but with some random noise to prevent
+  statistical analysis of traffic flow.
+* FakeTLS - this mode envelops telegram stream in TLS so it looks (in theory)
+  the same as any TLS1.3 traffic from DPI point of view.
+
+If you do not have preferences, go with FakeTLS or at least secured.
+Simple mode is a little bit naive and traffic flow can be easily
+identified as Telegram one.
+
+Unlike the rest of implementation, mtg is quite strict about the
+execution mode: if you run a proxy instance with FakeTLS secret, you
+can't connect to it with simple or secured clients. You can't connect
+to the proxy with secured secret with FakeTLS key. It forces one mode
+of working. So, unfortunately, there is no way how to connect to the
+deployed proxy with another secret (if you know how to construct and
+convert them). But at the same time, old clients can't connect so they
+won't expose the type of the service.
 
 First, you need to generate a secret:
 
 ```console
-openssl rand -hex 16
+$ mtg generate-secret simple
+52a493bdfb90eea55739eabff2d92a14
 ```
-
-or
 
 ```console
-head -c 512 /dev/urandom | md5sum | cut -f 1 -d ' '
+$ mtg generate-secret secured
+ddf05fb7acb549be047a7c585116581418
 ```
-
-## Secure mode
-
-_tl;dr - use secret mode for all new installation of proxy; only clients
-with dd-secrets will be able to connect. This mode abuses attempts to
-DPI MTPROTO traffic._
-
-Secure mode is not the best name and of course, it creates a lot of
-confusion. To explain what it means, we need to tell you some bits on
-dd-secrets.
-
-MTPROTO proxy protocol requires 16-byte secret. You usually
-propagate it as a 32 characters hexadecimal string like
-`282831900f371ca182feb0e4e1e1aeef` (if you decode this string
-to bytes, you will get a real secret which is used in the
-protocol). Everything went quite good until the moment when
-developers found an evidence that [protocol is quite weak to
-DPI](https://github.com/TelegramMessenger/MTProxy/issues/35) and some
-enthusiasts even created simple proofs of concepts on [detecting MTPROTO
-traffic](https://github.com/darkk/poormansmtproto).
-
-Telegram team has introduced a patch called dd-secrets. If you have
-a secret `282831900f371ca182feb0e4e1e1aeef` then your dd-secret is
-`dd282831900f371ca182feb0e4e1e1aeef`. That is, you just add dd prefix
-to the secret, prepend it with dd. In that case, original secret
-`282831900f371ca182feb0e4e1e1aeef` is used but client and server start
-to act a little bit different: they start to add random noise to the
-packets so they can't be detected by their length. In order to keep
-backward compatibility, all proxies a quite liberal to the secrets to
-use: if the client uses plain secret, without dd prefix, they fall back
-to the normal behavior. If dd-secret is used (proxy can extract this
-information on the handshake), then more secured, the hardened behavior
-is used.
-
-Yes, it can look like a hack but it is as it is.
-
-Now going back to the secure mode: if you do not pass `-s` flag to the
-mtg, then it checks what mode is requested by the client. If the client
-uses plain secret, without dd prefix, then proxy falls back to the
-original behavior and do not play with paddings. If dd-secret is used
-and client demands this mode, then proxy start to add that random noise
-to the packets. But if you pass `-s`, then only clients with dd-secrets
-can connect. How to migrate existing clients then? If a client is new
-enough, you can just prepend the secret with dd string in the settings.
-If it is an old guy, then nothing to do, sorry.
-
-Why this mode matters? We do not have evidence but there is quite a big
-suspicion that some ISPs start to filter MTPROTO traffic. If they detect
-the IP address which acts as a proxy, they block it and no clients can
-use this proxy. This is an attempt to prevent such a situation.
-
-General rule of thumb: with all new installation of proxies I would
-advise to go with secure mode by default. But please do remember that it
-means that clients, which do not pass dd-prefix to their secrets, will
-not be able to connect. *Secure mode works only with dd-prefixes!*
-
-Oneliners to generate such secrets:
 
 ```console
-echo dd$(openssl rand -hex 16)
+$ mtg generate-secret -c google.com tls
+ee852380f362a09343efb4690c4e17862e676f6f676c652e636f6d
 ```
 
-or
+Or, if you prefer docker:
 
 ```console
-echo dd$(head -c 512 /dev/urandom | md5sum | cut -f 1 -d ' ')
+$ docker run --rm nineseconds/mtg generate-secret tls -c bing.com
+eedf71035a8ed48a623d8e83e66aec4d0562696e672e636f6d
 ```
-
 
 ## Antireplay cache
 
-In order to prevent replay attacks, we have internal storage of first
-frames messages for connected clients. These frames are generated
-randomly by design and we have negligible possibility of duplication
-(probability is 1/(2^64)) but it could be quite effective in order to
-prevent replays.
+To prevent replay attacks, we have internal storage of first frames
+messages for connected clients. These frames are generated randomly
+by design and we have the negligible possibility of duplication
+(probability is 1/(2^64)) but it could be quite effective to prevent
+replays.
+
+
+## FakeTLS
+
+If you run this a proxy in faketls mode, this proxy will try to hide
+itself cloaking a host provided as a part of the generated secret. It
+means that if you cloak google.com then you can curl this proxy and
+you'll get a google.com response back.
+
+mtg proxies L3 traffic. In other words, only TCP, without interfering in
+TLS, HTTP or any other high-level protocol.
 
 
 ## Environment variables
@@ -199,30 +177,25 @@ It is possible to configure this tool using environment variables. You
 can configure any flag but not secret or adtag. Here is the list of
 supported environment variables:
 
-| Environment variable          | Corresponding flags         | Default value                     | Description                                                                                                                                                                                                                                                                |
-|-------------------------------|-----------------------------|-----------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `MTG_DEBUG`                   | `-d`, `--debug`             | `false`                           | Run in debug mode. Usually, you need to run in this mode  only if you develop this tool or its maintainer is asking you to provide  logs with such verbosity.                                                                                                              |
-| `MTG_VERBOSE`                 | `-v`, `--verbose`           | `false`                           | Run in verbose mode. This is way less chatty than debug mode.                                                                                                                                                                                                              |
-| `MTG_IP`                      | `-b`, `--bind-ip`           | `127.0.0.1`                       | Which IP should we bind to. As usual, `0.0.0.0` means that we want to listen on all interfaces. Also, 4 zeroes will bind to both IPv4 and IPv6.                                                                                                                            |
-| `MTG_PORT`                    | `-p`, `--bind-port`         | `3128`                            | Which port should we bind to (listen on).                                                                                                                                                                                                                                  |
-| `MTG_IPV4`                    | `-4`, `--public-ipv4`       | [Autodetect](https://ifconfig.co) | IPv4 address of this proxy. This is required if you NAT your proxy or run it in a docker container. In that case, you absolutely need to specify public IPv4 address of the proxy, otherwise either URLs will be broken or proxy could not access Telegram middle proxies. |
-| `MTG_IPV4_PORT`               | `--public-ipv4-port`        | Value of `--bind-port`            | Which port should be public of IPv4 interface. This affects only generated links and should be changed only if you NAT your proxy or run it in a docker container.                                                                                                         |
-| `MTG_IPV6`                    | `-6`, `--public-ipv6`       | [Autodetect](https://ifconfig.co) | IPv6 address of this proxy. This is required if you NAT your proxy or run it in a docker container. In that case, you absolutely need to specify public IPv6 address of the proxy, otherwise either URLs will be broken or proxy could not access Telegram middle proxies. |
-| `MTG_IPV6_PORT`               | `--public-ipv6-port`        | Value of `--bind-port`            | Which port should be public of IPv6 interface. This affects only generated links and should be changed only if you NAT your proxy or run it in a docker container.                                                                                                         |
-| `MTG_STATS_IP`                | `-t`, `--stats-ip`          | `127.0.0.1`                       | Which IP should we bind the internal statistics HTTP server.                                                                                                                                                                                                               |
-| `MTG_STATS_PORT`              | `-q`, `--stats-port`        | `3129`                            | Which port should we bind the internal statistics HTTP server.                                                                                                                                                                                                             |
-| `MTG_STATSD_IP`               | `--statsd-ip`               |                                   | IP/host addresses of statsd service. No defaults, by defaults we do not send anything there.                                                                                                                                                                               |
-| `MTG_STATSD_PORT`             | `--statsd-port`             | `8125`                            | Which port should we use to work with statsd.                                                                                                                                                                                                                              |
-| `MTG_STATSD_NETWORK`          | `--statsd-network`          | `udp`                             | Which protocol should we use to work with statsd. Possible options are `udp` and `tcp`.                                                                                                                                                                                    |
-| `MTG_STATSD_PREFIX`           | `--statsd-prefix`           | `mtg`                             | Which bucket prefix we should use. For example, if you set `mtg`, then metric `traffic.ingress` would be send as `mtg.traffic.ingress`.                                                                                                                                    |
-| `MTG_STATSD_TAGS_FORMAT`      | `--statsd-tags-format`      |                                   | Which tags format we should use. By default, we are using default vanilla statsd tags format but if you want to send directly to InfluxDB or Datadog, please specify it there. Possible options are `influxdb` and `datadog`.                                              |
-| `MTG_STATSD_TAGS`             | `--statsd-tags`             |                                   | Which tags should we send to statsd with our metrics. Please specify them as `key=value` pairs.                                                                                                                                                                            |
-| `MTG_PROMETHEUS_PREFIX`       | `--prometheus-prefix`       | `mtg`                             | Which namespace should be used for prometheus metrics.                                                                                                                                                                                                                     |
-| `MTG_BUFFER_WRITE`            | `-w`, `--write-buffer`      | `65536`                           | The size of TCP write buffer in bytes. Write buffer is the buffer for messages which are going from client to Telegram.                                                                                                                                                    |
-| `MTG_BUFFER_READ`             | `-r`, `--read-buffer`       | `131072`                          | The size of TCP read buffer in bytes. Read buffer is the buffer for messages from Telegram to client.                                                                                                                                                                      |
-| `MTG_SECURE_ONLY`             | `-s`, `--secure-only`       | `false`                           | Support only clients with secure mode (i.e only clients with dd-secrets).                                                                                                                                                                                                  |
-| `MTG_ANTIREPLAY_MAXSIZE`      | `anti-replay-max-size`      | `128`                             | Max size of antireplay cache in megabytes.                                                                                                                                                                                                                                 |
-| `MTG_ANTIREPLAY_EVICTIONTIME` | `anti-replay-eviction-time` | `168h`                            | Eviction time for antireplay cache entries.                                                                                                                                                                                                                                |
+| Environment variable          | Corresponding flags          | Default value                     | Description                                                                                                                                                                                                                                                                     |
+|-------------------------------|------------------------------|-----------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `MTG_DEBUG`                   | `-d`, `--debug`              | `false`                           | Run in debug mode. Usually, you need to run in this mode  only if you develop this tool or its maintainer is asking you to provide  logs with such verbosity.                                                                                                                   |
+| `MTG_VERBOSE`                 | `-v`, `--verbose`            | `false`                           | Run in verbose mode. This is way less chatty than debug mode.                                                                                                                                                                                                                   |
+| `MTG_BIND`                    | `-b`, `--bind`               | `0.0.0.0:3128`                    | Which host/port pair should we bind to (listen on).                                                                                                                                                                                                                             |
+| `MTG_IPV4`                    | `-4`, `--public-ipv4`        | [Autodetect](https://ifconfig.co) | IPv4 address:port of this proxy. This is required if you NAT your proxy or run it in a docker container. In that case, you absolutely need to specify public IPv4 address of the proxy, otherwise either URLs will be broken or proxy could not access Telegram middle proxies. |
+| `MTG_IPV6`                    | `-6`, `--public-ipv6`        | [Autodetect](https://ifconfig.co) | IPv6 address:port of this proxy. This is required if you NAT your proxy or run it in a docker container. In that case, you absolutely need to specify public IPv6 address of the proxy, otherwise either URLs will be broken or proxy could not access Telegram middle proxies. |
+| `MTG_STATS_BIND`              | `-t`, `--stats-bind`         | `127.0.0.1:3129`                  | Which hist:port should we bind the internal statistics HTTP server (Prometheus).                                                                                                                                                                                                |
+| `MTG_STATS_NAMESPACE`         | `--stats-namespace`          | `mtg`                             | Which namespace should be used for prometheus metrics.                                                                                                                                                                                                                          |
+| `MTG_STATSD_ADDR`             | `--statsd-addr`              |                                   | IP:host addresses of statsd service. No defaults, by defaults we do not send anything there.                                                                                                                                                                                    |
+| `MTG_STATSD_PORT`             | `--statsd-port`              | `8125`                            | Which port should we use to work with statsd.                                                                                                                                                                                                                                   |
+| `MTG_STATSD_PREFIX`           | `--statsd-prefix`            | `mtg`                             | Which bucket prefix we should use. For example, if you set `mtg`, then metric `traffic.ingress` would be send as `mtg.traffic.ingress`.                                                                                                                                         |
+| `MTG_STATSD_TAGS_FORMAT`      | `--statsd-tags-format`       |                                   | Which tags format we should use. By default, we are using default vanilla statsd tags format but if you want to send directly to InfluxDB or Datadog, please specify it there. Possible options are `influxdb` and `datadog`.                                                   |
+| `MTG_STATSD_TAGS`             | `--statsd-tags`              |                                   | Which tags should we send to statsd with our metrics. Please specify them as `key=value` pairs.                                                                                                                                                                                 |
+| `MTG_BUFFER_WRITE`            | `-w`, `--write-buffer`       | `65536`                           | The size of TCP write buffer in bytes. Write buffer is the buffer for messages which are going from client to Telegram.                                                                                                                                                         |
+| `MTG_BUFFER_READ`             | `-r`, `--read-buffer`        | `131072`                          | The size of TCP read buffer in bytes. Read buffer is the buffer for messages from Telegram to client.                                                                                                                                                                           |
+| `MTG_ANTIREPLAY_MAXSIZE`      | `--anti-replay-max-size`     | `128MB`                           | Max size of antireplay cache.                                                                                                                                                                                                                                                   |
+| `MTG_CLOAK_PORT`              | `--cloak-port`               | `443`                             | Which port we should use to connect to cloaked host in FakeTLS mode.                                                                                                                                                                                                            |
+| `MTG_MULTIPLEX_PERCONNECTION` | `--multiplex-per-connection` | `50`                              | How many client connections can share a single Telegram connection in adtag mode                                                                                                                                                                                                |
 
 Usually you want to modify only read/write buffer sizes. If you feel
 that proxy is slow, try to increase both sizes giving more priority to
@@ -237,34 +210,25 @@ userspace.
 Now run the tool:
 
 ```console
-mtg <secret>
+$ mtg run <secret>
 ```
 
 How to run the tool with ADTag:
 
 ```console
-mtg <secret> <adtag>
+$ mtg run <secret> <adtag>
 ```
 
 This tool will listen on port 3128 by default with the given secret.
 
-# One-line runner
+
+# oneliner to run this proxy
+
+Please ensure that docker is installed. After that just execute
 
 ```console
-docker run --name mtg --restart=unless-stopped -p 3128:3128 -p 3129:3129 -d nineseconds/mtg:stable $(openssl rand -hex 16)
+curl -sfL --compressed https://raw.githubusercontent.com/9seconds/mtg/master/run.sh | bash
 ```
-
-or in secret mode:
-
-```console
-docker run --name mtg --restart=unless-stopped -p 3128:3128 -p 3129:3129 -d nineseconds/mtg:stable dd$(openssl rand -hex 16)
-```
-
-You will have this tool up and running on port 3128. Now curl
-`localhost:3129` to get `tg://` links or do `docker logs mtg`. Also,
-port 3129 will show you some statistics if you are interested in.
-
-Also, you can use [run-mtg.sh](https://github.com/9seconds/mtg/blob/master/run-mtg.sh) script
 
 
 # statsd integration
@@ -278,31 +242,37 @@ and [Datadog](https://docs.datadoghq.com/developers/dogstatsd/).
 
 All metrics are gauges. Here is the list of metrics and their meaning:
 
-| Metric name                     | Unit    | Description                                               |
-|---------------------------------|---------|-----------------------------------------------------------|
-| `connections.abridged.ipv4`     | number  | The number of active abridged IPv4 connections            |
-| `connections.abridged.ipv6`     | number  | The number of active abridged IPv6 connections            |
-| `connections.intermediate.ipv4` | number  | The number of active intermediate IPv4 connections        |
-| `connections.intermediate.ipv6` | number  | The number of active intermediate IPv6 connections        |
-| `connections.secure.ipv4`       | number  | The number of active secure intermediate IPv4 connections |
-| `connections.secure.ipv6`       | number  | The number of active secure intermediate IPv6 connections |
-| `crashes`                       | number  | An amount of crashes in client handlers                   |
-| `traffic.ingress`               | bytes   | Ingress traffic from the start of application (incoming)  |
-| `traffic.egress`                | bytes   | Egress traffic from the start of application (outgoing)   |
-| `speed.ingress`                 | bytes/s | Ingress bandwidth of the latest second (incoming traffic) |
-| `speed.egress`                  | bytes/s | Egress bandwidth of the latest second (outgoing traffic)  |
+| Metric name            | Unit    | Description                                |
+|------------------------|---------|--------------------------------------------|
+| `connections`          | number  | The number of active connections.          |
+| `telegram_connections` | number  | The number of active telegram connections. |
+| `crashes`              | number  | An amount of crashes in client handlers.   |
+| `traffic.egress`       | bytes   | Traffic from the start of application.     |
+| `replay_attacks`       | number  | The number of prevented replay attacks.    |
 
 All metrics are prefixed with given prefix. Default prefix is `mtg`.
-With such prefix metric name `traffic.ingress`, for example, would be
-`mtg.traffic.ingress`.
+Also, metrics provide tags (ipv4/ipv6, dc indexes etc).
 
 
 # Prometheus integration
 
 [Prometheus](https://prometheus.io) integration comes out of
-the box, you do not need to setup anything special. Prometheus
-scrape endpoint lives on the same IP/port where generic stats
-service (`http://${MTG_STATS_IP}:${MTG_STATS_PORT}`) but on
-`/prometheus` path. So, if you access http stats service as `curl
-http://localhost:3129/`, then your prometheus endpoint is `curl
-http://localhost:3129/prometheus/`.
+the box, you do not need to setup anything special.
+
+
+# Upgrade to 1.0
+
+Version 1.0 breaks compatibility with previous versions so please read
+this chapter carefully:
+
+1. mtg now uses subcommands. Please use `mtg run` instead of just
+   `mtg` to run a proxy.
+2. Options which set host and port separately were removed in a
+   favor of fused `host:port` options.
+3. Own stats server was removed. Prometheus endpoint is moved to
+   default stats endpoint.
+4. It is possible to connect to this proxy only with a secret which
+   was used to run it. So, no backward compatibility of clients.
+5. Multiplexing involves connectivity with middle proxies and involves
+   the most complex code path of this proxy. To avoid potential bugs,
+   we still recommend using direct mode.

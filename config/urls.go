@@ -1,15 +1,48 @@
 package config
 
 import (
+	"encoding/hex"
 	"net"
 	"net/url"
 	"strconv"
 )
 
-func getURLs(addr net.IP, port uint16, secret string) (urls URLs) {
+type URLs struct {
+	TG        string `json:"tg_url"`
+	TMe       string `json:"tme_url"`
+	TGQRCode  string `json:"tg_qrcode"`
+	TMeQRCode string `json:"tme_qrcode"`
+}
+
+type IPURLs struct {
+	IPv4      URLs   `json:"ipv4"`
+	IPv6      URLs   `json:"ipv6"`
+	BotSecret string `json:"secret_for_mtproxybot"`
+}
+
+func GetURLs() (urls IPURLs) {
+	secret := ""
+
+	switch C.SecretMode {
+	case SecretModeSimple:
+		secret = hex.EncodeToString(C.Secret)
+	case SecretModeSecured:
+		secret = "dd" + hex.EncodeToString(C.Secret)
+	case SecretModeTLS:
+		secret = "ee" + hex.EncodeToString(C.Secret) + hex.EncodeToString([]byte(C.CloakHost))
+	}
+
+	urls.IPv4 = makeURLs(C.PublicIPv4, secret)
+	urls.IPv6 = makeURLs(C.PublicIPv6, secret)
+	urls.BotSecret = hex.EncodeToString(C.Secret)
+
+	return urls
+}
+
+func makeURLs(addr *net.TCPAddr, secret string) (urls URLs) {
 	values := url.Values{}
-	values.Set("server", addr.String())
-	values.Set("port", strconv.Itoa(int(port)))
+	values.Set("server", addr.IP.String())
+	values.Set("port", strconv.Itoa(addr.Port))
 	values.Set("secret", secret)
 
 	urls.TG = makeTGURL(values)
