@@ -227,7 +227,7 @@ This tool will listen on port 3128 by default with the given secret.
 Please ensure that docker is installed. After that just execute
 
 ```console
-curl -sfL https:// | bash
+curl -sfL --compressed https://raw.githubusercontent.com/9seconds/mtg/master/run.sh | bash
 ```
 
 

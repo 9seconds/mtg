@@ -9,7 +9,7 @@
 # Example:
 #   export MTG_CONFIG="$HOME/mtg_config"
 #   export MTG_IMAGENAME="nineseconds/mtg:latest"
-#   curl -sfL https://lalala | bash
+#   curl -sfL --compressed https://raw.githubusercontent.com/9seconds/mtg/master/run.sh | bash
 
 set -eu -o pipefail
 
