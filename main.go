@@ -66,7 +66,7 @@ var (
 	runStatsNamespace = runCommand.Flag("stats-namespace",
 		"Which namespace to use for Prometheus.").
 		Envar("MTG_STATS_NAMESPACE").
-		Default("MTG").
+		Default("mtg").
 		String()
 	runStatsdAddress = runCommand.Flag("statsd-addr",
 		"Host:port of statsd server").
