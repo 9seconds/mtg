@@ -14,6 +14,8 @@ import (
 	"github.com/9seconds/mtg/utils"
 )
 
+var version = "dev" // has to be set by ldflags
+
 var (
 	app = kingpin.New("mtg", "Simple MTPROTO proxy.")
 
@@ -155,24 +157,23 @@ func main() {
 }
 
 func getVersion() string {
-	if info, ok := debug.ReadBuildInfo(); ok {
-		builder := strings.Builder{}
-		version := info.Main.Version
-
-		if version == "(devel)" {
-			version = "dev"
-		}
-
-		builder.WriteString(version)
-
-		if info.Main.Sum != "" {
-			builder.WriteString(" (checksum: ")
-			builder.WriteString(info.Main.Sum)
-			builder.WriteRune(')')
-		}
-
-		return builder.String()
+	if version != "dev" {
+		return version
 	}
 
-	return "dev"
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return version
+	}
+
+	builder := strings.Builder{}
+	builder.WriteString(info.Main.Version)
+
+	if info.Main.Sum != "" {
+		builder.WriteString(" (checksum: ")
+		builder.WriteString(info.Main.Sum)
+		builder.WriteRune(')')
+	}
+
+	return builder.String()
 }
