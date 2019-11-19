@@ -3,7 +3,7 @@ package tlstypes
 import (
 	"bytes"
 
-	"mtg/utils"
+	"github.com/9seconds/mtg/utils"
 )
 
 type Handshake struct {

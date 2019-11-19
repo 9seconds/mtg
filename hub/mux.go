@@ -2,10 +2,13 @@ package hub
 
 import (
 	"context"
+	"time"
 
-	"mtg/conntypes"
-	"mtg/protocol"
+	"github.com/9seconds/mtg/conntypes"
+	"github.com/9seconds/mtg/protocol"
 )
+
+const muxGCEvery = time.Minute
 
 type muxNewRequest struct {
 	req  *protocol.TelegramRequest
@@ -26,6 +29,9 @@ type mux struct {
 }
 
 func (m *mux) run() {
+	gcTicker := time.NewTicker(muxGCEvery)
+	defer gcTicker.Stop()
+
 	for {
 		select {
 		case <-m.ctx.Done():
@@ -34,9 +40,12 @@ func (m *mux) run() {
 			}
 
 			return
+		case <-gcTicker.C:
+			m.connections.gc()
 		case req := <-m.channelNew:
+			m.connections.gc()
 			proxyConn := newProxyConn(req.req, m.channelClosed)
-			conn, err := m.connections.Get(proxyConn)
+			conn, err := m.connections.get(proxyConn)
 
 			if err == nil {
 				m.clients[string(req.req.ConnID[:])] = conn

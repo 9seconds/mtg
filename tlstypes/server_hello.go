@@ -10,7 +10,7 @@ import (
 
 	"golang.org/x/crypto/curve25519"
 
-	"mtg/config"
+	"github.com/9seconds/mtg/config"
 )
 
 type ServerHello struct {

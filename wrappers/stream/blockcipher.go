@@ -9,8 +9,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"mtg/conntypes"
-	"mtg/utils"
+	"github.com/9seconds/mtg/conntypes"
+	"github.com/9seconds/mtg/utils"
 )
 
 type wrapperBlockCipher struct {

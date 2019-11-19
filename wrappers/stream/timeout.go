@@ -6,7 +6,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"mtg/conntypes"
+	"github.com/9seconds/mtg/conntypes"
 )
 
 const (

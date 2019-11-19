@@ -7,10 +7,10 @@ import (
 
 	"go.uber.org/zap"
 
-	"mtg/conntypes"
-	"mtg/mtproto"
-	"mtg/mtproto/rpc"
-	"mtg/protocol"
+	"github.com/9seconds/mtg/conntypes"
+	"github.com/9seconds/mtg/mtproto"
+	"github.com/9seconds/mtg/mtproto/rpc"
+	"github.com/9seconds/mtg/protocol"
 )
 
 type connection struct {

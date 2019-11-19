@@ -1,6 +1,6 @@
 package telegram
 
-import "mtg/conntypes"
+import "github.com/9seconds/mtg/conntypes"
 
 const (
 	directV4DefaultIdx conntypes.DC = 1

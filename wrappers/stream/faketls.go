@@ -8,8 +8,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"mtg/conntypes"
-	"mtg/tlstypes"
+	"github.com/9seconds/mtg/conntypes"
+	"github.com/9seconds/mtg/tlstypes"
 )
 
 type wrapperFakeTLS struct {

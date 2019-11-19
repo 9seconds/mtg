@@ -8,8 +8,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"mtg/config"
-	"mtg/conntypes"
+	"github.com/9seconds/mtg/config"
+	"github.com/9seconds/mtg/conntypes"
 )
 
 type statsPrometheus struct {

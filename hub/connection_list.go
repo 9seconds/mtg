@@ -4,18 +4,14 @@ import (
 	"fmt"
 	"sort"
 
-	"mtg/config"
+	"github.com/9seconds/mtg/config"
 )
 
 type connectionList struct {
 	connections []*connection
 }
 
-func (c *connectionList) Get(conn *ProxyConn) (*connection, error) {
-	if len(c.connections) > 0 {
-		c.gc()
-	}
-
+func (c *connectionList) get(conn *ProxyConn) (*connection, error) {
 	if len(c.connections) > 0 && c.connections[0].Len() < config.C.MultiplexPerConnection {
 		if err := c.connections[0].Attach(conn); err == nil {
 			return c.connections[0], nil
@@ -41,6 +37,9 @@ func (c *connectionList) Get(conn *ProxyConn) (*connection, error) {
 
 func (c *connectionList) gc() {
 	prevLen := len(c.connections)
+	if prevLen == 0 {
+		return
+	}
 
 	for i := len(c.connections) - 1; i >= 0; i-- {
 		lastIndex := len(c.connections) - 1
