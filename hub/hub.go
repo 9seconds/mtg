@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"mtg/protocol"
+	"github.com/9seconds/mtg/protocol"
 )
 
 type hub struct {

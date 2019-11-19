@@ -7,8 +7,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"mtg/conntypes"
-	"mtg/telegram/api"
+	"github.com/9seconds/mtg/conntypes"
+	"github.com/9seconds/mtg/telegram/api"
 )
 
 const middleTelegramBackgroundUpdateEvery = time.Hour

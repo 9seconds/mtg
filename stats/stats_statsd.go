@@ -11,8 +11,8 @@ import (
 	statsd "github.com/smira/go-statsd"
 	"go.uber.org/zap"
 
-	"mtg/config"
-	"mtg/conntypes"
+	"github.com/9seconds/mtg/config"
+	"github.com/9seconds/mtg/conntypes"
 )
 
 var (

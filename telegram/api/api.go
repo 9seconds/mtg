@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	apiUserAgent   = "mtg"
+	apiUserAgent   = "github.com/9seconds/mtg"
 	apiHTTPTimeout = 30 * time.Second
 )
 

@@ -9,9 +9,9 @@ import (
 	"encoding/binary"
 	"net"
 
-	"mtg/conntypes"
-	"mtg/mtproto/rpc"
-	"mtg/utils"
+	"github.com/9seconds/mtg/conntypes"
+	"github.com/9seconds/mtg/mtproto/rpc"
+	"github.com/9seconds/mtg/utils"
 )
 
 type mtprotoCipherPurpose uint8

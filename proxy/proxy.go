@@ -6,12 +6,12 @@ import (
 
 	"go.uber.org/zap"
 
-	"mtg/config"
-	"mtg/conntypes"
-	"mtg/protocol"
-	"mtg/stats"
-	"mtg/utils"
-	"mtg/wrappers/stream"
+	"github.com/9seconds/mtg/config"
+	"github.com/9seconds/mtg/conntypes"
+	"github.com/9seconds/mtg/protocol"
+	"github.com/9seconds/mtg/stats"
+	"github.com/9seconds/mtg/utils"
+	"github.com/9seconds/mtg/wrappers/stream"
 )
 
 type Proxy struct {

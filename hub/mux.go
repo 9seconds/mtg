@@ -3,8 +3,8 @@ package hub
 import (
 	"context"
 
-	"mtg/conntypes"
-	"mtg/protocol"
+	"github.com/9seconds/mtg/conntypes"
+	"github.com/9seconds/mtg/protocol"
 )
 
 type muxNewRequest struct {

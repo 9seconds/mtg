@@ -3,7 +3,7 @@ package stream
 import (
 	"net"
 
-	"mtg/conntypes"
+	"github.com/9seconds/mtg/conntypes"
 )
 
 func NewClientConn(parent net.Conn, connID conntypes.ConnID) conntypes.StreamReadWriteCloser {

@@ -7,15 +7,15 @@ import (
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
-	"mtg/cli"
-	"mtg/config"
-	"mtg/utils"
+	"github.com/9seconds/mtg/cli"
+	"github.com/9seconds/mtg/config"
+	"github.com/9seconds/mtg/utils"
 )
 
 var version = "dev" // this has to be set by build ld flags
 
 var (
-	app = kingpin.New("mtg", "Simple MTPROTO proxy.")
+	app = kingpin.New("MTG", "Simple MTPROTO proxy.")
 
 	generateSecretCommand = app.Command("generate-secret",
 		"Generate new secret")
@@ -66,7 +66,7 @@ var (
 	runStatsNamespace = runCommand.Flag("stats-namespace",
 		"Which namespace to use for Prometheus.").
 		Envar("MTG_STATS_NAMESPACE").
-		Default("mtg").
+		Default("MTG").
 		String()
 	runStatsdAddress = runCommand.Flag("statsd-addr",
 		"Host:port of statsd server").

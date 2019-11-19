@@ -5,7 +5,7 @@ import (
 
 	"github.com/VictoriaMetrics/fastcache"
 
-	"mtg/config"
+	"github.com/9seconds/mtg/config"
 )
 
 var (

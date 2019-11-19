@@ -8,16 +8,16 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	"mtg/antireplay"
-	"mtg/config"
-	"mtg/faketls"
-	"mtg/hub"
-	"mtg/ntp"
-	"mtg/obfuscated2"
-	"mtg/proxy"
-	"mtg/stats"
-	"mtg/telegram"
-	"mtg/utils"
+	"github.com/9seconds/mtg/antireplay"
+	"github.com/9seconds/mtg/config"
+	"github.com/9seconds/mtg/faketls"
+	"github.com/9seconds/mtg/hub"
+	"github.com/9seconds/mtg/ntp"
+	"github.com/9seconds/mtg/obfuscated2"
+	"github.com/9seconds/mtg/proxy"
+	"github.com/9seconds/mtg/stats"
+	"github.com/9seconds/mtg/telegram"
+	"github.com/9seconds/mtg/utils"
 )
 
 func Proxy() error { // nolint: funlen

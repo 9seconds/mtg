@@ -1,4 +1,4 @@
-module mtg
+module github.com/9seconds/mtg
 
 go 1.13
 

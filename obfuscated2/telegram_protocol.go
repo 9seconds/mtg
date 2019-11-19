@@ -4,11 +4,11 @@ import (
 	"crypto/rand"
 	"fmt"
 
-	"mtg/conntypes"
-	"mtg/protocol"
-	"mtg/telegram"
-	"mtg/utils"
-	"mtg/wrappers/stream"
+	"github.com/9seconds/mtg/conntypes"
+	"github.com/9seconds/mtg/protocol"
+	"github.com/9seconds/mtg/telegram"
+	"github.com/9seconds/mtg/utils"
+	"github.com/9seconds/mtg/wrappers/stream"
 )
 
 func TelegramProtocol(req *protocol.TelegramRequest) (conntypes.StreamReadWriteCloser, error) {
