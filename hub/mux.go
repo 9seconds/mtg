@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"mtg/conntypes"
-	"mtg/protocol"
+	"github.com/9seconds/mtg/conntypes"
+	"github.com/9seconds/mtg/protocol"
 )
 
 const muxGCEvery = time.Minute

@@ -4,7 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 
-	"mtg/config"
+	"github.com/9seconds/mtg/config"
 )
 
 func Generate(secretType, hostname string) {

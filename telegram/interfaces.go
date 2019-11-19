@@ -1,6 +1,6 @@
 package telegram
 
-import "mtg/conntypes"
+import "github.com/9seconds/mtg/conntypes"
 
 type Telegram interface {
 	Dial(conntypes.DC, conntypes.ConnectionProtocol) (conntypes.StreamReadWriteCloser, error)

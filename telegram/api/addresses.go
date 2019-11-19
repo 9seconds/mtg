@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"mtg/conntypes"
+	"github.com/9seconds/mtg/conntypes"
 )
 
 const (
