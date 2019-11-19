@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	app = kingpin.New("MTG", "Simple MTPROTO proxy.")
+	app = kingpin.New("mtg", "Simple MTPROTO proxy.")
 
 	generateSecretCommand = app.Command("generate-secret",
 		"Generate new secret")
