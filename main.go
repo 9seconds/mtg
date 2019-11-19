@@ -3,6 +3,8 @@ package main
 import (
 	"math/rand"
 	"os"
+	"runtime/debug"
+	"strings"
 	"time"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
@@ -11,8 +13,6 @@ import (
 	"github.com/9seconds/mtg/config"
 	"github.com/9seconds/mtg/utils"
 )
-
-var version = "dev" // this has to be set by build ld flags
 
 var (
 	app = kingpin.New("MTG", "Simple MTPROTO proxy.")
@@ -114,7 +114,7 @@ var (
 
 func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
-	app.Version(version)
+	app.Version(getVersion())
 	app.HelpFlag.Short('h')
 
 	if err := utils.SetLimits(); err != nil {
@@ -152,4 +152,27 @@ func main() {
 			cli.Fatal(err)
 		}
 	}
+}
+
+func getVersion() string {
+	if info, ok := debug.ReadBuildInfo(); ok {
+		builder := strings.Builder{}
+		version := info.Main.Version
+
+		if version == "(devel)" {
+			version = "dev"
+		}
+
+		builder.WriteString(version)
+
+		if info.Main.Sum != "" {
+			builder.WriteString(" (checksum: ")
+			builder.WriteString(info.Main.Sum)
+			builder.WriteRune(')')
+		}
+
+		return builder.String()
+	}
+
+	return "dev"
 }
