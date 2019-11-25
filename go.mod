@@ -10,11 +10,12 @@ require (
 	github.com/prometheus/client_golang v1.2.1
 	github.com/prometheus/procfs v0.0.7 // indirect
 	github.com/smira/go-statsd v1.3.1
+	go.uber.org/atomic v1.5.1 // indirect
 	go.uber.org/multierr v1.4.0 // indirect
 	go.uber.org/zap v1.13.0
-	golang.org/x/crypto v0.0.0-20191117063200-497ca9f6d64f
-	golang.org/x/net v0.0.0-20191119073136-fc4aabc6c914 // indirect
-	golang.org/x/sys v0.0.0-20191119060738-e882bf8e40c2
-	golang.org/x/tools v0.0.0-20191118222007-07fc4c7f2b98 // indirect
+	golang.org/x/crypto v0.0.0-20191122220453-ac88ee75c92c
+	golang.org/x/net v0.0.0-20191124235446-72fef5d5e266 // indirect
+	golang.org/x/sys v0.0.0-20191120155948-bd437916bb0e
+	golang.org/x/tools v0.0.0-20191125011157-cc15fab314e3 // indirect
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 )
