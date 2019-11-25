@@ -34,7 +34,7 @@ MTG_SECRET="$MTG_CONFIG/secret"
 MTG_ENV="$MTG_CONFIG/env"
 
 if [ ! -f "$MTG_ENV" ]; then
-    MTG_IMAGENAME="${MTG_IMAGENAME:-nineseconds/mtg:latest}"
+    MTG_IMAGENAME="${MTG_IMAGENAME:-nineseconds/mtg:stable}"
     MTG_PORT="${MTG_PORT:-3128}"
     MTG_CONTAINER="${MTG_CONTAINER:-mtg}"
 
