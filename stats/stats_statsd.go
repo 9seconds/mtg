@@ -137,6 +137,14 @@ func (s *statsStatsd) ReplayDetected() {
 	s.gauge("replay_attacks", 1)
 }
 
+func (s *statsStatsd) AuthenticationFailed() {
+	s.gauge("authentication_failed", 1)
+}
+
+func (s *statsStatsd) CloakedRequest() {
+	s.gauge("cloaked_requests", 1)
+}
+
 func (s *statsStatsd) gauge(metric string, value int64, tags ...*statsStatsdTag) {
 	key, tagList := s.prepareVals(metric, tags)
 	s.initGauge(metric, key, tagList)

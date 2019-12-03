@@ -69,7 +69,9 @@ func (p *Proxy) accept(conn net.Conn) {
 	clientConn, err := clientProtocol.Handshake(clientConn)
 
 	if err != nil {
+		stats.Stats.AuthenticationFailed()
 		logger.Warnw("Cannot perform client handshake", "error", err)
+
 		return
 	}
 

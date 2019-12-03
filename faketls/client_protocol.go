@@ -101,6 +101,8 @@ func (c *ClientProtocol) tlsHandshake(conn io.ReadWriter) error {
 }
 
 func (c *ClientProtocol) cloakHost(clientConn io.ReadWriteCloser) {
+	stats.Stats.CloakedRequest()
+
 	addr := net.JoinHostPort(config.C.CloakHost, strconv.Itoa(config.C.CloakPort))
 	hostConn, err := net.Dial("tcp", addr)
 

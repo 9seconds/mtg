@@ -38,6 +38,14 @@ type ReplayDetectedInterface interface {
 	ReplayDetected()
 }
 
+type AuthenticationFailedInterface interface {
+	AuthenticationFailed()
+}
+
+type CloakedRequestInterface interface {
+	CloakedRequest()
+}
+
 type Interface interface {
 	IngressTrafficInterface
 	EgressTrafficInterface
@@ -47,4 +55,6 @@ type Interface interface {
 	TelegramDisconnectedInterface
 	CrashInterface
 	ReplayDetectedInterface
+	AuthenticationFailedInterface
+	CloakedRequestInterface
 }
