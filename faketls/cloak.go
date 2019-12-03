@@ -9,7 +9,10 @@ import (
 	"github.com/9seconds/mtg/wrappers/rwc"
 )
 
-const cloakTimeout = 5 * time.Second
+const (
+	cloakLastActivityTimeout = 5 * time.Second
+	cloakMaxTimeout          = 30 * time.Second
+)
 
 func cloak(one, another io.ReadWriteCloser) {
 	defer func() {
@@ -41,17 +44,23 @@ func cloak(one, another io.ReadWriteCloser) {
 	}()
 
 	go func() {
-		timer := time.NewTimer(cloakTimeout)
-		defer timer.Stop()
+		lastActivityTimer := time.NewTimer(cloakLastActivityTimeout)
+		defer lastActivityTimer.Stop()
+
+		maxTimer := time.NewTimer(cloakMaxTimeout)
+		defer maxTimer.Stop()
 
 		for {
 			select {
 			case <-channelPing:
-				timer.Stop()
-				timer = time.NewTimer(cloakTimeout)
+				lastActivityTimer.Stop()
+				lastActivityTimer = time.NewTimer(cloakLastActivityTimeout)
 			case <-ctx.Done():
 				return
-			case <-timer.C:
+			case <-lastActivityTimer.C:
+				cancel()
+				return
+			case <-maxTimer.C:
 				cancel()
 				return
 			}
