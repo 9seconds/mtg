@@ -8,7 +8,6 @@ import (
 	"io"
 	"net"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/9seconds/mtg/antireplay"
@@ -110,25 +109,7 @@ func (c *ClientProtocol) cloakHost(clientConn io.ReadWriteCloser) {
 		return
 	}
 
-	defer hostConn.Close()
-
-	wg := &sync.WaitGroup{}
-	wg.Add(2)
-
-	go c.pipe(hostConn, clientConn, wg)
-
-	go c.pipe(clientConn, hostConn, wg)
-
-	wg.Wait()
-}
-
-func (c *ClientProtocol) pipe(dst io.WriteCloser, src io.Reader, wg *sync.WaitGroup) {
-	defer func() {
-		wg.Done()
-		dst.Close()
-	}()
-
-	io.Copy(dst, src) // nolint: errcheck
+	cloak(clientConn, hostConn)
 }
 
 func MakeClientProtocol() protocol.ClientProtocol {
