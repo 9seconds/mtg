@@ -13,11 +13,13 @@ import (
 )
 
 type statsPrometheus struct {
-	connections         *prometheus.GaugeVec
-	telegramConnections *prometheus.GaugeVec
-	traffic             *prometheus.GaugeVec
-	crashes             prometheus.Counter
-	replayAttacks       prometheus.Counter
+	connections          *prometheus.GaugeVec
+	telegramConnections  *prometheus.GaugeVec
+	traffic              *prometheus.GaugeVec
+	crashes              prometheus.Counter
+	replayAttacks        prometheus.Counter
+	authenticationFailed prometheus.Counter
+	cloakedRequests      prometheus.Counter
 }
 
 func (s *statsPrometheus) IngressTraffic(traffic int) {
@@ -87,6 +89,14 @@ func (s *statsPrometheus) ReplayDetected() {
 	s.replayAttacks.Inc()
 }
 
+func (s *statsPrometheus) AuthenticationFailed() {
+	s.authenticationFailed.Inc()
+}
+
+func (s *statsPrometheus) CloakedRequest() {
+	s.cloakedRequests.Inc()
+}
+
 func newStatsPrometheus(mux *http.ServeMux) Interface {
 	registry := prometheus.NewPedanticRegistry()
 
@@ -116,6 +126,16 @@ func newStatsPrometheus(mux *http.ServeMux) Interface {
 			Name:      "replay_attacks",
 			Help:      "How many replay attacks were prevented.",
 		}),
+		authenticationFailed: prometheus.NewCounter(prometheus.CounterOpts{
+			Namespace: config.C.StatsNamespace,
+			Name:      "authentication_failed",
+			Help:      "How many authentication failed events we've seen.",
+		}),
+		cloakedRequests: prometheus.NewCounter(prometheus.CounterOpts{
+			Namespace: config.C.StatsNamespace,
+			Name:      "cloaked_requests",
+			Help:      "How many requests were proxified during cloaking.",
+		}),
 	}
 
 	registry.MustRegister(instance.connections)
@@ -123,6 +143,8 @@ func newStatsPrometheus(mux *http.ServeMux) Interface {
 	registry.MustRegister(instance.traffic)
 	registry.MustRegister(instance.crashes)
 	registry.MustRegister(instance.replayAttacks)
+	registry.MustRegister(instance.authenticationFailed)
+	registry.MustRegister(instance.cloakedRequests)
 
 	handler := promhttp.HandlerFor(registry, promhttp.HandlerOpts{})
 	mux.Handle("/", handler)
