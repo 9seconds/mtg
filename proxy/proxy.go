@@ -30,8 +30,7 @@ func (p *Proxy) Serve(listener net.Listener) {
 			case <-doneChan:
 				return
 			default:
-				p.Logger.Errorw("Cannot allocate incoming connection", "error", err)
-				continue
+				p.Logger.Fatalw("Cannot allocate incoming connection", "error", err)
 			}
 		}
 
