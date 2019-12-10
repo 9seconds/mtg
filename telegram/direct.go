@@ -37,5 +37,5 @@ func (d *directTelegram) Dial(dc conntypes.DC,
 		dc = conntypes.DCDefaultIdx
 	}
 
-	return d.baseTelegram.dial(dc-1, protocol)
+	return d.baseTelegram.dial(dc-1, conntypes.ConnectionProtocolAny)
 }
