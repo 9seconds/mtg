@@ -1,9 +1,11 @@
 package telegram
 
 import (
-	"fmt"
+	"errors"
 	"math/rand"
 	"net"
+
+	"go.uber.org/zap"
 
 	"github.com/9seconds/mtg/conntypes"
 	"github.com/9seconds/mtg/utils"
@@ -12,10 +14,11 @@ import (
 
 type baseTelegram struct {
 	dialer net.Dialer
+	logger *zap.SugaredLogger
 
 	secret      []byte
 	v4DefaultDC conntypes.DC
-	V6DefaultDC conntypes.DC
+	v6DefaultDC conntypes.DC
 	v4Addresses map[conntypes.DC][]string
 	v6Addresses map[conntypes.DC][]string
 }
@@ -26,25 +29,32 @@ func (b *baseTelegram) Secret() []byte {
 
 func (b *baseTelegram) dial(dc conntypes.DC,
 	protocol conntypes.ConnectionProtocol) (conntypes.StreamReadWriteCloser, error) {
-	addr := ""
+	addresses := make([]string, 0, 2)
 
-	switch protocol {
-	case conntypes.ConnectionProtocolIPv4:
-		addr = b.chooseAddress(b.v4Addresses, dc, b.v4DefaultDC)
-	default:
-		addr = b.chooseAddress(b.v6Addresses, dc, b.V6DefaultDC)
+	if protocol&conntypes.ConnectionProtocolIPv6 != 0 {
+		addresses = append(addresses, b.chooseAddress(b.v6Addresses, dc, b.v6DefaultDC))
 	}
 
-	conn, err := b.dialer.Dial("tcp", addr)
-	if err != nil {
-		return nil, fmt.Errorf("dial has failed: %w", err)
+	if protocol&conntypes.ConnectionProtocolIPv4 != 0 {
+		addresses = append(addresses, b.chooseAddress(b.v4Addresses, dc, b.v4DefaultDC))
 	}
 
-	if err := utils.InitTCP(conn); err != nil {
-		return nil, fmt.Errorf("cannot initialize tcp socket: %w", err)
+	for _, addr := range addresses {
+		conn, err := b.dialer.Dial("tcp", addr)
+		if err != nil {
+			b.logger.Infow("Cannot dial to Telegram", "address", addr, "error", err)
+			continue
+		}
+
+		if err := utils.InitTCP(conn); err != nil {
+			b.logger.Infow("Cannot initialize TCP socket", "address", addr, "error", err)
+			continue
+		}
+
+		return stream.NewTelegramConn(dc, conn), nil
 	}
 
-	return stream.NewTelegramConn(dc, conn), nil
+	return nil, errors.New("cannot dial to the chosen DC")
 }
 
 func (b *baseTelegram) chooseAddress(addresses map[conntypes.DC][]string,

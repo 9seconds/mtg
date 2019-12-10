@@ -45,7 +45,7 @@ func (m *middleTelegram) update() error {
 	m.mutex.Lock()
 	m.secret = secret
 	m.v4DefaultDC = v4DefaultDC
-	m.V6DefaultDC = v6DefaultDC
+	m.v6DefaultDC = v6DefaultDC
 	m.v4Addresses = v4Addresses
 	m.v6Addresses = v6Addresses
 	m.mutex.Unlock()
