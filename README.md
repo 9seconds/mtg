@@ -159,6 +159,9 @@ by design and we have the negligible possibility of duplication
 (probability is 1/(2^64)) but it could be quite effective to prevent
 replays.
 
+It is possible to disable this cache. To do that, please explicitly set
+its size to 0.
+
 
 ## FakeTLS
 
