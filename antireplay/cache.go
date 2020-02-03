@@ -11,19 +11,19 @@ type cache struct {
 	data *fastcache.Cache
 }
 
-func (c *cache) AddObfuscated2(data []byte) {
+func (c cache) AddObfuscated2(data []byte) {
 	c.data.Set(keyObfuscated2(data), nil)
 }
 
-func (c *cache) AddTLS(data []byte) {
+func (c cache) AddTLS(data []byte) {
 	c.data.Set(keyTLS(data), nil)
 }
 
-func (c *cache) HasObfuscated2(data []byte) bool {
+func (c cache) HasObfuscated2(data []byte) bool {
 	return c.data.Has(keyObfuscated2(data))
 }
 
-func (c *cache) HasTLS(data []byte) bool {
+func (c cache) HasTLS(data []byte) bool {
 	return c.data.Has(keyTLS(data))
 }
 
