@@ -41,6 +41,7 @@ func (p *Proxy) Serve(listener net.Listener) {
 func (p *Proxy) accept(conn net.Conn) {
 	defer func() {
 		conn.Close()
+
 		if err := recover(); err != nil {
 			stats.Stats.Crash()
 			p.Logger.Errorw("Crash of accept handler", "error", err)
