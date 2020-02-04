@@ -55,3 +55,15 @@ func (m multiStats) ReplayDetected() {
 		go m[i].ReplayDetected()
 	}
 }
+
+func (m multiStats) AuthenticationFailed() {
+	for i := range m {
+		go m[i].AuthenticationFailed()
+	}
+}
+
+func (m multiStats) CloakedRequest() {
+	for i := range m {
+		go m[i].CloakedRequest()
+	}
+}

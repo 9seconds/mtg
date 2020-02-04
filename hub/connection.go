@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"sync"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -12,6 +13,8 @@ import (
 	"github.com/9seconds/mtg/mtproto/rpc"
 	"github.com/9seconds/mtg/protocol"
 )
+
+const connectionTTL = time.Hour
 
 type connection struct {
 	conn            conntypes.PacketReadWriteCloser
@@ -31,6 +34,9 @@ type connection struct {
 func (c *connection) run() {
 	defer c.Close()
 
+	ttl := time.NewTimer(connectionTTL)
+	defer ttl.Stop()
+
 	for {
 		select {
 		case <-c.channelDone:
@@ -39,6 +45,9 @@ func (c *connection) run() {
 			}
 
 			return
+		case <-ttl.C:
+			c.logger.Debugw("Closing connection by TTL")
+			c.Close()
 		case resp := <-c.channelRead:
 			if channel, ok := c.proxyConns[string(resp.ConnID[:])]; ok {
 				if resp.Type == rpc.ProxyResponseTypeCloseExt {

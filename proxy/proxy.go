@@ -30,8 +30,7 @@ func (p *Proxy) Serve(listener net.Listener) {
 			case <-doneChan:
 				return
 			default:
-				p.Logger.Errorw("Cannot allocate incoming connection", "error", err)
-				continue
+				p.Logger.Fatalw("Cannot allocate incoming connection", "error", err)
 			}
 		}
 
@@ -42,6 +41,7 @@ func (p *Proxy) Serve(listener net.Listener) {
 func (p *Proxy) accept(conn net.Conn) {
 	defer func() {
 		conn.Close()
+
 		if err := recover(); err != nil {
 			stats.Stats.Crash()
 			p.Logger.Errorw("Crash of accept handler", "error", err)
@@ -69,7 +69,9 @@ func (p *Proxy) accept(conn net.Conn) {
 	clientConn, err := clientProtocol.Handshake(clientConn)
 
 	if err != nil {
+		stats.Stats.AuthenticationFailed()
 		logger.Warnw("Cannot perform client handshake", "error", err)
+
 		return
 	}
 
