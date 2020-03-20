@@ -7,6 +7,7 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/9seconds/mtg/config"
 	"github.com/9seconds/mtg/conntypes"
 	"github.com/9seconds/mtg/utils"
 	"github.com/9seconds/mtg/wrappers/stream"
@@ -29,17 +30,7 @@ func (b *baseTelegram) Secret() []byte {
 
 func (b *baseTelegram) dial(dc conntypes.DC,
 	protocol conntypes.ConnectionProtocol) (conntypes.StreamReadWriteCloser, error) {
-	addresses := make([]string, 0, 2)
-
-	if protocol&conntypes.ConnectionProtocolIPv6 != 0 {
-		addresses = append(addresses, b.chooseAddress(b.v6Addresses, dc, b.v6DefaultDC))
-	}
-
-	if protocol&conntypes.ConnectionProtocolIPv4 != 0 {
-		addresses = append(addresses, b.chooseAddress(b.v4Addresses, dc, b.v4DefaultDC))
-	}
-
-	for _, addr := range addresses {
+	for _, addr := range b.getAddresses(dc, protocol) {
 		conn, err := b.dialer.Dial("tcp", addr)
 		if err != nil {
 			b.logger.Infow("Cannot dial to Telegram", "address", addr, "error", err)
@@ -55,6 +46,30 @@ func (b *baseTelegram) dial(dc conntypes.DC,
 	}
 
 	return nil, errors.New("cannot dial to the chosen DC")
+}
+
+func (b *baseTelegram) getAddresses(dc conntypes.DC, protocol conntypes.ConnectionProtocol) []string {
+	addresses := make([]string, 0, 2)
+	protos := []conntypes.ConnectionProtocol{
+		conntypes.ConnectionProtocolIPv6,
+		conntypes.ConnectionProtocolIPv4,
+	}
+
+	if config.C.PreferIP == config.PreferIPv4 {
+		protos[0], protos[1] = protos[1], protos[0]
+	}
+
+	for _, proto := range protos {
+		switch {
+		case proto&protocol == 0:
+		case proto&conntypes.ConnectionProtocolIPv6 != 0:
+			addresses = append(addresses, b.chooseAddress(b.v6Addresses, dc, b.v6DefaultDC))
+		case proto&conntypes.ConnectionProtocolIPv4 != 0:
+			addresses = append(addresses, b.chooseAddress(b.v4Addresses, dc, b.v4DefaultDC))
+		}
+	}
+
+	return addresses
 }
 
 func (b *baseTelegram) chooseAddress(addresses map[conntypes.DC][]string,

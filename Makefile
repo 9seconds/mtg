@@ -4,7 +4,7 @@ APP_NAME     := $(IMAGE_NAME)
 
 CC_BINARIES  := $(shell bash -c "echo -n $(APP_NAME)-{linux,freebsd,openbsd}-{386,amd64} $(APP_NAME)-linux-{arm,arm64}")
 
-GOLANGCI_LINT_VERSION := v1.23.3
+GOLANGCI_LINT_VERSION := v1.24.0
 
 VERSION_GO         := $(shell go version)
 VERSION_DATE       := $(shell date -Ru)

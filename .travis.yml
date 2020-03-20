@@ -17,3 +17,4 @@ script:
 matrix:
   allow_failures:
     - go: master
+    - go: 1.14.x  # because of golangci-lint

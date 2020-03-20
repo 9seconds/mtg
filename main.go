@@ -43,6 +43,11 @@ var (
 		Short('v').
 		Envar("MTG_VERBOSE").
 		Bool()
+	runPreferIP = runCommand.Flag("prefer-ip",
+		"Prefer this IP protocol if possible. Valid options are 'ipv4' and 'ipv6'").
+		Envar("MTG_PREFER_DIRECT_IP").
+		Default("ipv6").
+		Enum("ipv4", "ipv6")
 	runBind = runCommand.Flag("bind",
 		"Host:Port to bind proxy to.").
 		Short('b').
@@ -110,6 +115,11 @@ var (
 		Envar("MTG_MULTIPLEX_PERCONNECTION").
 		Default("50").
 		Uint()
+	runNTPServers = runCommand.Flag("ntp-server",
+		"A list of NTP servers to use.").
+		Envar("MTG_NTP_SERVERS").
+		Default("0.pool.ntp.org", "1.pool.ntp.org", "2.pool.ntp.org", "3.pool.ntp.org").
+		Strings()
 	runSecret = runCommand.Arg("secret", "Secret of this proxy.").Required().HexBytes()
 	runAdtag  = runCommand.Arg("adtag", "ADTag of the proxy.").HexBytes()
 )
@@ -130,6 +140,7 @@ func main() {
 		err := config.Init(
 			config.Opt{Option: config.OptionTypeDebug, Value: *runDebug},
 			config.Opt{Option: config.OptionTypeVerbose, Value: *runVerbose},
+			config.Opt{Option: config.OptionTypePreferIP, Value: *runPreferIP},
 			config.Opt{Option: config.OptionTypeBind, Value: *runBind},
 			config.Opt{Option: config.OptionTypePublicIPv4, Value: *runPublicIPv4},
 			config.Opt{Option: config.OptionTypePublicIPv6, Value: *runPublicIPv6},
@@ -143,6 +154,7 @@ func main() {
 			config.Opt{Option: config.OptionTypeCloakPort, Value: *runTLSCloakPort},
 			config.Opt{Option: config.OptionTypeAntiReplayMaxSize, Value: *runAntiReplayMaxSize},
 			config.Opt{Option: config.OptionTypeMultiplexPerConnection, Value: *runMultiplexPerConnection},
+			config.Opt{Option: config.OptionTypeNTPServers, Value: *runNTPServers},
 			config.Opt{Option: config.OptionTypeSecret, Value: *runSecret},
 			config.Opt{Option: config.OptionTypeAdtag, Value: *runAdtag},
 		)
