@@ -43,6 +43,11 @@ var (
 		Short('v').
 		Envar("MTG_VERBOSE").
 		Bool()
+	runPreferIP = runCommand.Flag("prefer-ip",
+		"Prefer this IP protocol if possible. Valid options are 'ipv4' and 'ipv6'").
+		Envar("MTG_PREFER_DIRECT_IP").
+		Default("ipv6").
+		Enum("ipv4", "ipv6")
 	runBind = runCommand.Flag("bind",
 		"Host:Port to bind proxy to.").
 		Short('b').
@@ -130,6 +135,7 @@ func main() {
 		err := config.Init(
 			config.Opt{Option: config.OptionTypeDebug, Value: *runDebug},
 			config.Opt{Option: config.OptionTypeVerbose, Value: *runVerbose},
+			config.Opt{Option: config.OptionTypePreferIP, Value: *runPreferIP},
 			config.Opt{Option: config.OptionTypeBind, Value: *runBind},
 			config.Opt{Option: config.OptionTypePublicIPv4, Value: *runPublicIPv4},
 			config.Opt{Option: config.OptionTypePublicIPv6, Value: *runPublicIPv6},
