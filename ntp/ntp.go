@@ -7,20 +7,15 @@ import (
 
 	"github.com/beevik/ntp"
 	"go.uber.org/zap"
+
+	"github.com/9seconds/mtg/config"
 )
 
 const autoUpdatePeriod = time.Minute
 
-var ntpEndpoints = [...]string{
-	"0.pool.ntp.org",
-	"1.pool.ntp.org",
-	"2.pool.ntp.org",
-	"3.pool.ntp.org",
-}
-
 // Fetch fetches the data on time drift.
 func Fetch() (time.Duration, error) {
-	url := ntpEndpoints[rand.Intn(len(ntpEndpoints))]
+	url := config.C.NTPServers[rand.Intn(len(config.C.NTPServers))]
 
 	resp, err := ntp.Query(url)
 	if err != nil {

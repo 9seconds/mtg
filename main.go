@@ -115,6 +115,11 @@ var (
 		Envar("MTG_MULTIPLEX_PERCONNECTION").
 		Default("50").
 		Uint()
+	runNTPServers = runCommand.Flag("ntp-server",
+		"A list of NTP servers to use.").
+		Envar("MTG_NTP_SERVERS").
+		Default("0.pool.ntp.org", "1.pool.ntp.org", "2.pool.ntp.org", "3.pool.ntp.org").
+		Strings()
 	runSecret = runCommand.Arg("secret", "Secret of this proxy.").Required().HexBytes()
 	runAdtag  = runCommand.Arg("adtag", "ADTag of the proxy.").HexBytes()
 )
@@ -149,6 +154,7 @@ func main() {
 			config.Opt{Option: config.OptionTypeCloakPort, Value: *runTLSCloakPort},
 			config.Opt{Option: config.OptionTypeAntiReplayMaxSize, Value: *runAntiReplayMaxSize},
 			config.Opt{Option: config.OptionTypeMultiplexPerConnection, Value: *runMultiplexPerConnection},
+			config.Opt{Option: config.OptionTypeNTPServers, Value: *runNTPServers},
 			config.Opt{Option: config.OptionTypeSecret, Value: *runSecret},
 			config.Opt{Option: config.OptionTypeAdtag, Value: *runAdtag},
 		)

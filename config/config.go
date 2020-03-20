@@ -68,6 +68,8 @@ const (
 
 	OptionTypeMultiplexPerConnection
 
+	OptionTypeNTPServers
+
 	OptionTypeSecret
 	OptionTypeAdtag
 )
@@ -96,6 +98,7 @@ type Config struct {
 	Verbose    bool       `json:"verbose"`
 	SecretMode SecretMode `json:"secret_mode"`
 	PreferIP   PreferIP   `json:"prefer_ip"`
+	NTPServers []string   `json:"ntp_servers"`
 
 	Secret []byte `json:"secret"`
 	AdTag  []byte `json:"adtag"`
@@ -165,6 +168,11 @@ func Init(options ...Opt) error { // nolint: gocyclo, funlen
 			C.AntiReplayMaxSize = int(opt.Value.(units.Base2Bytes))
 		case OptionTypeMultiplexPerConnection:
 			C.MultiplexPerConnection = int(opt.Value.(uint))
+		case OptionTypeNTPServers:
+			C.NTPServers = opt.Value.([]string)
+			if len(C.NTPServers) == 0 {
+				return errors.New("ntp server list is empty")
+			}
 		case OptionTypeSecret:
 			C.Secret = opt.Value.([]byte)
 		case OptionTypeAdtag:
