@@ -32,6 +32,13 @@ const (
 	SecretModeTLS
 )
 
+type PreferIP uint8
+
+const (
+	PreferIPv4 PreferIP = iota
+	PreferIPv6
+)
+
 const SimpleSecretLength = 16
 
 type OptionType uint8
@@ -39,6 +46,8 @@ type OptionType uint8
 const (
 	OptionTypeDebug OptionType = iota
 	OptionTypeVerbose
+
+	OptionTypePreferIP
 
 	OptionTypeBind
 	OptionTypePublicIPv4
@@ -86,6 +95,7 @@ type Config struct {
 	Debug      bool       `json:"debug"`
 	Verbose    bool       `json:"verbose"`
 	SecretMode SecretMode `json:"secret_mode"`
+	PreferIP   PreferIP   `json:"prefer_ip"`
 
 	Secret []byte `json:"secret"`
 	AdTag  []byte `json:"adtag"`
@@ -105,6 +115,16 @@ func Init(options ...Opt) error { // nolint: gocyclo, funlen
 			C.Debug = opt.Value.(bool)
 		case OptionTypeVerbose:
 			C.Verbose = opt.Value.(bool)
+		case OptionTypePreferIP:
+			value := opt.Value.(string)
+			switch value {
+			case "ipv4":
+				C.PreferIP = PreferIPv4
+			case "ipv6":
+				C.PreferIP = PreferIPv6
+			default:
+				return fmt.Errorf("incorrect direct IP mode %s", value)
+			}
 		case OptionTypeBind:
 			C.Bind = opt.Value.(*net.TCPAddr)
 		case OptionTypePublicIPv4:
