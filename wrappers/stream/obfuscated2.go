@@ -21,11 +21,8 @@ var (
 	}
 )
 
-func poolWrapperObfuscated2WritePoolAcquire(size int) *bytes.Buffer {
-	buf := poolWrapperObfuscated2WritePool.Get().(*bytes.Buffer)
-	buf.Grow(size)
-
-	return buf
+func poolWrapperObfuscated2WritePoolAcquire() *bytes.Buffer {
+	return poolWrapperObfuscated2WritePool.Get().(*bytes.Buffer)
 }
 
 func poolWrapperObfuscated2WritePoolRelease(buf *bytes.Buffer) {
@@ -62,22 +59,26 @@ func (w *wrapperObfuscated2) Read(p []byte) (int, error) {
 }
 
 func (w *wrapperObfuscated2) WriteTimeout(p []byte, timeout time.Duration) (int, error) {
-	buffer := poolWrapperObfuscated2WritePoolAcquire(len(p))
+	buffer := poolWrapperObfuscated2WritePoolAcquire()
 	defer poolWrapperObfuscated2WritePoolRelease(buffer)
 
+	buffer.Write(p)
+
 	buf := buffer.Bytes()
-	copy(buf, p)
+
 	w.encryptor.XORKeyStream(buf, buf)
 
 	return w.parent.WriteTimeout(buf, timeout)
 }
 
 func (w *wrapperObfuscated2) Write(p []byte) (int, error) {
-	buffer := poolWrapperObfuscated2WritePoolAcquire(len(p))
+	buffer := poolWrapperObfuscated2WritePoolAcquire()
 	defer poolWrapperObfuscated2WritePoolRelease(buffer)
 
+	buffer.Write(p)
+
 	buf := buffer.Bytes()
-	copy(buf, p)
+
 	w.encryptor.XORKeyStream(buf, buf)
 
 	return w.parent.Write(buf)
