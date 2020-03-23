@@ -11,7 +11,7 @@ import (
 	"github.com/9seconds/mtg/protocol"
 )
 
-const directPipeBufferSize = 1024 * 1024
+const directPipeBufferSize = 1024
 
 var (
 	directPipePool = sync.Pool{
