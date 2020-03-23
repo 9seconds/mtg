@@ -13,15 +13,6 @@ import (
 
 const directPipeBufferSize = 1024
 
-var (
-	directPipePool = sync.Pool{
-		New: func() interface{} {
-			rv := make([]byte, directPipeBufferSize)
-			return &rv
-		},
-	}
-)
-
 func directConnection(request *protocol.TelegramRequest) error {
 	telegramConnRaw, err := obfuscated2.TelegramProtocol(request)
 	if err != nil {
@@ -51,10 +42,9 @@ func directPipe(dst io.WriteCloser, src io.ReadCloser, wg *sync.WaitGroup, logge
 		wg.Done()
 	}()
 
-	buf := directPipePool.Get().(*[]byte)
-	defer directPipePool.Put(buf)
+	buf := [directPipeBufferSize]byte{}
 
-	if _, err := io.CopyBuffer(dst, src, *buf); err != nil {
+	if _, err := io.CopyBuffer(dst, src, buf[:]); err != nil {
 		logger.Debugw("Cannot pump sockets", "error", err)
 	}
 }
