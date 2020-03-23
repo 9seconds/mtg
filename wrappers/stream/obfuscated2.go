@@ -1,15 +1,37 @@
 package stream
 
 import (
+	"bytes"
 	"crypto/cipher"
 	"fmt"
 	"net"
+	"sync"
 	"time"
 
 	"go.uber.org/zap"
 
 	"github.com/9seconds/mtg/conntypes"
 )
+
+var (
+	poolWrapperObfuscated2WritePool = sync.Pool{
+		New: func() interface{} {
+			return &bytes.Buffer{}
+		},
+	}
+)
+
+func poolWrapperObfuscated2WritePoolAcquire(size int) *bytes.Buffer {
+	buf := poolWrapperObfuscated2WritePool.Get().(*bytes.Buffer)
+	buf.Grow(size)
+
+	return buf
+}
+
+func poolWrapperObfuscated2WritePoolRelease(buf *bytes.Buffer) {
+	buf.Reset()
+	poolWrapperObfuscated2WritePool.Put(buf)
+}
 
 type wrapperObfuscated2 struct {
 	encryptor cipher.Stream
@@ -40,7 +62,10 @@ func (w *wrapperObfuscated2) Read(p []byte) (int, error) {
 }
 
 func (w *wrapperObfuscated2) WriteTimeout(p []byte, timeout time.Duration) (int, error) {
-	buf := make([]byte, len(p))
+	buffer := poolWrapperObfuscated2WritePoolAcquire(len(p))
+	defer poolWrapperObfuscated2WritePoolRelease(buffer)
+
+	buf := buffer.Bytes()
 	copy(buf, p)
 	w.encryptor.XORKeyStream(buf, buf)
 
@@ -48,7 +73,10 @@ func (w *wrapperObfuscated2) WriteTimeout(p []byte, timeout time.Duration) (int,
 }
 
 func (w *wrapperObfuscated2) Write(p []byte) (int, error) {
-	buf := make([]byte, len(p))
+	buffer := poolWrapperObfuscated2WritePoolAcquire(len(p))
+	defer poolWrapperObfuscated2WritePoolRelease(buffer)
+
+	buf := buffer.Bytes()
 	copy(buf, p)
 	w.encryptor.XORKeyStream(buf, buf)
 
