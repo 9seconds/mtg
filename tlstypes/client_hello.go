@@ -25,7 +25,7 @@ func (c ClientHello) Digest() []byte {
 	}
 
 	mac := hmac.New(sha256.New, config.C.Secret)
-	mac.Write(rec.Bytes()) // nolint: errcheck
+	rec.WriteBytes(mac)
 	computedDigest := mac.Sum(nil)
 
 	for i := range computedDigest {

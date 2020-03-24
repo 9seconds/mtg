@@ -28,15 +28,9 @@ func cloak(one, another io.ReadWriteCloser) {
 
 	wg.Add(2)
 
-	go func() {
-		defer wg.Done()
-		io.Copy(one, another) // nolint: errcheck
-	}()
+	go cloakPipe(one, another, wg)
 
-	go func() {
-		defer wg.Done()
-		io.Copy(another, one) // nolint: errcheck
-	}()
+	go cloakPipe(another, one, wg)
 
 	go func() {
 		wg.Wait()
@@ -68,4 +62,13 @@ func cloak(one, another io.ReadWriteCloser) {
 	}()
 
 	<-ctx.Done()
+}
+
+func cloakPipe(one io.Writer, another io.Reader, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	buf := acquireCloakBuffer()
+	defer releaseCloakBuffer(buf)
+
+	io.CopyBuffer(one, another, *buf) // nolint: errcheck
 }

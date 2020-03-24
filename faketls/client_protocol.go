@@ -63,7 +63,12 @@ func (c *ClientProtocol) tlsHandshake(conn io.ReadWriter) error {
 		return fmt.Errorf("cannot read initial record: %w", err)
 	}
 
-	clientHello, err := tlstypes.ParseClientHello(helloRecord.Data.Bytes())
+	buf := acquireBytesBuffer()
+	defer releaseBytesBuffer(buf)
+
+	helloRecord.Data.WriteBytes(buf)
+
+	clientHello, err := tlstypes.ParseClientHello(buf.Bytes())
 	if err != nil {
 		return fmt.Errorf("cannot parse client hello: %w", err)
 	}
