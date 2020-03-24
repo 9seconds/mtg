@@ -22,10 +22,9 @@ type wrapperProxy struct {
 }
 
 func (w *wrapperProxy) Write(packet conntypes.Packet, acks *conntypes.ConnectionAcks) error {
-	buf := acquireProxyBytesBuffer()
-	defer releaseProxyBytesBuffer(buf)
-
+	buf := bytes.Buffer{}
 	flags := w.flags
+
 	if acks.Quick {
 		flags |= rpc.ProxyRequestFlagsQuickAck
 	}
