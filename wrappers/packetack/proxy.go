@@ -43,6 +43,7 @@ func (w *wrapperProxy) Write(packet conntypes.Packet, acks *conntypes.Connection
 	buf.WriteByte(byte(len(config.C.AdTag)))
 	buf.Write(config.C.AdTag)
 	buf.Write(make([]byte, (4-buf.Len()%4)%4))
+	buf.Grow(len(packet))
 	buf.Write(packet)
 
 	return w.proxy.Write(buf.Bytes())
