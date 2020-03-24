@@ -30,6 +30,7 @@ func acquireCloakBuffer() *[]byte {
 }
 
 func releaseBytesBuffer(buf *bytes.Buffer) {
+	buf.Reset()
 	poolBytesBuffer.Put(buf)
 }
 
