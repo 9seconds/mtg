@@ -1,7 +1,6 @@
 package packetack
 
 import (
-	"bytes"
 	"encoding/binary"
 	"fmt"
 	"math/rand"
@@ -35,11 +34,13 @@ func (w *wrapperClientIntermediateSecure) Write(packet conntypes.Packet, acks *c
 		return nil
 	}
 
-	buf := bytes.Buffer{}
+	buf := acquireClientBytesBuffer()
+	defer releaseClientBytesBuffer(buf)
+
 	paddingLength := rand.Intn(4)
 	buf.Grow(4 + len(packet) + paddingLength)
 
-	binary.Write(&buf, binary.LittleEndian, uint32(len(packet)+paddingLength)) // nolint: errcheck
+	binary.Write(buf, binary.LittleEndian, uint32(len(packet)+paddingLength)) // nolint: errcheck
 	buf.Write(packet)
 	buf.Write(make([]byte, paddingLength))
 

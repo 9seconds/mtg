@@ -20,20 +20,22 @@ type ServerHello struct {
 }
 
 func (s ServerHello) WelcomePacket() []byte {
+	buf := &bytes.Buffer{}
+
 	s.Random = [32]byte{}
 	rec := Record{
 		Type:    RecordTypeHandshake,
 		Version: Version12,
 		Data:    &s,
 	}
-	buf := bytes.NewBuffer(rec.Bytes())
+	rec.WriteBytes(buf)
 
 	recChangeCipher := Record{
 		Type:    RecordTypeChangeCipherSpec,
 		Version: Version12,
 		Data:    RawBytes([]byte{0x01}),
 	}
-	buf.Write(recChangeCipher.Bytes())
+	recChangeCipher.WriteBytes(buf)
 
 	hostCert := make([]byte, 1024+mrand.Intn(3092))
 	rand.Read(hostCert) // nolint: errcheck
@@ -43,7 +45,8 @@ func (s ServerHello) WelcomePacket() []byte {
 		Version: Version12,
 		Data:    RawBytes(hostCert),
 	}
-	buf.Write(recData.Bytes())
+	recData.WriteBytes(buf)
+
 	packet := buf.Bytes()
 
 	mac := hmac.New(sha256.New, config.C.Secret)

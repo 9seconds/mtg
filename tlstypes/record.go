@@ -15,16 +15,15 @@ type Record struct {
 	Data    Byter
 }
 
-func (r Record) Bytes() []byte {
-	buf := bytes.Buffer{}
-	data := r.Data.Bytes()
+func (r Record) WriteBytes(writer io.Writer) {
+	writer.Write([]byte{byte(r.Type)})                           // nolint: errcheck
+	writer.Write(r.Version.Bytes())                              // nolint: errcheck
+	binary.Write(writer, binary.BigEndian, uint16(r.Data.Len())) // nolint: errcheck
+	r.Data.WriteBytes(writer)
+}
 
-	buf.WriteByte(byte(r.Type))
-	buf.Write(r.Version.Bytes())
-	binary.Write(&buf, binary.BigEndian, uint16(len(data))) // nolint: errcheck
-	buf.Write(data)
-
-	return buf.Bytes()
+func (r Record) Len() int {
+	return 1 + 2 + 2 + r.Data.Len()
 }
 
 func ReadRecord(reader io.Reader) (Record, error) {
