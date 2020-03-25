@@ -11,10 +11,10 @@ require (
 	github.com/prometheus/procfs v0.0.11 // indirect
 	github.com/smira/go-statsd v1.3.1
 	go.uber.org/zap v1.14.1
-	golang.org/x/crypto v0.0.0-20200317142112-1b76d66859c6
+	golang.org/x/crypto v0.0.0-20200323165209-0ec3e9974c59
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
-	golang.org/x/net v0.0.0-20200319234117-63522dbf7eec // indirect
-	golang.org/x/sys v0.0.0-20200317113312-5766fd39f98d
+	golang.org/x/net v0.0.0-20200324143707-d3edc9973b7e // indirect
+	golang.org/x/sys v0.0.0-20200323222414-85ca7c5b95cd
 	golang.org/x/tools v0.0.0-20200319210407-521f4a0cd458 // indirect
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 	honnef.co/go/tools v0.0.1-2020.1.3 // indirect

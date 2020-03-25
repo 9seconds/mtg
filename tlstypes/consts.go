@@ -1,5 +1,7 @@
 package tlstypes
 
+import "io"
+
 type RecordType uint8
 
 const (
@@ -69,11 +71,16 @@ var (
 )
 
 type Byter interface {
-	Bytes() []byte
+	WriteBytes(io.Writer)
+	Len() int
 }
 
 type RawBytes []byte
 
-func (r RawBytes) Bytes() []byte {
-	return []byte(r)
+func (r RawBytes) WriteBytes(writer io.Writer) {
+	writer.Write(r) // nolint: errcheck
+}
+
+func (r RawBytes) Len() int {
+	return len(r)
 }

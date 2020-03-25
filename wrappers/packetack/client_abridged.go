@@ -88,7 +88,9 @@ func (w *wrapperClientAbridged) Write(packet conntypes.Packet, acks *conntypes.C
 		return nil
 	case packetLength < clientAbridgedLargePacketLength:
 		length24 := utils.ToUint24(uint32(packetLength))
-		buf := bytes.Buffer{}
+
+		buf := acquireClientBytesBuffer()
+		defer releaseClientBytesBuffer(buf)
 
 		buf.WriteByte(byte(clientAbridgedSmallPacketLength))
 		buf.Write(length24[:])

@@ -40,16 +40,26 @@ func (w *wrapperObfuscated2) Read(p []byte) (int, error) {
 }
 
 func (w *wrapperObfuscated2) WriteTimeout(p []byte, timeout time.Duration) (int, error) {
-	buf := make([]byte, len(p))
-	copy(buf, p)
+	buffer := acquireBytesBuffer()
+	defer releaseBytesBuffer(buffer)
+
+	buffer.Write(p)
+
+	buf := buffer.Bytes()
+
 	w.encryptor.XORKeyStream(buf, buf)
 
 	return w.parent.WriteTimeout(buf, timeout)
 }
 
 func (w *wrapperObfuscated2) Write(p []byte) (int, error) {
-	buf := make([]byte, len(p))
-	copy(buf, p)
+	buffer := acquireBytesBuffer()
+	defer releaseBytesBuffer(buffer)
+
+	buffer.Write(p)
+
+	buf := buffer.Bytes()
+
 	w.encryptor.XORKeyStream(buf, buf)
 
 	return w.parent.Write(buf)

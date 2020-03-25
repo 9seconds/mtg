@@ -11,7 +11,7 @@ import (
 	"github.com/9seconds/mtg/protocol"
 )
 
-const directPipeBufferSize = 1024 * 1024
+const directPipeBufferSize = 1024
 
 func directConnection(request *protocol.TelegramRequest) error {
 	telegramConnRaw, err := obfuscated2.TelegramProtocol(request)
@@ -42,8 +42,9 @@ func directPipe(dst io.WriteCloser, src io.ReadCloser, wg *sync.WaitGroup, logge
 		wg.Done()
 	}()
 
-	buf := make([]byte, directPipeBufferSize)
-	if _, err := io.CopyBuffer(dst, src, buf); err != nil {
+	buf := [directPipeBufferSize]byte{}
+
+	if _, err := io.CopyBuffer(dst, src, buf[:]); err != nil {
 		logger.Debugw("Cannot pump sockets", "error", err)
 	}
 }

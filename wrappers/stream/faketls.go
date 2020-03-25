@@ -1,6 +1,7 @@
 package stream
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"net"
@@ -39,13 +40,19 @@ func (w *wrapperFakeTLS) WriteTimeout(p []byte, timeout time.Duration) (int, err
 func (w *wrapperFakeTLS) write(p []byte, writeFunc func([]byte) (int, error)) (int, error) {
 	sum := 0
 
+	buf := acquireBytesBuffer()
+	defer releaseBytesBuffer(buf)
+
 	for _, v := range tlstypes.MakeRecords(p) {
-		_, err := writeFunc(v.Bytes())
+		buf.Reset()
+		v.WriteBytes(buf)
+
+		_, err := writeFunc(buf.Bytes())
 		if err != nil {
 			return sum, err
 		}
 
-		sum += len(v.Data.Bytes())
+		sum += v.Data.Len()
 	}
 
 	return sum, nil
@@ -86,7 +93,10 @@ func NewFakeTLS(socket conntypes.StreamReadWriteCloser) conntypes.StreamReadWrit
 			switch rec.Type {
 			case tlstypes.RecordTypeChangeCipherSpec:
 			case tlstypes.RecordTypeApplicationData:
-				return rec.Data.Bytes(), nil
+				buf := &bytes.Buffer{}
+				rec.Data.WriteBytes(buf)
+
+				return buf.Bytes(), nil
 			default:
 				return nil, fmt.Errorf("unsupported record type %v", rec.Type)
 			}
