@@ -143,8 +143,10 @@ func (c *Config) adjustProxyValue(value int) int {
 	}
 
 	fvalue := float64(value)
-	newValue := fvalue * 1.5 * math.Log2(float64(c.MultiplexPerConnection))
-	newValue = math.Max(fvalue, math.Ceil(newValue))
+
+	newValue := fvalue * 2 * math.Log(float64(c.MultiplexPerConnection))
+	newValue = math.Ceil(newValue)
+	newValue = math.Max(fvalue, newValue)
 
 	return int(newValue)
 }
