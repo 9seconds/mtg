@@ -51,7 +51,7 @@ func (p *Proxy) accept(conn net.Conn) {
 	connID := conntypes.NewConnID()
 	logger := p.Logger.With("connection_id", connID)
 
-	if err := utils.InitTCP(conn); err != nil {
+	if err := utils.InitTCP(conn, config.C.ClientReadBuffer(), config.C.ClientWriteBuffer()); err != nil {
 		logger.Errorw("Cannot initialize client TCP connection", "error", err)
 		return
 	}
@@ -90,7 +90,7 @@ func (p *Proxy) accept(conn net.Conn) {
 
 	err = nil
 
-	if len(config.C.AdTag) > 0 {
+	if config.C.MiddleProxyMode() {
 		middleConnection(req)
 	} else {
 		err = directConnection(req)

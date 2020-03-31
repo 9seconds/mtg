@@ -37,7 +37,7 @@ func (b *baseTelegram) dial(dc conntypes.DC,
 			continue
 		}
 
-		if err := utils.InitTCP(conn); err != nil {
+		if err := utils.InitTCP(conn, config.C.ProxyReadBuffer(), config.C.ProxyWriteBuffer()); err != nil {
 			b.logger.Infow("Cannot initialize TCP socket", "address", addr, "error", err)
 			continue
 		}
