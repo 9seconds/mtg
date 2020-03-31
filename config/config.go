@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"net"
 
 	"github.com/alecthomas/units"
@@ -102,6 +103,52 @@ type Config struct {
 
 	Secret []byte `json:"secret"`
 	AdTag  []byte `json:"adtag"`
+}
+
+func (c *Config) ClientReadBuffer() int {
+	return c.ReadBuffer
+}
+
+func (c *Config) ClientWriteBuffer() int {
+	return c.WriteBuffer
+}
+
+func (c *Config) MiddleProxyMode() bool {
+	return len(c.AdTag) > 0
+}
+
+func (c *Config) ProxyReadBuffer() int {
+	value := c.ReadBuffer
+
+	if c.MiddleProxyMode() {
+		value = c.adjustProxyValue(value)
+	}
+
+	return value
+}
+
+func (c *Config) ProxyWriteBuffer() int {
+	value := c.WriteBuffer
+
+	if c.MiddleProxyMode() {
+		value = c.adjustProxyValue(value)
+	}
+
+	return value
+}
+
+func (c *Config) adjustProxyValue(value int) int {
+	if c.MultiplexPerConnection == 0 {
+		return value
+	}
+
+	fvalue := float64(value)
+
+	newValue := fvalue * 2 * math.Log(float64(c.MultiplexPerConnection))
+	newValue = math.Ceil(newValue)
+	newValue = math.Max(fvalue, newValue)
+
+	return int(newValue)
 }
 
 type Opt struct {

@@ -50,7 +50,7 @@ func Proxy() error { // nolint: funlen
 
 	zap.S().Debugw("Configuration", "config", config.Printable())
 
-	if len(config.C.AdTag) > 0 {
+	if config.C.MiddleProxyMode() {
 		zap.S().Infow("Use middle proxy connection to Telegram")
 
 		diff, err := ntp.Fetch()
