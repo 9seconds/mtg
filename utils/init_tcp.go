@@ -3,10 +3,7 @@ package utils
 import (
 	"fmt"
 	"net"
-	"time"
 )
-
-const tcpKeepAlivePingPeriod = 2 * time.Second
 
 func InitTCP(conn net.Conn, readBufferSize int, writeBufferSize int) error {
 	tcpConn := conn.(*net.TCPConn)
@@ -25,10 +22,6 @@ func InitTCP(conn net.Conn, readBufferSize int, writeBufferSize int) error {
 
 	if err := tcpConn.SetKeepAlive(true); err != nil {
 		return fmt.Errorf("cannot enable keep-alive: %w", err)
-	}
-
-	if err := tcpConn.SetKeepAlivePeriod(tcpKeepAlivePingPeriod); err != nil {
-		return fmt.Errorf("cannot set keep-alive period: %w", err)
 	}
 
 	return nil
