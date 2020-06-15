@@ -27,9 +27,5 @@ func InitTCP(conn net.Conn, readBufferSize int, writeBufferSize int) error {
 		return fmt.Errorf("cannot enable keep-alive: %w", err)
 	}
 
-	if err := tcpConn.SetKeepAlivePeriod(tcpKeepAlivePingPeriod); err != nil {
-		return fmt.Errorf("cannot set keep-alive period: %w", err)
-	}
-
 	return nil
 }
