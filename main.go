@@ -7,11 +7,10 @@ import (
 	"strings"
 	"time"
 
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
-
 	"github.com/9seconds/mtg/cli"
 	"github.com/9seconds/mtg/config"
 	"github.com/9seconds/mtg/utils"
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
 var version = "dev" // has to be set by ldflags

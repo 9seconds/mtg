@@ -5,11 +5,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-
 	"github.com/9seconds/mtg/config"
 	"github.com/9seconds/mtg/conntypes"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type statsPrometheus struct {
@@ -51,10 +50,14 @@ func (s *statsPrometheus) changeConnections(connectionType conntypes.ConnectionT
 		labels[0] = "abridged"
 	case conntypes.ConnectionTypeSecure:
 		labels[0] = "secured"
+	case conntypes.ConnectionTypeIntermediate:
+		labels[0] = "intermediate"
+	case conntypes.ConnectionTypeUnknown:
+		panic("unknown connection type")
 	}
 
 	if addr.IP.To4() == nil {
-		labels[1] = "ipv6" // nolint: goconst
+		labels[1] = "ipv6"
 	}
 
 	s.connections.WithLabelValues(labels[:]...).Add(increment)

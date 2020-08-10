@@ -5,9 +5,6 @@ import (
 	"os"
 	"time"
 
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-
 	"github.com/9seconds/mtg/antireplay"
 	"github.com/9seconds/mtg/config"
 	"github.com/9seconds/mtg/faketls"
@@ -18,6 +15,8 @@ import (
 	"github.com/9seconds/mtg/stats"
 	"github.com/9seconds/mtg/telegram"
 	"github.com/9seconds/mtg/utils"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 func Proxy() error { // nolint: funlen

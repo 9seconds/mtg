@@ -6,9 +6,8 @@ import (
 	"net"
 	"time"
 
-	"go.uber.org/zap"
-
 	"github.com/9seconds/mtg/conntypes"
+	"go.uber.org/zap"
 )
 
 type wrapperCtx struct {
@@ -21,6 +20,7 @@ func (w *wrapperCtx) WriteTimeout(p []byte, timeout time.Duration) (int, error) 
 	select {
 	case <-w.ctx.Done():
 		w.Close()
+
 		return 0, fmt.Errorf("cannot write because context was closed: %w", w.ctx.Err())
 	default:
 		return w.parent.WriteTimeout(p, timeout)
@@ -31,6 +31,7 @@ func (w *wrapperCtx) Write(p []byte) (int, error) {
 	select {
 	case <-w.ctx.Done():
 		w.Close()
+
 		return 0, fmt.Errorf("cannot write because context was closed: %w", w.ctx.Err())
 	default:
 		return w.parent.Write(p)
@@ -41,6 +42,7 @@ func (w *wrapperCtx) ReadTimeout(p []byte, timeout time.Duration) (int, error) {
 	select {
 	case <-w.ctx.Done():
 		w.Close()
+
 		return 0, fmt.Errorf("cannot write because context was closed: %w", w.ctx.Err())
 	default:
 		return w.parent.ReadTimeout(p, timeout)
@@ -51,6 +53,7 @@ func (w *wrapperCtx) Read(p []byte) (int, error) {
 	select {
 	case <-w.ctx.Done():
 		w.Close()
+
 		return 0, fmt.Errorf("cannot write because context was closed: %w", w.ctx.Err())
 	default:
 		return w.parent.Read(p)
@@ -59,6 +62,7 @@ func (w *wrapperCtx) Read(p []byte) (int, error) {
 
 func (w *wrapperCtx) Close() error {
 	w.cancel()
+
 	return w.parent.Close()
 }
 

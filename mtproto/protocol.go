@@ -19,8 +19,8 @@ func TelegramProtocol(req *protocol.TelegramRequest) (conntypes.PacketReadWriteC
 	}
 
 	rpcNonceConn := packet.NewMtprotoFrame(conn, rpc.SeqNoNonce)
-	rpcNonceReq, err := doRPCNonceRequest(rpcNonceConn)
 
+	rpcNonceReq, err := doRPCNonceRequest(rpcNonceConn)
 	if err != nil {
 		return nil, fmt.Errorf("cannot do nonce request: %w", err)
 	}

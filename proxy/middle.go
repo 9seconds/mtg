@@ -3,17 +3,17 @@ package proxy
 import (
 	"sync"
 
-	"go.uber.org/zap"
-
 	"github.com/9seconds/mtg/conntypes"
 	"github.com/9seconds/mtg/protocol"
 	"github.com/9seconds/mtg/wrappers/packetack"
+	"go.uber.org/zap"
 )
 
 func middleConnection(request *protocol.TelegramRequest) {
 	telegramConn, err := packetack.NewProxy(request)
 	if err != nil {
 		request.Logger.Debugw("Cannot dial to Telegram", "error", err)
+
 		return
 	}
 	defer telegramConn.Close()
@@ -27,7 +27,7 @@ func middleConnection(request *protocol.TelegramRequest) {
 		clientConn = packetack.NewClientIntermediate(request.ClientConn)
 	case conntypes.ConnectionTypeSecure:
 		clientConn = packetack.NewClientIntermediateSecure(request.ClientConn)
-	default:
+	case conntypes.ConnectionTypeUnknown:
 		panic("unknown connection type")
 	}
 
@@ -53,15 +53,17 @@ func middlePipe(dst conntypes.PacketAckWriteCloser,
 
 	for {
 		acks := conntypes.ConnectionAcks{}
-		packet, err := src.Read(&acks)
 
+		packet, err := src.Read(&acks)
 		if err != nil {
 			logger.Debugw("Cannot read packet", "error", err)
+
 			return
 		}
 
 		if err = dst.Write(packet, &acks); err != nil {
 			logger.Debugw("Cannot send packet", "error", err)
+
 			return
 		}
 	}

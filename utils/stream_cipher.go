@@ -6,6 +6,7 @@ import (
 )
 
 func MakeStreamCipher(key, iv []byte) cipher.Stream {
-	block, _ := aes.NewCipher(key) // nolint: gosec
+	block, _ := aes.NewCipher(key)
+
 	return cipher.NewCTR(block, iv)
 }

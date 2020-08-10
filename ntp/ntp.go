@@ -5,17 +5,16 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/9seconds/mtg/config"
 	"github.com/beevik/ntp"
 	"go.uber.org/zap"
-
-	"github.com/9seconds/mtg/config"
 )
 
 const autoUpdatePeriod = time.Minute
 
 // Fetch fetches the data on time drift.
 func Fetch() (time.Duration, error) {
-	url := config.C.NTPServers[rand.Intn(len(config.C.NTPServers))]
+	url := config.C.NTPServers[rand.Intn(len(config.C.NTPServers))] // nolint: gosec
 
 	resp, err := ntp.Query(url)
 	if err != nil {
@@ -40,6 +39,7 @@ func AutoUpdate() {
 		diff, err := Fetch()
 		if err != nil {
 			logger.Debugw("Cannot fetch time from NTP", "error", err)
+
 			continue
 		}
 

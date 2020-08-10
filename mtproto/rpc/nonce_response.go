@@ -15,13 +15,13 @@ type NonceResponse struct {
 
 // Bytes returns serialized form of the nonce response.
 func (r *NonceResponse) Bytes() []byte {
-	buf := &bytes.Buffer{}
+	buf := bytes.Buffer{}
 
-	buf.Write(r.Type)        // nolint: gosec
-	buf.Write(r.KeySelector) // nolint: gosec
-	buf.Write(r.Crypto)      // nolint: gosec
-	buf.Write(r.CryptoTS)    // nolint: gosec
-	buf.Write(r.Nonce)       // nolint: gosec
+	buf.Write(r.Type)
+	buf.Write(r.KeySelector)
+	buf.Write(r.Crypto)
+	buf.Write(r.CryptoTS)
+	buf.Write(r.Nonce)
 
 	return buf.Bytes()
 }

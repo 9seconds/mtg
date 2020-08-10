@@ -3,9 +3,8 @@ package antireplay
 import (
 	"sync"
 
-	"github.com/VictoriaMetrics/fastcache"
-
 	"github.com/9seconds/mtg/config"
+	"github.com/VictoriaMetrics/fastcache"
 )
 
 type CacheInterface interface {

@@ -9,3 +9,4 @@ mtg
 vendor/
 version.go
 ccbuilds/
+.bin/

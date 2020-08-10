@@ -7,7 +7,7 @@ const (
 	SeqNoHandshake = -1
 )
 
-// Different constants for RPC protocol
+// Different constants for RPC protocol.
 var (
 	TagCloseExt     = []byte{0xa2, 0x34, 0xb6, 0x5e}
 	TagProxyAns     = []byte{0x0d, 0xda, 0x03, 0x44}

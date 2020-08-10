@@ -10,9 +10,8 @@ import (
 	"io/ioutil"
 	"net"
 
-	"go.uber.org/zap"
-
 	"github.com/9seconds/mtg/conntypes"
+	"go.uber.org/zap"
 )
 
 const (
@@ -42,8 +41,7 @@ type wrapperMtprotoFrame struct {
 }
 
 func (w *wrapperMtprotoFrame) Read() (conntypes.Packet, error) { // nolint: funlen
-	buf := acquireMtprotoFrameBytesBuffer()
-	defer releaseMtprotoFrameBytesBuffer(buf)
+	buf := &bytes.Buffer{}
 
 	sum := crc32.NewIEEE()
 	writer := io.MultiWriter(buf, sum)
@@ -86,7 +84,7 @@ func (w *wrapperMtprotoFrame) Read() (conntypes.Packet, error) { // nolint: funl
 		return nil, fmt.Errorf("unexpected sequence number %d (wait for %d)", seqNo, w.readSeqNo)
 	}
 
-	data, _ := ioutil.ReadAll(buf) // nolint: gosec
+	data, _ := ioutil.ReadAll(buf)
 	buf.Reset()
 	// write to buf, not to writer. This is because we are going to fetch
 	// crc32 checksum.
@@ -114,8 +112,7 @@ func (w *wrapperMtprotoFrame) Write(p conntypes.Packet) error {
 	messageLength := 4 + 4 + len(p) + 4
 	paddingLength := (aes.BlockSize - messageLength%aes.BlockSize) % aes.BlockSize
 
-	buf := acquireMtprotoFrameBytesBuffer()
-	defer releaseMtprotoFrameBytesBuffer(buf)
+	buf := &bytes.Buffer{}
 
 	binary.Write(buf, binary.LittleEndian, uint32(messageLength)) // nolint: errcheck
 	binary.Write(buf, binary.LittleEndian, w.writeSeqNo)          // nolint: errcheck
