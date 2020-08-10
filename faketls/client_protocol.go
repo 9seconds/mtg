@@ -2,6 +2,7 @@ package faketls
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -63,9 +64,7 @@ func (c *ClientProtocol) tlsHandshake(conn io.ReadWriter) error {
 		return fmt.Errorf("cannot read initial record: %w", err)
 	}
 
-	buf := acquireBytesBuffer()
-	defer releaseBytesBuffer(buf)
-
+	buf := &bytes.Buffer{}
 	helloRecord.Data.WriteBytes(buf)
 
 	clientHello, err := tlstypes.ParseClientHello(buf.Bytes())
