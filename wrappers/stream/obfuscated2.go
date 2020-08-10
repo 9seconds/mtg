@@ -1,6 +1,7 @@
 package stream
 
 import (
+	"bytes"
 	"crypto/cipher"
 	"fmt"
 	"net"
@@ -40,8 +41,7 @@ func (w *wrapperObfuscated2) Read(p []byte) (int, error) {
 }
 
 func (w *wrapperObfuscated2) WriteTimeout(p []byte, timeout time.Duration) (int, error) {
-	buffer := acquireBytesBuffer()
-	defer releaseBytesBuffer(buffer)
+	buffer := bytes.Buffer{}
 
 	buffer.Write(p)
 
@@ -53,8 +53,7 @@ func (w *wrapperObfuscated2) WriteTimeout(p []byte, timeout time.Duration) (int,
 }
 
 func (w *wrapperObfuscated2) Write(p []byte) (int, error) {
-	buffer := acquireBytesBuffer()
-	defer releaseBytesBuffer(buffer)
+	buffer := bytes.Buffer{}
 
 	buffer.Write(p)
 

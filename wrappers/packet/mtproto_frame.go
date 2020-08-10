@@ -42,8 +42,7 @@ type wrapperMtprotoFrame struct {
 }
 
 func (w *wrapperMtprotoFrame) Read() (conntypes.Packet, error) { // nolint: funlen
-	buf := acquireMtprotoFrameBytesBuffer()
-	defer releaseMtprotoFrameBytesBuffer(buf)
+	buf := &bytes.Buffer{}
 
 	sum := crc32.NewIEEE()
 	writer := io.MultiWriter(buf, sum)
@@ -114,8 +113,7 @@ func (w *wrapperMtprotoFrame) Write(p conntypes.Packet) error {
 	messageLength := 4 + 4 + len(p) + 4
 	paddingLength := (aes.BlockSize - messageLength%aes.BlockSize) % aes.BlockSize
 
-	buf := acquireMtprotoFrameBytesBuffer()
-	defer releaseMtprotoFrameBytesBuffer(buf)
+	buf := &bytes.Buffer{}
 
 	binary.Write(buf, binary.LittleEndian, uint32(messageLength)) // nolint: errcheck
 	binary.Write(buf, binary.LittleEndian, w.writeSeqNo)          // nolint: errcheck

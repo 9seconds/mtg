@@ -1,6 +1,7 @@
 package stream
 
 import (
+	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/md5"  // nolint: gosec
@@ -53,8 +54,8 @@ func mtprotoDeriveKeys(purpose mtprotoCipherPurpose,
 	resp *rpc.NonceResponse,
 	client, remote *net.TCPAddr,
 	secret []byte) ([]byte, []byte) {
-	message := acquireBytesBuffer()
-	defer releaseBytesBuffer(message)
+
+	message := bytes.Buffer{}
 
 	message.Write(resp.Nonce)   // nolint: gosec
 	message.Write(req.Nonce)    // nolint: gosec

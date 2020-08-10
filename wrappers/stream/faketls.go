@@ -39,13 +39,11 @@ func (w *wrapperFakeTLS) WriteTimeout(p []byte, timeout time.Duration) (int, err
 
 func (w *wrapperFakeTLS) write(p []byte, writeFunc func([]byte) (int, error)) (int, error) {
 	sum := 0
-
-	buf := acquireBytesBuffer()
-	defer releaseBytesBuffer(buf)
+	buf := bytes.Buffer{}
 
 	for _, v := range tlstypes.MakeRecords(p) {
 		buf.Reset()
-		v.WriteBytes(buf)
+		v.WriteBytes(&buf)
 
 		_, err := writeFunc(buf.Bytes())
 		if err != nil {
