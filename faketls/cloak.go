@@ -53,9 +53,11 @@ func cloak(one, another io.ReadWriteCloser) {
 				return
 			case <-lastActivityTimer.C:
 				cancel()
+
 				return
 			case <-maxTimer.C:
 				cancel()
+
 				return
 			}
 		}

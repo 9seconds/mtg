@@ -64,6 +64,7 @@ func (w *wrapperProxy) Read(acks *conntypes.ConnectionAcks) (conntypes.Packet, e
 
 func (w *wrapperProxy) Close() error {
 	w.proxy.Close()
+
 	return nil
 }
 
@@ -77,7 +78,7 @@ func NewProxy(request *protocol.TelegramRequest) (conntypes.PacketAckReadWriteCl
 		flags |= rpc.ProxyRequestFlagsIntermediate
 	case conntypes.ConnectionTypeSecure:
 		flags |= rpc.ProxyRequestFlagsIntermediate | rpc.ProxyRequestFlagsPad
-	default:
+	case conntypes.ConnectionTypeUnknown:
 		panic("unknown connection type")
 	}
 

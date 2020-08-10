@@ -71,4 +71,4 @@ prepare: install-lint
 .PHONY: install-lint
 install-lint:
 	@curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh \
-		| $(MOD_OFF) bash -s -- -b $(GOPATH)/bin $(GOLANGCI_LINT_VERSION)
+		| $(MOD_OFF) bash -s -- -b . $(GOLANGCI_LINT_VERSION)

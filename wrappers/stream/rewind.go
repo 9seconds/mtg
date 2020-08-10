@@ -7,9 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"go.uber.org/zap"
-
 	"github.com/9seconds/mtg/conntypes"
+	"go.uber.org/zap"
 )
 
 type ReadWriteCloseRewinder interface {
@@ -88,6 +87,7 @@ func (w *wrapperRewind) RemoteAddr() *net.TCPAddr {
 
 func (w *wrapperRewind) Close() error {
 	w.buf.Reset()
+
 	return w.parent.Close()
 }
 

@@ -8,11 +8,10 @@ import (
 	"sync"
 	"time"
 
-	statsd "github.com/smira/go-statsd"
-	"go.uber.org/zap"
-
 	"github.com/9seconds/mtg/config"
 	"github.com/9seconds/mtg/conntypes"
+	statsd "github.com/smira/go-statsd"
+	"go.uber.org/zap"
 )
 
 var (
@@ -91,8 +90,10 @@ func (s *statsStatsd) changeConnections(connectionType conntypes.ConnectionType,
 		tags = append(tags, tagConnectionTypeAbridged)
 	case conntypes.ConnectionTypeIntermediate:
 		tags = append(tags, tagConnectionTypeIntermediate)
-	default:
+	case conntypes.ConnectionTypeSecure:
 		tags = append(tags, tagConnectionTypeSecured)
+	case conntypes.ConnectionTypeUnknown:
+		panic("Unknown connection type")
 	}
 
 	if addr.IP.To4() == nil {

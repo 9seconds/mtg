@@ -6,9 +6,8 @@ import (
 	"fmt"
 	"math/rand"
 
-	"go.uber.org/zap"
-
 	"github.com/9seconds/mtg/conntypes"
+	"go.uber.org/zap"
 )
 
 type wrapperClientIntermediateSecure struct {
@@ -36,7 +35,7 @@ func (w *wrapperClientIntermediateSecure) Write(packet conntypes.Packet, acks *c
 	}
 
 	buf := &bytes.Buffer{}
-	paddingLength := rand.Intn(4)
+	paddingLength := rand.Intn(4) // nolint: gosec
 
 	buf.Grow(4 + len(packet) + paddingLength)
 

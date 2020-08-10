@@ -10,9 +10,8 @@ import (
 	"io/ioutil"
 	"net"
 
-	"go.uber.org/zap"
-
 	"github.com/9seconds/mtg/conntypes"
+	"go.uber.org/zap"
 )
 
 const (
@@ -85,7 +84,7 @@ func (w *wrapperMtprotoFrame) Read() (conntypes.Packet, error) { // nolint: funl
 		return nil, fmt.Errorf("unexpected sequence number %d (wait for %d)", seqNo, w.readSeqNo)
 	}
 
-	data, _ := ioutil.ReadAll(buf) // nolint: gosec
+	data, _ := ioutil.ReadAll(buf)
 	buf.Reset()
 	// write to buf, not to writer. This is because we are going to fetch
 	// crc32 checksum.

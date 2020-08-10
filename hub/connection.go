@@ -6,12 +6,11 @@ import (
 	"sync"
 	"time"
 
-	"go.uber.org/zap"
-
 	"github.com/9seconds/mtg/conntypes"
 	"github.com/9seconds/mtg/mtproto"
 	"github.com/9seconds/mtg/mtproto/rpc"
 	"github.com/9seconds/mtg/protocol"
+	"go.uber.org/zap"
 )
 
 const connectionTTL = time.Hour
@@ -90,6 +89,7 @@ func (c *connection) readLoop() {
 		response, err := rpc.ParseProxyResponse(packet)
 		if err != nil {
 			c.logger.Debugw("Failed response", "error", err)
+
 			continue
 		}
 

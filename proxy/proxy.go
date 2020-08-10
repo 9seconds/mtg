@@ -4,14 +4,13 @@ import (
 	"context"
 	"net"
 
-	"go.uber.org/zap"
-
 	"github.com/9seconds/mtg/config"
 	"github.com/9seconds/mtg/conntypes"
 	"github.com/9seconds/mtg/protocol"
 	"github.com/9seconds/mtg/stats"
 	"github.com/9seconds/mtg/utils"
 	"github.com/9seconds/mtg/wrappers/stream"
+	"go.uber.org/zap"
 )
 
 type Proxy struct {
@@ -53,6 +52,7 @@ func (p *Proxy) accept(conn net.Conn) {
 
 	if err := utils.InitTCP(conn, config.C.ClientReadBuffer(), config.C.ClientWriteBuffer()); err != nil {
 		logger.Errorw("Cannot initialize client TCP connection", "error", err)
+
 		return
 	}
 
@@ -66,8 +66,8 @@ func (p *Proxy) accept(conn net.Conn) {
 	defer clientConn.Close()
 
 	clientProtocol := p.ClientProtocolMaker()
-	clientConn, err := clientProtocol.Handshake(clientConn)
 
+	clientConn, err := clientProtocol.Handshake(clientConn)
 	if err != nil {
 		stats.Stats.AuthenticationFailed()
 		logger.Warnw("Cannot perform client handshake", "error", err)

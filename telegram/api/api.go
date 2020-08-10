@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -18,7 +19,10 @@ var httpClient = http.Client{
 }
 
 func request(url string) (io.ReadCloser, error) {
-	req, err := http.NewRequest("GET", url, nil)
+	ctx, cancel := context.WithTimeout(context.Background(), apiHTTPTimeout)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		panic(err)
 	}

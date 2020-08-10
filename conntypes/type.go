@@ -21,7 +21,9 @@ func (t ConnectionType) Tag() []byte {
 		return ConnectionTagAbridged
 	case ConnectionTypeIntermediate:
 		return ConnectionTagIntermediate
-	default:
+	case ConnectionTypeSecure, ConnectionTypeUnknown:
 		return ConnectionTagSecure
 	}
+
+	return ConnectionTagSecure
 }

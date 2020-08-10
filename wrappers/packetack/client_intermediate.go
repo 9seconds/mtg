@@ -7,9 +7,8 @@ import (
 	"io"
 	"net"
 
-	"go.uber.org/zap"
-
 	"github.com/9seconds/mtg/conntypes"
+	"go.uber.org/zap"
 )
 
 const clientIntermediateQuickAckLength = 0x80000000
