@@ -53,7 +53,7 @@ crosscompile-dir:
 
 .PHONY: lint
 lint: vendor
-	@$(MOD_OFF) golangci-lint run
+	@$(MOD_OFF) "$(ROOT_DIR)/.bin/golangci-lint" run
 
 .PHONY: clean
 clean:
@@ -70,5 +70,6 @@ prepare: install-lint
 
 .PHONY: install-lint
 install-lint:
-	@curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh \
-		| $(MOD_OFF) bash -s -- -b . $(GOLANGCI_LINT_VERSION)
+	@mkdir -p ./bin || true && \
+		curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh \
+		| $(MOD_OFF) bash -s -- -b "$(ROOT_DIR)/.bin" $(GOLANGCI_LINT_VERSION)
