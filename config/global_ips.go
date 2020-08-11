@@ -60,7 +60,7 @@ func fetchIP(ctx context.Context, network string) (net.IP, error) {
 		return nil, fmt.Errorf("cannot perform a request: %w", err)
 	}
 
-	defer resp.Body.Close() // nolint: errcheck
+	defer resp.Body.Close()
 
 	respDataBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {

@@ -1,10 +1,11 @@
 package stream
 
 import (
+	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
-	"crypto/md5"  // nolint: gosec
-	"crypto/sha1" // nolint: gosec
+	"crypto/md5"
+	"crypto/sha1"
 	"encoding/binary"
 	"net"
 
@@ -53,12 +54,11 @@ func mtprotoDeriveKeys(purpose mtprotoCipherPurpose,
 	resp *rpc.NonceResponse,
 	client, remote *net.TCPAddr,
 	secret []byte) ([]byte, []byte) {
-	message := acquireBytesBuffer()
-	defer releaseBytesBuffer(message)
+	message := bytes.Buffer{}
 
-	message.Write(resp.Nonce)   // nolint: gosec
-	message.Write(req.Nonce)    // nolint: gosec
-	message.Write(req.CryptoTS) // nolint: gosec
+	message.Write(resp.Nonce)
+	message.Write(req.Nonce)
+	message.Write(req.CryptoTS)
 
 	clientIPv4 := mtprotoEmptyIP[:]
 	serverIPv4 := mtprotoEmptyIP[:]
@@ -68,34 +68,34 @@ func mtprotoDeriveKeys(purpose mtprotoCipherPurpose,
 		serverIPv4 = utils.ReverseBytes(remote.IP.To4())
 	}
 
-	message.Write(serverIPv4) // nolint: gosec
+	message.Write(serverIPv4)
 
 	var port [2]byte
 
 	binary.LittleEndian.PutUint16(port[:], uint16(client.Port))
-	message.Write(port[:]) // nolint: gosec
+	message.Write(port[:])
 
 	switch purpose {
 	case mtprotoCipherPurposeClient:
-		message.WriteString("CLIENT") // nolint: gosec
+		message.WriteString("CLIENT")
 	case mtprotoCipherPurposeServer:
-		message.WriteString("SERVER") // nolint: gosec
+		message.WriteString("SERVER")
 	default:
 		panic("Unexpected cipher purpose")
 	}
 
-	message.Write(clientIPv4) // nolint: gosec
+	message.Write(clientIPv4)
 	binary.LittleEndian.PutUint16(port[:], uint16(remote.Port))
-	message.Write(port[:])    // nolint: gosec
-	message.Write(secret)     // nolint: gosec
-	message.Write(resp.Nonce) // nolint: gosec
+	message.Write(port[:])
+	message.Write(secret)
+	message.Write(resp.Nonce)
 
 	if client.IP.To4() == nil {
-		message.Write(client.IP.To16()) // nolint: gosec
-		message.Write(remote.IP.To16()) // nolint: gosec
+		message.Write(client.IP.To16())
+		message.Write(remote.IP.To16())
 	}
 
-	message.Write(req.Nonce) // nolint: gosec
+	message.Write(req.Nonce)
 
 	data := message.Bytes()
 	md5sum := md5.Sum(data[1:]) // nolint: gas

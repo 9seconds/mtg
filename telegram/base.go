@@ -5,12 +5,11 @@ import (
 	"math/rand"
 	"net"
 
-	"go.uber.org/zap"
-
 	"github.com/9seconds/mtg/config"
 	"github.com/9seconds/mtg/conntypes"
 	"github.com/9seconds/mtg/utils"
 	"github.com/9seconds/mtg/wrappers/stream"
+	"go.uber.org/zap"
 )
 
 type baseTelegram struct {
@@ -34,11 +33,13 @@ func (b *baseTelegram) dial(dc conntypes.DC,
 		conn, err := b.dialer.Dial("tcp", addr)
 		if err != nil {
 			b.logger.Infow("Cannot dial to Telegram", "address", addr, "error", err)
+
 			continue
 		}
 
 		if err := utils.InitTCP(conn, config.C.ProxyReadBuffer(), config.C.ProxyWriteBuffer()); err != nil {
 			b.logger.Infow("Cannot initialize TCP socket", "address", addr, "error", err)
+
 			continue
 		}
 
@@ -83,7 +84,7 @@ func (b *baseTelegram) chooseAddress(addresses map[conntypes.DC][]string,
 	case len(addrs) == 1:
 		return addrs[0]
 	case len(addrs) > 1:
-		return addrs[rand.Intn(len(addrs))]
+		return addrs[rand.Intn(len(addrs))] // nolint: gosec
 	}
 
 	return ""

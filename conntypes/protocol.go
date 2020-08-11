@@ -8,6 +8,8 @@ func (c ConnectionProtocol) String() string {
 		return "any"
 	case ConnectionProtocolIPv4:
 		return "ipv4"
+	case ConnectionProtocolIPv6:
+		return "ipv6"
 	}
 
 	return "ipv6"

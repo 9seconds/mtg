@@ -15,7 +15,7 @@ const (
 	frameLen = 64
 )
 
-// [frameOffsetFirst:frameOffsetKey:frameOffsetIV:frameOffsetMagic:frameOffsetDC:frameOffsetEnd]
+// [frameOffsetFirst:frameOffsetKey:frameOffsetIV:frameOffsetMagic:frameOffsetDC:frameOffsetEnd].
 type Frame struct {
 	data [frameLen]byte
 }

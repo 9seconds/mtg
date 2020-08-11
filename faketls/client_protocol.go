@@ -2,6 +2,7 @@ package faketls
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -48,8 +49,8 @@ func (c *ClientProtocol) Handshake(socket conntypes.StreamReadWriteCloser) (conn
 	}
 
 	conn := stream.NewFakeTLS(socket)
-	conn, err := c.ClientProtocol.Handshake(conn)
 
+	conn, err := c.ClientProtocol.Handshake(conn)
 	if err != nil {
 		return nil, err
 	}
@@ -63,9 +64,7 @@ func (c *ClientProtocol) tlsHandshake(conn io.ReadWriter) error {
 		return fmt.Errorf("cannot read initial record: %w", err)
 	}
 
-	buf := acquireBytesBuffer()
-	defer releaseBytesBuffer(buf)
-
+	buf := &bytes.Buffer{}
 	helloRecord.Data.WriteBytes(buf)
 
 	clientHello, err := tlstypes.ParseClientHello(buf.Bytes())
@@ -90,6 +89,7 @@ func (c *ClientProtocol) tlsHandshake(conn io.ReadWriter) error {
 
 	if antireplay.Cache.HasTLS(clientHello.Random[:]) {
 		stats.Stats.ReplayDetected()
+
 		return errors.New("replay attack is detected")
 	}
 
@@ -108,8 +108,8 @@ func (c *ClientProtocol) cloakHost(clientConn io.ReadWriteCloser) {
 	stats.Stats.CloakedRequest()
 
 	addr := net.JoinHostPort(config.C.CloakHost, strconv.Itoa(config.C.CloakPort))
-	hostConn, err := net.Dial("tcp", addr)
 
+	hostConn, err := net.Dial("tcp", addr)
 	if err != nil {
 		return
 	}

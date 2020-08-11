@@ -22,6 +22,8 @@ func (s SecretMode) String() string {
 		return "simple"
 	case SecretModeSecured:
 		return "secured"
+	case SecretModeTLS:
+		return "tls"
 	}
 
 	return "tls"

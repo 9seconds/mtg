@@ -25,6 +25,7 @@ func (c *connectionList) get(conn *ProxyConn) (*connection, error) {
 
 	if err = newConn.Attach(conn); err != nil {
 		newConn.Close()
+
 		return nil, fmt.Errorf("cannot attach to the newly created connection: %w", err)
 	}
 

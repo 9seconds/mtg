@@ -8,9 +8,8 @@ import (
 	"io"
 	mrand "math/rand"
 
-	"golang.org/x/crypto/curve25519"
-
 	"github.com/9seconds/mtg/config"
+	"golang.org/x/crypto/curve25519"
 )
 
 type ServerHello struct {
@@ -37,8 +36,8 @@ func (s ServerHello) WelcomePacket() []byte {
 	}
 	recChangeCipher.WriteBytes(buf)
 
-	hostCert := make([]byte, 1024+mrand.Intn(3092))
-	rand.Read(hostCert) // nolint: errcheck
+	hostCert := make([]byte, 1024+mrand.Intn(3092)) // nolint: gosec
+	rand.Read(hostCert)                             // nolint: errcheck
 
 	recData := Record{
 		Type:    RecordTypeApplicationData,

@@ -5,10 +5,9 @@ import (
 	"net"
 	"time"
 
-	"go.uber.org/zap"
-
 	"github.com/9seconds/mtg/config"
 	"github.com/9seconds/mtg/conntypes"
+	"go.uber.org/zap"
 )
 
 type connPurpose uint8
@@ -29,6 +28,7 @@ type wrapperConn struct {
 func (w *wrapperConn) WriteTimeout(p []byte, timeout time.Duration) (int, error) {
 	if err := w.parent.SetWriteDeadline(time.Now().Add(timeout)); err != nil {
 		w.Close()
+
 		return 0, fmt.Errorf("cannot set write deadline to the socket: %w", err)
 	}
 
@@ -40,7 +40,7 @@ func (w *wrapperConn) Write(p []byte) (int, error) {
 	w.logger.Debugw("write to stream", "bytes", n, "error", err)
 
 	if err != nil {
-		w.Close() // nolint: gosec
+		w.Close()
 	}
 
 	return n, err
@@ -49,6 +49,7 @@ func (w *wrapperConn) Write(p []byte) (int, error) {
 func (w *wrapperConn) ReadTimeout(p []byte, timeout time.Duration) (int, error) {
 	if err := w.parent.SetReadDeadline(time.Now().Add(timeout)); err != nil {
 		w.Close()
+
 		return 0, fmt.Errorf("cannot set read deadline to the socket: %w", err)
 	}
 
@@ -68,6 +69,7 @@ func (w *wrapperConn) Read(p []byte) (int, error) {
 
 func (w *wrapperConn) Close() error {
 	w.logger.Debugw("Close connection")
+
 	return w.parent.Close()
 }
 

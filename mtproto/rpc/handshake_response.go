@@ -17,10 +17,10 @@ type HandshakeResponse struct {
 func (r *HandshakeResponse) Bytes() []byte {
 	buf := &bytes.Buffer{}
 
-	buf.Write(r.Type)      // nolint: gosec
-	buf.Write(r.Flags)     // nolint: gosec
-	buf.Write(r.SenderPID) // nolint: gosec
-	buf.Write(r.PeerPID)   // nolint: gosec
+	buf.Write(r.Type)
+	buf.Write(r.Flags)
+	buf.Write(r.SenderPID)
+	buf.Write(r.PeerPID)
 
 	return buf.Bytes()
 }

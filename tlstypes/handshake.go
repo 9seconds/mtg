@@ -1,6 +1,7 @@
 package tlstypes
 
 import (
+	"bytes"
 	"io"
 
 	"github.com/9seconds/mtg/utils"
@@ -15,8 +16,7 @@ type Handshake struct {
 }
 
 func (h *Handshake) WriteBytes(writer io.Writer) {
-	packetBuf := acquireBytesBuffer()
-	defer releaseBytesBuffer(packetBuf)
+	packetBuf := bytes.Buffer{}
 
 	writer.Write([]byte{byte(h.Type)}) // nolint: errcheck
 
@@ -24,7 +24,7 @@ func (h *Handshake) WriteBytes(writer io.Writer) {
 	packetBuf.Write(h.Random[:])
 	packetBuf.WriteByte(byte(len(h.SessionID)))
 	packetBuf.Write(h.SessionID)
-	h.Tail.WriteBytes(packetBuf)
+	h.Tail.WriteBytes(&packetBuf)
 
 	sizeUint24 := utils.ToUint24(uint32(packetBuf.Len()))
 	sizeUint24Bytes := sizeUint24[:]
@@ -35,10 +35,9 @@ func (h *Handshake) WriteBytes(writer io.Writer) {
 }
 
 func (h *Handshake) Len() int {
-	buf := acquireBytesBuffer()
-	defer releaseBytesBuffer(buf)
+	buf := bytes.Buffer{}
 
-	h.WriteBytes(buf)
+	h.WriteBytes(&buf)
 
 	return buf.Len()
 }

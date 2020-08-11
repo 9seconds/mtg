@@ -84,6 +84,7 @@ func (c *ClientProtocol) Handshake(socket conntypes.StreamReadWriteCloser) (conn
 	replayKey := decryptedFrame.Unique()
 	if antireplay.Cache.HasObfuscated2(replayKey) {
 		stats.Stats.ReplayDetected()
+
 		return nil, errors.New("replay attack is detected")
 	}
 
