@@ -84,7 +84,7 @@ func (c *ClientProtocol) tlsHandshake(conn io.ReadWriter) error {
 	timeDiff := time.Since(createdAt)
 
 	if (timeDiff > TimeSkew || timeDiff < -TimeSkew) && timestamp > TimeFromBoot {
-		return errBadTime
+		return fmt.Errorf("extracted timestamp is %d: %w", timestamp, errBadTime)
 	}
 
 	if antireplay.Cache.HasTLS(clientHello.Random[:]) {
