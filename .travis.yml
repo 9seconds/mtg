@@ -5,6 +5,7 @@ sudo: false
 dist: trusty
 
 go:
+  - 1.15.x
   - 1.14.x
   - 1.13.x
   - master
@@ -18,4 +19,3 @@ script:
 matrix:
   allow_failures:
     - go: master
-    - go: 1.14.x  # because of golangci-lint

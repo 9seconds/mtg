@@ -7,13 +7,14 @@ require (
 	github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d
 	github.com/beevik/ntp v0.3.0
 	github.com/prometheus/client_golang v1.7.1
-	github.com/prometheus/common v0.11.1 // indirect
+	github.com/prometheus/common v0.13.0 // indirect
 	github.com/smira/go-statsd v1.3.1
-	go.uber.org/zap v1.15.0
-	golang.org/x/crypto v0.0.0-20200728195943-123391ffb6de
+	go.uber.org/multierr v1.6.0 // indirect
+	go.uber.org/zap v1.16.0
+	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
-	golang.org/x/net v0.0.0-20200707034311-ab3426394381 // indirect
-	golang.org/x/sys v0.0.0-20200808120158-1030fc2bf1d9
+	golang.org/x/net v0.0.0-20200904194848-62affa334b73 // indirect
+	golang.org/x/sys v0.0.0-20200918174421-af09f7315aff
 	golang.org/x/tools v0.0.0-20200319210407-521f4a0cd458 // indirect
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
