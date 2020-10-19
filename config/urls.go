@@ -48,7 +48,7 @@ func makeURLs(addr *net.TCPAddr, secret string) (urls URLs) {
 	urls.TG = makeTGURL(values)
 	urls.TMe = makeTMeURL(values)
 	urls.TGQRCode = makeQRCodeURL(urls.TG)
-	urls.TMeQRCode = makeQRCodeURL(urls.TG)
+	urls.TMeQRCode = makeQRCodeURL(urls.TMe)
 
 	return
 }
