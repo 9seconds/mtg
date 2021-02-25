@@ -43,7 +43,7 @@ func (w *wrapperConn) Write(p []byte) (int, error) {
 		w.Close()
 	}
 
-	return n, err
+	return n, err // nolint: wrapcheck
 }
 
 func (w *wrapperConn) ReadTimeout(p []byte, timeout time.Duration) (int, error) {
@@ -64,7 +64,7 @@ func (w *wrapperConn) Read(p []byte) (int, error) {
 		w.Close()
 	}
 
-	return n, err
+	return n, err // nolint: wrapcheck
 }
 
 func (w *wrapperConn) Close() error {

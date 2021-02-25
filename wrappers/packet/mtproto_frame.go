@@ -40,7 +40,7 @@ type wrapperMtprotoFrame struct {
 	writeSeqNo int32
 }
 
-func (w *wrapperMtprotoFrame) Read() (conntypes.Packet, error) { // nolint: funlen
+func (w *wrapperMtprotoFrame) Read() (conntypes.Packet, error) { // nolint: funlen, cyclop
 	buf := &bytes.Buffer{}
 
 	sum := crc32.NewIEEE()
@@ -132,7 +132,7 @@ func (w *wrapperMtprotoFrame) Write(p conntypes.Packet) error {
 
 	_, err := w.parent.Write(buf.Bytes())
 
-	return err
+	return err // nolint: wrapcheck
 }
 
 func (w *wrapperMtprotoFrame) Close() error {

@@ -19,7 +19,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-func Proxy() error { // nolint: funlen
+func Proxy() error { // nolint: funlen,cyclop
 	ctx := utils.GetSignalContext()
 
 	atom := zap.NewAtomicLevel()

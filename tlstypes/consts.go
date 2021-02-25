@@ -20,9 +20,9 @@ const (
 type CipherSuiteType uint8
 
 const (
-	CipherSuiteType_TLS_AES_128_GCM_SHA256       CipherSuiteType = iota // nolint: stylecheck,golint
-	CipherSuiteType_TLS_AES_256_GCM_SHA384                              // nolint: stylecheck,golint
-	CipherSuiteType_TLS_CHACHA20_POLY1305_SHA256                        // nolint: stylecheck,golint
+	CipherSuiteType_TLS_AES_128_GCM_SHA256       CipherSuiteType = iota // nolint: stylecheck,golint,revive
+	CipherSuiteType_TLS_AES_256_GCM_SHA384                              // nolint: stylecheck,golint,revive
+	CipherSuiteType_TLS_CHACHA20_POLY1305_SHA256                        // nolint: stylecheck,golint,revive
 )
 
 func (c CipherSuiteType) Bytes() []byte {
@@ -69,9 +69,9 @@ var (
 	Version12Bytes = []byte{0x03, 0x03}
 	Version13Bytes = []byte{0x03, 0x04}
 
-	CipherSuiteType_TLS_AES_128_GCM_SHA256_Bytes       = []byte{0x13, 0x01} // nolint: stylecheck,golint
-	CipherSuiteType_TLS_AES_256_GCM_SHA384_Bytes       = []byte{0x13, 0x02} // nolint: stylecheck,golint
-	CipherSuiteType_TLS_CHACHA20_POLY1305_SHA256_Bytes = []byte{0x13, 0x03} // nolint: stylecheck,golint
+	CipherSuiteType_TLS_AES_128_GCM_SHA256_Bytes       = []byte{0x13, 0x01} // nolint: stylecheck,golint,revive
+	CipherSuiteType_TLS_AES_256_GCM_SHA384_Bytes       = []byte{0x13, 0x02} // nolint: stylecheck,golint,revive
+	CipherSuiteType_TLS_CHACHA20_POLY1305_SHA256_Bytes = []byte{0x13, 0x03} // nolint: stylecheck,golint,revive
 )
 
 type Byter interface {

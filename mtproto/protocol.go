@@ -51,7 +51,7 @@ func doRPCNonceRequest(conn conntypes.BasePacketWriter) (*rpc.NonceRequest, erro
 	}
 
 	if err := conn.Write(rpcNonceReq.Bytes()); err != nil {
-		return nil, err
+		return nil, err // nolint: wrapcheck
 	}
 
 	return rpcNonceReq, nil

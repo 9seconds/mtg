@@ -9,7 +9,7 @@ import (
 
 func Fatal(arg interface{}) {
 	if value, ok := arg.(error); ok {
-		arg = fmt.Errorf("fatal error: %+v", value)
+		arg = fmt.Errorf("fatal error: %+v", value) // nolint: errorlint
 	}
 
 	PrintStderr(arg)
@@ -21,7 +21,7 @@ func PrintStderr(args ...interface{}) {
 }
 
 func PrintStdout(args ...interface{}) {
-	fmt.Println(args...)
+	fmt.Println(args...) // nolint: forbidigo
 }
 
 func PrintJSONStderr(data interface{}) {

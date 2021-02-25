@@ -31,7 +31,7 @@ func (w *wrapperObfuscated2) ReadTimeout(p []byte, timeout time.Duration) (int, 
 func (w *wrapperObfuscated2) Read(p []byte) (int, error) {
 	n, err := w.parent.Read(p)
 	if err != nil {
-		return n, err
+		return n, err // nolint: wrapcheck
 	}
 
 	w.decryptor.XORKeyStream(p, p[:n])

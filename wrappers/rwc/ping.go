@@ -20,7 +20,7 @@ func (w *wrapperPing) Read(p []byte) (int, error) {
 		}
 	}
 
-	return n, err
+	return n, err // nolint: wrapcheck
 }
 
 func (w *wrapperPing) Write(p []byte) (int, error) {
@@ -32,7 +32,7 @@ func (w *wrapperPing) Write(p []byte) (int, error) {
 		}
 	}
 
-	return n, err
+	return n, err // nolint: wrapcheck
 }
 
 func (w *wrapperPing) Close() error {
