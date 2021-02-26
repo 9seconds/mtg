@@ -8,6 +8,8 @@ on:
       - v*
     branches:
       - master
+      - stable
+      - v1
   release:
     types:
       - published
