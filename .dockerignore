@@ -1,3 +1,9 @@
-version.go
 vendor/
 tags
+.github/
+.bin/
+*.md
+mtg
+.golangci.toml
+.gitignore
+run.sh
