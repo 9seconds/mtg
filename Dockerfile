@@ -9,15 +9,13 @@ RUN set -x \
     ca-certificates \
     curl \
     git \
-    make \
-    upx
+    make
 
-COPY . /go/src/github.com/9seconds/mtg/
-WORKDIR /go/src/github.com/9seconds/mtg
+COPY . /app
+WORKDIR /app
 
 RUN set -x \
-  && make -j 4 static \
-  && upx --ultra-brute -qq ./mtg
+  && make -j 4 static
 
 
 ###############################################################################
@@ -31,4 +29,4 @@ ENV MTG_BIND=0.0.0.0:3128 \
 EXPOSE 3128 3129
 
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-COPY --from=build /go/src/github.com/9seconds/mtg/mtg /mtg
+COPY --from=build /app/mtg /mtg

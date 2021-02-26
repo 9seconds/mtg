@@ -52,10 +52,10 @@ func (c *ClientProtocol) Handshake(socket conntypes.StreamReadWriteCloser) (conn
 
 	conn, err := c.ClientProtocol.Handshake(conn)
 	if err != nil {
-		return nil, err
+		return nil, err // nolint: wrapcheck
 	}
 
-	return conn, err
+	return conn, err // nolint: wrapcheck
 }
 
 func (c *ClientProtocol) tlsHandshake(conn io.ReadWriter) error {

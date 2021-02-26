@@ -2,6 +2,7 @@ package stream
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"net"
 	"sync"
@@ -36,8 +37,8 @@ func (w *wrapperRewind) Read(p []byte) (int, error) {
 	defer w.mutex.Unlock()
 
 	if w.rewinded {
-		if n, err := w.buf.Read(p); err != io.EOF {
-			return n, err
+		if n, err := w.buf.Read(p); errors.Is(err, io.EOF) {
+			return n, err // nolint: wrapcheck
 		}
 	}
 
@@ -47,7 +48,7 @@ func (w *wrapperRewind) Read(p []byte) (int, error) {
 		w.buf.Write(p[:n])
 	}
 
-	return n, err
+	return n, err // nolint: wrapcheck
 }
 
 func (w *wrapperRewind) ReadTimeout(p []byte, timeout time.Duration) (int, error) {
@@ -55,8 +56,8 @@ func (w *wrapperRewind) ReadTimeout(p []byte, timeout time.Duration) (int, error
 	defer w.mutex.Unlock()
 
 	if w.rewinded {
-		if n, err := w.buf.Read(p); err != io.EOF {
-			return n, err
+		if n, err := w.buf.Read(p); errors.Is(err, io.EOF) {
+			return n, err // nolint: wrapcheck
 		}
 	}
 
@@ -66,7 +67,7 @@ func (w *wrapperRewind) ReadTimeout(p []byte, timeout time.Duration) (int, error
 		w.buf.Write(p[:n])
 	}
 
-	return n, err
+	return n, err // nolint: wrapcheck
 }
 
 func (w *wrapperRewind) Conn() net.Conn {

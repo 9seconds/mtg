@@ -4,56 +4,56 @@ APP_NAME     := $(IMAGE_NAME)
 
 CC_BINARIES  := $(shell bash -c "echo -n $(APP_NAME)-{linux,freebsd,openbsd}-{386,amd64} $(APP_NAME)-linux-{arm,arm64}")
 
-GOLANGCI_LINT_VERSION := v1.31.0
+GOLANGCI_LINT_VERSION := v1.37.1
 
 VERSION_GO         := $(shell go version)
 VERSION_DATE       := $(shell date -Ru)
 VERSION_TAG        := $(shell git describe --tags --always)
-COMMON_BUILD_FLAGS := -ldflags="-s -w -X 'main.version=$(VERSION_TAG) ($(VERSION_GO)) [$(VERSION_DATE)]'"
+COMMON_BUILD_FLAGS := -mod=readonly -ldflags="-s -w -X 'main.version=$(VERSION_TAG) ($(VERSION_GO)) [$(VERSION_DATE)]'"
 
-MOD_ON  := env GO111MODULE=on
-MOD_OFF := env GO111MODULE=auto
+GOBIN  := $(ROOT_DIR)/.bin
+GOTOOL := env "GOBIN=$(GOBIN)" "PATH=$(ROOT_DIR)/.bin:$(PATH)"
 
 # -----------------------------------------------------------------------------
 
-$(APP_NAME):
-	@$(MOD_ON) go build $(COMMON_BUILD_FLAGS) -o "$(APP_NAME)"
+.PHONY: all
+all: build
 
-static-$(APP_NAME):
-	@$(MOD_ON) env CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo $(COMMON_BUILD_FLAGS) -o "$(APP_NAME)"
+.PHONY: build
+build:
+	@go build $(COMMON_BUILD_FLAGS) -o "$(APP_NAME)"
+
+$(APP_NAME): build
+
+.PHONY: static
+static:
+	@env CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo $(COMMON_BUILD_FLAGS) -o "$(APP_NAME)"
 
 $(APP_NAME)-%: GOOS=$(shell echo -n "$@" | sed 's?$(APP_NAME)-??' | cut -f1 -d-)
 $(APP_NAME)-%: GOARCH=$(shell echo -n "$@" | sed 's?$(APP_NAME)-??' | cut -f2 -d-)
 $(APP_NAME)-%: ccbuilds
-	@$(MOD_ON) env "GOOS=$(GOOS)" "GOARCH=$(GOARCH)" \
+	@env "GOOS=$(GOOS)" "GOARCH=$(GOARCH)" \
 		go build \
 		$(COMMON_BUILD_FLAGS) \
 		-o "./ccbuilds/$(APP_NAME)-$(GOOS)-$(GOARCH)"
 
+.PHONY: ccbuilds
 ccbuilds:
 	@rm -rf ./ccbuilds && mkdir -p ./ccbuilds
 
 vendor: go.mod go.sum
 	@$(MOD_ON) go mod vendor
 
-# -----------------------------------------------------------------------------
+.PHONY: test
+test:
+	@go test -v ./...
 
-.PHONY: all
-all: $(APP_NAME)
-
-.PHONY: static
-static: static-$(APP_NAME)
+.PHONY: citest
+citest:
+	@go test -coverprofile=coverage.txt -covermode=atomic -race -v ./...
 
 .PHONY: crosscompile
 crosscompile: $(CC_BINARIES)
-
-.PHONY: crosscompile-dir
-crosscompile-dir:
-	@rm -rf "$(CC_DIR)" && mkdir -p "$(CC_DIR)"
-
-.PHONY: lint
-lint: vendor
-	@$(MOD_OFF) "$(ROOT_DIR)/.bin/golangci-lint" run
 
 .PHONY: clean
 clean:
@@ -61,15 +61,32 @@ clean:
 		git reset --hard >/dev/null && \
 		git submodule foreach --recursive sh -c 'git clean -xfd && git reset --hard' >/dev/null
 
+.PHONY: lint
+lint:
+	@$(GOTOOL) golangci-lint run
+
 .PHONY: docker
 docker:
 	@docker build --pull -t "$(IMAGE_NAME)" "$(ROOT_DIR)"
 
-.PHONY: prepare
-prepare: install-lint
+.PHONY: doc
+doc:
+	@$(GOTOOL) godoc -http 0.0.0.0:10000
 
-.PHONY: install-lint
-install-lint:
-	@mkdir -p ./bin || true && \
+.PHONY: install-tools
+install-tools: install-tools-lint install-tools-godoc
+
+.PHONY: install-tools-lint
+install-tools-lint:
+	@mkdir -p "$(GOBIN)" || true && \
 		curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh \
-		| $(MOD_OFF) bash -s -- -b "$(ROOT_DIR)/.bin" $(GOLANGCI_LINT_VERSION)
+		| bash -s -- -b "$(GOBIN)" "$(GOLANGCI_LINT_VERSION)"
+
+.PHONY: install-tools-godoc
+install-tools-godoc:
+	@mkdir -p "$(GOBIN)" || true && \
+		$(GOTOOL) go get -u golang.org/x/tools/cmd/godoc
+
+.PHONY: update-deps
+upgrade-deps:
+	$go get -u && go mod tidy

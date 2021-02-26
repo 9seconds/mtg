@@ -85,7 +85,7 @@ func NewFakeTLS(socket conntypes.StreamReadWriteCloser) conntypes.StreamReadWrit
 		for {
 			rec, err := tlstypes.ReadRecord(faketls.parent)
 			if err != nil {
-				return nil, err
+				return nil, err // nolint: wrapcheck
 			}
 
 			switch rec.Type {
