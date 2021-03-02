@@ -20,12 +20,13 @@ GOTOOL := env "GOBIN=$(GOBIN)" "PATH=$(ROOT_DIR)/.bin:$(PATH)"
 all: build
 
 .PHONY: build
-build: $(APP_NAME)
-
-$(APP_NAME):
+build:
 	@go build $(COMMON_BUILD_FLAGS) -o "$(APP_NAME)"
 
-static-$(APP_NAME):
+$(APP_NAME): build
+
+.PHONY: static
+static:
 	@env CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo $(COMMON_BUILD_FLAGS) -o "$(APP_NAME)"
 
 $(APP_NAME)-%: GOOS=$(shell echo -n "$@" | sed 's?$(APP_NAME)-??' | cut -f1 -d-)
@@ -36,6 +37,7 @@ $(APP_NAME)-%: ccbuilds
 		$(COMMON_BUILD_FLAGS) \
 		-o "./ccbuilds/$(APP_NAME)-$(GOOS)-$(GOARCH)"
 
+.PHONY: ccbuilds
 ccbuilds:
 	@rm -rf ./ccbuilds && mkdir -p ./ccbuilds
 
