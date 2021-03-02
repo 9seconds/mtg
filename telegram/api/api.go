@@ -40,5 +40,5 @@ func request(url string) (io.ReadCloser, error) {
 		return nil, fmt.Errorf("cannot perform a request: %w", err)
 	}
 
-	return resp.Body, err
+	return resp.Body, err // nolint: wrapcheck
 }

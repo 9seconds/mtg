@@ -168,17 +168,18 @@ func (s *statsStatsd) prepareVals(metric string, tags []*statsStatsdTag) (string
 
 func (s *statsStatsd) initGauge(metric, key string, tags []statsd.Tag) {
 	s.seenMutex.RLock()
-	_, ok := s.seen[key]
-	s.seenMutex.RUnlock()
+	if _, ok := s.seen[key]; ok {
+		s.seenMutex.RUnlock()
 
-	if ok {
 		return
+	} else { // nolint: golint,revive
+		s.seenMutex.RUnlock()
 	}
 
 	s.seenMutex.Lock()
 	defer s.seenMutex.Unlock()
 
-	if _, ok = s.seen[key]; !ok {
+	if _, ok := s.seen[key]; !ok {
 		s.seen[key] = struct{}{}
 		s.client.Gauge(metric, 0, tags...)
 	}

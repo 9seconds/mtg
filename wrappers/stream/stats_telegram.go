@@ -56,7 +56,7 @@ func (w *wrapperTelegramStats) Close() error {
 		stats.Stats.TelegramDisconnected(w.dc, w.RemoteAddr())
 	})
 
-	return err
+	return err // nolint: wrapcheck
 }
 
 func NewTelegramStats(dc conntypes.DC, parent conntypes.StreamReadWriteCloser) conntypes.StreamReadWriteCloser {

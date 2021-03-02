@@ -30,7 +30,7 @@ type connection struct {
 	channelConnDetach chan conntypes.ConnID
 }
 
-func (c *connection) run() {
+func (c *connection) run() { // nolint: cyclop
 	defer c.Close()
 
 	ttl := time.NewTimer(connectionTTL)

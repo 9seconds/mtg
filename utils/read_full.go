@@ -11,7 +11,7 @@ func ReadFull(src io.Reader) (rv []byte, err error) {
 	for n == len(buf) {
 		n, err = src.Read(buf)
 		if err != nil {
-			return nil, err
+			return nil, err // nolint: wrapcheck
 		}
 
 		rv = append(rv, buf[:n]...)

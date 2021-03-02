@@ -160,7 +160,7 @@ type Opt struct {
 
 var C = Config{}
 
-func Init(options ...Opt) error { // nolint: gocyclo, funlen
+func Init(options ...Opt) error { // nolint: gocyclo, funlen, cyclop
 	for _, opt := range options {
 		switch opt.Option {
 		case OptionTypeDebug:
