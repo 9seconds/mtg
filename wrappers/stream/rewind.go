@@ -2,7 +2,6 @@ package stream
 
 import (
 	"bytes"
-	"errors"
 	"io"
 	"net"
 	"sync"
@@ -18,10 +17,10 @@ type ReadWriteCloseRewinder interface {
 }
 
 type wrapperRewind struct {
-	parent   conntypes.StreamReadWriteCloser
-	buf      bytes.Buffer
-	mutex    sync.Mutex
-	rewinded bool
+	parent       conntypes.StreamReadWriteCloser
+	activeReader io.Reader
+	buf          bytes.Buffer
+	mutex        sync.Mutex
 }
 
 func (w *wrapperRewind) Write(p []byte) (int, error) {
@@ -36,38 +35,14 @@ func (w *wrapperRewind) Read(p []byte) (int, error) {
 	w.mutex.Lock()
 	defer w.mutex.Unlock()
 
-	if w.rewinded {
-		if n, err := w.buf.Read(p); errors.Is(err, io.EOF) {
-			return n, err // nolint: wrapcheck
-		}
-	}
-
-	n, err := w.parent.Read(p)
-
-	if !w.rewinded {
-		w.buf.Write(p[:n])
-	}
-
-	return n, err // nolint: wrapcheck
+	return w.activeReader.Read(p)
 }
 
-func (w *wrapperRewind) ReadTimeout(p []byte, timeout time.Duration) (int, error) {
+func (w *wrapperRewind) ReadTimeout(p []byte, _ time.Duration) (int, error) {
 	w.mutex.Lock()
 	defer w.mutex.Unlock()
 
-	if w.rewinded {
-		if n, err := w.buf.Read(p); errors.Is(err, io.EOF) {
-			return n, err // nolint: wrapcheck
-		}
-	}
-
-	n, err := w.parent.ReadTimeout(p, timeout)
-
-	if !w.rewinded {
-		w.buf.Write(p[:n])
-	}
-
-	return n, err // nolint: wrapcheck
+	return w.activeReader.Read(p)
 }
 
 func (w *wrapperRewind) Conn() net.Conn {
@@ -94,12 +69,15 @@ func (w *wrapperRewind) Close() error {
 
 func (w *wrapperRewind) Rewind() {
 	w.mutex.Lock()
-	w.rewinded = true
+	w.activeReader = io.MultiReader(&w.buf, w.parent)
 	w.mutex.Unlock()
 }
 
 func NewRewind(parent conntypes.StreamReadWriteCloser) ReadWriteCloseRewinder {
-	return &wrapperRewind{
+	rv := &wrapperRewind{
 		parent: parent,
 	}
+	rv.activeReader = io.TeeReader(parent, &rv.buf)
+
+	return rv
 }
