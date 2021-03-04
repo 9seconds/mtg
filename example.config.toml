@@ -1,0 +1,127 @@
+# This is an example of the configuration file for mtg. You actually can
+# run mtg with it. It starts a proxy on all interfaces with a secret
+# ee367a189aee18fa31c190054efd4a8e9573746f726167652e676f6f676c65617069732e636f6d
+#
+# It has all possible options with default values. So, a real world
+# configuration file should contain only those options you are going to
+# use. You do not need to enumerate all of them. In other words, each
+# option here has a default value. If you comment a key-value pair, it
+# should not make any effect.
+#
+# stats is the only exception.
+
+# Debug starts application in debug mode. It starts to be quite verbose
+# in output. Actually, the idea is that you run it in debug mode only if
+# you have any issue.
+debug = false
+
+# A secret. Please remember that mtg supports only FakeTLS mode, legacy
+# simple and secured mode are prohibited. For you it means that secret
+# should either be base64-encoded or starts with ee.
+secret = "ee367a189aee18fa31c190054efd4a8e9573746f726167652e676f6f676c65617069732e636f6d"
+
+# Host:port pair to run proxy on.
+bind-to = "0.0.0.0:3128"
+
+# A size of user-space buffer for TCP to use. Since we do 2 connections,
+# then we have tcp-buffer * (4 + 2) per each connection: read/write for
+# each connection + 2 copy buffers to pump the data between sockets.
+tcp-buffer = "4kb"
+
+# Sometimes you want to enforce mtg to use some types of
+# IP connectivity to Telegram. We have 4 modes:
+#   - prefer-ipv6:
+#     We can use both ipv4 and ipv6 but ipv6 has a preference
+#   - prefer-ipv4:
+#     We can use both ipv4 and ipv6 but ipv4 has a preference
+#   - only-ipv6:
+#     Only ipv6 connectivity is used
+#   - only-ipv4:
+#     Only ipv4 connectivity is used
+prefer-ips = "prefer-ipv6"
+
+# FakeTLS uses domain fronting protection. So it needs to know a port to
+# access.
+cloak-port = 443
+
+# FakeTLS can compare timestamps to prevent probes. Each message has
+# encrypted timestamp. So, mtg can compare this timestamp and decide if
+# we need to proceed with connection or not.
+#
+# Please ensure that you have some ntp active on this host. Otherwise,
+# you can endup with badly performing proxy.
+[probes.time]
+# You can enable/disable that. A good idea is always enable.
+enabled = true
+# Time can be skewed by many reasons. So, this is a time interval
+# when message is cosidered as a good one.
+allow-skewness = "5s"
+
+# Some countries do active probing on Telegram connections. This technique
+# allows to protect from such effort.
+#
+# mtg has a cache of some connection fingerprints. Actually, first bytes
+# of each connection. So, it stores them in some in-memory LRU+TTL cache.
+# You can configure this cache here.
+[probes.anti-replay]
+# You can enable/disable this feature.
+enabled = true
+# max size of such a cache. Please be aware that this number is
+# approximate we try hard to store data quite dense but it is possible
+# that we can go over this limit for 10-20% under some conditions and
+# architectures.
+max-size = "16mb"
+# TTL for each cache record.
+ttl = "8h"
+
+# public ip addresses of the server. Actually, it is required only to
+# generate a correct access file. if you use default values here, mtg
+# will try to resolve these IPs on its own.
+[public-ip]
+ipv4 = ""
+ipv6 = ""
+
+# you can redefine a dialer for mtg. Dialer is how we 'dial' to either
+# some external services or telegram. empty string means default
+# connectivity.
+#
+# it is also possible to use socks5 or shadowsocks here
+#
+# socks5 example:
+#   socks5://user:password@host:port
+# shadowsocks example (SIP002):
+#   ss://YWVzLTEyOC1nY206dGVzdA@192.168.100.1:8888
+#
+# You can define 2 dialers here: telegram and default. Telegram dialer
+# is used to connect to Telegram servers only. Default is used for other
+# purposes, like accessing ifconfig.co to obtains public address (DNS is
+# resolved via DoH)
+#
+# Please also be aware that dialers are only doing TCP. If UDP is
+# required (for statsd for example), then these dialers are going to be
+# ignored.
+#
+# If telegram dialer is not defined, a default one is going to be used.
+[dialers]
+telegram = ""
+default = ""
+
+# statsd statistics integration.
+[stats.statsd]
+# enabled/disabled
+enabled = false
+# host:port for UDP endpoint of statsd
+address = "127.0.0.1:8888"
+# prefix of metric for statsd
+metric-prefix = "mtg"
+
+# prometheus metrics integration.
+[stats.prometheus]
+# enabled/disabled
+enabled = true
+# host:port where to start http server for endpoint
+bind-to = "127.0.0.1:3129"
+# prefix of http path
+http-path = "/"
+# prefix for metrics for prometheus
+metric-prefix = "mtg"
