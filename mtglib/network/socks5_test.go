@@ -14,6 +14,7 @@ import (
 type Socks5TestSuite struct {
 	HTTPServerTestSuite
 
+	baseDialer    network.Dialer
 	socksListener net.Listener
 	socksProxy    *socks5.Server
 }
@@ -29,6 +30,7 @@ func (suite *Socks5TestSuite) SetupSuite() {
 
 	suite.socksProxy, _ = socks5.New(&socksConf)
 	suite.socksListener, _ = net.Listen("tcp", "127.0.0.1:0")
+    suite.baseDialer, _ = network.NewDefaultDialer(0, 0)
 
 	go suite.socksProxy.Serve(suite.socksListener)
 }
@@ -45,7 +47,7 @@ func (suite *Socks5TestSuite) TestRequestFailed() {
 		User:   url.UserPassword("user2", "password"),
 		Host:   suite.socksListener.Addr().String(),
 	}
-	dialer, _ := network.NewSocks5Dialer(proxyURL, 0, 0)
+	dialer, _ := network.NewSocks5Dialer(proxyURL, suite.baseDialer)
 
 	httpClient := http.Client{
 		Transport: &http.Transport{
@@ -64,7 +66,7 @@ func (suite *Socks5TestSuite) TestRequestOk() {
 		User:   url.UserPassword("user", "password"),
 		Host:   suite.socksListener.Addr().String(),
 	}
-	dialer, _ := network.NewSocks5Dialer(proxyURL, 0, 0)
+	dialer, _ := network.NewSocks5Dialer(proxyURL, suite.baseDialer)
 
 	httpClient := http.Client{
 		Transport: &http.Transport{
