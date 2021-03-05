@@ -3,38 +3,26 @@ package network_test
 import (
 	"context"
 	"net/http"
-	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/9seconds/mtg/v2/mtglib/network"
-	"github.com/mccutchen/go-httpbin/httpbin"
 	"github.com/stretchr/testify/suite"
 )
 
 type DefaultDialerTestSuite struct {
-	suite.Suite
+	HTTPServerTestSuite
 
-	d          network.Dialer
-	srvAddress string
-	srv        *httptest.Server
+	d network.Dialer
 }
 
 func (suite *DefaultDialerTestSuite) SetupSuite() {
-	suite.srv = httptest.NewServer(httpbin.NewHTTPBin().Handler())
-	suite.srvAddress = strings.TrimPrefix(suite.srv.URL, "http://")
-}
+	suite.HTTPServerTestSuite.SetupSuite()
 
-func (suite *DefaultDialerTestSuite) SetupTest() {
 	d, err := network.NewDefaultDialer(0, 0)
 
 	suite.NoError(err)
 
 	suite.d = d
-}
-
-func (suite *DefaultDialerTestSuite) TearDownSuite() {
-	suite.srv.Close()
 }
 
 func (suite *DefaultDialerTestSuite) TestNegativeTimeout() {
@@ -50,7 +38,9 @@ func (suite *DefaultDialerTestSuite) TestNegativeBufferSize() {
 }
 
 func (suite *DefaultDialerTestSuite) TestUnsupportedProtocol() {
-	_, err := suite.d.DialContext(context.Background(), "udp", suite.srvAddress)
+	_, err := suite.d.DialContext(context.Background(),
+		"udp",
+		suite.HTTPServerAddress())
 
 	suite.Error(err)
 }
@@ -58,7 +48,7 @@ func (suite *DefaultDialerTestSuite) TestUnsupportedProtocol() {
 func (suite *DefaultDialerTestSuite) TestCannotDial() {
 	_, err := suite.d.DialContext(context.Background(),
 		"tcp",
-		suite.srvAddress+suite.srvAddress)
+		suite.HTTPServerAddress()+suite.HTTPServerAddress())
 
 	suite.Error(err)
 }
@@ -66,7 +56,7 @@ func (suite *DefaultDialerTestSuite) TestCannotDial() {
 func (suite *DefaultDialerTestSuite) TestConnectOk() {
 	conn, err := suite.d.DialContext(context.Background(),
 		"tcp",
-		suite.srvAddress)
+		suite.HTTPServerAddress())
 
 	suite.NoError(err)
 	suite.NotNil(conn)
@@ -74,14 +64,14 @@ func (suite *DefaultDialerTestSuite) TestConnectOk() {
 	conn.Close()
 }
 
-func (suite *DefaultDialerTestSuite) TestRequest() {
+func (suite *DefaultDialerTestSuite) TestHTTPRequest() {
 	httpClient := http.Client{
 		Transport: &http.Transport{
 			DialContext: suite.d.DialContext,
 		},
 	}
 
-	resp, err := httpClient.Get(suite.srv.URL + "/get")
+	resp, err := httpClient.Get(suite.httpServer.URL + "/get")
 
 	suite.NoError(err)
 
