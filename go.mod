@@ -5,7 +5,9 @@ go 1.16
 require (
 	github.com/babolivier/go-doh-client v0.0.0-20201028162107-a76cff4cb8b6
 	github.com/libp2p/go-reuseport v0.0.2
+	github.com/mccutchen/go-httpbin v1.1.1 // indirect
 	github.com/pelletier/go-toml v1.8.1
 	github.com/shadowsocks/go-shadowsocks2 v0.1.4
+	github.com/stretchr/testify v1.7.0 // indirect
 	golang.org/x/net v0.0.0-20210226172049-e18ecbb05110
 )
