@@ -44,6 +44,13 @@ prefer-ips = "prefer-ipv6"
 # access.
 cloak-port = 443
 
+# Path to access file. Each time when proxy starts up, it writes an
+# access file. This file contains a JSON with settings how to access
+# this proxy.
+#
+# Pass filepath here or '-' if you want to dump into stdout.
+access-file = "-"
+
 # FakeTLS can compare timestamps to prevent probes. Each message has
 # encrypted timestamp. So, mtg can compare this timestamp and decide if
 # we need to proceed with connection or not.
