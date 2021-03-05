@@ -26,14 +26,17 @@ type rawConfig struct {
 			TTL     string `toml:"ttl"`
 		} `toml:"anti-replay"`
 	} `toml:"probes"`
-	PublicIP struct {
-		IPv4 string `toml:"ipv4"`
-		IPv6 string `toml:"ipv6"`
-	} `toml:"public-ip"`
-	Dialers struct {
-		Telegram string `toml:"telegram"`
-		Default  string `toml:"default"`
-	} `toml:"dialers"`
+	Network struct {
+		PublicIP struct {
+			IPv4 string `toml:"ipv4"`
+			IPv6 string `toml:"ipv6"`
+		} `toml:"public-ip"`
+		Dialers struct {
+			Telegram string `toml:"telegram"`
+			Default  string `toml:"default"`
+		} `toml:"dialers"`
+		DOHHostname string `toml:"doh-hostname"`
+	} `toml:"network"`
 	Stats struct {
 		StatsD struct {
 			Enabled      bool   `toml:"enabled"`

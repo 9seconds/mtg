@@ -51,6 +51,54 @@ cloak-port = 443
 # Pass filepath here or '-' if you want to dump into stdout.
 access-file = "-"
 
+# network defines different network-related settings
+[network]
+# please be aware that mtg needs to do some external requests. For
+# example, if you do not pass public ips, it will request your public ip
+# address from some external service.
+#
+# As for 2.0, if you set a public-ip on your own, mtg won't issue any
+# network requests except of those required for Telegram.
+#
+# so, in order of doing them, it needs to do DNS lookup. mtg ignores DNS
+# resolver of the operating system and uses DOH instead. This is a host
+# it has to access.
+#
+# By default we use Quad9.
+doh-hostname = "9.9.9.9"
+
+# public ip addresses of the server. Actually, it is required only to
+# generate a correct access file. if you use default values here, mtg
+# will try to resolve these IPs on its own.
+[network.public-ip]
+ipv4 = ""
+ipv6 = ""
+
+# you can redefine a dialer for mtg. Dialer is how we 'dial' to either
+# some external services or telegram. empty string means default
+# connectivity.
+#
+# it is also possible to use socks5 or shadowsocks here
+#
+# socks5 example:
+#   socks5://user:password@host:port
+# shadowsocks example (SIP002):
+#   ss://YWVzLTEyOC1nY206dGVzdA@192.168.100.1:8888
+#
+# You can define 2 dialers here: telegram and default. Telegram dialer
+# is used to connect to Telegram servers only. Default is used for other
+# purposes, like accessing ifconfig.co to obtains public address (DNS is
+# resolved via DoH)
+#
+# Please also be aware that dialers are only doing TCP. If UDP is
+# required (for statsd for example), then these dialers are going to be
+# ignored.
+#
+# If telegram dialer is not defined, a default one is going to be used.
+[network.dialers]
+telegram = ""
+default = ""
+
 # FakeTLS can compare timestamps to prevent probes. Each message has
 # encrypted timestamp. So, mtg can compare this timestamp and decide if
 # we need to proceed with connection or not.
@@ -80,38 +128,6 @@ enabled = true
 max-size = "16mb"
 # TTL for each cache record.
 ttl = "8h"
-
-# public ip addresses of the server. Actually, it is required only to
-# generate a correct access file. if you use default values here, mtg
-# will try to resolve these IPs on its own.
-[public-ip]
-ipv4 = ""
-ipv6 = ""
-
-# you can redefine a dialer for mtg. Dialer is how we 'dial' to either
-# some external services or telegram. empty string means default
-# connectivity.
-#
-# it is also possible to use socks5 or shadowsocks here
-#
-# socks5 example:
-#   socks5://user:password@host:port
-# shadowsocks example (SIP002):
-#   ss://YWVzLTEyOC1nY206dGVzdA@192.168.100.1:8888
-#
-# You can define 2 dialers here: telegram and default. Telegram dialer
-# is used to connect to Telegram servers only. Default is used for other
-# purposes, like accessing ifconfig.co to obtains public address (DNS is
-# resolved via DoH)
-#
-# Please also be aware that dialers are only doing TCP. If UDP is
-# required (for statsd for example), then these dialers are going to be
-# ignored.
-#
-# If telegram dialer is not defined, a default one is going to be used.
-[dialers]
-telegram = ""
-default = ""
 
 # statsd statistics integration.
 [stats.statsd]

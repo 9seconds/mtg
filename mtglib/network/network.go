@@ -30,9 +30,11 @@ func (d *Network) DialContext(ctx context.Context, network, address string) (net
 		return nil, fmt.Errorf("cannot resolve dns names: %w", err)
 	}
 
-	rand.Shuffle(len(ips), func(i, j int) {
-		ips[i], ips[j] = ips[j], ips[i]
-	})
+	if len(ips) > 1 {
+		rand.Shuffle(len(ips), func(i, j int) {
+			ips[i], ips[j] = ips[j], ips[i]
+		})
+	}
 
 	for _, v := range ips {
 		if conn, err := d.dialer.DialContext(ctx, network, net.JoinHostPort(v, port)); err == nil {
