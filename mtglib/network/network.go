@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
+	"sync"
 	"time"
 
 	doh "github.com/babolivier/go-doh-client"
@@ -50,25 +51,47 @@ func (d *Network) resolveIPs(network, address string) ([]string, error) {
 		return []string{address}, nil
 	}
 
-	var ips []string
+	ips := []string{}
+	wg := &sync.WaitGroup{}
+	mutex := &sync.Mutex{}
 
 	switch network {
 	case "tcp", "tcp4":
-		if recs, _, err := d.DNS.LookupA(address); err == nil {
-			for _, v := range recs {
-				ips = append(ips, v.IP4)
+		wg.Add(1)
+
+		go func() {
+			defer wg.Done()
+
+			if recs, _, err := d.DNS.LookupA(address); err == nil {
+				mutex.Lock()
+				defer mutex.Unlock()
+
+				for _, v := range recs {
+					ips = append(ips, v.IP4)
+				}
 			}
-		}
+		}()
 	}
 
 	switch network {
 	case "tcp", "tcp6":
-		if recs, _, err := d.DNS.LookupAAAA(address); err == nil {
-			for _, v := range recs {
-				ips = append(ips, v.IP6)
+		wg.Add(1)
+
+		go func() {
+			defer wg.Done()
+
+			if recs, _, err := d.DNS.LookupAAAA(address); err == nil {
+				mutex.Lock()
+				defer mutex.Unlock()
+
+				for _, v := range recs {
+					ips = append(ips, v.IP6)
+				}
 			}
-		}
+		}()
 	}
+
+	wg.Wait()
 
 	if len(ips) == 0 {
 		return nil, fmt.Errorf("cannot find any ips for %s:%s", network, address)

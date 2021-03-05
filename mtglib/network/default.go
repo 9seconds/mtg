@@ -21,7 +21,7 @@ func (d *defaultDialer) Dial(network, address string) (net.Conn, error) {
 
 func (d *defaultDialer) DialContext(ctx context.Context, network, address string) (net.Conn, error) {
 	switch network {
-	case "tcp", "tcp4", "tcp6":
+	case "tcp", "tcp4", "tcp6": // nolint: goconst
 	default:
 		return nil, fmt.Errorf("unsupported network %s", network)
 	}
@@ -35,21 +35,25 @@ func (d *defaultDialer) DialContext(ctx context.Context, network, address string
 
 	if err := tcpConn.SetNoDelay(true); err != nil {
 		conn.Close()
+
 		return nil, fmt.Errorf("cannot set TCP_NO_DELAY: %w", err)
 	}
 
 	if err := tcpConn.SetReadBuffer(d.bufferSize); err != nil {
 		tcpConn.Close()
+
 		return nil, fmt.Errorf("cannot set read buffer size: %w", err)
 	}
 
 	if err := tcpConn.SetWriteBuffer(d.bufferSize); err != nil {
 		tcpConn.Close()
+
 		return nil, fmt.Errorf("cannot set write buffer size: %w", err)
 	}
 
 	if err := tcpConn.SetKeepAlive(true); err != nil {
 		tcpConn.Close()
+
 		return nil, fmt.Errorf("cannot enable keep-alive: %w", err)
 	}
 
@@ -61,7 +65,7 @@ func NewDefaultDialer(timeout time.Duration, bufferSize int) (Dialer, error) {
 	case timeout < 0:
 		return nil, fmt.Errorf("timeout %v should be positive number", timeout)
 	case bufferSize < 0:
-		return nil, fmt.Errorf("buffer size %s should be positive number", bufferSize)
+		return nil, fmt.Errorf("buffer size %d should be positive number", bufferSize)
 	}
 
 	if timeout == 0 {
