@@ -1,4 +1,4 @@
-package dialers
+package network
 
 import (
 	"context"
@@ -11,18 +11,18 @@ import (
 	doh "github.com/babolivier/go-doh-client"
 )
 
-type Dialer struct {
+type Network struct {
 	HTTP http.Client
 	DNS  doh.Resolver
 
-	baseDialer BaseDialer
+	dialer Dialer
 }
 
-func (d *Dialer) Dial(network, address string) (net.Conn, error) {
+func (d *Network) Dial(network, address string) (net.Conn, error) {
 	return d.DialContext(context.Background(), network, address)
 }
 
-func (d *Dialer) DialContext(ctx context.Context, network, address string) (net.Conn, error) {
+func (d *Network) DialContext(ctx context.Context, network, address string) (net.Conn, error) {
 	host, port, _ := net.SplitHostPort(address)
 
 	ips, err := d.resolveIPs(network, host)
@@ -35,7 +35,7 @@ func (d *Dialer) DialContext(ctx context.Context, network, address string) (net.
 	})
 
 	for _, v := range ips {
-		if conn, err := d.baseDialer.DialContext(ctx, network, net.JoinHostPort(v, port)); err == nil {
+		if conn, err := d.dialer.DialContext(ctx, network, net.JoinHostPort(v, port)); err == nil {
 			return conn, nil
 		}
 	}
@@ -43,7 +43,7 @@ func (d *Dialer) DialContext(ctx context.Context, network, address string) (net.
 	return nil, fmt.Errorf("cannot dial to %s:%s", network, address)
 }
 
-func (d *Dialer) resolveIPs(network, address string) ([]string, error) {
+func (d *Network) resolveIPs(network, address string) ([]string, error) {
 	if net.ParseIP(address) != nil {
 		return []string{address}, nil
 	}
@@ -75,7 +75,7 @@ func (d *Dialer) resolveIPs(network, address string) ([]string, error) {
 	return ips, nil
 }
 
-func MakeDialer(base BaseDialer, dohHostname string, httpTimeout time.Duration) (*Dialer, error) {
+func NewNetwork(dialer Dialer, dohHostname string, httpTimeout time.Duration) (*Network, error) {
 	switch {
 	case httpTimeout < 0:
 		return nil, fmt.Errorf("timeout should be positive number %v", httpTimeout)
@@ -90,23 +90,23 @@ func MakeDialer(base BaseDialer, dohHostname string, httpTimeout time.Duration) 
 	dohHTTPClient := &http.Client{
 		Timeout: httpTimeout,
 		Transport: &http.Transport{
-			DialContext: base.DialContext,
+			DialContext: dialer.DialContext,
 		},
 	}
-	rv := &Dialer{
-		baseDialer: base,
+	network := &Network{
+		dialer: dialer,
 		DNS: doh.Resolver{
 			Host:       dohHostname,
 			Class:      doh.IN,
 			HTTPClient: dohHTTPClient,
 		},
 	}
-	rv.HTTP = http.Client{
+	network.HTTP = http.Client{
 		Timeout: httpTimeout,
 		Transport: &http.Transport{
-			DialContext: rv.DialContext,
+			DialContext: network.DialContext,
 		},
 	}
 
-	return rv, nil
+	return network, nil
 }

@@ -1,4 +1,4 @@
-package dialers
+package network
 
 import (
 	"context"
@@ -12,23 +12,15 @@ import (
 	shadowsocks "github.com/shadowsocks/go-shadowsocks2/core"
 )
 
-type shadowsocksBaseDialer struct {
-	base   BaseDialer
+type shadowsocksDialer struct {
+	Dialer
+
 	cipher shadowsocks.StreamConnCipher
 }
 
-func (s *shadowsocksBaseDialer) Dial(network, address string) (net.Conn, error) {
-	conn, err := s.base.Dial(network, address)
-	if err != nil {
-		return nil, err
-	}
-
-	return s.cipher.StreamConn(conn), nil
-}
-
-func (s *shadowsocksBaseDialer) DialContext(ctx context.Context,
+func (s *shadowsocksDialer) DialContext(ctx context.Context,
 	network, address string) (net.Conn, error) {
-	conn, err := s.base.DialContext(ctx, network, address)
+	conn, err := s.Dialer.DialContext(ctx, network, address)
 	if err != nil {
 		return nil, err
 	}
@@ -36,8 +28,8 @@ func (s *shadowsocksBaseDialer) DialContext(ctx context.Context,
 	return s.cipher.StreamConn(conn), nil
 }
 
-func NewShadowsocksBaseDialer(proxyUrl *url.URL,
-	timeout time.Duration, bufferSize int) (BaseDialer, error) {
+func NewShadowsocksDialer(proxyUrl *url.URL,
+	timeout time.Duration, bufferSize int) (Dialer, error) {
 	username := proxyUrl.User.Username()
 
 	decoded, err := base64.RawURLEncoding.DecodeString(username)
@@ -55,14 +47,14 @@ func NewShadowsocksBaseDialer(proxyUrl *url.URL,
 		return nil, fmt.Errorf("cannot initialize shadowsocks cipher: %w", err)
 	}
 
-	baseDialer, err := NewDefaultBaseDialer(timeout, bufferSize)
+	dialer, err := NewDefaultDialer(timeout, bufferSize)
 	if err != nil {
 		return nil, fmt.Errorf("cannot initialize a base dialer: %w", err)
 
 	}
 
-	return &shadowsocksBaseDialer{
-		base:   baseDialer,
+	return &shadowsocksDialer{
+		Dialer: dialer,
 		cipher: cipher,
 	}, nil
 }

@@ -1,4 +1,4 @@
-package dialers
+package network
 
 import "time"
 

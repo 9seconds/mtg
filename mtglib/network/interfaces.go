@@ -1,11 +1,10 @@
-package dialers
+package network
 
 import (
 	"context"
 	"net"
 )
 
-type BaseDialer interface {
-	Dial(network, address string) (net.Conn, error)
+type Dialer interface {
 	DialContext(ctx context.Context, network, address string) (net.Conn, error)
 }

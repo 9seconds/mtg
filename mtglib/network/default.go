@@ -1,4 +1,4 @@
-package dialers
+package network
 
 import (
 	"context"
@@ -9,17 +9,17 @@ import (
 	"github.com/libp2p/go-reuseport"
 )
 
-type defaultBaseDialer struct {
+type defaultDialer struct {
 	net.Dialer
 
 	bufferSize int
 }
 
-func (d *defaultBaseDialer) Dial(network, address string) (net.Conn, error) {
+func (d *defaultDialer) Dial(network, address string) (net.Conn, error) {
 	return d.DialContext(context.Background(), network, address)
 }
 
-func (d *defaultBaseDialer) DialContext(ctx context.Context, network, address string) (net.Conn, error) {
+func (d *defaultDialer) DialContext(ctx context.Context, network, address string) (net.Conn, error) {
 	switch network {
 	case "tcp", "tcp4", "tcp6":
 	default:
@@ -56,7 +56,7 @@ func (d *defaultBaseDialer) DialContext(ctx context.Context, network, address st
 	return tcpConn, nil
 }
 
-func NewDefaultBaseDialer(timeout time.Duration, bufferSize int) (BaseDialer, error) {
+func NewDefaultDialer(timeout time.Duration, bufferSize int) (Dialer, error) {
 	switch {
 	case timeout < 0:
 		return nil, fmt.Errorf("timeout %v should be positive number", timeout)
@@ -72,7 +72,7 @@ func NewDefaultBaseDialer(timeout time.Duration, bufferSize int) (BaseDialer, er
 		bufferSize = DefaultBufferSize
 	}
 
-	return &defaultBaseDialer{
+	return &defaultDialer{
 		Dialer: net.Dialer{
 			Timeout: timeout,
 			Control: reuseport.Control,

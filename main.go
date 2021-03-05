@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/9seconds/mtg/v2/mtglib/dialers"
+	"github.com/9seconds/mtg/v2/mtglib/network"
 )
 
 var version = "dev" // has to be set by ldflags
@@ -19,8 +19,8 @@ func main() {
 
 	fmt.Println(parseRawConfig(f))
 
-	bd, _ := dialers.NewDefaultBaseDialer(0, 0)
-	d, _ := dialers.MakeDialer(bd, "9.9.9.9", 0)
+	bd, _ := network.NewDefaultDialer(0, 0)
+	d, _ := network.NewNetwork(bd, "9.9.9.9", 0)
 
 	r, err := d.HTTP.Get("https://ifconfig.co")
 
