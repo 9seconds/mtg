@@ -113,7 +113,7 @@ func NewNetwork(dialer Dialer, dohHostname string, httpTimeout time.Duration) (*
 	}
 
 	dohHTTPClient := &http.Client{
-		Timeout: httpTimeout,
+		Timeout: DefaultDNSTimeout,
 		Transport: &http.Transport{
 			DialContext: dialer.DialContext,
 		},

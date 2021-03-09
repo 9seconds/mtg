@@ -47,7 +47,7 @@ func (suite *Socks5TestSuite) TestRequestFailed() {
 		User:   url.UserPassword("user2", "password"),
 		Host:   suite.socksListener.Addr().String(),
 	}
-	dialer, _ := network.NewSocks5Dialer(proxyURL, suite.baseDialer)
+	dialer, _ := network.NewSocks5Dialer(suite.baseDialer, proxyURL)
 
 	httpClient := http.Client{
 		Transport: &http.Transport{
@@ -66,7 +66,7 @@ func (suite *Socks5TestSuite) TestRequestOk() {
 		User:   url.UserPassword("user", "password"),
 		Host:   suite.socksListener.Addr().String(),
 	}
-	dialer, _ := network.NewSocks5Dialer(proxyURL, suite.baseDialer)
+	dialer, _ := network.NewSocks5Dialer(suite.baseDialer, proxyURL)
 
 	httpClient := http.Client{
 		Transport: &http.Transport{
