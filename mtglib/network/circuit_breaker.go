@@ -71,7 +71,7 @@ func (c *circuitBreakerDialer) doClosed(ctx context.Context,
 
 	c.failuresCount++
 
-	if c.state == circuitBreakerStateClosed && c.failuresCount > c.openThreshold {
+	if c.state == circuitBreakerStateClosed && c.failuresCount >= c.openThreshold {
 		c.switchState(circuitBreakerStateOpened)
 	}
 
@@ -184,6 +184,7 @@ func newCircuitBreakerDialer(baseDialer Dialer,
 	openThreshold uint32, halfOpenTimeout, resetFailuresTimeout time.Duration) Dialer {
 	cb := &circuitBreakerDialer{
 		Dialer:               baseDialer,
+		stateMutexChan:       make(chan bool, 1),
 		openThreshold:        openThreshold,
 		halfOpenTimeout:      halfOpenTimeout,
 		resetFailuresTimeout: resetFailuresTimeout,
