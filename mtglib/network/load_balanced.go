@@ -2,6 +2,7 @@ package network
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
 	"net"
 	"net/url"
@@ -31,19 +32,12 @@ func (l loadBalancedDialer) DialContext(ctx context.Context, network, address st
 }
 
 func NewLoadBalancedDialer(baseDialer Dialer, proxyURLs []*url.URL) (Dialer, error) {
-	switch len(proxyURLs) {
-	case 0:
-		return baseDialer, nil
-	case 1:
-		return NewSocks5Dialer(baseDialer, proxyURLs[0])
-	}
-
-	dialers := []Dialer{}
+	var dialers []Dialer
 
 	for _, u := range proxyURLs {
 		dialer, err := NewSocks5Dialer(newProxyDialer(baseDialer, u), u)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("cannot build dialer for %s: %w", u.String(), err)
 		}
 
 		dialers = append(dialers, dialer)
