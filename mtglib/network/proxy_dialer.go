@@ -6,12 +6,6 @@ import (
 	"time"
 )
 
-const (
-	ProxyDialerOpenThreshold        = 5
-	ProxyDialerHalfOpenTimeout      = time.Minute
-	ProxyDialerResetFailuresTimeout = 10 * time.Second
-)
-
 func newProxyDialer(baseDialer Dialer, proxyURL *url.URL) Dialer {
 	params := proxyURL.Query()
 

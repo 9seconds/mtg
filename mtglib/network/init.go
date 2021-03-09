@@ -12,6 +12,10 @@ const (
 	DefaultDNSTimeout  = time.Second
 	DefaultHTTPTimeout = DefaultTimeout
 	DefaultBufferSize  = 4096
+
+	ProxyDialerOpenThreshold        = 5
+	ProxyDialerHalfOpenTimeout      = time.Minute
+	ProxyDialerResetFailuresTimeout = 10 * time.Second
 )
 
 var (
