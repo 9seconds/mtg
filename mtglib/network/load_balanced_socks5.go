@@ -8,15 +8,15 @@ import (
 	"net/url"
 )
 
-type loadBalancedDialer struct {
+type loadBalancedSocks5Dialer struct {
 	dialers []Dialer
 }
 
-func (l loadBalancedDialer) Dial(network, address string) (net.Conn, error) {
+func (l loadBalancedSocks5Dialer) Dial(network, address string) (net.Conn, error) {
 	return l.DialContext(context.Background(), network, address)
 }
 
-func (l loadBalancedDialer) DialContext(ctx context.Context, network, address string) (net.Conn, error) {
+func (l loadBalancedSocks5Dialer) DialContext(ctx context.Context, network, address string) (net.Conn, error) {
 	length := len(l.dialers)
 	start := rand.Intn(length)
 	moved := false
@@ -31,7 +31,7 @@ func (l loadBalancedDialer) DialContext(ctx context.Context, network, address st
 	return nil, ErrCannotDialWithAllProxies
 }
 
-func NewLoadBalancedDialer(baseDialer Dialer, proxyURLs []*url.URL) (Dialer, error) {
+func NewLoadBalancedSocks5Dialer(baseDialer Dialer, proxyURLs []*url.URL) (Dialer, error) {
 	var dialers []Dialer
 
 	for _, u := range proxyURLs {
@@ -43,7 +43,7 @@ func NewLoadBalancedDialer(baseDialer Dialer, proxyURLs []*url.URL) (Dialer, err
 		dialers = append(dialers, dialer)
 	}
 
-	return loadBalancedDialer{
+	return loadBalancedSocks5Dialer{
 		dialers: dialers,
 	}, nil
 }
