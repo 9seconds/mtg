@@ -3,6 +3,7 @@ module github.com/9seconds/mtg/v2
 go 1.16
 
 require (
+	github.com/alecthomas/kong v0.2.16
 	github.com/alecthomas/units v0.0.0-20210208195552-ff826a37aa15
 	github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5
 	github.com/babolivier/go-doh-client v0.0.0-20201028162107-a76cff4cb8b6
