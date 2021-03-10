@@ -190,7 +190,9 @@ func newCircuitBreakerDialer(baseDialer Dialer,
 		resetFailuresTimeout: resetFailuresTimeout,
 	}
 
+	cb.stateMutexChan <- true // to convince race detector we are good
 	cb.switchState(circuitBreakerStateClosed)
+	<-cb.stateMutexChan
 
 	return cb
 }
