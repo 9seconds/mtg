@@ -64,8 +64,8 @@ func runAccess(cli *CLI) {
 		IPv4: runMakeAccessResponseURLs(ipv4, conf, cli),
 		IPv6: runMakeAccessResponseURLs(ipv6, conf, cli),
 	}
-    resp.Secret.Base64 = conf.Secret.Base64()
-    resp.Secret.Hex = conf.Secret.EE()
+	resp.Secret.Base64 = conf.Secret.Base64()
+	resp.Secret.Hex = conf.Secret.Hex()
 
 	encoder := json.NewEncoder(os.Stdout)
 
@@ -92,6 +92,10 @@ func runAccessGetIP(ntw *network.Network, protocol string) net.IP {
 		return nil
 	}
 
+	if resp.StatusCode != http.StatusOK {
+		return nil
+	}
+
 	defer exhaustResponse(resp)
 
 	data, err := ioutil.ReadAll(resp.Body)
@@ -111,10 +115,11 @@ func runMakeAccessResponseURLs(ip net.IP, conf *config, cli *CLI) *runAccessResp
 
 	values.Set("server", ip.String())
 	values.Set("port", strconv.Itoa(int(conf.BindTo.port.Value(0))))
-	values.Set("secret", conf.Secret.Base64())
 
 	if cli.Access.Hex {
-		values.Set("secret", conf.Secret.EE())
+		values.Set("secret", conf.Secret.Hex())
+	} else {
+		values.Set("secret", conf.Secret.Base64())
 	}
 
 	urlQuery := values.Encode()

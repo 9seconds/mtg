@@ -57,19 +57,23 @@ func (s *Secret) UnmarshalText(data []byte) error {
 	return nil
 }
 
-func (s Secret) Base64() string {
-	data := append([]byte{238}, s.Key...) // 238 = hex ee
-	data = append(data, s.Host...)
-
-	return base64.RawURLEncoding.EncodeToString(data)
-}
-
 func (s Secret) String() string {
 	return s.Base64()
 }
 
-func (s Secret) EE() string {
-	return "ee" + hex.EncodeToString(append(s.Key, s.Host...))
+func (s Secret) Base64() string {
+	return base64.RawURLEncoding.EncodeToString(s.makeBytes())
+}
+
+func (s Secret) Hex() string {
+	return hex.EncodeToString(s.makeBytes())
+}
+
+func (s *Secret) makeBytes() []byte {
+	data := append([]byte{238}, s.Key...) // hex 'ee' = 238
+	data = append(data, s.Host...)
+
+	return data
 }
 
 func GenerateSecret(hostname string) Secret {
