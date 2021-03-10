@@ -1,12 +1,14 @@
 package mtglib
 
 import (
+	"crypto/rand"
 	"encoding/base64"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"strings"
 )
+
+const SecretKeyLength = 32
 
 type Secret struct {
 	Key  []byte
@@ -21,51 +23,53 @@ func (s *Secret) MarshalText() ([]byte, error) {
 	return []byte(s.String()), nil
 }
 
-func (s *Secret) UnmarshalText(text []byte) error {
-	sc, err := ParseSecret(string(text))
-	if err != nil {
-		return err
+func (s *Secret) UnmarshalText(data []byte) error {
+	text := string(data)
+
+	if text == "" {
+		return ErrSecretEmpty
 	}
 
-	*s = sc
+	decoded, err := base64.RawStdEncoding.DecodeString(text)
+	if err != nil && strings.HasPrefix(text, "ee") {
+		decoded, err = hex.DecodeString(strings.TrimPrefix(text, "ee"))
+	}
+
+	if err != nil {
+		return fmt.Errorf("incorrect secret format: %w", err)
+	}
+
+	if len(decoded) <= SecretKeyLength {
+		return fmt.Errorf("secret has incorrect length %d", len(text))
+	}
+
+	s.Key = decoded[:SecretKeyLength]
+	s.Host = string(decoded[SecretKeyLength:])
 
 	return nil
 }
 
 func (s Secret) Base64() string {
-	return s.String()
-}
-
-func (s Secret) EE() string {
-	return "ee" + hex.EncodeToString(append(s.Key, s.Host...))
+	return base64.StdEncoding.EncodeToString(append(s.Key[:], s.Host...))
 }
 
 func (s Secret) String() string {
-	return base64.StdEncoding.EncodeToString(append(s.Key, s.Host...))
+	return s.Base64()
 }
 
-func ParseSecret(secret string) (Secret, error) {
-	rv := Secret{}
+func (s Secret) EE() string {
+	return "ee" + hex.EncodeToString(append(s.Key[:], s.Host...))
+}
 
-	if secret == "" {
-		return rv, errors.New("secret cannot be empty")
+func GenerateSecret(hostname string) Secret {
+	s := Secret{
+		Key:  make([]byte, SecretKeyLength),
+		Host: hostname,
 	}
 
-	decoded, err := base64.RawStdEncoding.DecodeString(secret)
-	if err != nil && strings.HasPrefix(secret, "ee") {
-		decoded, err = hex.DecodeString(strings.TrimPrefix(secret, "ee"))
+	if _, err := rand.Read(s.Key); err != nil {
+		panic(err)
 	}
 
-	if err != nil {
-		return rv, fmt.Errorf("incorrect secret format: %w", err)
-	}
-
-	if len(decoded) < 33 {
-		return rv, fmt.Errorf("secret %s has incorrect length", secret)
-	}
-
-	rv.Key = decoded[:32]
-	rv.Host = string(decoded[32:])
-
-	return rv, nil
+	return s
 }
