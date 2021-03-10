@@ -58,10 +58,10 @@ func (s *Secret) UnmarshalText(data []byte) error {
 }
 
 func (s Secret) Base64() string {
-    data := append([]byte{238}, s.Key...) // 238 = hex ee
-    data = append(data, s.Host...)
+	data := append([]byte{238}, s.Key...) // 238 = hex ee
+	data = append(data, s.Host...)
 
-    return base64.RawURLEncoding.EncodeToString(data)
+	return base64.RawURLEncoding.EncodeToString(data)
 }
 
 func (s Secret) String() string {

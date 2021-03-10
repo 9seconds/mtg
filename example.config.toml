@@ -38,7 +38,7 @@ tcp-buffer = "4kb"
 #     Only ipv6 connectivity is used
 #   - only-ipv4:
 #     Only ipv4 connectivity is used
-prefer-ips = "prefer-ipv6"
+prefer-ip = "prefer-ipv6"
 
 # FakeTLS uses domain fronting protection. So it needs to know a port to
 # access.
@@ -58,7 +58,7 @@ cloak-port = 443
 # it has to access.
 #
 # By default we use Quad9.
-doh-hostname = "9.9.9.9"
+doh-ip = "9.9.9.9"
 
 # mtg can work via proxies (for now, we support only socks5). Proxy
 # configuration is done via list. So, you can specify many proxies
@@ -75,7 +75,6 @@ doh-hostname = "9.9.9.9"
 #
 #     socks5://user:password@host:port?open_threshold=5&half_open_timeout=1m&reset_failures_timeout=10s
 #
-
 # Only socks5 proxy is used. user/password is optional. As you can
 # see, you can specify some parameters in GET query. These parameters
 # configure circuit breaker.
@@ -101,31 +100,6 @@ proxies = [
 [network.public-ip]
 ipv4 = ""
 ipv6 = ""
-
-# you can redefine a dialer for mtg. Dialer is how we 'dial' to either
-# some external services or telegram. empty string means default
-# connectivity.
-#
-# it is also possible to use socks5 or shadowsocks here
-#
-# socks5 example:
-#   socks5://user:password@host:port
-# shadowsocks example (SIP002):
-#   ss://YWVzLTEyOC1nY206dGVzdA@192.168.100.1:8888
-#
-# You can define 2 dialers here: telegram and default. Telegram dialer
-# is used to connect to Telegram servers only. Default is used for other
-# purposes, like accessing ifconfig.co to obtains public address (DNS is
-# resolved via DoH)
-#
-# Please also be aware that dialers are only doing TCP. If UDP is
-# required (for statsd for example), then these dialers are going to be
-# ignored.
-#
-# If telegram dialer is not defined, a default one is going to be used.
-[network.dialers]
-telegram = ""
-default = ""
 
 # FakeTLS can compare timestamps to prevent probes. Each message has
 # encrypted timestamp. So, mtg can compare this timestamp and decide if
@@ -154,8 +128,9 @@ enabled = true
 # that we can go over this limit for 10-20% under some conditions and
 # architectures.
 max-size = "16mb"
-# TTL for each cache record.
-ttl = "8h"
+# we use stable bloom filters for anti-replay cache. This helps
+# to maintain a desired error ratio.
+error-rate = 0.0001
 
 # statsd statistics integration.
 [stats.statsd]
