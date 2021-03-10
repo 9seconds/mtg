@@ -7,6 +7,8 @@ import (
 )
 
 type cliCommandGenerateSecret struct {
+    cli
+
 	HostName string `arg optional help:"Hostname to use for domain fronting. Default is '${domain_front}'." name:"hostname" default:"${domain_front}"` // nolint: lll, govet
 	Hex      bool   `help:"Print secret in hex encoding."`
 }

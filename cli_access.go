@@ -11,8 +11,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-
-	"github.com/9seconds/mtg/v2/mtglib/network"
 )
 
 type runAccessResponse struct {
@@ -33,45 +31,34 @@ type runAccessResponseURLs struct {
 }
 
 type cliCommandAccess struct {
+	cli
+
 	ConfigPath string `arg required type:"existingfile" help:"Path to the configuration file." name:"config-path"` // nolint: lll, govet
 	Hex        bool   `help:"Print secret in hex encoding."`
 }
 
 func (c *cliCommandAccess) Run(cli *CLI) error {
-	filefp, err := os.Open(cli.Access.ConfigPath)
-	if err != nil {
-		return fmt.Errorf("cannot open config file: %w", err)
+	if err := c.ReadConfig(cli.Access.ConfigPath); err != nil {
+		return fmt.Errorf("cannot init config: %w", err)
 	}
 
-	defer filefp.Close()
-
-	conf, err := parseConfig(filefp)
-	if err != nil {
-		return fmt.Errorf("cannot parse config: %w", err)
-	}
-
-	ntw, err := makeNetwork(conf)
-	if err != nil {
-		return fmt.Errorf("cannot build a network: %w", err)
-	}
-
-	ipv4 := conf.Network.PublicIP.IPv4.Value(nil)
-	ipv6 := conf.Network.PublicIP.IPv6.Value(nil)
+	ipv4 := c.conf.Network.PublicIP.IPv4.Value(nil)
+	ipv6 := c.conf.Network.PublicIP.IPv6.Value(nil)
 
 	if ipv4 == nil {
-		ipv4 = c.getIP(ntw, "tcp4")
+		ipv4 = c.getIP("tcp4")
 	}
 
 	if ipv6 == nil {
-		ipv6 = c.getIP(ntw, "tcp6")
+		ipv6 = c.getIP("tcp6")
 	}
 
 	resp := runAccessResponse{
-		IPv4: c.makeResponseURLs(ipv4, conf, cli),
-		IPv6: c.makeResponseURLs(ipv6, conf, cli),
+		IPv4: c.makeResponseURLs(ipv4, cli),
+		IPv6: c.makeResponseURLs(ipv6, cli),
 	}
-	resp.Secret.Base64 = conf.Secret.Base64()
-	resp.Secret.Hex = conf.Secret.Hex()
+	resp.Secret.Base64 = c.conf.Secret.Base64()
+	resp.Secret.Hex = c.conf.Secret.Hex()
 
 	encoder := json.NewEncoder(os.Stdout)
 
@@ -85,12 +72,12 @@ func (c *cliCommandAccess) Run(cli *CLI) error {
 	return nil
 }
 
-func (c *cliCommandAccess) getIP(ntw *network.Network, protocol string) net.IP {
+func (c *cliCommandAccess) getIP(protocol string) net.IP {
 	client := &http.Client{
-		Timeout: ntw.HTTP.Timeout,
+		Timeout: c.network.HTTP.Timeout,
 		Transport: &http.Transport{
 			DialContext: func(ctx context.Context, network, address string) (net.Conn, error) {
-				return ntw.DialContext(ctx, protocol, address)
+				return c.network.DialContext(ctx, protocol, address)
 			},
 		},
 	}
@@ -114,7 +101,7 @@ func (c *cliCommandAccess) getIP(ntw *network.Network, protocol string) net.IP {
 	return net.ParseIP(strings.TrimSpace(string(data)))
 }
 
-func (c *cliCommandAccess) makeResponseURLs(ip net.IP, conf *config, cli *CLI) *runAccessResponseURLs {
+func (c *cliCommandAccess) makeResponseURLs(ip net.IP, cli *CLI) *runAccessResponseURLs {
 	if ip == nil {
 		return nil
 	}
@@ -122,12 +109,12 @@ func (c *cliCommandAccess) makeResponseURLs(ip net.IP, conf *config, cli *CLI) *
 	values := url.Values{}
 
 	values.Set("server", ip.String())
-	values.Set("port", strconv.Itoa(int(conf.BindTo.port.Value(0))))
+	values.Set("port", strconv.Itoa(int(c.conf.BindTo.port.Value(0))))
 
 	if cli.Access.Hex {
-		values.Set("secret", conf.Secret.Hex())
+		values.Set("secret", c.conf.Secret.Hex())
 	} else {
-		values.Set("secret", conf.Secret.Base64())
+		values.Set("secret", c.conf.Secret.Base64())
 	}
 
 	urlQuery := values.Encode()
