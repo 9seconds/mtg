@@ -14,7 +14,6 @@ type rawConfig struct {
 	TCPBuffer  string `toml:"tcp-buffer"`
 	PreferIP   string `toml:"prefer-ip"`
 	CloakPort  uint   `toml:"cloak-port"`
-	AccessFile string `toml:"access-file"`
 	Probes     struct {
 		Time struct {
 			Enabled       bool   `toml:"enabled"`
