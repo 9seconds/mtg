@@ -15,6 +15,14 @@ type config struct {
 	Secret mtglib.Secret `json:"secret"`
 }
 
+func (c *config) Validate() error {
+	if len(c.Secret.Key) == 0 || c.Secret.Host == "" {
+		return fmt.Errorf("incorrect secret %s", c.Secret.String())
+	}
+
+	return nil
+}
+
 type configRaw struct {
 	Debug     bool   `toml:"debug" json:"debug"`
 	Secret    string `toml:"secret" json:"secret"`
@@ -77,6 +85,10 @@ func parseConfig(reader io.Reader) (*config, error) {
 
 	if err := json.NewDecoder(jsonBuf).Decode(conf); err != nil {
 		return nil, fmt.Errorf("cannot parse final config: %w", err)
+	}
+
+	if err := conf.Validate(); err != nil {
+		return nil, fmt.Errorf("cannot validate config: %w", err)
 	}
 
 	return conf, nil
