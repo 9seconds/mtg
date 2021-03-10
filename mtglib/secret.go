@@ -10,13 +10,15 @@ import (
 
 const SecretKeyLength = 16
 
+var secretEmptyKey [SecretKeyLength]byte
+
 type Secret struct {
-	Key  []byte
+	Key  [SecretKeyLength]byte
 	Host string
 }
 
 func (s Secret) MarshalText() ([]byte, error) {
-	if s.Key == nil {
+	if s.Key == secretEmptyKey {
 		return nil, nil
 	}
 
@@ -51,7 +53,7 @@ func (s *Secret) UnmarshalText(data []byte) error {
 		return fmt.Errorf("secret has incorrect length %d", len(text))
 	}
 
-	s.Key = decoded[:SecretKeyLength]
+	copy(s.Key[:], decoded[:SecretKeyLength])
 	s.Host = string(decoded[SecretKeyLength:])
 
 	return nil
@@ -70,7 +72,7 @@ func (s Secret) Hex() string {
 }
 
 func (s *Secret) makeBytes() []byte {
-	data := append([]byte{238}, s.Key...) // hex 'ee' = 238
+	data := append([]byte{238}, s.Key[:]...) // hex 'ee' = 238
 	data = append(data, s.Host...)
 
 	return data
@@ -78,13 +80,18 @@ func (s *Secret) makeBytes() []byte {
 
 func GenerateSecret(hostname string) Secret {
 	s := Secret{
-		Key:  make([]byte, SecretKeyLength),
 		Host: hostname,
 	}
 
-	if _, err := rand.Read(s.Key); err != nil {
+	if _, err := rand.Read(s.Key[:]); err != nil {
 		panic(err)
 	}
 
 	return s
+}
+
+func ParseSecret(secret string) (Secret, error) {
+	s := Secret{}
+
+	return s, s.UnmarshalText([]byte(secret))
 }
