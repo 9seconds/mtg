@@ -7,15 +7,9 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"os"
 
 	"github.com/9seconds/mtg/v2/mtglib/network"
 )
-
-func exit(err error) {
-	fmt.Fprintln(os.Stderr, err.Error())
-	os.Exit(1)
-}
 
 func makeNetwork(conf *config) (*network.Network, error) {
 	tcpTimeout := conf.Network.Timeout.TCP.Value(network.DefaultTimeout)

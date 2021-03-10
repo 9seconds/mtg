@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -31,38 +32,43 @@ type runAccessResponseURLs struct {
 	TmeQrCode string `json:"tme_qrcode"`
 }
 
-func runAccess(cli *CLI) {
+type cliCommandAccess struct {
+	ConfigPath string `arg required type:"existingfile" help:"Path to the configuration file." name:"config-path"` // nolint: lll, govet
+	Hex        bool   `help:"Print secret in hex encoding."`
+}
+
+func (c *cliCommandAccess) Run(cli *CLI) error {
 	filefp, err := os.Open(cli.Access.ConfigPath)
 	if err != nil {
-		exit(err)
+		return fmt.Errorf("cannot open config file: %w", err)
 	}
 
 	defer filefp.Close()
 
 	conf, err := parseConfig(filefp)
 	if err != nil {
-		exit(err)
+		return fmt.Errorf("cannot parse config: %w", err)
 	}
 
 	ntw, err := makeNetwork(conf)
 	if err != nil {
-		exit(err)
+		return fmt.Errorf("cannot build a network: %w", err)
 	}
 
 	ipv4 := conf.Network.PublicIP.IPv4.Value(nil)
 	ipv6 := conf.Network.PublicIP.IPv6.Value(nil)
 
 	if ipv4 == nil {
-		ipv4 = runAccessGetIP(ntw, "tcp4")
+		ipv4 = c.getIP(ntw, "tcp4")
 	}
 
 	if ipv6 == nil {
-		ipv6 = runAccessGetIP(ntw, "tcp6")
+		ipv6 = c.getIP(ntw, "tcp6")
 	}
 
 	resp := runAccessResponse{
-		IPv4: runMakeAccessResponseURLs(ipv4, conf, cli),
-		IPv6: runMakeAccessResponseURLs(ipv6, conf, cli),
+		IPv4: c.makeResponseURLs(ipv4, conf, cli),
+		IPv6: c.makeResponseURLs(ipv6, conf, cli),
 	}
 	resp.Secret.Base64 = conf.Secret.Base64()
 	resp.Secret.Hex = conf.Secret.Hex()
@@ -73,11 +79,13 @@ func runAccess(cli *CLI) {
 	encoder.SetIndent("", "  ")
 
 	if err := encoder.Encode(resp); err != nil {
-		exit(err)
+		return fmt.Errorf("cannot dump access json: %w", err)
 	}
+
+	return nil
 }
 
-func runAccessGetIP(ntw *network.Network, protocol string) net.IP {
+func (c *cliCommandAccess) getIP(ntw *network.Network, protocol string) net.IP {
 	client := &http.Client{
 		Timeout: ntw.HTTP.Timeout,
 		Transport: &http.Transport{
@@ -106,7 +114,7 @@ func runAccessGetIP(ntw *network.Network, protocol string) net.IP {
 	return net.ParseIP(strings.TrimSpace(string(data)))
 }
 
-func runMakeAccessResponseURLs(ip net.IP, conf *config, cli *CLI) *runAccessResponseURLs {
+func (c *cliCommandAccess) makeResponseURLs(ip net.IP, conf *config, cli *CLI) *runAccessResponseURLs {
 	if ip == nil {
 		return nil
 	}
@@ -139,13 +147,13 @@ func runMakeAccessResponseURLs(ip net.IP, conf *config, cli *CLI) *runAccessResp
 		}).String(),
 	}
 
-	rv.TgQrCode = runMakeAccessResponseURLsQRCode(rv.TgURL)
-	rv.TmeQrCode = runMakeAccessResponseURLsQRCode(rv.TmeURL)
+	rv.TgQrCode = c.makeResponseQRCode(rv.TgURL)
+	rv.TmeQrCode = c.makeResponseQRCode(rv.TmeURL)
 
 	return rv
 }
 
-func runMakeAccessResponseURLsQRCode(data string) string {
+func (c *cliCommandAccess) makeResponseQRCode(data string) string {
 	values := url.Values{}
 
 	values.Set("qzone", "4")
