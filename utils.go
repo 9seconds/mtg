@@ -28,7 +28,7 @@ func makeNetwork(conf *config) (*network.Network, error) {
 		return nil, fmt.Errorf("cannot build a default dialer: %w", err)
 	}
 
-	proxyURLs := make([]*url.URL, len(conf.Network.Proxies))
+	proxyURLs := make([]*url.URL, 0, len(conf.Network.Proxies))
 
 	for _, v := range conf.Network.Proxies {
 		if value := v.Value(nil); value != nil {
@@ -41,7 +41,6 @@ func makeNetwork(conf *config) (*network.Network, error) {
 		return network.NewNetwork(baseDialer, dohIP, httpTimeout)
 	case 1:
 		socksDialer, err := network.NewSocks5Dialer(baseDialer, proxyURLs[0])
-
 		if err != nil {
 			return nil, fmt.Errorf("cannot build socks5 dialer: %w", err)
 		}
@@ -51,7 +50,6 @@ func makeNetwork(conf *config) (*network.Network, error) {
 
 	socksDialer, err := network.NewLoadBalancedSocks5Dialer(baseDialer, proxyURLs)
 	if err != nil {
-
 		return nil, fmt.Errorf("cannot build socks5 dialer: %w", err)
 	}
 
@@ -59,6 +57,6 @@ func makeNetwork(conf *config) (*network.Network, error) {
 }
 
 func exhaustResponse(response *http.Response) {
-	io.Copy(ioutil.Discard, response.Body)
+	io.Copy(ioutil.Discard, response.Body) // nolint: errcheck
 	response.Body.Close()
 }

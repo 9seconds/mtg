@@ -87,7 +87,7 @@ func runAccessGetIP(ntw *network.Network, protocol string) net.IP {
 		},
 	}
 
-	resp, err := client.Get("https://ifconfig.co")
+	resp, err := client.Get("https://ifconfig.co") // nolint: bodyclose, noctx
 	if err != nil {
 		return nil
 	}

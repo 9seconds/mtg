@@ -15,8 +15,8 @@ type Secret struct {
 	Host string
 }
 
-func (s *Secret) MarshalText() ([]byte, error) {
-	if s == nil {
+func (s Secret) MarshalText() ([]byte, error) {
+	if s.Key == nil {
 		return nil, nil
 	}
 

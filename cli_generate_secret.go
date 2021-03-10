@@ -10,8 +10,8 @@ func runGenerateSecret(cli *CLI) {
 	secret := mtglib.GenerateSecret(cli.GenerateSecret.HostName)
 
 	if cli.GenerateSecret.Hex {
-		fmt.Println(secret.Hex())
+		fmt.Println(secret.Hex()) // nolint: forbidigo
 	} else {
-		fmt.Println(secret.Base64())
+		fmt.Println(secret.Base64()) // nolint: forbidigo
 	}
 }

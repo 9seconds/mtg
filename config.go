@@ -43,7 +43,7 @@ func (c *configTypeHostPort) UnmarshalText(data []byte) error {
 	return nil
 }
 
-func (c configTypeHostPort) MarshalText() ([]byte, error) {
+func (c configTypeHostPort) MarshalText() ([]byte, error) { // nolint: unparam
 	return []byte(c.String()), nil
 }
 
@@ -118,7 +118,7 @@ func (c *configTypeBytes) UnmarshalText(data []byte) error {
 	return nil
 }
 
-func (c configTypeBytes) MarshalText() ([]byte, error) {
+func (c configTypeBytes) MarshalText() ([]byte, error) { // nolint: unparam
 	return []byte(c.String()), nil
 }
 
@@ -155,7 +155,7 @@ func (c *configTypePreferIP) UnmarshalText(data []byte) error {
 	return nil
 }
 
-func (c configTypePreferIP) MarshalText() ([]byte, error) {
+func (c configTypePreferIP) MarshalText() ([]byte, error) { // nolint: unparam
 	return []byte(c.value), nil
 }
 
@@ -194,7 +194,7 @@ func (c *configTypeDuration) UnmarshalText(data []byte) error {
 	return nil
 }
 
-func (c configTypeDuration) MarshalText() ([]byte, error) {
+func (c configTypeDuration) MarshalText() ([]byte, error) { // nolint: unparam
 	return []byte(c.value.String()), nil
 }
 
@@ -229,7 +229,7 @@ func (c *configTypeFloat) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (c *configTypeFloat) MarshalText() ([]byte, error) {
+func (c *configTypeFloat) MarshalText() ([]byte, error) { // nolint: unparam
 	return []byte(c.String()), nil
 }
 
@@ -264,7 +264,7 @@ func (c *configTypeIP) UnmarshalText(data []byte) error {
 	return nil
 }
 
-func (c *configTypeIP) MarshalText() ([]byte, error) {
+func (c *configTypeIP) MarshalText() ([]byte, error) { // nolint: unparam
 	return []byte(c.String()), nil
 }
 
@@ -303,7 +303,7 @@ func (c *configTypeURL) UnmarshalText(data []byte) error {
 	return nil
 }
 
-func (c *configTypeURL) MarshalText() ([]byte, error) {
+func (c *configTypeURL) MarshalText() ([]byte, error) { // nolint: unparam
 	return []byte(c.String()), nil
 }
 
@@ -343,7 +343,7 @@ func (c *configTypeMetricPrefix) UnmarshalText(data []byte) error {
 	return nil
 }
 
-func (c configTypeMetricPrefix) MarshalText() ([]byte, error) {
+func (c configTypeMetricPrefix) MarshalText() ([]byte, error) { // nolint: unparam
 	return []byte(c.String()), nil
 }
 
@@ -371,7 +371,7 @@ func (c *configTypeHTTPPath) UnmarshalText(data []byte) error { // nolint: unpar
 	return nil
 }
 
-func (c configTypeHTTPPath) MarshalText() ([]byte, error) {
+func (c configTypeHTTPPath) MarshalText() ([]byte, error) { // nolint: unparam
 	return []byte(c.String()), nil
 }
 

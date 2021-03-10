@@ -10,17 +10,18 @@ import (
 var version = "dev" // has to be set by ldflags
 
 type CLI struct {
-	GenerateSecret struct {
-		HostName string `arg optional help:"Hostname to use for domain fronting. Default is '${domain_front}'." name:"hostname" default:"${domain_front}"`
+	GenerateSecret struct { // nolint: govet
+		HostName string `arg optional help:"Hostname to use for domain fronting. Default is '${domain_front}'." name:"hostname" default:"${domain_front}"` // nolint: lll, govet
 		Hex      bool   `help:"Print secret in hex encoding."`
 	} `cmd help:"Generate new proxy secret."`
-	Access struct {
-		ConfigPath string `arg required type:"existingfile" help:"Path to the configuration file." name:"config-path"`
+	Access struct { // nolint: govet
+		ConfigPath string `arg required type:"existingfile" help:"Path to the configuration file." name:"config-path"` // nolint: lll, govet
 		Hex        bool   `help:"Print secret in hex encoding."`
 	} `cmd help:"Print access information."`
-	Run struct {
-		ConfigPath string `arg required type:"existingfile" help:"Path to the configuration file." name:"config-path"`
+	Run struct { // nolint: govet
+		ConfigPath string `arg required type:"existingfile" help:"Path to the configuration file." name:"config-path"` // nolint: lll, govet
 	} `cmd help:"Run proxy."`
+	Version kong.VersionFlag `help:"Print version."`
 }
 
 func main() {
@@ -30,6 +31,7 @@ func main() {
 	ctx := kong.Parse(cli, kong.Vars{
 		"domain_front": "amazonaws.com",
 		"config_path":  "/etc/mtg.toml",
+		"version":      version,
 	})
 
 	switch ctx.Command() {
