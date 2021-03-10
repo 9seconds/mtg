@@ -2,12 +2,9 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"math/rand"
 	"os"
 	"time"
-
-	"github.com/9seconds/mtg/v2/mtglib/network"
 )
 
 var version = "dev" // has to be set by ldflags
@@ -17,15 +14,5 @@ func main() {
 
 	f, _ := os.Open("example.config.toml")
 
-	fmt.Println(parseRawConfig(f))
-
-	bd, _ := network.NewDefaultDialer(0, 0)
-	d, _ := network.NewNetwork(bd, "9.9.9.9", 0)
-
-	r, err := d.HTTP.Get("https://ifconfig.co")
-
-	fmt.Println(err)
-	body, _ := ioutil.ReadAll(r.Body)
-
-	fmt.Println(string(body))
+	fmt.Println(parseConfig(f))
 }

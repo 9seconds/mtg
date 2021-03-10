@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-const SecretKeyLength = 32
+const SecretKeyLength = 16
 
 type Secret struct {
 	Key  []byte
@@ -30,9 +30,17 @@ func (s *Secret) UnmarshalText(data []byte) error {
 		return ErrSecretEmpty
 	}
 
-	decoded, err := base64.RawStdEncoding.DecodeString(text)
-	if err != nil && strings.HasPrefix(text, "ee") {
+	var (
+		decoded []byte
+		err     error
+	)
+
+	if strings.HasPrefix(text, "ee") {
 		decoded, err = hex.DecodeString(strings.TrimPrefix(text, "ee"))
+	}
+
+	if err != nil || len(decoded) <= SecretKeyLength {
+		decoded, err = base64.RawURLEncoding.DecodeString(text)
 	}
 
 	if err != nil {
@@ -50,7 +58,10 @@ func (s *Secret) UnmarshalText(data []byte) error {
 }
 
 func (s Secret) Base64() string {
-	return base64.StdEncoding.EncodeToString(append(s.Key[:], s.Host...))
+    data := append([]byte{238}, s.Key...) // 238 = hex ee
+    data = append(data, s.Host...)
+
+    return base64.RawURLEncoding.EncodeToString(data)
 }
 
 func (s Secret) String() string {
@@ -58,7 +69,7 @@ func (s Secret) String() string {
 }
 
 func (s Secret) EE() string {
-	return "ee" + hex.EncodeToString(append(s.Key[:], s.Host...))
+	return "ee" + hex.EncodeToString(append(s.Key, s.Host...))
 }
 
 func GenerateSecret(hostname string) Secret {
