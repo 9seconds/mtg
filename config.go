@@ -43,6 +43,10 @@ func (c *configTypeHostPort) UnmarshalText(data []byte) error {
 	return nil
 }
 
+func (c configTypeHostPort) MarshalText() ([]byte, error) {
+	return []byte(c.String()), nil
+}
+
 func (c configTypeHostPort) String() string {
 	return c.Value(net.IP{}, 0)
 }
@@ -73,6 +77,10 @@ func (c *configTypePort) UnmarshalJSON(data []byte) error {
 	c.value = uint(intValue)
 
 	return nil
+}
+
+func (c *configTypePort) MarshalJSON() ([]byte, error) {
+	return json.Marshal(c.value)
 }
 
 func (c configTypePort) String() string {
@@ -110,6 +118,10 @@ func (c *configTypeBytes) UnmarshalText(data []byte) error {
 	return nil
 }
 
+func (c configTypeBytes) MarshalText() ([]byte, error) {
+	return []byte(c.String()), nil
+}
+
 func (c configTypeBytes) String() string {
 	return units.ToString(int64(c.value), 1024, "ib", "b")
 }
@@ -141,6 +153,10 @@ func (c *configTypePreferIP) UnmarshalText(data []byte) error {
 	}
 
 	return nil
+}
+
+func (c configTypePreferIP) MarshalText() ([]byte, error) {
+	return []byte(c.value), nil
 }
 
 func (c *configTypePreferIP) String() string {
@@ -178,6 +194,10 @@ func (c *configTypeDuration) UnmarshalText(data []byte) error {
 	return nil
 }
 
+func (c configTypeDuration) MarshalText() ([]byte, error) {
+	return []byte(c.value.String()), nil
+}
+
 func (c configTypeDuration) String() string {
 	return c.value.String()
 }
@@ -207,6 +227,10 @@ func (c *configTypeFloat) UnmarshalJSON(data []byte) error {
 	c.value = value
 
 	return nil
+}
+
+func (c *configTypeFloat) MarshalText() ([]byte, error) {
+	return []byte(c.String()), nil
 }
 
 func (c configTypeFloat) String() string {
@@ -240,7 +264,15 @@ func (c *configTypeIP) UnmarshalText(data []byte) error {
 	return nil
 }
 
+func (c *configTypeIP) MarshalText() ([]byte, error) {
+	return []byte(c.String()), nil
+}
+
 func (c configTypeIP) String() string {
+	if c.value == nil {
+		return ""
+	}
+
 	return c.value.String()
 }
 
@@ -269,6 +301,10 @@ func (c *configTypeURL) UnmarshalText(data []byte) error {
 	c.value = value
 
 	return nil
+}
+
+func (c *configTypeURL) MarshalText() ([]byte, error) {
+	return []byte(c.String()), nil
 }
 
 func (c configTypeURL) String() string {
@@ -307,6 +343,10 @@ func (c *configTypeMetricPrefix) UnmarshalText(data []byte) error {
 	return nil
 }
 
+func (c configTypeMetricPrefix) MarshalText() ([]byte, error) {
+	return []byte(c.String()), nil
+}
+
 func (c configTypeMetricPrefix) String() string {
 	return c.value
 }
@@ -329,6 +369,10 @@ func (c *configTypeHTTPPath) UnmarshalText(data []byte) error { // nolint: unpar
 	}
 
 	return nil
+}
+
+func (c configTypeHTTPPath) MarshalText() ([]byte, error) {
+	return []byte(c.String()), nil
 }
 
 func (c configTypeHTTPPath) String() string {
@@ -390,6 +434,19 @@ func (c *config) Validate() error {
 	}
 
 	return nil
+}
+
+func (c *config) String() string {
+	buf := &bytes.Buffer{}
+	encoder := json.NewEncoder(buf)
+
+	encoder.SetEscapeHTML(false)
+
+	if err := encoder.Encode(c); err != nil {
+		panic(err)
+	}
+
+	return buf.String()
 }
 
 type configRaw struct {
