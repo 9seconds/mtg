@@ -48,8 +48,9 @@ func (suite *ProxyDialerTestSuite) TestOpenThreshold() {
 	params := []string{"-30", "aaa", "1.0", "-1.0"}
 
 	for _, v := range params {
+		param := v
 		suite.T().Run(fmt.Sprintf("param=%s", v), func(t *testing.T) {
-			query.Set("open_threshold", v)
+			query.Set("open_threshold", param)
 
 			suite.u.RawQuery = query.Encode()
 			d := newProxyDialer(&DialerMock{}, suite.u).(*circuitBreakerDialer)
@@ -64,8 +65,9 @@ func (suite *ProxyDialerTestSuite) TestHalfOpenTimeout() {
 	params := []string{"-30", "30", "aaa", "-3.0", "3.0"}
 
 	for _, v := range params {
+		param := v
 		suite.T().Run(fmt.Sprintf("param=%s", v), func(t *testing.T) {
-			query.Set("half_open_timeout", v)
+			query.Set("half_open_timeout", param)
 
 			suite.u.RawQuery = query.Encode()
 			d := newProxyDialer(&DialerMock{}, suite.u).(*circuitBreakerDialer)
@@ -80,8 +82,9 @@ func (suite *ProxyDialerTestSuite) TestResetFailuresTimeout() {
 	params := []string{"-30", "30", "aaa", "-3.0", "3.0"}
 
 	for _, v := range params {
+		param := v
 		suite.T().Run(fmt.Sprintf("param=%s", v), func(t *testing.T) {
-			query.Set("reset_failures_timeout", v)
+			query.Set("reset_failures_timeout", param)
 
 			suite.u.RawQuery = query.Encode()
 			d := newProxyDialer(&DialerMock{}, suite.u).(*circuitBreakerDialer)
@@ -92,5 +95,6 @@ func (suite *ProxyDialerTestSuite) TestResetFailuresTimeout() {
 }
 
 func TestProxyDialer(t *testing.T) {
+	t.Parallel()
 	suite.Run(t, &ProxyDialerTestSuite{})
 }

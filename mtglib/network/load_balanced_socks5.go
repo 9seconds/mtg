@@ -23,6 +23,7 @@ func (l loadBalancedSocks5Dialer) DialContext(ctx context.Context, network, addr
 
 	for i := start; i != start || !moved; i = (i + 1) % length {
 		moved = true
+
 		if conn, err := l.dialers[i].DialContext(ctx, network, address); err == nil {
 			return conn, nil
 		}
@@ -32,7 +33,7 @@ func (l loadBalancedSocks5Dialer) DialContext(ctx context.Context, network, addr
 }
 
 func NewLoadBalancedSocks5Dialer(baseDialer Dialer, proxyURLs []*url.URL) (Dialer, error) {
-	var dialers []Dialer
+	dialers := make([]Dialer, 0, len(proxyURLs))
 
 	for _, u := range proxyURLs {
 		dialer, err := NewSocks5Dialer(newProxyDialer(baseDialer, u), u)

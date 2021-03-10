@@ -66,7 +66,7 @@ func (c *circuitBreakerDialer) doClosed(ctx context.Context,
 	if err == nil {
 		c.switchState(circuitBreakerStateClosed)
 
-		return conn, err
+		return conn, err // nolint: wrapcheck
 	}
 
 	c.failuresCount++
@@ -75,7 +75,7 @@ func (c *circuitBreakerDialer) doClosed(ctx context.Context,
 		c.switchState(circuitBreakerStateOpened)
 	}
 
-	return conn, err
+	return conn, err // nolint: wrapcheck
 }
 
 func (c *circuitBreakerDialer) doHalfOpened(ctx context.Context, network, address string) (net.Conn, error) {
@@ -99,7 +99,7 @@ func (c *circuitBreakerDialer) doHalfOpened(ctx context.Context, network, addres
 	}
 
 	if c.state != circuitBreakerStateHalfOpened {
-		return conn, err
+		return conn, err // nolint: wrapcheck
 	}
 
 	if err == nil {
@@ -108,7 +108,7 @@ func (c *circuitBreakerDialer) doHalfOpened(ctx context.Context, network, addres
 		c.switchState(circuitBreakerStateOpened)
 	}
 
-	return conn, err
+	return conn, err // nolint: wrapcheck
 }
 
 func (c *circuitBreakerDialer) switchState(state uint32) {

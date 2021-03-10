@@ -7,53 +7,12 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"strings"
-	"time"
 
 	"github.com/9seconds/mtg/v2/mtglib/network"
 	socks5 "github.com/armon/go-socks5"
 	"github.com/mccutchen/go-httpbin/httpbin"
 	"github.com/stretchr/testify/mock"
 )
-
-type ConnMock struct {
-	mock.Mock
-}
-
-func (c *ConnMock) Read(b []byte) (int, error) {
-	args := c.Called(b)
-
-	return args.Int(0), args.Error(1)
-}
-
-func (c *ConnMock) Write(b []byte) (int, error) {
-	args := c.Called(b)
-
-	return args.Int(0), args.Error(1)
-}
-
-func (c *ConnMock) Close() error {
-	return c.Called().Error(0)
-}
-
-func (c *ConnMock) LocalAddr() net.Addr {
-	return c.Called().Get(0).(net.Addr)
-}
-
-func (c *ConnMock) RemoteAddr() net.Addr {
-	return c.Called().Get(0).(net.Addr)
-}
-
-func (c *ConnMock) SetDeadline(t time.Time) error {
-	return c.Called(t).Error(0)
-}
-
-func (c *ConnMock) SetReadDeadline(t time.Time) error {
-	return c.Called(t).Error(0)
-}
-
-func (c *ConnMock) SetWriteDeadline(t time.Time) error {
-	return c.Called(t).Error(0)
-}
 
 type DialerMock struct {
 	mock.Mock
@@ -112,7 +71,7 @@ func (suite *Socks5ServerTestSuite) SetupSuite() {
 		},
 	})
 
-	go suite.socks5Server.Serve(suite.socks5Listener)
+	go suite.socks5Server.Serve(suite.socks5Listener) // nolint: errcheck
 }
 
 func (suite *Socks5ServerTestSuite) TearDownSuite() {

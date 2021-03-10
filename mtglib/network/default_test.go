@@ -68,12 +68,16 @@ func (suite *DefaultDialerTestSuite) TestConnectOk() {
 func (suite *DefaultDialerTestSuite) TestHTTPRequest() {
 	httpClient := suite.MakeHTTPClient(suite.d)
 
-	resp, err := httpClient.Get(suite.MakeURL("/get"))
+	resp, err := httpClient.Get(suite.MakeURL("/get")) // nolint: noctx
+	if err == nil {
+		defer resp.Body.Close()
+	}
 
 	suite.NoError(err)
 	suite.Equal(http.StatusOK, resp.StatusCode)
 }
 
 func TestDefaultDialer(t *testing.T) {
+	t.Parallel()
 	suite.Run(t, &DefaultDialerTestSuite{})
 }
