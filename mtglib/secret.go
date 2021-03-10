@@ -8,7 +8,11 @@ import (
 	"strings"
 )
 
-const SecretKeyLength = 16
+const (
+	SecretKeyLength = 16
+
+	secretFakeTLSFirstByte byte = 238
+)
 
 var secretEmptyKey [SecretKeyLength]byte
 
@@ -43,18 +47,28 @@ func (s *Secret) UnmarshalText(data []byte) error {
 
 	if err != nil || len(decoded) <= SecretKeyLength {
 		decoded, err = base64.RawURLEncoding.DecodeString(text)
-	}
 
-	if err != nil {
-		return fmt.Errorf("incorrect secret format: %w", err)
-	}
+		if err != nil {
+			return fmt.Errorf("incorrect secret format: %w", err)
+		}
 
-	if len(decoded) <= SecretKeyLength {
-		return fmt.Errorf("secret has incorrect length %d", len(text))
+		if len(decoded) <= SecretKeyLength {
+			return fmt.Errorf("secret has incorrect length %d", len(text))
+		}
+
+		if decoded[0] != secretFakeTLSFirstByte {
+			return fmt.Errorf("incorrect first byte: %v", decoded[0])
+		}
+
+		decoded = decoded[1:]
 	}
 
 	copy(s.Key[:], decoded[:SecretKeyLength])
 	s.Host = string(decoded[SecretKeyLength:])
+
+	if s.Host == "" {
+		return fmt.Errorf("hostname cannot be empty: %s", text)
+	}
 
 	return nil
 }
@@ -72,7 +86,7 @@ func (s Secret) Hex() string {
 }
 
 func (s *Secret) makeBytes() []byte {
-	data := append([]byte{238}, s.Key[:]...) // hex 'ee' = 238
+	data := append([]byte{secretFakeTLSFirstByte}, s.Key[:]...)
 	data = append(data, s.Host...)
 
 	return data
