@@ -44,6 +44,10 @@ ccbuilds:
 vendor: go.mod go.sum
 	@$(MOD_ON) go mod vendor
 
+.PHONY: fmt
+fmt:
+	@$(GOTOOL) gofumpt -w -s -extra "$(ROOT_DIR)"
+
 .PHONY: test
 test:
 	@go test -v ./...
@@ -74,7 +78,7 @@ doc:
 	@$(GOTOOL) godoc -http 0.0.0.0:10000
 
 .PHONY: install-tools
-install-tools: install-tools-lint install-tools-godoc
+install-tools: install-tools-lint install-tools-godoc install-tools-gofumpt
 
 .PHONY: install-tools-lint
 install-tools-lint:
@@ -86,6 +90,11 @@ install-tools-lint:
 install-tools-godoc:
 	@mkdir -p "$(GOBIN)" || true && \
 		$(GOTOOL) go get -u golang.org/x/tools/cmd/godoc
+
+.PHONY: install-tools-gofumpt
+install-tools-gofumpt:
+	@mkdir -p "$(GOBIN)" || true && \
+		$(GOTOOL) go get -u mvdan.cc/gofumpt
 
 .PHONY: update-deps
 upgrade-deps:

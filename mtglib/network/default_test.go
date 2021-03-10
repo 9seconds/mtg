@@ -71,7 +71,7 @@ func (suite *DefaultDialerTestSuite) TestHTTPRequest() {
 	resp, err := httpClient.Get(suite.MakeURL("/get"))
 
 	suite.NoError(err)
-    suite.Equal(http.StatusOK, resp.StatusCode)
+	suite.Equal(http.StatusOK, resp.StatusCode)
 }
 
 func TestDefaultDialer(t *testing.T) {
