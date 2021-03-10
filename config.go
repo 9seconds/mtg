@@ -410,6 +410,10 @@ type config struct {
 			IPv4 configTypeIP `json:"ipv4"`
 			IPv6 configTypeIP `json:"ipv6"`
 		} `json:"public-ip"`
+		Timeout struct {
+			TCP  configTypeDuration `json:"tcp"`
+			HTTP configTypeDuration `json:"http"`
+		} `json:"timeout"`
 		DOHIP   configTypeIP    `json:"doh-ip"`
 		Proxies []configTypeURL `json:"proxies"`
 	} `json:"network"`
@@ -472,6 +476,10 @@ type configRaw struct {
 			IPv4 string `toml:"ipv4" json:"ipv4"`
 			IPv6 string `toml:"ipv6" json:"ipv6"`
 		} `toml:"public-ip" json:"public-ip"`
+		Timeout struct {
+			TCP  string `toml:"tcp" json:"tcp"`
+			HTTP string `toml:"http" json:"http"`
+		} `toml:"timeout" json:"timeout"`
 		DOHIP   string   `toml:"doh-ip" json:"doh-ip"`
 		Proxies []string `toml:"proxies" json:"proxies"`
 	} `toml:"network" json:"network"`

@@ -16,6 +16,8 @@ const (
 	ProxyDialerOpenThreshold        = 5
 	ProxyDialerHalfOpenTimeout      = time.Minute
 	ProxyDialerResetFailuresTimeout = 10 * time.Second
+
+	DefaultDOHHostname = "9.9.9.9"
 )
 
 var (

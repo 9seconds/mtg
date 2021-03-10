@@ -101,6 +101,12 @@ proxies = [
 ipv4 = ""
 ipv6 = ""
 
+# network timeouts define different settings for timeouts. HTTP timeout
+# is required only for DOH.
+[network.timeout]
+tcp = "5s"
+http = "10s"
+
 # FakeTLS can compare timestamps to prevent probes. Each message has
 # encrypted timestamp. So, mtg can compare this timestamp and decide if
 # we need to proceed with connection or not.

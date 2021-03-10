@@ -16,6 +16,7 @@ type CLI struct {
 	} `cmd help:"Generate new proxy secret."`
 	Access struct {
 		ConfigPath string `arg required type:"existingfile" help:"Path to the configuration file." name:"config-path"`
+		Hex        bool   `help:"Print secret in hex encoding."`
 	} `cmd help:"Print access information."`
 	Run struct {
 		ConfigPath string `arg required type:"existingfile" help:"Path to the configuration file." name:"config-path"`
@@ -34,8 +35,11 @@ func main() {
 	switch ctx.Command() {
 	case "generate-secret":
 		runGenerateSecret(cli)
-	case "access":
-	case "run":
+	case "access <config-path>":
+		runAccess(cli)
+	case "run <config-path>":
 		panic("not implemented yet")
+	default:
+		panic(ctx.Command())
 	}
 }
