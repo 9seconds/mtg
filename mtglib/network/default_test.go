@@ -10,6 +10,7 @@ import (
 )
 
 type DefaultDialerTestSuite struct {
+	suite.Suite
 	HTTPServerTestSuite
 
 	d network.Dialer
@@ -65,17 +66,12 @@ func (suite *DefaultDialerTestSuite) TestConnectOk() {
 }
 
 func (suite *DefaultDialerTestSuite) TestHTTPRequest() {
-	httpClient := http.Client{
-		Transport: &http.Transport{
-			DialContext: suite.d.DialContext,
-		},
-	}
+	httpClient := suite.MakeHTTPClient(suite.d)
 
-	resp, err := httpClient.Get(suite.httpServer.URL + "/get")
+	resp, err := httpClient.Get(suite.MakeURL("/get"))
 
 	suite.NoError(err)
-
-	resp.Body.Close()
+    suite.Equal(http.StatusOK, resp.StatusCode)
 }
 
 func TestDefaultDialer(t *testing.T) {

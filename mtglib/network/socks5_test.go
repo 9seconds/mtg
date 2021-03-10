@@ -1,84 +1,52 @@
 package network_test
 
 import (
-	"net"
 	"net/http"
-	"net/url"
 	"testing"
 
 	"github.com/9seconds/mtg/v2/mtglib/network"
-	socks5 "github.com/armon/go-socks5"
 	"github.com/stretchr/testify/suite"
 )
 
 type Socks5TestSuite struct {
+	suite.Suite
 	HTTPServerTestSuite
+	Socks5ServerTestSuite
 
-	baseDialer    network.Dialer
-	socksListener net.Listener
-	socksProxy    *socks5.Server
+	d network.Dialer
 }
 
 func (suite *Socks5TestSuite) SetupSuite() {
 	suite.HTTPServerTestSuite.SetupSuite()
+	suite.Socks5ServerTestSuite.SetupSuite()
 
-	socksConf := socks5.Config{
-		Credentials: socks5.StaticCredentials{
-			"user": "password",
-		},
-	}
-
-	suite.socksProxy, _ = socks5.New(&socksConf)
-	suite.socksListener, _ = net.Listen("tcp", "127.0.0.1:0")
-    suite.baseDialer, _ = network.NewDefaultDialer(0, 0)
-
-	go suite.socksProxy.Serve(suite.socksListener)
+	suite.d, _ = network.NewDefaultDialer(0, 0)
 }
 
 func (suite *Socks5TestSuite) TearDownSuite() {
-	suite.socksListener.Close()
-
+	suite.Socks5ServerTestSuite.TearDownSuite()
 	suite.HTTPServerTestSuite.TearDownSuite()
 }
 
 func (suite *Socks5TestSuite) TestRequestFailed() {
-	proxyURL := &url.URL{
-		Scheme: "socks5",
-		User:   url.UserPassword("user2", "password"),
-		Host:   suite.socksListener.Addr().String(),
-	}
-	dialer, _ := network.NewSocks5Dialer(suite.baseDialer, proxyURL)
+	proxyURL := suite.MakeSocks5URL("user2", "password")
+	dialer, _ := network.NewSocks5Dialer(suite.d, proxyURL)
+	httpClient := suite.MakeHTTPClient(dialer)
 
-	httpClient := http.Client{
-		Transport: &http.Transport{
-			DialContext: dialer.DialContext,
-		},
-	}
-
-	_, err := httpClient.Get(suite.httpServer.URL + "/get")
+	_, err := httpClient.Get(suite.MakeURL("/get"))
 
 	suite.Error(err)
 }
 
 func (suite *Socks5TestSuite) TestRequestOk() {
-	proxyURL := &url.URL{
-		Scheme: "socks5",
-		User:   url.UserPassword("user", "password"),
-		Host:   suite.socksListener.Addr().String(),
-	}
-	dialer, _ := network.NewSocks5Dialer(suite.baseDialer, proxyURL)
+	proxyURL := suite.MakeSocks5URL("user", "password")
+	dialer, _ := network.NewSocks5Dialer(suite.d, proxyURL)
+	httpClient := suite.MakeHTTPClient(dialer)
 
-	httpClient := http.Client{
-		Transport: &http.Transport{
-			DialContext: dialer.DialContext,
-		},
-	}
-
-	resp, err := httpClient.Get(suite.httpServer.URL + "/get")
+	resp, err := httpClient.Get(suite.MakeURL("/get"))
 
 	suite.NoError(err)
-
-	resp.Body.Close()
+	suite.Equal(http.StatusOK, resp.StatusCode)
 }
 
 func TestSocks5TestSuite(t *testing.T) {
