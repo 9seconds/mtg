@@ -8,13 +8,13 @@ import (
 )
 
 type rawConfig struct {
-	Debug      bool   `toml:"debug"`
-	Secret     string `toml:"secret"`
-	BindTo     string `toml:"bind-to"`
-	TCPBuffer  string `toml:"tcp-buffer"`
-	PreferIP   string `toml:"prefer-ip"`
-	CloakPort  uint   `toml:"cloak-port"`
-	Probes     struct {
+	Debug     bool   `toml:"debug"`
+	Secret    string `toml:"secret"`
+	BindTo    string `toml:"bind-to"`
+	TCPBuffer string `toml:"tcp-buffer"`
+	PreferIP  string `toml:"prefer-ip"`
+	CloakPort uint   `toml:"cloak-port"`
+	Probes    struct {
 		Time struct {
 			Enabled       bool   `toml:"enabled"`
 			AllowSkewness string `toml:"allow-skewness"`
@@ -34,7 +34,8 @@ type rawConfig struct {
 			Telegram string `toml:"telegram"`
 			Default  string `toml:"default"`
 		} `toml:"dialers"`
-		DOHHostname string `toml:"doh-hostname"`
+		DOHHostname string   `toml:"doh-hostname"`
+		Proxies     []string `toml:"proxies"`
 	} `toml:"network"`
 	Stats struct {
 		StatsD struct {

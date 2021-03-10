@@ -60,6 +60,41 @@ cloak-port = 443
 # By default we use Quad9.
 doh-hostname = "9.9.9.9"
 
+# mtg can work via proxies (for now, we support only socks5). Proxy
+# configuration is done via list. So, you can specify many proxies
+# there.
+#
+# Actually, if you supply an empty list, then no proxies are going to be
+# used. If you supply a single proxy, then mtg will use it exclusively.
+# If you supply >= 2, then mtg will load balance between them.
+#
+# If you add an empty string here, this is an equivalent of 'plain network',
+# with no proxy usage.
+#
+# Proxy configuration is done via ordinary URI schema:
+#
+#     socks5://user:password@host:port?open_threshold=5&half_open_timeout=1m&reset_failures_timeout=10s
+#
+
+# Only socks5 proxy is used. user/password is optional. As you can
+# see, you can specify some parameters in GET query. These parameters
+# configure circuit breaker.
+#
+# open_threshold means a number of errors which should happen so we stop
+# use a proxy.
+#
+# half_open_timeout means a time period (in Golang duration notation)
+# after which we can retry with this proxy
+#
+# reset_failures_timeout means a time period when we flush out errors
+# when circuit breaker in closed state.
+#
+# Please see https://docs.microsoft.com/en-us/azure/architecture/patterns/circuit-breaker
+# on details about circuit breakers.
+proxies = [
+    # "socks5://user:password@host:port?open_threshold=5&half_open_timeout=1m&reset_failures_timeout=10s"
+]
+
 # public ip addresses of the server. Actually, it is required only to
 # generate a correct access file. if you use default values here, mtg
 # will try to resolve these IPs on its own.
