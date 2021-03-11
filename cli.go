@@ -8,8 +8,8 @@ import (
 )
 
 type cli struct {
+	network network.Network
 	conf    *config
-	network *network.Network
 }
 
 func (c *cli) ReadConfig(path string) error {

@@ -12,21 +12,20 @@ import (
 	doh "github.com/babolivier/go-doh-client"
 )
 
-type Network struct {
-	HTTP http.Client
-	DNS  doh.Resolver
-
-	dialer Dialer
+type network struct {
+	idleTimeout time.Duration
+	dialer      Dialer
+	dns         doh.Resolver
 }
 
-func (d *Network) Dial(network, address string) (net.Conn, error) {
-	return d.DialContext(context.Background(), network, address)
+func (n *network) Dial(protocol, address string) (net.Conn, error) {
+	return n.DialContext(context.Background(), protocol, address)
 }
 
-func (d *Network) DialContext(ctx context.Context, network, address string) (net.Conn, error) {
+func (n *network) DialContext(ctx context.Context, protocol, address string) (net.Conn, error) {
 	host, port, _ := net.SplitHostPort(address)
 
-	ips, err := d.resolveIPs(network, host)
+	ips, err := n.DNSResolve(protocol, host)
 	if err != nil {
 		return nil, fmt.Errorf("cannot resolve dns names: %w", err)
 	}
@@ -37,16 +36,20 @@ func (d *Network) DialContext(ctx context.Context, network, address string) (net
 		})
 	}
 
+	var conn net.Conn
+
 	for _, v := range ips {
-		if conn, err := d.dialer.DialContext(ctx, network, net.JoinHostPort(v, port)); err == nil {
+		conn, err = n.dialer.DialContext(ctx, protocol, net.JoinHostPort(v, port))
+
+		if err == nil {
 			return conn, nil
 		}
 	}
 
-	return nil, fmt.Errorf("cannot dial to %s:%s", network, address)
+	return nil, fmt.Errorf("cannot dial to %s:%s: %w", protocol, address, err)
 }
 
-func (d *Network) resolveIPs(network, address string) ([]string, error) {
+func (n *network) DNSResolve(protocol, address string) ([]string, error) {
 	if net.ParseIP(address) != nil {
 		return []string{address}, nil
 	}
@@ -55,14 +58,14 @@ func (d *Network) resolveIPs(network, address string) ([]string, error) {
 	wg := &sync.WaitGroup{}
 	mutex := &sync.Mutex{}
 
-	switch network {
+	switch protocol {
 	case "tcp", "tcp4":
 		wg.Add(1)
 
 		go func() {
 			defer wg.Done()
 
-			if recs, _, err := d.DNS.LookupA(address); err == nil {
+			if recs, _, err := n.dns.LookupA(address); err == nil {
 				mutex.Lock()
 				defer mutex.Unlock()
 
@@ -73,14 +76,14 @@ func (d *Network) resolveIPs(network, address string) ([]string, error) {
 		}()
 	}
 
-	switch network {
+	switch protocol {
 	case "tcp", "tcp6":
 		wg.Add(1)
 
 		go func() {
 			defer wg.Done()
 
-			if recs, _, err := d.DNS.LookupAAAA(address); err == nil {
+			if recs, _, err := n.dns.LookupAAAA(address); err == nil {
 				mutex.Lock()
 				defer mutex.Unlock()
 
@@ -94,44 +97,53 @@ func (d *Network) resolveIPs(network, address string) ([]string, error) {
 	wg.Wait()
 
 	if len(ips) == 0 {
-		return nil, fmt.Errorf("cannot find any ips for %s:%s", network, address)
+		return nil, fmt.Errorf("cannot find any ips for %s:%s", protocol, address)
 	}
 
 	return ips, nil
 }
 
-func NewNetwork(dialer Dialer, dohHostname string, httpTimeout time.Duration) (*Network, error) {
+func (n *network) IdleTimeout() time.Duration {
+	return n.idleTimeout
+}
+
+func (n *network) MakeHTTPClient(timeout time.Duration) *http.Client {
+	if timeout <= 0 {
+		timeout = DefaultHTTPTimeout
+	}
+
+	return &http.Client{
+		Timeout: timeout,
+		Transport: &http.Transport{
+			DialContext: n.DialContext,
+		},
+	}
+}
+
+func NewNetwork(dialer Dialer, dohHostname string, idleTimeout time.Duration) (Network, error) {
 	switch {
-	case httpTimeout < 0:
-		return nil, fmt.Errorf("timeout should be positive number %v", httpTimeout)
-	case httpTimeout == 0:
-		httpTimeout = DefaultHTTPTimeout
+	case idleTimeout < 0:
+		return nil, fmt.Errorf("timeout should be positive number %s", idleTimeout)
+	case idleTimeout == 0:
+		idleTimeout = DefaultIdleTimeout
 	}
 
 	if net.ParseIP(dohHostname) == nil {
 		return nil, fmt.Errorf("hostname %s should be IP address", dohHostname)
 	}
 
-	dohHTTPClient := &http.Client{
-		Timeout: DefaultDNSTimeout,
-		Transport: &http.Transport{
-			DialContext: dialer.DialContext,
+	return &network{
+		dialer:      dialer,
+		idleTimeout: idleTimeout,
+		dns: doh.Resolver{
+			Host:  dohHostname,
+			Class: doh.IN,
+			HTTPClient: &http.Client{
+				Timeout: DNSTimeout,
+				Transport: &http.Transport{
+					DialContext: dialer.DialContext,
+				},
+			},
 		},
-	}
-	network := &Network{
-		dialer: dialer,
-		DNS: doh.Resolver{
-			Host:       dohHostname,
-			Class:      doh.IN,
-			HTTPClient: dohHTTPClient,
-		},
-	}
-	network.HTTP = http.Client{
-		Timeout: httpTimeout,
-		Transport: &http.Transport{
-			DialContext: network.DialContext,
-		},
-	}
-
-	return network, nil
+	}, nil
 }

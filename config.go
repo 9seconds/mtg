@@ -412,7 +412,7 @@ type config struct {
 		} `json:"public-ip"`
 		Timeout struct {
 			TCP  configTypeDuration `json:"tcp"`
-			HTTP configTypeDuration `json:"http"`
+			Idle configTypeDuration `json:"idle"`
 		} `json:"timeout"`
 		DOHIP   configTypeIP    `json:"doh-ip"`
 		Proxies []configTypeURL `json:"proxies"`
@@ -478,7 +478,7 @@ type configRaw struct {
 		} `toml:"public-ip" json:"public-ip"`
 		Timeout struct {
 			TCP  string `toml:"tcp" json:"tcp"`
-			HTTP string `toml:"http" json:"http"`
+			Idle string `toml:"idle" json:"idle"`
 		} `toml:"timeout" json:"timeout"`
 		DOHIP   string   `toml:"doh-ip" json:"doh-ip"`
 		Proxies []string `toml:"proxies" json:"proxies"`

@@ -11,9 +11,9 @@ import (
 	"github.com/9seconds/mtg/v2/mtglib/network"
 )
 
-func makeNetwork(conf *config) (*network.Network, error) {
+func makeNetwork(conf *config) (network.Network, error) {
 	tcpTimeout := conf.Network.Timeout.TCP.Value(network.DefaultTimeout)
-	httpTimeout := conf.Network.Timeout.TCP.Value(network.DefaultHTTPTimeout)
+	idleTimeout := conf.Network.Timeout.Idle.Value(network.DefaultIdleTimeout)
 	dohIP := conf.Network.DOHIP.Value(net.ParseIP(network.DefaultDOHHostname)).String()
 	bufferSize := conf.TCPBuffer.Value(network.DefaultBufferSize)
 
@@ -32,14 +32,14 @@ func makeNetwork(conf *config) (*network.Network, error) {
 
 	switch len(proxyURLs) {
 	case 0:
-		return network.NewNetwork(baseDialer, dohIP, httpTimeout)
+		return network.NewNetwork(baseDialer, dohIP, idleTimeout)
 	case 1:
 		socksDialer, err := network.NewSocks5Dialer(baseDialer, proxyURLs[0])
 		if err != nil {
 			return nil, fmt.Errorf("cannot build socks5 dialer: %w", err)
 		}
 
-		return network.NewNetwork(socksDialer, dohIP, httpTimeout)
+		return network.NewNetwork(socksDialer, dohIP, idleTimeout)
 	}
 
 	socksDialer, err := network.NewLoadBalancedSocks5Dialer(baseDialer, proxyURLs)
@@ -47,7 +47,7 @@ func makeNetwork(conf *config) (*network.Network, error) {
 		return nil, fmt.Errorf("cannot build socks5 dialer: %w", err)
 	}
 
-	return network.NewNetwork(socksDialer, dohIP, httpTimeout)
+	return network.NewNetwork(socksDialer, dohIP, idleTimeout)
 }
 
 func exhaustResponse(response *http.Response) {

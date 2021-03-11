@@ -73,12 +73,10 @@ func (c *cliCommandAccess) Run(cli *CLI) error {
 }
 
 func (c *cliCommandAccess) getIP(protocol string) net.IP {
-	client := &http.Client{
-		Timeout: c.network.HTTP.Timeout,
-		Transport: &http.Transport{
-			DialContext: func(ctx context.Context, network, address string) (net.Conn, error) {
-				return c.network.DialContext(ctx, protocol, address)
-			},
+	client := c.network.MakeHTTPClient(0)
+	client.Transport = &http.Transport{
+		DialContext: func(ctx context.Context, network, address string) (net.Conn, error) {
+			return c.network.DialContext(ctx, protocol, address)
 		},
 	}
 
