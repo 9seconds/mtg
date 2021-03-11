@@ -5,18 +5,18 @@ import (
 	"strconv"
 )
 
-type TypeFloat struct {
+type TypeErrorRate struct {
 	value float64
 }
 
-func (c *TypeFloat) UnmarshalJSON(data []byte) error {
+func (c *TypeErrorRate) UnmarshalJSON(data []byte) error {
 	value, err := strconv.ParseFloat(string(data), 64)
 	if err != nil {
 		return fmt.Errorf("incorrect float value: %w", err)
 	}
 
-	if value < 0 {
-		return fmt.Errorf("%f should be positive", value)
+	if value <= 0 || value >= 100 {
+		return fmt.Errorf("%f should be 0 < x < 100", value)
 	}
 
 	c.value = value
@@ -24,16 +24,16 @@ func (c *TypeFloat) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (c *TypeFloat) MarshalText() ([]byte, error) {
+func (c *TypeErrorRate) MarshalText() ([]byte, error) {
 	return []byte(c.String()), nil
 }
 
-func (c TypeFloat) String() string {
+func (c TypeErrorRate) String() string {
 	return strconv.FormatFloat(c.value, 'f', -1, 64)
 }
 
-func (c TypeFloat) Value(defaultValue float64) float64 {
-	if c.value < 0.00001 {
+func (c TypeErrorRate) Value(defaultValue float64) float64 {
+	if c.value < 1e-8 {
 		return defaultValue
 	}
 

@@ -22,9 +22,9 @@ type Config struct {
 			AllowSkewness TypeDuration `json:"allow-skewness"`
 		} `json:"time"`
 		AntiReplay struct {
-			Enabled   bool      `json:"enabled"`
-			MaxSize   TypeBytes `json:"max-size"`
-			ErrorRate TypeFloat `json:"error-rate"`
+			Enabled   bool          `json:"enabled"`
+			MaxSize   TypeBytes     `json:"max-size"`
+			ErrorRate TypeErrorRate `json:"error-rate"`
 		} `json:"anti-replay"`
 	} `json:"probes"`
 	Network struct {
