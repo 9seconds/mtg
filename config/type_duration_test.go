@@ -3,27 +3,27 @@ package config_test
 import (
 	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/9seconds/mtg/v2/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
 
-type typeBytesTestStruct struct {
-	Value config.TypeBytes `json:"value"`
+type typeDurationTestStruct struct {
+	Value config.TypeDuration `json:"value"`
 }
 
-type TypeBytesTestSuite struct {
+type TypeDurationTestSuite struct {
 	suite.Suite
 }
 
-func (suite *TypeBytesTestSuite) TestUnmarshalFail() {
+func (suite *TypeDurationTestSuite) TestUnmarshalFail() {
 	testData := []string{
-		"1m",
+		"1t",
 		"1",
-		"-1kb",
-		"-1kib",
-		"-1QB",
+		"-1s",
+		"-1h",
 	}
 
 	for _, v := range testData {
@@ -33,18 +33,16 @@ func (suite *TypeBytesTestSuite) TestUnmarshalFail() {
 		suite.NoError(err)
 
 		suite.T().Run(v, func(t *testing.T) {
-			assert.Error(t, json.Unmarshal(data, &typeBytesTestStruct{}))
+			assert.Error(t, json.Unmarshal(data, &typeDurationTestStruct{}))
 		})
 	}
 }
 
-func (suite *TypeBytesTestSuite) TestUnmarshalOk() {
-	testData := map[string]uint{
-		"1b":   1,
-		"1kb":  1024,
-		"1kib": 1024,
-		"2mb":  2 * 1024 * 1024,
-		"2mib": 2 * 1024 * 1024,
+func (suite *TypeDurationTestSuite) TestUnmarshalOk() {
+	testData := map[string]time.Duration{
+		"1s":   time.Second,
+		"1m":   time.Minute,
+		"2h1s": 2*time.Hour + time.Second,
 	}
 
 	for k, v := range testData {
@@ -56,19 +54,19 @@ func (suite *TypeBytesTestSuite) TestUnmarshalOk() {
 		suite.NoError(err)
 
 		suite.T().Run(k, func(t *testing.T) {
-			testStruct := &typeBytesTestStruct{}
+			testStruct := &typeDurationTestStruct{}
 
 			assert.NoError(t, json.Unmarshal(data, testStruct))
-			assert.EqualValues(t, value, testStruct.Value.Value(0))
+			assert.Equal(t, value, testStruct.Value.Value(0))
 		})
 	}
 }
 
-func (suite *TypeBytesTestSuite) TestMarshalOk() {
+func (suite *TypeDurationTestSuite) TestMarshalOk() {
 	testData := []string{
-		"1b",
-		"1kib",
-		"2mib",
+		"1s",
+		"1m0s",
+		"2h0m1s",
 	}
 
 	for _, v := range testData {
@@ -80,7 +78,7 @@ func (suite *TypeBytesTestSuite) TestMarshalOk() {
 		suite.NoError(err)
 
 		suite.T().Run(name, func(t *testing.T) {
-			testStruct := &typeBytesTestStruct{}
+			testStruct := &typeDurationTestStruct{}
 
 			assert.NoError(t, json.Unmarshal(data, testStruct))
 			assert.Equal(t, name, testStruct.Value.String())
@@ -92,23 +90,23 @@ func (suite *TypeBytesTestSuite) TestMarshalOk() {
 	}
 }
 
-func (suite *TypeBytesTestSuite) TestValue() {
-	testStruct := &typeBytesTestStruct{}
+func (suite *TypeDurationTestSuite) TestValue() {
+	testStruct := &typeDurationTestStruct{}
 
 	suite.EqualValues(0, testStruct.Value.Value(0))
-	suite.EqualValues(1, testStruct.Value.Value(1))
+	suite.Equal(time.Second, testStruct.Value.Value(time.Second))
 
 	data, err := json.Marshal(map[string]string{
-		"value": "1kb",
+		"value": "1s",
 	})
 	suite.NoError(err)
 	suite.NoError(json.Unmarshal(data, testStruct))
 
-	suite.EqualValues(1024, testStruct.Value.Value(0))
-	suite.EqualValues(1024, testStruct.Value.Value(1))
+	suite.Equal(time.Second, testStruct.Value.Value(0))
+	suite.Equal(time.Second, testStruct.Value.Value(time.Minute))
 }
 
-func TestTypeBytes(t *testing.T) {
+func TestTypeDuration(t *testing.T) {
 	t.Parallel()
-	suite.Run(t, &TypeBytesTestSuite{})
+	suite.Run(t, &TypeDurationTestSuite{})
 }
