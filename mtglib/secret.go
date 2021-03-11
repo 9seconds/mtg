@@ -31,7 +31,6 @@ func (s Secret) MarshalText() ([]byte, error) {
 
 func (s *Secret) UnmarshalText(data []byte) error {
 	text := string(data)
-
 	if text == "" {
 		return ErrSecretEmpty
 	}

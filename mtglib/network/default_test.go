@@ -20,7 +20,6 @@ func (suite *DefaultDialerTestSuite) SetupSuite() {
 	suite.HTTPServerTestSuite.SetupSuite()
 
 	d, err := network.NewDefaultDialer(0, 0)
-
 	suite.NoError(err)
 
 	suite.d = d
@@ -28,13 +27,11 @@ func (suite *DefaultDialerTestSuite) SetupSuite() {
 
 func (suite *DefaultDialerTestSuite) TestNegativeTimeout() {
 	_, err := network.NewDefaultDialer(-1, 0)
-
 	suite.Error(err)
 }
 
 func (suite *DefaultDialerTestSuite) TestNegativeBufferSize() {
 	_, err := network.NewDefaultDialer(0, -1)
-
 	suite.Error(err)
 }
 
@@ -42,7 +39,6 @@ func (suite *DefaultDialerTestSuite) TestUnsupportedProtocol() {
 	_, err := suite.d.DialContext(context.Background(),
 		"udp",
 		suite.HTTPServerAddress())
-
 	suite.Error(err)
 }
 
@@ -50,7 +46,6 @@ func (suite *DefaultDialerTestSuite) TestCannotDial() {
 	_, err := suite.d.DialContext(context.Background(),
 		"tcp",
 		suite.HTTPServerAddress()+suite.HTTPServerAddress())
-
 	suite.Error(err)
 }
 
@@ -58,7 +53,6 @@ func (suite *DefaultDialerTestSuite) TestConnectOk() {
 	conn, err := suite.d.DialContext(context.Background(),
 		"tcp",
 		suite.HTTPServerAddress())
-
 	suite.NoError(err)
 	suite.NotNil(conn)
 

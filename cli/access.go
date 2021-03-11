@@ -44,18 +44,17 @@ func (c *Access) Run(cli *CLI, version string) error {
 		return fmt.Errorf("cannot init config: %w", err)
 	}
 
-	wg := &sync.WaitGroup{}
 	resp := &accessResponse{}
 	resp.Secret.Base64 = c.conf.Secret.Base64()
 	resp.Secret.Hex = c.conf.Secret.Hex()
 
-	wg.Add(2)
+	wg := &sync.WaitGroup{}
+	wg.Add(2) // nolint: gomnd
 
 	go func() {
 		defer wg.Done()
 
 		ip := c.conf.Network.PublicIP.IPv4.Value(nil)
-
 		if ip == nil {
 			ip = c.getIP("tcp4")
 		}
@@ -71,7 +70,6 @@ func (c *Access) Run(cli *CLI, version string) error {
 		defer wg.Done()
 
 		ip := c.conf.Network.PublicIP.IPv4.Value(nil)
-
 		if ip == nil {
 			ip = c.getIP("tcp6")
 		}
@@ -86,7 +84,6 @@ func (c *Access) Run(cli *CLI, version string) error {
 	wg.Wait()
 
 	encoder := json.NewEncoder(os.Stdout)
-
 	encoder.SetEscapeHTML(false)
 	encoder.SetIndent("", "  ")
 
@@ -137,7 +134,6 @@ func (c *Access) makeURLs(ip net.IP, cli *CLI) *accessResponseURLs {
 	}
 
 	values := url.Values{}
-
 	values.Set("server", ip.String())
 	values.Set("port", strconv.Itoa(int(c.conf.BindTo.PortValue(0))))
 
@@ -163,7 +159,6 @@ func (c *Access) makeURLs(ip net.IP, cli *CLI) *accessResponseURLs {
 			RawQuery: urlQuery,
 		}).String(),
 	}
-
 	rv.TgQrCode = c.makeQRCode(rv.TgURL)
 	rv.TmeQrCode = c.makeQRCode(rv.TmeURL)
 
@@ -172,7 +167,6 @@ func (c *Access) makeURLs(ip net.IP, cli *CLI) *accessResponseURLs {
 
 func (c *Access) makeQRCode(data string) string {
 	values := url.Values{}
-
 	values.Set("qzone", "4")
 	values.Set("format", "svg")
 	values.Set("data", data)

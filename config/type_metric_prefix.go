@@ -15,7 +15,6 @@ func (c *TypeMetricPrefix) UnmarshalText(data []byte) error {
 	}
 
 	prefix := string(data)
-
 	if ok, err := regexp.MatchString("^[a-z0-9]+$", prefix); !ok || err != nil {
 		return fmt.Errorf("incorrect metric prefix: %s", prefix)
 	}

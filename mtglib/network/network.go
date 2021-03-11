@@ -49,7 +49,6 @@ func (n *network) DialContext(ctx context.Context, protocol, address string) (ne
 	}
 
 	var conn net.Conn
-
 	for _, v := range ips {
 		conn, err = n.dialer.DialContext(ctx, protocol, net.JoinHostPort(v, port))
 

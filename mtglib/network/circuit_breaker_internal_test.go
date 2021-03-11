@@ -51,7 +51,6 @@ func (suite *CircuitBreakerTestSuite) TestMultipleRunsOk() {
 		Return(suite.connMock, nil)
 
 	wg := &sync.WaitGroup{}
-
 	wg.Add(5)
 
 	go func() {
@@ -126,7 +125,6 @@ func (suite *CircuitBreakerTestSuite) TestHalfOpen() {
 	time.Sleep(500 * time.Millisecond)
 
 	conn, err := suite.d.DialContext(suite.ctx, "tcp", "127.0.0.2")
-
 	suite.NoError(err)
 	suite.Equal("10.0.0.10:80", conn.RemoteAddr().String())
 

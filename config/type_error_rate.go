@@ -5,6 +5,8 @@ import (
 	"strconv"
 )
 
+const typeErrorRateIgnoreLess = 1e-8
+
 type TypeErrorRate struct {
 	value float64
 }
@@ -33,7 +35,7 @@ func (c TypeErrorRate) String() string {
 }
 
 func (c TypeErrorRate) Value(defaultValue float64) float64 {
-	if c.value < 1e-8 {
+	if c.value < typeErrorRateIgnoreLess {
 		return defaultValue
 	}
 

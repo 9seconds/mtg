@@ -32,13 +32,11 @@ func (suite *SecretTestSuite) TestParseSecret() {
 
 		suite.T().Run(name, func(t *testing.T) {
 			parsed, err := mtglib.ParseSecret(param)
-
 			assert.NoError(t, err)
 			assert.Equal(t, s.Key, parsed.Key)
 			assert.Equal(t, s.Host, parsed.Host)
 
 			newSecret := mtglib.Secret{}
-
 			assert.NoError(t, newSecret.UnmarshalText([]byte(param)))
 			assert.Equal(t, s.Key, newSecret.Key)
 			assert.Equal(t, s.Host, newSecret.Host)
@@ -67,7 +65,6 @@ func (suite *SecretTestSuite) TestMarshalData() {
 	copy(s.Key[:], secretData)
 
 	data, err := json.Marshal(&s)
-
 	suite.NoError(err)
 	suite.Equal(string(data), `"7tEcbLvZ7-f-1bwNsiCwlmVnb29nbGUuY29t"`)
 }
@@ -87,7 +84,6 @@ func (suite *SecretTestSuite) TestIncorrectSecret() {
 
 		suite.T().Run(param, func(t *testing.T) {
 			_, err := mtglib.ParseSecret(param)
-
 			assert.Error(t, err)
 		})
 	}
@@ -97,7 +93,6 @@ func (suite *SecretTestSuite) TestInvariant() {
 	generated := mtglib.GenerateSecret("google.com")
 
 	parsed, err := mtglib.ParseSecret(generated.Hex())
-
 	suite.NoError(err)
 	suite.Equal(generated.Key, parsed.Key)
 	suite.Equal(generated.Host, parsed.Host)

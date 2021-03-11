@@ -28,12 +28,10 @@ func (suite *LoadBalancedSocks5TestSuite) SetupSuite() {
 
 func (suite *LoadBalancedSocks5TestSuite) SetupTest() {
 	baseDialer, _ := network.NewDefaultDialer(0, 0)
-
 	lbDialer, err := network.NewLoadBalancedSocks5Dialer(baseDialer, []*url.URL{
 		suite.MakeSocks5URL("user", "password"),
 		suite.MakeSocks5URL("user2", "password"),
 	})
-
 	suite.NoError(err)
 
 	suite.httpClient = suite.MakeHTTPClient(lbDialer)
@@ -48,13 +46,11 @@ func (suite *LoadBalancedSocks5TestSuite) TestIncorrectURL() {
 	_, err := network.NewLoadBalancedSocks5Dialer(&DialerMock{}, []*url.URL{
 		{Scheme: "http"},
 	})
-
 	suite.Error(err)
 }
 
 func (suite *LoadBalancedSocks5TestSuite) TestCannotDial() {
 	baseDialer := &DialerMock{}
-
 	baseDialer.On("DialContext", mock.Anything, "tcp", "127.0.0.1:1080").
 		Times(network.ProxyDialerOpenThreshold).
 		Return(&net.TCPConn{}, io.EOF)

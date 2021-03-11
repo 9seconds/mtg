@@ -122,22 +122,20 @@ type configRaw struct {
 
 func Parse(rawData []byte) (*Config, error) {
 	rawConf := &configRaw{}
+	jsonBuf := &bytes.Buffer{}
+	conf := &Config{}
+
+	jsonEncoder := json.NewEncoder(jsonBuf)
+	jsonEncoder.SetEscapeHTML(false)
+	jsonEncoder.SetIndent("", "")
 
 	if err := toml.Unmarshal(rawData, rawConf); err != nil {
 		return nil, fmt.Errorf("cannot parse toml config: %w", err)
 	}
 
-	jsonBuf := &bytes.Buffer{}
-	jsonEncoder := json.NewEncoder(jsonBuf)
-
-	jsonEncoder.SetEscapeHTML(false)
-	jsonEncoder.SetIndent("", "")
-
 	if err := jsonEncoder.Encode(rawConf); err != nil {
 		return nil, fmt.Errorf("cannot dump into interim format: %w", err)
 	}
-
-	conf := &Config{}
 
 	if err := json.NewDecoder(jsonBuf).Decode(conf); err != nil {
 		return nil, fmt.Errorf("cannot parse final config: %w", err)

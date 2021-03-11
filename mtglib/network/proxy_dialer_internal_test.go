@@ -22,7 +22,6 @@ func (suite *ProxyDialerTestSuite) SetupSuite() {
 
 func (suite *ProxyDialerTestSuite) TestSetupDefaults() {
 	d := newProxyDialer(&DialerMock{}, suite.u).(*circuitBreakerDialer)
-
 	suite.EqualValues(ProxyDialerOpenThreshold, d.openThreshold)
 	suite.EqualValues(ProxyDialerHalfOpenTimeout, d.halfOpenTimeout)
 	suite.EqualValues(ProxyDialerResetFailuresTimeout, d.resetFailuresTimeout)
@@ -30,14 +29,12 @@ func (suite *ProxyDialerTestSuite) TestSetupDefaults() {
 
 func (suite *ProxyDialerTestSuite) TestSetupValuesAllOk() {
 	query := url.Values{}
-
 	query.Set("open_threshold", "30")
 	query.Set("reset_failures_timeout", "1s")
 	query.Set("half_open_timeout", "2s")
-
 	suite.u.RawQuery = query.Encode()
-	d := newProxyDialer(&DialerMock{}, suite.u).(*circuitBreakerDialer)
 
+	d := newProxyDialer(&DialerMock{}, suite.u).(*circuitBreakerDialer)
 	suite.EqualValues(30, d.openThreshold)
 	suite.EqualValues(2*time.Second, d.halfOpenTimeout)
 	suite.EqualValues(time.Second, d.resetFailuresTimeout)
@@ -51,10 +48,9 @@ func (suite *ProxyDialerTestSuite) TestOpenThreshold() {
 		param := v
 		suite.T().Run(v, func(t *testing.T) {
 			query.Set("open_threshold", param)
-
 			suite.u.RawQuery = query.Encode()
-			d := newProxyDialer(&DialerMock{}, suite.u).(*circuitBreakerDialer)
 
+			d := newProxyDialer(&DialerMock{}, suite.u).(*circuitBreakerDialer)
 			assert.EqualValues(t, ProxyDialerOpenThreshold, d.openThreshold)
 		})
 	}
@@ -68,10 +64,9 @@ func (suite *ProxyDialerTestSuite) TestHalfOpenTimeout() {
 		param := v
 		suite.T().Run(v, func(t *testing.T) {
 			query.Set("half_open_timeout", param)
-
 			suite.u.RawQuery = query.Encode()
-			d := newProxyDialer(&DialerMock{}, suite.u).(*circuitBreakerDialer)
 
+			d := newProxyDialer(&DialerMock{}, suite.u).(*circuitBreakerDialer)
 			assert.EqualValues(t, ProxyDialerHalfOpenTimeout, d.halfOpenTimeout)
 		})
 	}
@@ -85,10 +80,9 @@ func (suite *ProxyDialerTestSuite) TestResetFailuresTimeout() {
 		param := v
 		suite.T().Run(v, func(t *testing.T) {
 			query.Set("reset_failures_timeout", param)
-
 			suite.u.RawQuery = query.Encode()
-			d := newProxyDialer(&DialerMock{}, suite.u).(*circuitBreakerDialer)
 
+			d := newProxyDialer(&DialerMock{}, suite.u).(*circuitBreakerDialer)
 			assert.EqualValues(t, ProxyDialerHalfOpenTimeout, d.halfOpenTimeout)
 		})
 	}

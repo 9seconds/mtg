@@ -125,7 +125,6 @@ func (c *circuitBreakerDialer) switchState(state uint32) {
 	}
 
 	c.failuresCount = 0
-
 	atomic.StoreUint32(&c.halfOpenAttempts, 0)
 	atomic.StoreUint32(&c.state, state)
 }
@@ -158,7 +157,6 @@ func (c *circuitBreakerDialer) tryHalfOpen() {
 
 func (c *circuitBreakerDialer) stopTimer(timerRef **time.Timer) {
 	timer := *timerRef
-
 	if timer == nil {
 		return
 	}
