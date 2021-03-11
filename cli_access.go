@@ -80,6 +80,8 @@ func (c *cliCommandAccess) getIP(protocol string) net.IP {
 		},
 	}
 
+	c.network.PatchHTTPClient(client)
+
 	resp, err := client.Get("https://ifconfig.co") // nolint: bodyclose, noctx
 	if err != nil {
 		return nil

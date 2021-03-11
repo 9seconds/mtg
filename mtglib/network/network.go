@@ -120,6 +120,9 @@ func (n *network) MakeHTTPClient(timeout time.Duration) *http.Client {
 	}
 }
 
+func (n *network) PatchHTTPClient(_ *http.Client) {
+}
+
 func NewNetwork(dialer Dialer, dohHostname string, idleTimeout time.Duration) (Network, error) {
 	switch {
 	case idleTimeout < 0:
