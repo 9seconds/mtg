@@ -1,9 +1,10 @@
-package main
+package cli
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -30,14 +31,14 @@ type accessResponseURLs struct {
 	TmeQrCode string `json:"tme_qrcode"`
 }
 
-type cliCommandAccess struct {
-	cli
+type Access struct {
+	base
 
 	ConfigPath string `arg required type:"existingfile" help:"Path to the configuration file." name:"config-path"` // nolint: lll, govet
 	Hex        bool   `help:"Print secret in hex encoding."`
 }
 
-func (c *cliCommandAccess) Run(cli *CLI) error {
+func (c *Access) Run(cli *CLI) error {
 	if err := c.ReadConfig(cli.Access.ConfigPath); err != nil {
 		return fmt.Errorf("cannot init config: %w", err)
 	}
@@ -72,7 +73,7 @@ func (c *cliCommandAccess) Run(cli *CLI) error {
 	return nil
 }
 
-func (c *cliCommandAccess) getIP(protocol string) net.IP {
+func (c *Access) getIP(protocol string) net.IP {
 	client := c.network.MakeHTTPClient(0)
 	client.Transport = &http.Transport{
 		DialContext: func(ctx context.Context, network, address string) (net.Conn, error) {
@@ -80,9 +81,14 @@ func (c *cliCommandAccess) getIP(protocol string) net.IP {
 		},
 	}
 
-	c.network.PatchHTTPClient(client)
+	c.network.PrepareHTTPClient(client)
 
-	resp, err := client.Get("https://ifconfig.co") // nolint: bodyclose, noctx
+	req, err := http.NewRequest(http.MethodGet, "https://ifconfig.co", nil)
+	if err != nil {
+		panic(err)
+	}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil
 	}
@@ -91,7 +97,10 @@ func (c *cliCommandAccess) getIP(protocol string) net.IP {
 		return nil
 	}
 
-	defer exhaustResponse(resp)
+	defer func() {
+		io.Copy(ioutil.Discard, resp.Body)
+		resp.Body.Close()
+	}()
 
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -101,7 +110,7 @@ func (c *cliCommandAccess) getIP(protocol string) net.IP {
 	return net.ParseIP(strings.TrimSpace(string(data)))
 }
 
-func (c *cliCommandAccess) makeURLs(ip net.IP, cli *CLI) *accessResponseURLs {
+func (c *Access) makeURLs(ip net.IP, cli *CLI) *accessResponseURLs {
 	if ip == nil {
 		return nil
 	}
@@ -140,7 +149,7 @@ func (c *cliCommandAccess) makeURLs(ip net.IP, cli *CLI) *accessResponseURLs {
 	return rv
 }
 
-func (c *cliCommandAccess) makeQRCode(data string) string {
+func (c *Access) makeQRCode(data string) string {
 	values := url.Values{}
 
 	values.Set("qzone", "4")

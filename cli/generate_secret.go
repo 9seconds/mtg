@@ -1,4 +1,4 @@
-package main
+package cli
 
 import (
 	"fmt"
@@ -6,14 +6,14 @@ import (
 	"github.com/9seconds/mtg/v2/mtglib"
 )
 
-type cliCommandGenerateSecret struct {
-	cli
+type GenerateSecret struct {
+	base
 
 	HostName string `arg optional help:"Hostname to use for domain fronting. Default is '${domain_front}'." name:"hostname" default:"${domain_front}"` // nolint: lll, govet
 	Hex      bool   `help:"Print secret in hex encoding."`
 }
 
-func (c *cliCommandGenerateSecret) Run(cli *CLI) error { // nolint: unparam
+func (c *GenerateSecret) Run(cli *CLI) error { // nolint: unparam
 	secret := mtglib.GenerateSecret(cli.GenerateSecret.HostName)
 
 	if cli.GenerateSecret.Hex {
