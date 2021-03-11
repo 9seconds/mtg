@@ -25,7 +25,7 @@ func (c *TypeMetricPrefix) UnmarshalText(data []byte) error {
 	return nil
 }
 
-func (c TypeMetricPrefix) MarshalText() ([]byte, error) { // nolint: unparam
+func (c TypeMetricPrefix) MarshalText() ([]byte, error) {
 	return []byte(c.String()), nil
 }
 

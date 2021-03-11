@@ -6,7 +6,7 @@ type TypeHTTPPath struct {
 	value string
 }
 
-func (c *TypeHTTPPath) UnmarshalText(data []byte) error { // nolint: unparam
+func (c *TypeHTTPPath) UnmarshalText(data []byte) error {
 	if len(data) > 0 {
 		c.value = "/" + strings.Trim(string(data), "/")
 	}
@@ -14,7 +14,7 @@ func (c *TypeHTTPPath) UnmarshalText(data []byte) error { // nolint: unparam
 	return nil
 }
 
-func (c TypeHTTPPath) MarshalText() ([]byte, error) { // nolint: unparam
+func (c TypeHTTPPath) MarshalText() ([]byte, error) {
 	return []byte(c.String()), nil
 }
 

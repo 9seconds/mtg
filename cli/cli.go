@@ -1,8 +1,6 @@
 package cli
 
-import (
-	"github.com/alecthomas/kong"
-)
+import "github.com/alecthomas/kong"
 
 type CLI struct {
 	GenerateSecret GenerateSecret   `cmd help:"Generate new proxy secret"` // nolint: govet

@@ -38,8 +38,8 @@ type Access struct {
 	Hex        bool   `help:"Print secret in hex encoding."`
 }
 
-func (c *Access) Run(cli *CLI) error {
-	if err := c.ReadConfig(cli.Access.ConfigPath); err != nil {
+func (c *Access) Run(cli *CLI, version string) error {
+	if err := c.ReadConfig(cli.Access.ConfigPath, version); err != nil {
 		return fmt.Errorf("cannot init config: %w", err)
 	}
 
@@ -74,21 +74,11 @@ func (c *Access) Run(cli *CLI) error {
 }
 
 func (c *Access) getIP(protocol string) net.IP {
-	client := c.network.MakeHTTPClient(0)
-	client.Transport = &http.Transport{
-		DialContext: func(ctx context.Context, network, address string) (net.Conn, error) {
-			return c.network.DialContext(ctx, protocol, address)
-		},
-	}
+	client := c.network.MakeHTTPClient(func(ctx context.Context, network, address string) (net.Conn, error) {
+		return c.network.DialContext(ctx, protocol, address)
+	})
 
-	c.network.PrepareHTTPClient(client)
-
-	req, err := http.NewRequest(http.MethodGet, "https://ifconfig.co", nil)
-	if err != nil {
-		panic(err)
-	}
-
-	resp, err := client.Do(req)
+	resp, err := client.Get("https://ifconfig.co") // nolint: noctx
 	if err != nil {
 		return nil
 	}
@@ -98,7 +88,7 @@ func (c *Access) getIP(protocol string) net.IP {
 	}
 
 	defer func() {
-		io.Copy(ioutil.Discard, resp.Body)
+		io.Copy(ioutil.Discard, resp.Body) // nolint: errcheck
 		resp.Body.Close()
 	}()
 

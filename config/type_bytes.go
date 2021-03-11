@@ -30,7 +30,7 @@ func (c *TypeBytes) UnmarshalText(data []byte) error {
 	return nil
 }
 
-func (c TypeBytes) MarshalText() ([]byte, error) { // nolint: unparam
+func (c TypeBytes) MarshalText() ([]byte, error) {
 	return []byte(c.String()), nil
 }
 

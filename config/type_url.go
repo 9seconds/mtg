@@ -24,7 +24,7 @@ func (c *TypeURL) UnmarshalText(data []byte) error {
 	return nil
 }
 
-func (c *TypeURL) MarshalText() ([]byte, error) { // nolint: unparam
+func (c *TypeURL) MarshalText() ([]byte, error) {
 	return []byte(c.String()), nil
 }
 

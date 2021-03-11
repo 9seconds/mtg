@@ -24,7 +24,7 @@ func (c *TypeFloat) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (c *TypeFloat) MarshalText() ([]byte, error) { // nolint: unparam
+func (c *TypeFloat) MarshalText() ([]byte, error) {
 	return []byte(c.String()), nil
 }
 

@@ -28,8 +28,8 @@ func (c *TypePort) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (c *TypePort) MarshalJSON() ([]byte, error) { // nolint: unparam
-    return []byte(c.String()), nil
+func (c *TypePort) MarshalJSON() ([]byte, error) {
+	return []byte(c.String()), nil
 }
 
 func (c TypePort) String() string {

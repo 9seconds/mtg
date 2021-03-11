@@ -32,7 +32,7 @@ func (c *TypeHostPort) UnmarshalText(data []byte) error {
 	return nil
 }
 
-func (c TypeHostPort) MarshalText() ([]byte, error) { // nolint: unparam
+func (c TypeHostPort) MarshalText() ([]byte, error) {
 	return []byte(c.String()), nil
 }
 
@@ -41,11 +41,11 @@ func (c TypeHostPort) String() string {
 }
 
 func (c TypeHostPort) HostValue(defaultValue net.IP) net.IP {
-    return c.host.Value(defaultValue)
+	return c.host.Value(defaultValue)
 }
 
 func (c TypeHostPort) PortValue(defaultValue uint) uint {
-    return c.port.Value(defaultValue)
+	return c.port.Value(defaultValue)
 }
 
 func (c TypeHostPort) Value(defaultHostValue net.IP, defaultPortValue uint) string {

@@ -13,7 +13,7 @@ type GenerateSecret struct {
 	Hex      bool   `help:"Print secret in hex encoding."`
 }
 
-func (c *GenerateSecret) Run(cli *CLI) error { // nolint: unparam
+func (c *GenerateSecret) Run(cli *CLI, _ string) error {
 	secret := mtglib.GenerateSecret(cli.GenerateSecret.HostName)
 
 	if cli.GenerateSecret.Hex {

@@ -19,5 +19,5 @@ func main() {
 		"version":      version,
 	})
 
-	ctx.FatalIfErrorf(ctx.Run(cli))
+	ctx.FatalIfErrorf(ctx.Run(cli, version))
 }

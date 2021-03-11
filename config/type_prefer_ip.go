@@ -26,7 +26,7 @@ func (c *TypePreferIP) UnmarshalText(data []byte) error {
 	return nil
 }
 
-func (c TypePreferIP) MarshalText() ([]byte, error) { // nolint: unparam
+func (c TypePreferIP) MarshalText() ([]byte, error) {
 	return []byte(c.value), nil
 }
 

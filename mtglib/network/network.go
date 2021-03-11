@@ -12,10 +12,22 @@ import (
 	doh "github.com/babolivier/go-doh-client"
 )
 
+type networkHTTPTransport struct {
+	userAgent string
+	next      http.RoundTripper
+}
+
+func (n networkHTTPTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req.Header.Set("User-Agent", n.userAgent)
+
+	return n.next.RoundTrip(req)
+}
+
 type network struct {
-	idleTimeout time.Duration
 	dialer      Dialer
 	dns         doh.Resolver
+	idleTimeout time.Duration
+	userAgent   string
 }
 
 func (n *network) Dial(protocol, address string) (net.Conn, error) {
@@ -107,23 +119,15 @@ func (n *network) IdleTimeout() time.Duration {
 	return n.idleTimeout
 }
 
-func (n *network) MakeHTTPClient(timeout time.Duration) *http.Client {
-	if timeout <= 0 {
-		timeout = DefaultHTTPTimeout
+func (n *network) MakeHTTPClient(dialFunc DialFunc) *http.Client {
+	if dialFunc == nil {
+		dialFunc = n.DialContext
 	}
 
-	return &http.Client{
-		Timeout: timeout,
-		Transport: &http.Transport{
-			DialContext: n.DialContext,
-		},
-	}
+	return makeHTTPClient(n.userAgent, dialFunc)
 }
 
-func (n *network) PatchHTTPClient(_ *http.Client) {
-}
-
-func NewNetwork(dialer Dialer, dohHostname string, idleTimeout time.Duration) (Network, error) {
+func NewNetwork(dialer Dialer, userAgent, dohHostname string, idleTimeout time.Duration) (Network, error) {
 	switch {
 	case idleTimeout < 0:
 		return nil, fmt.Errorf("timeout should be positive number %s", idleTimeout)
@@ -138,6 +142,7 @@ func NewNetwork(dialer Dialer, dohHostname string, idleTimeout time.Duration) (N
 	return &network{
 		dialer:      dialer,
 		idleTimeout: idleTimeout,
+		userAgent:   userAgent,
 		dns: doh.Resolver{
 			Host:  dohHostname,
 			Class: doh.IN,
@@ -149,4 +154,16 @@ func NewNetwork(dialer Dialer, dohHostname string, idleTimeout time.Duration) (N
 			},
 		},
 	}, nil
+}
+
+func makeHTTPClient(userAgent string, dialFunc DialFunc) *http.Client {
+	return &http.Client{
+		Timeout: HTTPTimeout,
+		Transport: networkHTTPTransport{
+			userAgent: userAgent,
+			next: &http.Transport{
+				DialContext: dialFunc,
+			},
+		},
+	}
 }
