@@ -19,6 +19,10 @@ func (c TypeHTTPPath) MarshalText() ([]byte, error) {
 }
 
 func (c TypeHTTPPath) String() string {
+	if c.value == "" {
+		return "/"
+	}
+
 	return c.value
 }
 

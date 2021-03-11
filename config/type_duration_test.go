@@ -85,7 +85,7 @@ func (suite *TypeDurationTestSuite) TestMarshalOk() {
 
 			marshalled, err := testStruct.Value.MarshalText()
 			assert.NoError(t, err)
-			assert.Equal(t, string(marshalled), name)
+			assert.Equal(t, name, string(marshalled))
 		})
 	}
 }
