@@ -1,11 +1,11 @@
 package network
 
 import (
-	"fmt"
 	"net/url"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -49,13 +49,13 @@ func (suite *ProxyDialerTestSuite) TestOpenThreshold() {
 
 	for _, v := range params {
 		param := v
-		suite.T().Run(fmt.Sprintf("param=%s", v), func(t *testing.T) {
+		suite.T().Run(v, func(t *testing.T) {
 			query.Set("open_threshold", param)
 
 			suite.u.RawQuery = query.Encode()
 			d := newProxyDialer(&DialerMock{}, suite.u).(*circuitBreakerDialer)
 
-			suite.EqualValues(ProxyDialerOpenThreshold, d.openThreshold)
+			assert.EqualValues(t, ProxyDialerOpenThreshold, d.openThreshold)
 		})
 	}
 }
@@ -66,13 +66,13 @@ func (suite *ProxyDialerTestSuite) TestHalfOpenTimeout() {
 
 	for _, v := range params {
 		param := v
-		suite.T().Run(fmt.Sprintf("param=%s", v), func(t *testing.T) {
+		suite.T().Run(v, func(t *testing.T) {
 			query.Set("half_open_timeout", param)
 
 			suite.u.RawQuery = query.Encode()
 			d := newProxyDialer(&DialerMock{}, suite.u).(*circuitBreakerDialer)
 
-			suite.EqualValues(ProxyDialerHalfOpenTimeout, d.halfOpenTimeout)
+			assert.EqualValues(t, ProxyDialerHalfOpenTimeout, d.halfOpenTimeout)
 		})
 	}
 }
@@ -83,13 +83,13 @@ func (suite *ProxyDialerTestSuite) TestResetFailuresTimeout() {
 
 	for _, v := range params {
 		param := v
-		suite.T().Run(fmt.Sprintf("param=%s", v), func(t *testing.T) {
+		suite.T().Run(v, func(t *testing.T) {
 			query.Set("reset_failures_timeout", param)
 
 			suite.u.RawQuery = query.Encode()
 			d := newProxyDialer(&DialerMock{}, suite.u).(*circuitBreakerDialer)
 
-			suite.EqualValues(ProxyDialerHalfOpenTimeout, d.halfOpenTimeout)
+			assert.EqualValues(t, ProxyDialerHalfOpenTimeout, d.halfOpenTimeout)
 		})
 	}
 }

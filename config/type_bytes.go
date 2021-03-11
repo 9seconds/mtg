@@ -8,7 +8,7 @@ import (
 )
 
 type TypeBytes struct {
-	value uint
+	value units.Base2Bytes
 }
 
 func (c *TypeBytes) UnmarshalText(data []byte) error {
@@ -16,7 +16,10 @@ func (c *TypeBytes) UnmarshalText(data []byte) error {
 		return nil
 	}
 
-	value, err := units.ParseStrictBytes(strings.ToUpper(string(data)))
+	normalizedData := strings.ToUpper(string(data))
+	normalizedData = strings.ReplaceAll(normalizedData, "IB", "iB")
+
+	value, err := units.ParseBase2Bytes(normalizedData)
 	if err != nil {
 		return fmt.Errorf("incorrect bytes value: %w", err)
 	}
@@ -25,7 +28,7 @@ func (c *TypeBytes) UnmarshalText(data []byte) error {
 		return fmt.Errorf("%d should be positive number", value)
 	}
 
-	c.value = uint(value)
+	c.value = value
 
 	return nil
 }
@@ -35,7 +38,7 @@ func (c TypeBytes) MarshalText() ([]byte, error) {
 }
 
 func (c TypeBytes) String() string {
-	return units.ToString(int64(c.value), 1024, "ib", "b")
+	return strings.ToLower(c.value.String())
 }
 
 func (c TypeBytes) Value(defaultValue uint) uint {
@@ -43,5 +46,5 @@ func (c TypeBytes) Value(defaultValue uint) uint {
 		return defaultValue
 	}
 
-	return c.value
+	return uint(c.value)
 }

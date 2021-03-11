@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/9seconds/mtg/v2/mtglib"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -32,16 +33,15 @@ func (suite *SecretTestSuite) TestParseSecret() {
 		suite.T().Run(name, func(t *testing.T) {
 			parsed, err := mtglib.ParseSecret(param)
 
-			suite.NoError(err)
-			suite.Equal(s.Key, parsed.Key)
-			suite.Equal(s.Host, parsed.Host)
+			assert.NoError(t, err)
+			assert.Equal(t, s.Key, parsed.Key)
+			assert.Equal(t, s.Host, parsed.Host)
 
 			newSecret := mtglib.Secret{}
 
-			suite.NoError(newSecret.UnmarshalText([]byte(param)))
-
-			suite.Equal(s.Key, newSecret.Key)
-			suite.Equal(s.Host, newSecret.Host)
+			assert.NoError(t, newSecret.UnmarshalText([]byte(param)))
+			assert.Equal(t, s.Key, newSecret.Key)
+			assert.Equal(t, s.Host, newSecret.Host)
 		})
 	}
 }
@@ -88,7 +88,7 @@ func (suite *SecretTestSuite) TestIncorrectSecret() {
 		suite.T().Run(param, func(t *testing.T) {
 			_, err := mtglib.ParseSecret(param)
 
-			suite.Error(err)
+			assert.Error(t, err)
 		})
 	}
 }
