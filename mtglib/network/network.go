@@ -124,7 +124,7 @@ func (n *network) MakeHTTPClient(dialFunc DialFunc) *http.Client {
 		dialFunc = n.DialContext
 	}
 
-	return makeHTTPClient(n.userAgent, dialFunc)
+	return makeHTTPClient(n.userAgent, HTTPTimeout, dialFunc)
 }
 
 func NewNetwork(dialer Dialer, userAgent, dohHostname string, idleTimeout time.Duration) (Network, error) {
@@ -144,21 +144,16 @@ func NewNetwork(dialer Dialer, userAgent, dohHostname string, idleTimeout time.D
 		idleTimeout: idleTimeout,
 		userAgent:   userAgent,
 		dns: doh.Resolver{
-			Host:  dohHostname,
-			Class: doh.IN,
-			HTTPClient: &http.Client{
-				Timeout: DNSTimeout,
-				Transport: &http.Transport{
-					DialContext: dialer.DialContext,
-				},
-			},
+			Host:       dohHostname,
+			Class:      doh.IN,
+			HTTPClient: makeHTTPClient(userAgent, DNSTimeout, dialer.DialContext),
 		},
 	}, nil
 }
 
-func makeHTTPClient(userAgent string, dialFunc DialFunc) *http.Client {
+func makeHTTPClient(userAgent string, timeout time.Duration, dialFunc DialFunc) *http.Client {
 	return &http.Client{
-		Timeout: HTTPTimeout,
+		Timeout: timeout,
 		Transport: networkHTTPTransport{
 			userAgent: userAgent,
 			next: &http.Transport{

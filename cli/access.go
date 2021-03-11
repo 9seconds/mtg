@@ -12,6 +12,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 type accessResponse struct {
@@ -43,23 +44,46 @@ func (c *Access) Run(cli *CLI, version string) error {
 		return fmt.Errorf("cannot init config: %w", err)
 	}
 
-	ipv4 := c.conf.Network.PublicIP.IPv4.Value(nil)
-	ipv6 := c.conf.Network.PublicIP.IPv6.Value(nil)
-
-	if ipv4 == nil {
-		ipv4 = c.getIP("tcp4")
-	}
-
-	if ipv6 == nil {
-		ipv6 = c.getIP("tcp6")
-	}
-
-	resp := accessResponse{
-		IPv4: c.makeURLs(ipv4, cli),
-		IPv6: c.makeURLs(ipv6, cli),
-	}
+	wg := &sync.WaitGroup{}
+	resp := &accessResponse{}
 	resp.Secret.Base64 = c.conf.Secret.Base64()
 	resp.Secret.Hex = c.conf.Secret.Hex()
+
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+
+		ip := c.conf.Network.PublicIP.IPv4.Value(nil)
+
+		if ip == nil {
+			ip = c.getIP("tcp4")
+		}
+
+		if ip != nil {
+			ip = ip.To4()
+		}
+
+		resp.IPv4 = c.makeURLs(ip, cli)
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		ip := c.conf.Network.PublicIP.IPv4.Value(nil)
+
+		if ip == nil {
+			ip = c.getIP("tcp6")
+		}
+
+		if ip != nil {
+			ip = ip.To16()
+		}
+
+		resp.IPv6 = c.makeURLs(ip, cli)
+	}()
+
+	wg.Wait()
 
 	encoder := json.NewEncoder(os.Stdout)
 
@@ -78,7 +102,14 @@ func (c *Access) getIP(protocol string) net.IP {
 		return c.network.DialContext(ctx, protocol, address)
 	})
 
-	resp, err := client.Get("https://ifconfig.co") // nolint: noctx
+	req, err := http.NewRequest(http.MethodGet, "https://ifconfig.co", nil) // nolint: noctx
+	if err != nil {
+		panic(err)
+	}
+
+	req.Header.Add("Accept", "text/plain")
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil
 	}
