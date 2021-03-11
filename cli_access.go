@@ -13,16 +13,16 @@ import (
 	"strings"
 )
 
-type runAccessResponse struct {
-	IPv4   *runAccessResponseURLs `json:"ipv4,omitempty"`
-	IPv6   *runAccessResponseURLs `json:"ipv6,omitempty"`
+type accessResponse struct {
+	IPv4   *accessResponseURLs `json:"ipv4,omitempty"`
+	IPv6   *accessResponseURLs `json:"ipv6,omitempty"`
 	Secret struct {
 		Hex    string `json:"hex"`
 		Base64 string `json:"base64"`
 	} `json:"secret"`
 }
 
-type runAccessResponseURLs struct {
+type accessResponseURLs struct {
 	IP        net.IP `json:"ip"`
 	TgURL     string `json:"tg_url"`
 	TgQrCode  string `json:"tg_qrcode"`
@@ -53,9 +53,9 @@ func (c *cliCommandAccess) Run(cli *CLI) error {
 		ipv6 = c.getIP("tcp6")
 	}
 
-	resp := runAccessResponse{
-		IPv4: c.makeResponseURLs(ipv4, cli),
-		IPv6: c.makeResponseURLs(ipv6, cli),
+	resp := accessResponse{
+		IPv4: c.makeURLs(ipv4, cli),
+		IPv6: c.makeURLs(ipv6, cli),
 	}
 	resp.Secret.Base64 = c.conf.Secret.Base64()
 	resp.Secret.Hex = c.conf.Secret.Hex()
@@ -101,7 +101,7 @@ func (c *cliCommandAccess) getIP(protocol string) net.IP {
 	return net.ParseIP(strings.TrimSpace(string(data)))
 }
 
-func (c *cliCommandAccess) makeResponseURLs(ip net.IP, cli *CLI) *runAccessResponseURLs {
+func (c *cliCommandAccess) makeURLs(ip net.IP, cli *CLI) *accessResponseURLs {
 	if ip == nil {
 		return nil
 	}
@@ -109,7 +109,7 @@ func (c *cliCommandAccess) makeResponseURLs(ip net.IP, cli *CLI) *runAccessRespo
 	values := url.Values{}
 
 	values.Set("server", ip.String())
-	values.Set("port", strconv.Itoa(int(c.conf.BindTo.port.Value(0))))
+	values.Set("port", strconv.Itoa(int(c.conf.BindTo.PortValue(0))))
 
 	if cli.Access.Hex {
 		values.Set("secret", c.conf.Secret.Hex())
@@ -119,7 +119,7 @@ func (c *cliCommandAccess) makeResponseURLs(ip net.IP, cli *CLI) *runAccessRespo
 
 	urlQuery := values.Encode()
 
-	rv := &runAccessResponseURLs{
+	rv := &accessResponseURLs{
 		IP: ip,
 		TgURL: (&url.URL{
 			Scheme:   "tg",
@@ -134,13 +134,13 @@ func (c *cliCommandAccess) makeResponseURLs(ip net.IP, cli *CLI) *runAccessRespo
 		}).String(),
 	}
 
-	rv.TgQrCode = c.makeResponseQRCode(rv.TgURL)
-	rv.TmeQrCode = c.makeResponseQRCode(rv.TmeURL)
+	rv.TgQrCode = c.makeQRCode(rv.TgURL)
+	rv.TmeQrCode = c.makeQRCode(rv.TmeURL)
 
 	return rv
 }
 
-func (c *cliCommandAccess) makeResponseQRCode(data string) string {
+func (c *cliCommandAccess) makeQRCode(data string) string {
 	values := url.Values{}
 
 	values.Set("qzone", "4")

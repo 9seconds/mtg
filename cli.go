@@ -2,25 +2,24 @@ package main
 
 import (
 	"fmt"
-	"os"
+	"io/ioutil"
 
+	"github.com/9seconds/mtg/v2/config"
 	"github.com/9seconds/mtg/v2/mtglib/network"
 )
 
 type cli struct {
 	network network.Network
-	conf    *config
+	conf    *config.Config
 }
 
 func (c *cli) ReadConfig(path string) error {
-	filefp, err := os.Open(path)
-	if err != nil {
-		return fmt.Errorf("cannot open config file: %w", err)
-	}
+    content, err := ioutil.ReadFile(path)
+    if err != nil {
+		return fmt.Errorf("cannot read config file: %w", err)
+    }
 
-	defer filefp.Close()
-
-	conf, err := parseConfig(filefp)
+	conf, err := config.Parse(content)
 	if err != nil {
 		return fmt.Errorf("cannot parse config: %w", err)
 	}

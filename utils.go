@@ -8,10 +8,11 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/9seconds/mtg/v2/config"
 	"github.com/9seconds/mtg/v2/mtglib/network"
 )
 
-func makeNetwork(conf *config) (network.Network, error) {
+func makeNetwork(conf *config.Config) (network.Network, error) {
 	tcpTimeout := conf.Network.Timeout.TCP.Value(network.DefaultTimeout)
 	idleTimeout := conf.Network.Timeout.Idle.Value(network.DefaultIdleTimeout)
 	dohIP := conf.Network.DOHIP.Value(net.ParseIP(network.DefaultDOHHostname)).String()
