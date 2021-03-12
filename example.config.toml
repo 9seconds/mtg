@@ -23,6 +23,10 @@ secret = "ee367a189aee18fa31c190054efd4a8e9573746f726167652e676f6f676c6561706973
 # Host:port pair to run proxy on.
 bind-to = "0.0.0.0:3128"
 
+# Defines how many concurrent connections are allowed to this proxy.
+# All other incoming connections are going to be dropped.
+concurrency = 8192
+
 # A size of user-space buffer for TCP to use. Since we do 2 connections,
 # then we have tcp-buffer * (4 + 2) per each connection: read/write for
 # each connection + 2 copy buffers to pump the data between sockets.
