@@ -19,7 +19,7 @@ func (c *TypePort) UnmarshalJSON(data []byte) error {
 		return fmt.Errorf("port number is not a number: %w", err)
 	}
 
-	if intValue == 0 || intValue > 65536 {
+	if intValue == 0 || intValue >= 65536 {
 		return fmt.Errorf("port number should be 0 < portNo < 65536: %d", intValue)
 	}
 

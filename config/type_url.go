@@ -10,7 +10,7 @@ type TypeURL struct {
 	value *url.URL
 }
 
-func (c *TypeURL) UnmarshalText(data []byte) error {
+func (c *TypeURL) UnmarshalText(data []byte) error { // nolint: cyclop
 	if len(data) == 0 {
 		return nil
 	}
