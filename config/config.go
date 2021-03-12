@@ -34,6 +34,7 @@ type Config struct {
 		} `json:"public-ip"`
 		Timeout struct {
 			TCP  TypeDuration `json:"tcp"`
+			HTTP TypeDuration `json:"http"`
 			Idle TypeDuration `json:"idle"`
 		} `json:"timeout"`
 		DOHIP   TypeIP    `json:"doh-ip"`
@@ -103,6 +104,7 @@ type configRaw struct {
 		} `toml:"public-ip" json:"public-ip,omitempty"`
 		Timeout struct {
 			TCP  string `toml:"tcp" json:"tcp,omitempty"`
+			HTTP string `toml:"http" json:"http,omitempty"`
 			Idle string `toml:"idle" json:"idle,omitempty"`
 		} `toml:"timeout" json:"timeout,omitempty"`
 		DOHIP   string   `toml:"doh-ip" json:"doh-ip,omitempty"`

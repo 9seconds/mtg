@@ -111,6 +111,7 @@ ipv6 = ""
 # https://www.ndss-symposium.org/wp-content/uploads/2020/02/23087-paper.pdf
 [network.timeout]
 tcp = "5s"
+http = "10s"
 idle = "1m"
 
 # FakeTLS can compare timestamps to prevent probes. Each message has
