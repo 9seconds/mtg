@@ -99,6 +99,17 @@ func (suite *SecretTestSuite) TestInvariant() {
 	suite.Equal("google.com", parsed.Host)
 }
 
+func (suite *SecretTestSuite) TestValid() {
+	s := mtglib.Secret{}
+	suite.False(s.Valid())
+
+	s.Key[0] = 1
+	suite.False(s.Valid())
+
+	s.Host = "11"
+	suite.True(s.Valid())
+}
+
 func TestSecret(t *testing.T) {
 	t.Parallel()
 	suite.Run(t, &SecretTestSuite{})

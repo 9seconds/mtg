@@ -55,8 +55,8 @@ type Config struct {
 }
 
 func (c *Config) Validate() error {
-	if len(c.Secret.Key) == 0 || c.Secret.Host == "" {
-		return fmt.Errorf("incorrect secret %s", c.Secret.String())
+	if !c.Secret.Valid() {
+		return fmt.Errorf("invalid secret %s", c.Secret.String())
 	}
 
 	return nil

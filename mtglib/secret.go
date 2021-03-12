@@ -22,11 +22,11 @@ type Secret struct {
 }
 
 func (s Secret) MarshalText() ([]byte, error) {
-	if s.Key == secretEmptyKey {
-		return nil, nil
+	if s.Valid() {
+		return []byte(s.String()), nil
 	}
 
-	return []byte(s.String()), nil
+	return nil, nil
 }
 
 func (s *Secret) UnmarshalText(data []byte) error {
@@ -70,6 +70,10 @@ func (s *Secret) UnmarshalText(data []byte) error {
 	}
 
 	return nil
+}
+
+func (s Secret) Valid() bool {
+	return s.Key != secretEmptyKey && s.Host != ""
 }
 
 func (s Secret) String() string {
