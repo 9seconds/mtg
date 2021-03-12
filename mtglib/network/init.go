@@ -40,4 +40,5 @@ type Network interface {
 	DNSResolve(network, hostname string) (ips []string, err error)
 	MakeHTTPClient(DialFunc) *http.Client
 	IdleTimeout() time.Duration
+	HTTPTimeout() time.Duration
 }

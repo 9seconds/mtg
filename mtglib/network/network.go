@@ -115,16 +115,20 @@ func (n *network) DNSResolve(protocol, address string) ([]string, error) {
 	return ips, nil
 }
 
-func (n *network) IdleTimeout() time.Duration {
-	return n.idleTimeout
-}
-
 func (n *network) MakeHTTPClient(dialFunc DialFunc) *http.Client {
 	if dialFunc == nil {
 		dialFunc = n.DialContext
 	}
 
 	return makeHTTPClient(n.userAgent, n.httpTimeout, dialFunc)
+}
+
+func (n *network) IdleTimeout() time.Duration {
+	return n.idleTimeout
+}
+
+func (n *network) HTTPTimeout() time.Duration {
+	return n.httpTimeout
 }
 
 func NewNetwork(dialer Dialer,

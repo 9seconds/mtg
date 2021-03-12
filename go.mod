@@ -7,6 +7,7 @@ require (
 	github.com/alecthomas/units v0.0.0-20210208195552-ff826a37aa15
 	github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5
 	github.com/babolivier/go-doh-client v0.0.0-20201028162107-a76cff4cb8b6
+	github.com/jarcoal/httpmock v1.0.8 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/libp2p/go-reuseport v0.0.2
 	github.com/mccutchen/go-httpbin v1.1.1
