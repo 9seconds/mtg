@@ -27,6 +27,12 @@ type Config struct {
 			MaxSize   TypeBytes     `json:"max-size"`
 			ErrorRate TypeErrorRate `json:"error-rate"`
 		} `json:"anti-replay"`
+		Blocklist struct {
+			Enabled             bool               `json:"enabled"`
+			DownloadConcurrency uint               `json:"download-concurrency"`
+			URLs                []TypeBlocklistURI `json:"urls"`
+			UpdateEach          TypeDuration       `json:"update-each"`
+		} `json:"blocklist"`
 	} `json:"defense"`
 	Network struct {
 		PublicIP struct {
@@ -60,6 +66,7 @@ func (c *Config) Validate() error {
 	if !c.Secret.Valid() {
 		return fmt.Errorf("invalid secret %s", c.Secret.String())
 	}
+
 	if len(c.BindTo.HostValue(nil)) == 0 || c.BindTo.PortValue(0) == 0 {
 		return fmt.Errorf("incorrect bind-to parameter %s", c.BindTo.String())
 	}
@@ -98,6 +105,12 @@ type configRaw struct {
 			MaxSize   string  `toml:"max-size" json:"max-size,omitempty"`
 			ErrorRate float64 `toml:"error-rate" json:"error-rate,omitempty"`
 		} `toml:"anti-replay" json:"anti-replay,omitempty"`
+		Blocklist struct {
+			Enabled             bool     `toml:"enabled" json:"enabled,omitempty"`
+			DownloadConcurrency uint     `toml:"download-concurrency" json:"download-concurrency,omitempty"`
+			URLs                []string `toml:"urls" json:"urls,omitempty"`
+			UpdateEach          string   `toml:"update-each" json:"update-each,omitempty"`
+		} `toml:"blocklist" json:"blocklist,omitempty"`
 	} `toml:"defense" json:"defense,omitempty"`
 	Network struct {
 		PublicIP struct {

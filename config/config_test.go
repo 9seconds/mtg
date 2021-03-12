@@ -39,7 +39,7 @@ func (suite *ConfigTestSuite) TestParseMinimalConfig() {
 	conf, err := config.Parse(suite.ReadConfig("minimal.toml"))
 	suite.NoError(err)
 	suite.Equal("7oe1GqLy6TBc38CV3jx7q09nb29nbGUuY29t", conf.Secret.Base64())
-    suite.Equal("0.0.0.0:3128", conf.BindTo.String())
+	suite.Equal("0.0.0.0:3128", conf.BindTo.String())
 }
 
 func TestConfig(t *testing.T) {

@@ -149,6 +149,30 @@ max-size = "16mb"
 # to maintain a desired error ratio.
 error-rate = 0.0001
 
+# You can protect proxies by using different blocklists. If client has
+# ip from the given range, we do not try to do a proper handshake. We
+# actually route it to fronting domain. So, this client will never ever
+# have a chance to use mtg to access Telegram.
+#
+# Please remember that blocklists are initialized in async way. So,
+# when you start a proxy, blocklists are empty, they are populated and
+# processed in backgrounds. An error in any URL is ignored.
+[defense.blocklist]
+# You can enable/disable this feature.
+enabled = true
+# This is a limiter for concurrency. In order to protect website
+# from overloading, we download files in this number of threads.
+download-concurrency = 2
+# A list of URLs in FireHOL format (https://iplists.firehol.org/)
+# You can provider links here (starts with https:// or http://) or
+# path to a local file, but in this case it should be absolute.
+urls = [
+    # "https://iplists.firehol.org/files/firehol_level1.netset",
+    # "/local.file"
+]
+# How often do we need to update a blocklist set.
+update-each = "1d"
+
 # statsd statistics integration.
 [stats.statsd]
 # enabled/disabled
