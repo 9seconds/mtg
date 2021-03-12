@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"net"
 	"net/url"
 )
 
@@ -17,6 +18,31 @@ func (c *TypeURL) UnmarshalText(data []byte) error {
 	value, err := url.Parse(string(data))
 	if err != nil {
 		return fmt.Errorf("incorrect URL: %w", err)
+	}
+
+	switch value.Scheme {
+	case "http", "https", "socks5":
+	case "":
+		return fmt.Errorf("url %s has to have a schema", value)
+	default:
+		return fmt.Errorf("unsupported schema %s", value.Scheme)
+	}
+
+	if value.Host == "" {
+		return fmt.Errorf("url %s has to have a host", value)
+	}
+
+	if _, _, err := net.SplitHostPort(value.Host); err != nil {
+		switch value.Scheme {
+		case "http":
+			value.Host = net.JoinHostPort(value.Host, "80")
+		case "https":
+			value.Host = net.JoinHostPort(value.Host, "443")
+		case "socks5":
+			value.Host = net.JoinHostPort(value.Host, "1080")
+		default:
+			return fmt.Errorf("cannot set a default port for %s", value)
+		}
 	}
 
 	c.value = value
