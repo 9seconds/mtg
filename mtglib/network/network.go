@@ -27,6 +27,7 @@ type network struct {
 	dialer      Dialer
 	dns         doh.Resolver
 	idleTimeout time.Duration
+	httpTimeout time.Duration
 	userAgent   string
 }
 
@@ -123,10 +124,12 @@ func (n *network) MakeHTTPClient(dialFunc DialFunc) *http.Client {
 		dialFunc = n.DialContext
 	}
 
-	return makeHTTPClient(n.userAgent, HTTPTimeout, dialFunc)
+	return makeHTTPClient(n.userAgent, n.httpTimeout, dialFunc)
 }
 
-func NewNetwork(dialer Dialer, userAgent, dohHostname string, idleTimeout time.Duration) (Network, error) {
+func NewNetwork(dialer Dialer,
+	userAgent, dohHostname string,
+	httpTimeout, idleTimeout time.Duration) (Network, error) {
 	switch {
 	case idleTimeout < 0:
 		return nil, fmt.Errorf("timeout should be positive number %s", idleTimeout)
@@ -141,6 +144,7 @@ func NewNetwork(dialer Dialer, userAgent, dohHostname string, idleTimeout time.D
 	return &network{
 		dialer:      dialer,
 		idleTimeout: idleTimeout,
+		httpTimeout: httpTimeout,
 		userAgent:   userAgent,
 		dns: doh.Resolver{
 			Host:       dohHostname,

@@ -11,6 +11,7 @@ import (
 const (
 	DefaultTimeout     = 10 * time.Second
 	DefaultIdleTimeout = time.Minute
+	DefaultHTTPTimeout = 10 * time.Second
 	DefaultBufferSize  = 4096
 
 	ProxyDialerOpenThreshold        = 5
@@ -18,9 +19,7 @@ const (
 	ProxyDialerResetFailuresTimeout = 10 * time.Second
 
 	DefaultDOHHostname = "9.9.9.9"
-
-	DNSTimeout  = 5 * time.Second
-	HTTPTimeout = 10 * time.Second
+	DNSTimeout         = 5 * time.Second
 )
 
 var (
