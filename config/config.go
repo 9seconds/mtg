@@ -16,7 +16,7 @@ type Config struct {
 	TCPBuffer TypeBytes     `json:"tcp-buffer"`
 	PreferIP  TypePreferIP  `json:"prefer-ip"`
 	CloakPort TypePort      `json:"cloak-port"`
-	Probes    struct {
+	Defense   struct {
 		Time struct {
 			Enabled       bool         `json:"enabled"`
 			AllowSkewness TypeDuration `json:"allow-skewness"`
@@ -26,7 +26,7 @@ type Config struct {
 			MaxSize   TypeBytes     `json:"max-size"`
 			ErrorRate TypeErrorRate `json:"error-rate"`
 		} `json:"anti-replay"`
-	} `json:"probes"`
+	} `json:"defense"`
 	Network struct {
 		PublicIP struct {
 			IPv4 TypeIP `json:"ipv4"`
@@ -58,6 +58,9 @@ func (c *Config) Validate() error {
 	if !c.Secret.Valid() {
 		return fmt.Errorf("invalid secret %s", c.Secret.String())
 	}
+	if len(c.BindTo.HostValue(nil)) == 0 || c.BindTo.PortValue(0) == 0 {
+		return fmt.Errorf("incorrect bind-to parameter %s", c.BindTo.String())
+	}
 
 	return nil
 }
@@ -76,48 +79,48 @@ func (c *Config) String() string {
 }
 
 type configRaw struct {
-	Debug     bool   `toml:"debug" json:"debug"`
+	Debug     bool   `toml:"debug" json:"debug,omitempty"`
 	Secret    string `toml:"secret" json:"secret"`
 	BindTo    string `toml:"bind-to" json:"bind-to"`
-	TCPBuffer string `toml:"tcp-buffer" json:"tcp-buffer"`
-	PreferIP  string `toml:"prefer-ip" json:"prefer-ip"`
-	CloakPort uint   `toml:"cloak-port" json:"cloak-port"`
-	Probes    struct {
+	TCPBuffer string `toml:"tcp-buffer" json:"tcp-buffer,omitempty"`
+	PreferIP  string `toml:"prefer-ip" json:"prefer-ip,omitempty"`
+	CloakPort uint   `toml:"cloak-port" json:"cloak-port,omitempty"`
+	Defense   struct {
 		Time struct {
-			Enabled       bool   `toml:"enabled" json:"enabled"`
-			AllowSkewness string `toml:"allow-skewness" json:"allow-skewness"`
-		} `toml:"time" json:"time"`
+			Enabled       bool   `toml:"enabled" json:"enabled,omitempty"`
+			AllowSkewness string `toml:"allow-skewness" json:"allow-skewness,omitempty"`
+		} `toml:"time" json:"time,omitempty"`
 		AntiReplay struct {
-			Enabled   bool    `toml:"enabled" json:"enabled"`
-			MaxSize   string  `toml:"max-size" json:"max-size"`
-			ErrorRate float64 `toml:"error-rate" json:"error-rate"`
-		} `toml:"anti-replay" json:"anti-replay"`
-	} `toml:"probes" json:"probes"`
+			Enabled   bool    `toml:"enabled" json:"enabled,omitempty"`
+			MaxSize   string  `toml:"max-size" json:"max-size,omitempty"`
+			ErrorRate float64 `toml:"error-rate" json:"error-rate,omitempty"`
+		} `toml:"anti-replay" json:"anti-replay,omitempty"`
+	} `toml:"defense" json:"defense,omitempty"`
 	Network struct {
 		PublicIP struct {
-			IPv4 string `toml:"ipv4" json:"ipv4"`
-			IPv6 string `toml:"ipv6" json:"ipv6"`
-		} `toml:"public-ip" json:"public-ip"`
+			IPv4 string `toml:"ipv4" json:"ipv4,omitempty"`
+			IPv6 string `toml:"ipv6" json:"ipv6,omitempty"`
+		} `toml:"public-ip" json:"public-ip,omitempty"`
 		Timeout struct {
-			TCP  string `toml:"tcp" json:"tcp"`
-			Idle string `toml:"idle" json:"idle"`
-		} `toml:"timeout" json:"timeout"`
-		DOHIP   string   `toml:"doh-ip" json:"doh-ip"`
-		Proxies []string `toml:"proxies" json:"proxies"`
-	} `toml:"network" json:"network"`
+			TCP  string `toml:"tcp" json:"tcp,omitempty"`
+			Idle string `toml:"idle" json:"idle,omitempty"`
+		} `toml:"timeout" json:"timeout,omitempty"`
+		DOHIP   string   `toml:"doh-ip" json:"doh-ip,omitempty"`
+		Proxies []string `toml:"proxies" json:"proxies,omitempty"`
+	} `toml:"network" json:"network,omitempty"`
 	Stats struct {
 		StatsD struct {
-			Enabled      bool   `toml:"enabled" json:"enabled"`
-			Address      string `toml:"address" json:"address"`
-			MetricPrefix string `toml:"metric-prefix" json:"metric-prefix"`
-		} `toml:"statsd" json:"statsd"`
+			Enabled      bool   `toml:"enabled" json:"enabled,omitempty"`
+			Address      string `toml:"address" json:"address,omitempty"`
+			MetricPrefix string `toml:"metric-prefix" json:"metric-prefix,omitempty"`
+		} `toml:"statsd" json:"statsd,omitempty"`
 		Prometheus struct {
-			Enabled      bool   `toml:"enabled" json:"enabled"`
-			BindTo       string `toml:"bind-to" json:"bind-to"`
-			HTTPPath     string `toml:"http-path" json:"http-path"`
-			MetricPrefix string `toml:"metric-prefix" json:"metric-prefix"`
-		} `toml:"prometheus" json:"prometheus"`
-	} `toml:"stats" json:"stats"`
+			Enabled      bool   `toml:"enabled" json:"enabled,omitempty"`
+			BindTo       string `toml:"bind-to" json:"bind-to,omitempty"`
+			HTTPPath     string `toml:"http-path" json:"http-path,omitempty"`
+			MetricPrefix string `toml:"metric-prefix" json:"metric-prefix,omitempty"`
+		} `toml:"prometheus" json:"prometheus,omitempty"`
+	} `toml:"stats" json:"stats,omitempty"`
 }
 
 func Parse(rawData []byte) (*Config, error) {

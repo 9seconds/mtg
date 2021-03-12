@@ -119,7 +119,7 @@ idle = "1m"
 #
 # Please ensure that you have some ntp active on this host. Otherwise,
 # you can endup with badly performing proxy.
-[probes.time]
+[defense.time]
 # You can enable/disable that. A good idea is always enable.
 enabled = true
 # Time can be skewed by many reasons. So, this is a time interval
@@ -132,7 +132,7 @@ allow-skewness = "5s"
 # mtg has a cache of some connection fingerprints. Actually, first bytes
 # of each connection. So, it stores them in some in-memory LRU+TTL cache.
 # You can configure this cache here.
-[probes.anti-replay]
+[defense.anti-replay]
 # You can enable/disable this feature.
 enabled = true
 # max size of such a cache. Please be aware that this number is
