@@ -29,11 +29,11 @@ func (c *TypeIP) MarshalText() ([]byte, error) {
 }
 
 func (c TypeIP) String() string {
-	if c.value == nil {
-		return ""
+	if len(c.value) > 0 {
+		return c.value.String()
 	}
 
-	return c.value.String()
+	return ""
 }
 
 func (c TypeIP) Value(defaultValue net.IP) net.IP {

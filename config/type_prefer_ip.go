@@ -5,6 +5,13 @@ import (
 	"strings"
 )
 
+const (
+	TypePreferIPPreferIPv4 = "prefer-ipv4"
+	TypePreferIPPreferIPv6 = "prefer-ipv6"
+	TypePreferOnlyIPv4     = "only-ipv4"
+	TypePreferOnlyIPv6     = "only-ipv6"
+)
+
 type TypePreferIP struct {
 	value string
 }
@@ -17,7 +24,7 @@ func (c *TypePreferIP) UnmarshalText(data []byte) error {
 	text := strings.ToLower(string(data))
 
 	switch text {
-	case "prefer-ipv4", "prefer-ipv6", "only-ipv4", "only-ipv6":
+	case TypePreferIPPreferIPv4, TypePreferIPPreferIPv6, TypePreferOnlyIPv4, TypePreferOnlyIPv6:
 		c.value = text
 	default:
 		return fmt.Errorf("incorrect prefer-ip value: %s", string(data))
