@@ -16,9 +16,15 @@ func (c *TypeHostPort) UnmarshalText(data []byte) error {
 		return nil
 	}
 
-	host, port, err := net.SplitHostPort(string(data))
+	text := string(data)
+
+	host, port, err := net.SplitHostPort(text)
 	if err != nil {
 		return fmt.Errorf("incorrect host:port syntax: %w", err)
+	}
+
+	if port == "" {
+		return fmt.Errorf("port in %s host:port pair cannot be empty", text)
 	}
 
 	if err := c.port.UnmarshalJSON([]byte(port)); err != nil {
@@ -52,5 +58,10 @@ func (c TypeHostPort) Value(defaultHostValue net.IP, defaultPortValue uint) stri
 	host := c.HostValue(defaultHostValue)
 	port := c.PortValue(defaultPortValue)
 
-	return net.JoinHostPort(host.String(), strconv.Itoa(int(port)))
+	hostStr := ""
+	if len(host) > 0 {
+		hostStr = host.String()
+	}
+
+	return net.JoinHostPort(hostStr, strconv.Itoa(int(port)))
 }
