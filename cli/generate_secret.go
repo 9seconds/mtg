@@ -7,10 +7,10 @@ import (
 )
 
 type GenerateSecret struct {
-	base
+    base `kong:"-"`
 
-	HostName string `arg optional help:"Hostname to use for domain fronting. Default is '${domain_front}'." name:"hostname" default:"${domain_front}"` // nolint: lll, govet
-	Hex      bool   `help:"Print secret in hex encoding."`
+	HostName string `kong:"arg,required,help='Hostname to use for domain fronting.',name='hostname'"` // nolint: lll, govet
+	Hex      bool   `kong:"help='Print secret in hex encoding.'"`
 }
 
 func (c *GenerateSecret) Run(cli *CLI, _ string) error {

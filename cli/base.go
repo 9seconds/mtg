@@ -11,8 +11,8 @@ import (
 )
 
 type base struct {
-	network network.Network
-	conf    *config.Config
+	Network network.Network
+	Config  *config.Config
 }
 
 func (b *base) ReadConfig(path, version string) error {
@@ -31,8 +31,8 @@ func (b *base) ReadConfig(path, version string) error {
 		return fmt.Errorf("cannot build a network: %w", err)
 	}
 
-	b.conf = conf
-	b.network = ntw
+	b.Config = conf
+	b.Network = ntw
 
 	return nil
 }

@@ -26,6 +26,7 @@ type accessResponse struct {
 
 type accessResponseURLs struct {
 	IP        net.IP `json:"ip"`
+	Port      uint   `json:"port"`
 	TgURL     string `json:"tg_url"`
 	TgQrCode  string `json:"tg_qrcode"`
 	TmeURL    string `json:"tme_url"`
@@ -33,10 +34,11 @@ type accessResponseURLs struct {
 }
 
 type Access struct {
-	base
+	base `kong:"-"`
 
-	ConfigPath string `arg required type:"existingfile" help:"Path to the configuration file." name:"config-path"` // nolint: lll, govet
-	Hex        bool   `help:"Print secret in hex encoding."`
+	ConfigPath string `kong:"arg,required,type='existingfile',help='Path to the configuration file.',name='config-path'"` // nolint: lll
+	Port       uint   `kong:"help='Port number. Default port is taken from configuration file, bind-to parameter',type:'uint'"`
+	Hex        bool   `kong:"help='Print secret in hex encoding.'"`
 }
 
 func (c *Access) Run(cli *CLI, version string) error {
@@ -44,9 +46,13 @@ func (c *Access) Run(cli *CLI, version string) error {
 		return fmt.Errorf("cannot init config: %w", err)
 	}
 
+	return c.Execute(cli)
+}
+
+func (c *Access) Execute(cli *CLI) error {
 	resp := &accessResponse{}
-	resp.Secret.Base64 = c.conf.Secret.Base64()
-	resp.Secret.Hex = c.conf.Secret.Hex()
+	resp.Secret.Base64 = c.Config.Secret.Base64()
+	resp.Secret.Hex = c.Config.Secret.Hex()
 
 	wg := &sync.WaitGroup{}
 	wg.Add(2) // nolint: gomnd
@@ -54,7 +60,7 @@ func (c *Access) Run(cli *CLI, version string) error {
 	go func() {
 		defer wg.Done()
 
-		ip := c.conf.Network.PublicIP.IPv4.Value(nil)
+		ip := c.Config.Network.PublicIP.IPv4.Value(nil)
 		if ip == nil {
 			ip = c.getIP("tcp4")
 		}
@@ -69,7 +75,7 @@ func (c *Access) Run(cli *CLI, version string) error {
 	go func() {
 		defer wg.Done()
 
-		ip := c.conf.Network.PublicIP.IPv4.Value(nil)
+		ip := c.Config.Network.PublicIP.IPv6.Value(nil)
 		if ip == nil {
 			ip = c.getIP("tcp6")
 		}
@@ -95,8 +101,8 @@ func (c *Access) Run(cli *CLI, version string) error {
 }
 
 func (c *Access) getIP(protocol string) net.IP {
-	client := c.network.MakeHTTPClient(func(ctx context.Context, network, address string) (net.Conn, error) {
-		return c.network.DialContext(ctx, protocol, address)
+	client := c.Network.MakeHTTPClient(func(ctx context.Context, network, address string) (net.Conn, error) {
+		return c.Network.DialContext(ctx, protocol, address)
 	})
 
 	req, err := http.NewRequest(http.MethodGet, "https://ifconfig.co", nil) // nolint: noctx
@@ -133,20 +139,26 @@ func (c *Access) makeURLs(ip net.IP, cli *CLI) *accessResponseURLs {
 		return nil
 	}
 
+	portNo := cli.Access.Port
+	if portNo == 0 {
+		portNo = c.Config.BindTo.PortValue(0)
+	}
+
 	values := url.Values{}
 	values.Set("server", ip.String())
-	values.Set("port", strconv.Itoa(int(c.conf.BindTo.PortValue(0))))
+	values.Set("port", strconv.Itoa(int(portNo)))
 
 	if cli.Access.Hex {
-		values.Set("secret", c.conf.Secret.Hex())
+		values.Set("secret", c.Config.Secret.Hex())
 	} else {
-		values.Set("secret", c.conf.Secret.Base64())
+		values.Set("secret", c.Config.Secret.Base64())
 	}
 
 	urlQuery := values.Encode()
 
 	rv := &accessResponseURLs{
-		IP: ip,
+		IP:   ip,
+		Port: portNo,
 		TgURL: (&url.URL{
 			Scheme:   "tg",
 			Host:     "proxy",

@@ -15,8 +15,7 @@ func main() {
 
 	cli := &cli.CLI{}
 	ctx := kong.Parse(cli, kong.Vars{
-		"domain_front": "amazonaws.com",
-		"version":      version,
+		"version": version,
 	})
 
 	ctx.FatalIfErrorf(ctx.Run(cli, version))
