@@ -7,9 +7,9 @@ import (
 )
 
 type GenerateSecret struct {
-    base `kong:"-"`
+	base `kong:"-"`
 
-	HostName string `kong:"arg,required,help='Hostname to use for domain fronting.',name='hostname'"` // nolint: lll, govet
+	HostName string `kong:"arg,required,help='Hostname to use for domain fronting.',name='hostname'"`
 	Hex      bool   `kong:"help='Print secret in hex encoding.'"`
 }
 

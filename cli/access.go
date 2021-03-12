@@ -36,8 +36,8 @@ type accessResponseURLs struct {
 type Access struct {
 	base `kong:"-"`
 
-	ConfigPath string `kong:"arg,required,type='existingfile',help='Path to the configuration file.',name='config-path'"` // nolint: lll
-	Port       uint   `kong:"help='Port number. Default port is taken from configuration file, bind-to parameter',type:'uint'"`
+	ConfigPath string `kong:"arg,required,type='existingfile',help='Path to the configuration file.',name='config-path'"`       // nolint: lll
+	Port       uint   `kong:"help='Port number. Default port is taken from configuration file, bind-to parameter',type:'uint'"` // nolint: lll
 	Hex        bool   `kong:"help='Print secret in hex encoding.'"`
 }
 

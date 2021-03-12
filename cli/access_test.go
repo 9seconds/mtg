@@ -99,7 +99,6 @@ var accressResponseJSONSchema = func() *gojsonschema.Schema {
     }
 }
     `))
-
 	if err != nil {
 		panic(err)
 	}
