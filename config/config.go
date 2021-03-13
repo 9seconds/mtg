@@ -35,10 +35,6 @@ type Config struct {
 		} `json:"blocklist"`
 	} `json:"defense"`
 	Network struct {
-		PublicIP struct {
-			IPv4 TypeIP `json:"ipv4"`
-			IPv6 TypeIP `json:"ipv6"`
-		} `json:"public-ip"`
 		Timeout struct {
 			TCP  TypeDuration `json:"tcp"`
 			HTTP TypeDuration `json:"http"`
@@ -113,10 +109,6 @@ type configRaw struct {
 		} `toml:"blocklist" json:"blocklist,omitempty"`
 	} `toml:"defense" json:"defense,omitempty"`
 	Network struct {
-		PublicIP struct {
-			IPv4 string `toml:"ipv4" json:"ipv4,omitempty"`
-			IPv6 string `toml:"ipv6" json:"ipv6,omitempty"`
-		} `toml:"public-ip" json:"public-ip,omitempty"`
 		Timeout struct {
 			TCP  string `toml:"tcp" json:"tcp,omitempty"`
 			HTTP string `toml:"http" json:"http,omitempty"`

@@ -36,9 +36,12 @@ type accessResponseURLs struct {
 type Access struct {
 	base `kong:"-"`
 
-	ConfigPath string `kong:"arg,required,type='existingfile',help='Path to the configuration file.',name='config-path'"`       // nolint: lll
-	Port       uint   `kong:"help='Port number. Default port is taken from configuration file, bind-to parameter',type:'uint'"` // nolint: lll
-	Hex        bool   `kong:"help='Print secret in hex encoding.'"`
+	PublicIPv4 net.IP `kong:"help='Public IPv4 address for proxy. By default it is resolved via remote website',name='ipv4',short='i'"`   // nolint: lll
+	PublicIPv6 net.IP `kong:"help='Public IPv6 address for proxy. By default it is resolved via remote website',name='ipv6',short='I'"`   // nolint: lll
+	Port       uint   `kong:"help='Port number. Default port is taken from configuration file, bind-to parameter',type:'uint',short='p'"` // nolint: lll
+	Hex        bool   `kong:"help='Print secret in hex encoding.',short='x'"`
+
+	ConfigPath string `kong:"arg,required,type='existingfile',help='Path to the configuration file.',name='config-path'"` // nolint: lll
 }
 
 func (c *Access) Run(cli *CLI, version string) error {
@@ -60,7 +63,7 @@ func (c *Access) Execute(cli *CLI) error {
 	go func() {
 		defer wg.Done()
 
-		ip := c.Config.Network.PublicIP.IPv4.Value(nil)
+		ip := cli.Access.PublicIPv4
 		if ip == nil {
 			ip = c.getIP("tcp4")
 		}
@@ -75,7 +78,7 @@ func (c *Access) Execute(cli *CLI) error {
 	go func() {
 		defer wg.Done()
 
-		ip := c.Config.Network.PublicIP.IPv6.Value(nil)
+		ip := cli.Access.PublicIPv6
 		if ip == nil {
 			ip = c.getIP("tcp6")
 		}

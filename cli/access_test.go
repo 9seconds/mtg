@@ -1,6 +1,7 @@
 package cli_test
 
 import (
+	"net"
 	"net/http"
 	"testing"
 
@@ -122,12 +123,8 @@ func (suite *AccessTestSuite) SetupTest() {
 }
 
 func (suite *AccessTestSuite) TestGenerateNoCalls() {
-	suite.NoError(
-		suite.cli.Access.Config.Network.PublicIP.IPv4.UnmarshalText(
-			[]byte("10.0.0.10")))
-	suite.NoError(
-		suite.cli.Access.Config.Network.PublicIP.IPv6.UnmarshalText(
-			[]byte("2001:0db8:85a3:0000:0000:8a2e:0370:7334")))
+	suite.cli.Access.PublicIPv4 = net.ParseIP("10.0.0.10")
+	suite.cli.Access.PublicIPv6 = net.ParseIP("2001:0db8:85a3:0000:0000:8a2e:0370:7334")
 
 	output := suite.CaptureStdout(func() {
 		suite.NoError(suite.cli.Access.Execute(suite.cli))
@@ -148,9 +145,7 @@ func (suite *AccessTestSuite) TestGenerateNoCalls() {
 }
 
 func (suite *AccessTestSuite) TestGenerateIPv4Call() {
-	suite.NoError(
-		suite.cli.Access.Config.Network.PublicIP.IPv6.UnmarshalText(
-			[]byte("2001:0db8:85a3:0000:0000:8a2e:0370:7334")))
+	suite.cli.Access.PublicIPv6 = net.ParseIP("2001:0db8:85a3:0000:0000:8a2e:0370:7334")
 
 	httpmock.RegisterResponder(http.MethodGet, "https://ifconfig.co",
 		httpmock.NewStringResponder(http.StatusOK, "10.11.12.13"))
@@ -174,9 +169,7 @@ func (suite *AccessTestSuite) TestGenerateIPv4Call() {
 }
 
 func (suite *AccessTestSuite) TestIPv4CallFail() {
-	suite.NoError(
-		suite.cli.Access.Config.Network.PublicIP.IPv6.UnmarshalText(
-			[]byte("2001:0db8:85a3:0000:0000:8a2e:0370:7334")))
+	suite.cli.Access.PublicIPv6 = net.ParseIP("2001:0db8:85a3:0000:0000:8a2e:0370:7334")
 
 	httpmock.RegisterResponder(http.MethodGet, "https://ifconfig.co",
 		httpmock.NewStringResponder(http.StatusForbidden, ""))

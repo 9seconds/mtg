@@ -98,13 +98,6 @@ proxies = [
     # "socks5://user:password@host:port?open_threshold=5&half_open_timeout=1m&reset_failures_timeout=10s"
 ]
 
-# public ip addresses of the server. Actually, it is required only to
-# generate a correct access file. if you use default values here, mtg
-# will try to resolve these IPs on its own.
-[network.public-ip]
-ipv4 = ""
-ipv6 = ""
-
 # network timeouts define different settings for timeouts. tcp timeout
 # define a global timeout on establishing of network connections. idle
 # means a timeout on pumping data between sockset when nothing is
@@ -171,7 +164,7 @@ urls = [
     # "/local.file"
 ]
 # How often do we need to update a blocklist set.
-update-each = "1d"
+update-each = "24h"
 
 # statsd statistics integration.
 [stats.statsd]
