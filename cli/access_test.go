@@ -7,6 +7,7 @@ import (
 
 	"github.com/9seconds/mtg/v2/config"
 	"github.com/9seconds/mtg/v2/mtglib"
+	"github.com/9seconds/mtg/v2/testlib"
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/suite"
 	"github.com/xeipuuv/gojsonschema"
@@ -126,7 +127,7 @@ func (suite *AccessTestSuite) TestGenerateNoCalls() {
 	suite.cli.Access.PublicIPv4 = net.ParseIP("10.0.0.10")
 	suite.cli.Access.PublicIPv6 = net.ParseIP("2001:0db8:85a3:0000:0000:8a2e:0370:7334")
 
-	output := suite.CaptureStdout(func() {
+	output := testlib.CaptureStdout(func() {
 		suite.NoError(suite.cli.Access.Execute(suite.cli))
 	})
 
@@ -150,7 +151,7 @@ func (suite *AccessTestSuite) TestGenerateIPv4Call() {
 	httpmock.RegisterResponder(http.MethodGet, "https://ifconfig.co",
 		httpmock.NewStringResponder(http.StatusOK, "10.11.12.13"))
 
-	output := suite.CaptureStdout(func() {
+	output := testlib.CaptureStdout(func() {
 		suite.NoError(suite.cli.Access.Execute(suite.cli))
 	})
 
@@ -174,7 +175,7 @@ func (suite *AccessTestSuite) TestIPv4CallFail() {
 	httpmock.RegisterResponder(http.MethodGet, "https://ifconfig.co",
 		httpmock.NewStringResponder(http.StatusForbidden, ""))
 
-	output := suite.CaptureStdout(func() {
+	output := testlib.CaptureStdout(func() {
 		suite.NoError(suite.cli.Access.Execute(suite.cli))
 	})
 
@@ -191,7 +192,6 @@ func (suite *AccessTestSuite) TestIPv4CallFail() {
 	suite.Contains(output, suite.cli.Access.Config.Secret.Hex())
 }
 
-func TestAccess(t *testing.T) {
-	t.Parallel()
+func TestAccess(t *testing.T) { // nolint: paralleltest
 	suite.Run(t, &AccessTestSuite{})
 }

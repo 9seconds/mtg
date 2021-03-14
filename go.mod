@@ -12,6 +12,7 @@ require (
 	github.com/libp2p/go-reuseport v0.0.2
 	github.com/mccutchen/go-httpbin v1.1.1
 	github.com/pelletier/go-toml v1.8.1
+	github.com/rs/zerolog v1.20.0 // indirect
 	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/stretchr/testify v1.7.0
 	github.com/xeipuuv/gojsonschema v1.2.0

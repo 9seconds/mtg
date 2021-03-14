@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/9seconds/mtg/v2/mtglib"
+	"github.com/9seconds/mtg/v2/testlib"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -19,7 +20,7 @@ func (suite *GenerateSecretTestSuite) SetupTest() {
 }
 
 func (suite *GenerateSecretTestSuite) TestDefault() {
-	output := suite.CaptureStdout(func() {
+	output := testlib.CaptureStdout(func() {
 		suite.NoError(suite.cli.GenerateSecret.Run(suite.cli, "dev"))
 	})
 	suite.True(strings.HasPrefix(output, "7"))
@@ -33,7 +34,7 @@ func (suite *GenerateSecretTestSuite) TestDefault() {
 func (suite *GenerateSecretTestSuite) TestHex() {
 	suite.cli.GenerateSecret.Hex = true
 
-	output := suite.CaptureStdout(func() {
+	output := testlib.CaptureStdout(func() {
 		suite.NoError(suite.cli.GenerateSecret.Run(suite.cli, "dev"))
 	})
 	suite.True(strings.HasPrefix(output, "ee"))

@@ -7,11 +7,12 @@ import (
 	"net/url"
 
 	"github.com/9seconds/mtg/v2/config"
-	"github.com/9seconds/mtg/v2/mtglib/network"
+	"github.com/9seconds/mtg/v2/mtglib"
+	"github.com/9seconds/mtg/v2/network"
 )
 
 type base struct {
-	Network network.Network
+	Network mtglib.Network
 	Config  *config.Config
 }
 
@@ -37,7 +38,7 @@ func (b *base) ReadConfig(path, version string) error {
 	return nil
 }
 
-func (b *base) makeNetwork(conf *config.Config, version string) (network.Network, error) {
+func (b *base) makeNetwork(conf *config.Config, version string) (mtglib.Network, error) {
 	tcpTimeout := conf.Network.Timeout.TCP.Value(network.DefaultTimeout)
 	idleTimeout := conf.Network.Timeout.Idle.Value(network.DefaultIdleTimeout)
 	httpTimeout := conf.Network.Timeout.HTTP.Value(network.DefaultHTTPTimeout)

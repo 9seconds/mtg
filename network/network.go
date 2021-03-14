@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/9seconds/mtg/v2/mtglib"
 	doh "github.com/babolivier/go-doh-client"
 )
 
@@ -38,7 +39,7 @@ func (n *network) Dial(protocol, address string) (net.Conn, error) {
 func (n *network) DialContext(ctx context.Context, protocol, address string) (net.Conn, error) {
 	host, port, _ := net.SplitHostPort(address)
 
-	ips, err := n.DNSResolve(protocol, host)
+	ips, err := n.dnsResolve(protocol, host)
 	if err != nil {
 		return nil, fmt.Errorf("cannot resolve dns names: %w", err)
 	}
@@ -61,7 +62,20 @@ func (n *network) DialContext(ctx context.Context, protocol, address string) (ne
 	return nil, fmt.Errorf("cannot dial to %s:%s: %w", protocol, address, err)
 }
 
-func (n *network) DNSResolve(protocol, address string) ([]string, error) {
+func (n *network) MakeHTTPClient(dialFunc func(ctx context.Context,
+	network, address string) (net.Conn, error)) *http.Client {
+	if dialFunc == nil {
+		dialFunc = n.DialContext
+	}
+
+	return makeHTTPClient(n.userAgent, n.httpTimeout, dialFunc)
+}
+
+func (n *network) IdleTimeout() time.Duration {
+	return n.idleTimeout
+}
+
+func (n *network) dnsResolve(protocol, address string) ([]string, error) {
 	if net.ParseIP(address) != nil {
 		return []string{address}, nil
 	}
@@ -115,25 +129,9 @@ func (n *network) DNSResolve(protocol, address string) ([]string, error) {
 	return ips, nil
 }
 
-func (n *network) MakeHTTPClient(dialFunc DialFunc) *http.Client {
-	if dialFunc == nil {
-		dialFunc = n.DialContext
-	}
-
-	return makeHTTPClient(n.userAgent, n.httpTimeout, dialFunc)
-}
-
-func (n *network) IdleTimeout() time.Duration {
-	return n.idleTimeout
-}
-
-func (n *network) HTTPTimeout() time.Duration {
-	return n.httpTimeout
-}
-
 func NewNetwork(dialer Dialer,
 	userAgent, dohHostname string,
-	httpTimeout, idleTimeout time.Duration) (Network, error) {
+	httpTimeout, idleTimeout time.Duration) (mtglib.Network, error) {
 	switch {
 	case idleTimeout < 0:
 		return nil, fmt.Errorf("timeout should be positive number %s", idleTimeout)
@@ -158,7 +156,9 @@ func NewNetwork(dialer Dialer,
 	}, nil
 }
 
-func makeHTTPClient(userAgent string, timeout time.Duration, dialFunc DialFunc) *http.Client {
+func makeHTTPClient(userAgent string,
+	timeout time.Duration,
+	dialFunc func(ctx context.Context, network, address string) (net.Conn, error)) *http.Client {
 	return &http.Client{
 		Timeout: timeout,
 		Transport: networkHTTPTransport{

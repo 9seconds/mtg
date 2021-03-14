@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/9seconds/mtg/v2/testlib"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
@@ -20,7 +21,7 @@ type CircuitBreakerTestSuite struct {
 	mutex          sync.Mutex
 	ctx            context.Context
 	ctxCancel      context.CancelFunc
-	connMock       *ConnMock
+	connMock       *testlib.NetConnMock
 	baseDialerMock *DialerMock
 }
 
@@ -28,7 +29,7 @@ func (suite *CircuitBreakerTestSuite) SetupTest() {
 	suite.mutex = sync.Mutex{}
 	suite.ctx, suite.ctxCancel = context.WithCancel(context.Background())
 	suite.baseDialerMock = &DialerMock{}
-	suite.connMock = &ConnMock{}
+	suite.connMock = &testlib.NetConnMock{}
 	suite.d = newCircuitBreakerDialer(suite.baseDialerMock,
 		3, 100*time.Millisecond, 50*time.Millisecond)
 }
