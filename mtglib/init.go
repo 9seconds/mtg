@@ -17,6 +17,10 @@ type Network interface {
 	IdleTimeout() time.Duration
 }
 
+type AntiReplayCache interface {
+	SeenBefore(data []byte) bool
+}
+
 type Logger interface {
 	Named(name string) Logger
 
