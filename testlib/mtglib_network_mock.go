@@ -13,14 +13,14 @@ type MtglibNetworkMock struct {
 	mock.Mock
 }
 
-func (n *MtglibNetworkMock) Dial(network, address string) (net.Conn, error) {
-	args := n.Called(network, address)
+func (m *MtglibNetworkMock) Dial(network, address string) (net.Conn, error) {
+	args := m.Called(network, address)
 
 	return args.Get(0).(net.Conn), args.Error(1)
 }
 
-func (n *MtglibNetworkMock) DialContext(ctx context.Context, network, address string) (net.Conn, error) {
-	args := n.Called(ctx, network, address)
+func (m *MtglibNetworkMock) DialContext(ctx context.Context, network, address string) (net.Conn, error) {
+	args := m.Called(ctx, network, address)
 
 	return args.Get(0).(net.Conn), args.Error(1)
 }
