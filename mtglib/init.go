@@ -21,6 +21,10 @@ type AntiReplayCache interface {
 	SeenBefore(data []byte) bool
 }
 
+type IPBlocklist interface {
+	Contains(net.IP) bool
+}
+
 type Logger interface {
 	Named(name string) Logger
 

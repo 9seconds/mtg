@@ -133,6 +133,13 @@ func NewNetwork(dialer Dialer,
 	userAgent, dohHostname string,
 	httpTimeout, idleTimeout time.Duration) (mtglib.Network, error) {
 	switch {
+	case httpTimeout < 0:
+		return nil, fmt.Errorf("timeout should be positive number %s", httpTimeout)
+	case httpTimeout == 0:
+		httpTimeout = DefaultHTTPTimeout
+	}
+
+	switch {
 	case idleTimeout < 0:
 		return nil, fmt.Errorf("timeout should be positive number %s", idleTimeout)
 	case idleTimeout == 0:
