@@ -20,6 +20,8 @@ func (s *stableBloomFilter) SeenBefore(digest []byte) bool {
 	return s.filter.TestAndAdd(digest)
 }
 
+func (s *stableBloomFilter) Shutdown() {}
+
 func NewStableBloomFilter(byteSize uint, errorRate float64) mtglib.AntiReplayCache {
 	sf := boom.NewDefaultStableBloomFilter(byteSize*8, errorRate) // nolint: gomnd
 	sf.SetHash(xxhash.New64())

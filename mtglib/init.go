@@ -19,10 +19,21 @@ type Network interface {
 
 type AntiReplayCache interface {
 	SeenBefore(data []byte) bool
+	Shutdown()
 }
 
 type IPBlocklist interface {
 	Contains(net.IP) bool
+	Shutdown()
+}
+
+type Event interface {
+	ConnectionID() string
+}
+
+type EventStream interface {
+	Send(context.Context, Event)
+	Shutdown()
 }
 
 type Logger interface {

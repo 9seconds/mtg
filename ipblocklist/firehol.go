@@ -29,14 +29,20 @@ const (
 var fireholRegexpComment = regexp.MustCompile(`\s*#.*?$`)
 
 type Firehol struct {
-	logger     mtglib.Logger
-	rwMutex    sync.RWMutex
+	ctx       context.Context
+	ctxCancel context.CancelFunc
+	logger    mtglib.Logger
+
+	rwMutex sync.RWMutex
+
 	remoteURLs []string
 	localFiles []string
+
 	httpClient *http.Client
 	workerPool *ants.Pool
-	treeV4     *bool_tree.TreeV4
-	treeV6     *bool_tree.TreeV6
+
+	treeV4 *bool_tree.TreeV4
+	treeV6 *bool_tree.TreeV6
 }
 
 func (f *Firehol) Contains(ip net.IP) bool {
@@ -76,7 +82,7 @@ func (f *Firehol) containsIPv6(addr net.IP) bool {
 	return false
 }
 
-func (f *Firehol) Run(ctx context.Context, updateEach time.Duration) {
+func (f *Firehol) Run(updateEach time.Duration) {
 	ticker := time.NewTicker(updateEach)
 
 	defer func() {
@@ -88,24 +94,28 @@ func (f *Firehol) Run(ctx context.Context, updateEach time.Duration) {
 		}
 	}()
 
-	if err := f.update(ctx); err != nil {
+	if err := f.update(); err != nil {
 		f.logger.WarningError("cannot update blocklist", err)
 	}
 
 	for {
 		select {
-		case <-ctx.Done():
+		case <-f.ctx.Done():
 			return
 		case <-ticker.C:
-			if err := f.update(ctx); err != nil {
+			if err := f.update(); err != nil {
 				f.logger.WarningError("cannot update blocklist", err)
 			}
 		}
 	}
 }
 
-func (f *Firehol) update(ctx context.Context) error { // nolint: funlen, cyclop
-	ctx, cancel := context.WithCancel(ctx)
+func (f *Firehol) Shutdown() {
+	f.ctxCancel()
+}
+
+func (f *Firehol) update() error { // nolint: funlen, cyclop
+	ctx, cancel := context.WithCancel(f.ctx)
 	defer cancel()
 
 	wg := &sync.WaitGroup{}
@@ -314,8 +324,11 @@ func NewFirehol(logger mtglib.Logger, network mtglib.Network,
 	}
 
 	workerPool, _ := ants.NewPool(int(downloadConcurrency))
+	ctx, cancel := context.WithCancel(context.Background())
 
 	return &Firehol{
+		ctx:        ctx,
+		ctxCancel:  cancel,
 		logger:     logger.Named("firehol"),
 		httpClient: network.MakeHTTPClient(nil),
 		treeV4:     bool_tree.NewTreeV4(),

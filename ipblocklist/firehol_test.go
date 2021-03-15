@@ -1,7 +1,6 @@
 package ipblocklist_test
 
 import (
-	"context"
 	"io"
 	"net"
 	"net/http"
@@ -72,12 +71,15 @@ func (suite *FireholTestSuite) TestLocalFail() {
 
 	suite.NoError(err)
 
-	go blocklist.Run(context.Background(), time.Hour)
+	go blocklist.Run(time.Hour)
 
 	time.Sleep(500 * time.Millisecond)
 
 	suite.False(blocklist.Contains(net.ParseIP("10.0.0.10")))
 	suite.False(blocklist.Contains(net.ParseIP("127.0.0.1")))
+
+	blocklist.Shutdown()
+	time.Sleep(500 * time.Millisecond)
 }
 
 func (suite *FireholTestSuite) TestLocalOk() {
@@ -87,12 +89,15 @@ func (suite *FireholTestSuite) TestLocalOk() {
 
 	suite.NoError(err)
 
-	go blocklist.Run(context.Background(), time.Hour)
+	go blocklist.Run(time.Hour)
 
 	time.Sleep(500 * time.Millisecond)
 
 	suite.True(blocklist.Contains(net.ParseIP("10.0.0.10")))
 	suite.False(blocklist.Contains(net.ParseIP("127.0.0.1")))
+
+	blocklist.Shutdown()
+	time.Sleep(500 * time.Millisecond)
 }
 
 func (suite *FireholTestSuite) TestRemoteFail() {
@@ -102,11 +107,14 @@ func (suite *FireholTestSuite) TestRemoteFail() {
 
 	suite.NoError(err)
 
-	go blocklist.Run(context.Background(), time.Hour)
+	go blocklist.Run(time.Hour)
 
 	time.Sleep(500 * time.Millisecond)
 
 	suite.False(blocklist.Contains(net.ParseIP("10.2.2.2")))
+
+	blocklist.Shutdown()
+	time.Sleep(500 * time.Millisecond)
 }
 
 func (suite *FireholTestSuite) TestMixed() {
@@ -123,12 +131,15 @@ func (suite *FireholTestSuite) TestMixed() {
 
 	suite.NoError(err)
 
-	go blocklist.Run(context.Background(), time.Hour)
+	go blocklist.Run(time.Hour)
 
 	time.Sleep(500 * time.Millisecond)
 
 	suite.True(blocklist.Contains(net.ParseIP("10.2.2.2")))
 	suite.True(blocklist.Contains(net.ParseIP("10.1.0.100")))
+
+	blocklist.Shutdown()
+	time.Sleep(500 * time.Millisecond)
 }
 
 func TestFirehol(t *testing.T) {
