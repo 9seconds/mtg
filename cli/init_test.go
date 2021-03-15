@@ -14,12 +14,12 @@ type CommonTestSuite struct {
 	suite.Suite
 
 	cli         *cli.CLI
-	networkMock *testlib.NetworkMock
+	networkMock *testlib.MtglibNetworkMock
 	httpClient  *http.Client
 }
 
 func (suite *CommonTestSuite) SetupTest() {
-	suite.networkMock = &testlib.NetworkMock{}
+	suite.networkMock = &testlib.MtglibNetworkMock{}
 	suite.httpClient = &http.Client{}
 	suite.cli = &cli.CLI{}
 
