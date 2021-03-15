@@ -187,9 +187,14 @@ func (f *Firehol) updateLocalFile(ctx context.Context, filename string,
 		return fmt.Errorf("cannot open file: %w", err)
 	}
 
+	go func(ctx context.Context, closer io.Closer) {
+		<-ctx.Done()
+		closer.Close()
+	}(ctx, filefp)
+
 	defer filefp.Close()
 
-	return f.updateTrees(ctx, mutex, filefp, v4tree, v6tree)
+	return f.updateTrees(mutex, filefp, v4tree, v6tree)
 }
 
 func (f *Firehol) updateRemoteURL(ctx context.Context, url string,
@@ -200,33 +205,31 @@ func (f *Firehol) updateRemoteURL(ctx context.Context, url string,
 		return fmt.Errorf("cannot build a request: %w", err)
 	}
 
-	resp, err := f.httpClient.Do(req)
+	resp, err := f.httpClient.Do(req) // nolint: bodyclose
 	if err != nil {
 		return fmt.Errorf("cannot request a remote URL %s: %w", url, err)
 	}
 
-	defer func() {
-		io.Copy(ioutil.Discard, resp.Body) // nolint: errcheck
-		resp.Body.Close()
-	}()
+	go func(ctx context.Context, closer io.Closer) {
+		<-ctx.Done()
+		closer.Close()
+	}(ctx, resp.Body)
 
-	return f.updateTrees(ctx, mutex, resp.Body, v4tree, v6tree)
+	defer func(rc io.ReadCloser) {
+		io.Copy(ioutil.Discard, rc) // nolint: errcheck
+		rc.Close()
+	}(resp.Body)
+
+	return f.updateTrees(mutex, resp.Body, v4tree, v6tree)
 }
 
-func (f *Firehol) updateTrees(ctx context.Context,
-	mutex sync.Locker,
+func (f *Firehol) updateTrees(mutex sync.Locker,
 	reader io.Reader,
 	v4tree *bool_tree.TreeV4,
 	v6tree *bool_tree.TreeV6) error {
 	scanner := bufio.NewScanner(reader)
 
 	for scanner.Scan() {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-		}
-
 		text := scanner.Text()
 		text = fireholRegexpComment.ReplaceAllLiteralString(text, "")
 		text = strings.TrimSpace(text)
