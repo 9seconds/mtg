@@ -54,7 +54,7 @@ test:
 
 .PHONY: citest
 citest:
-	@go test -coverprofile=coverage.txt -covermode=atomic -race -v ./...
+	@go test -coverprofile=coverage.txt -covermode=atomic -parallel 2 -race -v ./...
 
 .PHONY: crosscompile
 crosscompile: $(CC_BINARIES)
