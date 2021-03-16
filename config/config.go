@@ -148,11 +148,11 @@ func Parse(rawData []byte) (*Config, error) {
 	}
 
 	if err := jsonEncoder.Encode(rawConf); err != nil {
-		return nil, fmt.Errorf("cannot dump into interim format: %w", err)
+		panic(err)
 	}
 
 	if err := json.NewDecoder(jsonBuf).Decode(conf); err != nil {
-		return nil, fmt.Errorf("cannot parse final config: %w", err)
+        return nil, fmt.Errorf("cannot parse a config: %w", err)
 	}
 
 	if err := conf.Validate(); err != nil {
