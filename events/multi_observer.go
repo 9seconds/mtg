@@ -40,6 +40,21 @@ func (m multiObserver) EventFinish(evt mtglib.EventFinish) {
 	wg.Wait()
 }
 
+func (m multiObserver) EventConcurrencyLimited(evt mtglib.EventConcurrencyLimited) {
+	wg := &sync.WaitGroup{}
+	wg.Add(len(m.observers))
+
+	for _, v := range m.observers {
+		go func(obs Observer) {
+			defer wg.Done()
+
+			obs.EventConcurrencyLimited(evt)
+		}(v)
+	}
+
+	wg.Wait()
+}
+
 func (m multiObserver) Shutdown() {
 	for _, v := range m.observers {
 		v.Shutdown()

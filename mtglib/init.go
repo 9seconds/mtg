@@ -28,7 +28,7 @@ type IPBlocklist interface {
 }
 
 type Event interface {
-	ConnectionID() string
+	StreamID() string
 }
 
 type EventStream interface {

@@ -2,6 +2,7 @@ package events
 
 import (
 	"context"
+	"math/rand"
 	"runtime"
 
 	"github.com/9seconds/mtg/v2/mtglib"
@@ -15,12 +16,20 @@ type eventStream struct {
 }
 
 func (e eventStream) Send(ctx context.Context, evt mtglib.Event) {
-	chanNo := int(xxhash.ChecksumString32(evt.ConnectionID())) % len(e.chans)
+	var chanNo uint32
+
+	streamID := evt.StreamID()
+
+	if streamID == "" {
+		chanNo = rand.Uint32()
+	} else {
+		chanNo = xxhash.ChecksumString32(streamID)
+	}
 
 	select {
 	case <-ctx.Done():
 	case <-e.ctx.Done():
-	case e.chans[chanNo] <- evt:
+	case e.chans[int(chanNo)%len(e.chans)] <- evt:
 	}
 }
 
@@ -29,6 +38,10 @@ func (e eventStream) Shutdown() {
 }
 
 func NewEventStream(observerFactories []ObserverFactory) mtglib.EventStream {
+	if len(observerFactories) == 0 {
+		observerFactories = append(observerFactories, NewNoopObserver)
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	rv := eventStream{
 		ctx:       ctx,
@@ -39,7 +52,11 @@ func NewEventStream(observerFactories []ObserverFactory) mtglib.EventStream {
 	for i := 0; i < runtime.NumCPU(); i++ {
 		rv.chans[i] = make(chan mtglib.Event, 1)
 
-		go eventStreamProcessor(ctx, rv.chans[i], newMultiObserver(observerFactories))
+		if len(observerFactories) == 1 {
+			go eventStreamProcessor(ctx, rv.chans[i], observerFactories[0]())
+		} else {
+			go eventStreamProcessor(ctx, rv.chans[i], newMultiObserver(observerFactories))
+		}
 	}
 
 	return rv
@@ -58,6 +75,8 @@ func eventStreamProcessor(ctx context.Context, eventChan <-chan mtglib.Event, ob
 				observer.EventStart(typedEvt)
 			case mtglib.EventFinish:
 				observer.EventFinish(typedEvt)
+			case mtglib.EventConcurrencyLimited:
+				observer.EventConcurrencyLimited(typedEvt)
 			}
 		}
 	}

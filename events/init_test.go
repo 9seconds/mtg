@@ -17,6 +17,10 @@ func (o *ObserverMock) EventFinish(evt mtglib.EventStart) {
 	o.Called(evt)
 }
 
+func (o *ObserverMock) EventConcurrencyLimited(evt mtglib.EventConcurrencyLimited) {
+	o.Called(evt)
+}
+
 func (o *ObserverMock) Shutdown() {
 	o.Called()
 }

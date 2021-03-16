@@ -5,21 +5,27 @@ import (
 	"time"
 )
 
-type eventBase struct {
+type EventStart struct {
+	CreatedAt time.Time
+	ConnID    string
+	RemoteIP  net.IP
+}
+
+func (e EventStart) StreamID() string {
+	return e.ConnID
+}
+
+type EventFinish struct {
 	CreatedAt time.Time
 	ConnID    string
 }
 
-func (e eventBase) ConnectionID() string {
+func (e EventFinish) StreamID() string {
 	return e.ConnID
 }
 
-type EventStart struct {
-	eventBase
+type EventConcurrencyLimited struct{}
 
-	RemoteIP net.IP
-}
-
-type EventFinish struct {
-	eventBase
+func (e EventConcurrencyLimited) StreamID() string {
+	return ""
 }
