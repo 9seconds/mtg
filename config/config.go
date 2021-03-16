@@ -45,9 +45,10 @@ type Config struct {
 	} `json:"network"`
 	Stats struct {
 		StatsD struct {
-			Enabled      bool             `json:"enabled"`
-			Address      TypeHostPort     `json:"address"`
-			MetricPrefix TypeMetricPrefix `json:"metric-prefix"`
+			Enabled      bool                `json:"enabled"`
+			Address      TypeHostPort        `json:"address"`
+			MetricPrefix TypeMetricPrefix    `json:"metric-prefix"`
+			TagFormat    TypeStatsdTagFormat `json:"tag-format"`
 		} `json:"statsd"`
 		Prometheus struct {
 			Enabled      bool             `json:"enabled"`
@@ -122,6 +123,7 @@ type configRaw struct {
 			Enabled      bool   `toml:"enabled" json:"enabled,omitempty"`
 			Address      string `toml:"address" json:"address,omitempty"`
 			MetricPrefix string `toml:"metric-prefix" json:"metric-prefix,omitempty"`
+			TagFormat    string `toml:"tag-format" json:"tag-format,omitempty"`
 		} `toml:"statsd" json:"statsd,omitempty"`
 		Prometheus struct {
 			Enabled      bool   `toml:"enabled" json:"enabled,omitempty"`
