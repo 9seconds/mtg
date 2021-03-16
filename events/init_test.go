@@ -13,7 +13,7 @@ func (o *ObserverMock) EventStart(evt mtglib.EventStart) {
 	o.Called(evt)
 }
 
-func (o *ObserverMock) EventFinish(evt mtglib.EventStart) {
+func (o *ObserverMock) EventFinish(evt mtglib.EventFinish) {
 	o.Called(evt)
 }
 

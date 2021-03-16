@@ -18,12 +18,10 @@ type eventStream struct {
 func (e eventStream) Send(ctx context.Context, evt mtglib.Event) {
 	var chanNo uint32
 
-	streamID := evt.StreamID()
-
-	if streamID == "" {
-		chanNo = rand.Uint32()
-	} else {
+	if streamID := evt.StreamID(); streamID != "" {
 		chanNo = xxhash.ChecksumString32(streamID)
+	} else {
+		chanNo = rand.Uint32()
 	}
 
 	select {

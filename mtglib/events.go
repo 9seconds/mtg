@@ -24,7 +24,9 @@ func (e EventFinish) StreamID() string {
 	return e.ConnID
 }
 
-type EventConcurrencyLimited struct{}
+type EventConcurrencyLimited struct {
+	CreatedAt time.Time
+}
 
 func (e EventConcurrencyLimited) StreamID() string {
 	return ""
