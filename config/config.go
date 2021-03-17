@@ -152,7 +152,7 @@ func Parse(rawData []byte) (*Config, error) {
 	}
 
 	if err := json.NewDecoder(jsonBuf).Decode(conf); err != nil {
-        return nil, fmt.Errorf("cannot parse a config: %w", err)
+		return nil, fmt.Errorf("cannot parse a config: %w", err)
 	}
 
 	if err := conf.Validate(); err != nil {

@@ -97,6 +97,7 @@ func (suite *StatsdTestSuite) TestEventStartFinish() {
 	suite.statsd.EventStart(mtglib.EventStart{
 		CreatedAt: time.Now(),
 		ConnID:    "connID",
+		RemoteIP:  net.ParseIP("10.0.0.10"),
 	})
 
 	time.Sleep(2 * statsd.DefaultFlushInterval)

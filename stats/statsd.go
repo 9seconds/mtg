@@ -2,7 +2,6 @@ package stats
 
 import (
 	"fmt"
-	"net"
 	"strings"
 	"time"
 
@@ -15,45 +14,34 @@ type statsdFakeLogger struct{}
 
 func (s statsdFakeLogger) Printf(msg string, args ...interface{}) {}
 
-type statsdStreamInfo struct {
-	createdAt time.Time
-	clientIP  net.IP
-}
-
-func (s *statsdStreamInfo) ClientIPTag() statsd.Tag {
-	if s.clientIP.To4() == nil {
-		return statsd.StringTag(TagIPType, TagIPTypeIPv6)
-	} else {
-		return statsd.StringTag(TagIPType, TagIPTypeIPv4)
-	}
-}
-
 type statsdProcessor struct {
-	streams map[string]*statsdStreamInfo
+	streams map[string]*streamInfo
 	client  *statsd.Client
 }
 
 func (s statsdProcessor) EventStart(evt mtglib.EventStart) {
-	clientInfo := &statsdStreamInfo{
+	sInfo := &streamInfo{
 		createdAt: evt.CreatedAt,
 		clientIP:  evt.RemoteIP,
 	}
-	s.streams[evt.StreamID()] = clientInfo
+	s.streams[evt.StreamID()] = sInfo
+	ipTypeTag := statsd.StringTag(TagIPType, sInfo.IPType())
 
-	s.client.GaugeDelta(MetricActiveConnection, 1, clientInfo.ClientIPTag())
+	s.client.GaugeDelta(MetricActiveConnection, 1, ipTypeTag)
 }
 
 func (s statsdProcessor) EventFinish(evt mtglib.EventFinish) {
-	clientInfo, ok := s.streams[evt.StreamID()]
+	sInfo, ok := s.streams[evt.StreamID()]
 	if !ok {
 		return
 	}
 
 	defer delete(s.streams, evt.StreamID())
 
-	duration := evt.CreatedAt.Sub(clientInfo.createdAt)
+	duration := evt.CreatedAt.Sub(sInfo.createdAt)
+	ipTypeTag := statsd.StringTag(TagIPType, sInfo.IPType())
 
-	s.client.GaugeDelta(MetricActiveConnection, -1, clientInfo.ClientIPTag())
+	s.client.GaugeDelta(MetricActiveConnection, -1, ipTypeTag)
 	s.client.PrecisionTiming(MetricSessionDuration, duration)
 }
 
@@ -88,7 +76,7 @@ func (s StatsdFactory) Close() error {
 func (s StatsdFactory) Make() events.Observer {
 	return statsdProcessor{
 		client:  s.client,
-		streams: make(map[string]*statsdStreamInfo),
+		streams: make(map[string]*streamInfo),
 	}
 }
 

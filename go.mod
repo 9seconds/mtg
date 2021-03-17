@@ -15,6 +15,7 @@ require (
 	github.com/mccutchen/go-httpbin v1.1.1
 	github.com/panjf2000/ants v1.3.0 // indirect
 	github.com/pelletier/go-toml v1.8.1
+	github.com/prometheus/client_golang v1.9.0 // indirect
 	github.com/rs/zerolog v1.20.0 // indirect
 	github.com/smira/go-statsd v1.3.2 // indirect
 	github.com/stretchr/objx v0.3.0 // indirect
