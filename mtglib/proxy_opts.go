@@ -9,4 +9,6 @@ type ProxyOpts struct {
 	Logger          Logger
 
 	Concurrency uint
+	CloakPort   uint
+	PreferIP    string
 }
