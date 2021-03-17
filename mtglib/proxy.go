@@ -74,7 +74,9 @@ func (p *Proxy) Serve(listener net.Listener) error {
 		case errors.Is(err, ants.ErrPoolClosed):
 			return nil
 		case errors.Is(err, ants.ErrPoolOverload):
-			p.eventStream.Send(p.ctx, EventConcurrencyLimited{})
+			p.eventStream.Send(p.ctx, EventConcurrencyLimited{
+				CreatedAt: time.Now(),
+			})
 		}
 	}
 }
