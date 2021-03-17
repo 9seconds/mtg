@@ -121,6 +121,16 @@ func (suite *StatsdTestSuite) TestEventConcurrencyLimited() {
 	suite.Equal("mtg.concurrency_limited:1|c", suite.statsdServer.String())
 }
 
+func (suite *StatsdTestSuite) TestEventIPBlocklisted() {
+	suite.statsd.EventIPBlocklisted(mtglib.EventIPBlocklisted{
+		CreatedAt: time.Now(),
+		RemoteIP:  net.ParseIP("10.0.0.10"),
+	})
+
+	time.Sleep(2 * statsd.DefaultFlushInterval)
+	suite.Equal("mtg.ip_blocklisted:1|c|#ip_type:ipv4", suite.statsdServer.String())
+}
+
 func TestStatsd(t *testing.T) {
 	t.Parallel()
 	suite.Run(t, &StatsdTestSuite{})

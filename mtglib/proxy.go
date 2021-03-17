@@ -52,6 +52,16 @@ func (p *Proxy) Serve(listener net.Listener) error {
 			return fmt.Errorf("cannot accept a new connection: %w", err)
 		}
 
+		if addr := conn.RemoteAddr().(*net.TCPAddr).IP; p.ipBlocklist.Contains(addr) {
+			conn.Close()
+			p.eventStream.Send(p.ctx, EventIPBlocklisted{
+				CreatedAt: time.Now(),
+				RemoteIP:  addr,
+			})
+
+			continue
+		}
+
 		err = p.workerPool.Invoke(conn)
 
 		switch {

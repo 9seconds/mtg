@@ -31,3 +31,12 @@ type EventConcurrencyLimited struct {
 func (e EventConcurrencyLimited) StreamID() string {
 	return ""
 }
+
+type EventIPBlocklisted struct {
+	CreatedAt time.Time
+	RemoteIP  net.IP
+}
+
+func (e EventIPBlocklisted) StreamID() string {
+	return ""
+}

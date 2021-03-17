@@ -73,6 +73,8 @@ func eventStreamProcessor(ctx context.Context, eventChan <-chan mtglib.Event, ob
 				observer.EventStart(typedEvt)
 			case mtglib.EventFinish:
 				observer.EventFinish(typedEvt)
+			case mtglib.EventIPBlocklisted:
+				observer.EventIPBlocklisted(typedEvt)
 			case mtglib.EventConcurrencyLimited:
 				observer.EventConcurrencyLimited(typedEvt)
 			}

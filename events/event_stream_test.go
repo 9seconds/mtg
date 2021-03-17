@@ -106,6 +106,29 @@ func (suite *EventStreamTestSuite) TestEventConcurrencyLimitedOk() {
 	time.Sleep(100 * time.Millisecond)
 }
 
+func (suite *EventStreamTestSuite) TestEventIPBlocklistedOk() {
+	evt := mtglib.EventIPBlocklisted{
+		CreatedAt: time.Now(),
+		RemoteIP:  net.ParseIP("10.0.0.10"),
+	}
+
+	for _, v := range []*ObserverMock{suite.observerMock1, suite.observerMock2} {
+		v.
+			On("EventIPBlocklisted", mock.Anything).
+			Once().
+			Run(func(args mock.Arguments) {
+				caught := args.Get(0).(mtglib.EventIPBlocklisted)
+
+				suite.Equal(evt.CreatedAt, caught.CreatedAt)
+				suite.Equal(evt.StreamID(), caught.StreamID())
+				suite.Equal(evt.RemoteIP.String(), caught.RemoteIP.String())
+			})
+	}
+
+	suite.stream.Send(suite.ctx, evt)
+	time.Sleep(100 * time.Millisecond)
+}
+
 func (suite *EventStreamTestSuite) TearDownTest() {
 	suite.stream.Shutdown()
 	suite.ctxCancel()

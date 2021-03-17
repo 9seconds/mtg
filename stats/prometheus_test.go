@@ -91,6 +91,19 @@ func (suite *PrometheusTestSuite) TestEventConcurrencyLimited() {
 	suite.Contains(data, `mtg_concurrency_limited 1`)
 }
 
+func (suite *PrometheusTestSuite) TestEventIPBlocklisted() {
+	suite.prometheus.EventIPBlocklisted(mtglib.EventIPBlocklisted{
+		CreatedAt: time.Now(),
+		RemoteIP:  net.ParseIP("2001:db8::68"),
+	})
+
+	time.Sleep(100 * time.Millisecond)
+
+	data, err := suite.Get()
+	suite.NoError(err)
+	suite.Contains(data, `mtg_ip_blocklisted{ip_type="ipv6"} 1`)
+}
+
 func TestPrometheus(t *testing.T) {
 	t.Parallel()
 	suite.Run(t, &PrometheusTestSuite{})

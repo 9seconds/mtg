@@ -6,6 +6,7 @@ type Observer interface {
 	EventStart(mtglib.EventStart)
 	EventFinish(mtglib.EventFinish)
 	EventConcurrencyLimited(mtglib.EventConcurrencyLimited)
+	EventIPBlocklisted(mtglib.EventIPBlocklisted)
 
 	Shutdown()
 }

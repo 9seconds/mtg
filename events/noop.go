@@ -20,6 +20,7 @@ type noopObserver struct{}
 func (n noopObserver) EventStart(_ mtglib.EventStart)                           {}
 func (n noopObserver) EventFinish(_ mtglib.EventFinish)                         {}
 func (n noopObserver) EventConcurrencyLimited(_ mtglib.EventConcurrencyLimited) {}
+func (n noopObserver) EventIPBlocklisted(_ mtglib.EventIPBlocklisted)           {}
 func (n noopObserver) Shutdown()                                                {}
 
 func NewNoopObserver() Observer {

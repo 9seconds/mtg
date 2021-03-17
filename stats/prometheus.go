@@ -41,8 +41,16 @@ func (p prometheusProcessor) EventFinish(evt mtglib.EventFinish) {
 	p.factory.metricSessionDuration.Observe(float64(duration) / float64(time.Second))
 }
 
-func (p prometheusProcessor) EventConcurrencyLimited(evt mtglib.EventConcurrencyLimited) {
+func (p prometheusProcessor) EventConcurrencyLimited(_ mtglib.EventConcurrencyLimited) {
 	p.factory.metricConcurrencyLimited.Inc()
+}
+
+func (p prometheusProcessor) EventIPBlocklisted(evt mtglib.EventIPBlocklisted) {
+	if evt.RemoteIP.To4() == nil {
+		p.factory.metricIPBlocklisted.WithLabelValues(TagIPTypeIPv6).Inc()
+	} else {
+		p.factory.metricIPBlocklisted.WithLabelValues(TagIPTypeIPv4).Inc()
+	}
 }
 
 func (p prometheusProcessor) Shutdown() {
@@ -53,6 +61,7 @@ type PrometheusFactory struct {
 	httpServer *http.Server
 
 	metricActiveConnections  *prometheus.GaugeVec
+	metricIPBlocklisted      *prometheus.CounterVec
 	metricConcurrencyLimited prometheus.Counter
 	metricSessionDuration    prometheus.Histogram
 }
@@ -113,11 +122,17 @@ func NewPrometheus(metricPrefix, httpPath string) *PrometheusFactory {
 			Name:      MetricConcurrencyLimited,
 			Help:      "A number of sessions that were rejected by concurrency limiter.",
 		}),
+		metricIPBlocklisted: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: metricPrefix,
+			Name:      MetricIPBlocklisted,
+			Help:      "A number of rejected sessions due to ip blocklisting",
+		}, []string{TagIPType}),
 	}
 
 	registry.MustRegister(factory.metricActiveConnections)
 	registry.MustRegister(factory.metricSessionDuration)
 	registry.MustRegister(factory.metricConcurrencyLimited)
+	registry.MustRegister(factory.metricIPBlocklisted)
 
 	return factory
 }

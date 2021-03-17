@@ -21,6 +21,10 @@ func (o *ObserverMock) EventConcurrencyLimited(evt mtglib.EventConcurrencyLimite
 	o.Called(evt)
 }
 
+func (o *ObserverMock) EventIPBlocklisted(evt mtglib.EventIPBlocklisted) {
+	o.Called(evt)
+}
+
 func (o *ObserverMock) Shutdown() {
 	o.Called()
 }

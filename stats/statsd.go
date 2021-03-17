@@ -49,6 +49,18 @@ func (s statsdProcessor) EventConcurrencyLimited(_ mtglib.EventConcurrencyLimite
 	s.client.Incr(MetricConcurrencyLimited, 1)
 }
 
+func (s statsdProcessor) EventIPBlocklisted(evt mtglib.EventIPBlocklisted) {
+	var tag statsd.Tag
+
+	if evt.RemoteIP.To4() == nil {
+		tag = statsd.StringTag(TagIPType, TagIPTypeIPv6)
+	} else {
+		tag = statsd.StringTag(TagIPType, TagIPTypeIPv4)
+	}
+
+	s.client.Incr(MetricIPBlocklisted, 1, tag)
+}
+
 func (s statsdProcessor) Shutdown() {
 	now := time.Now()
 	events := make([]mtglib.EventFinish, 0, len(s.streams))

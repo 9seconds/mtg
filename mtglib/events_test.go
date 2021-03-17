@@ -36,6 +36,10 @@ func (suite *EventsTestSuite) TestEventConcurrencyLimited() {
 	suite.Empty(mtglib.EventConcurrencyLimited{}.StreamID())
 }
 
+func (suite *EventsTestSuite) TestEventIPBlocklisted() {
+	suite.Empty(mtglib.EventIPBlocklisted{}.StreamID())
+}
+
 func TestEvents(t *testing.T) {
 	t.Parallel()
 	suite.Run(t, &EventsTestSuite{})
