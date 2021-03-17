@@ -1,0 +1,42 @@
+package mtglib_test
+
+import (
+	"net"
+	"testing"
+	"time"
+
+	"github.com/9seconds/mtg/v2/mtglib"
+	"github.com/stretchr/testify/suite"
+)
+
+type EventsTestSuite struct {
+	suite.Suite
+}
+
+func (suite *EventsTestSuite) TestEventStart() {
+	evt := mtglib.EventStart{
+		CreatedAt: time.Now(),
+		ConnID:    "CONNID",
+		RemoteIP:  net.ParseIP("10.0.0.10"),
+	}
+
+	suite.Equal("CONNID", evt.StreamID())
+}
+
+func (suite *EventsTestSuite) TestEventFinish() {
+	evt := mtglib.EventFinish{
+		CreatedAt: time.Now(),
+		ConnID:    "CONNID",
+	}
+
+	suite.Equal("CONNID", evt.StreamID())
+}
+
+func (suite *EventsTestSuite) TestEventConcurrencyLimited() {
+	suite.Empty(mtglib.EventConcurrencyLimited{}.StreamID())
+}
+
+func TestEvents(t *testing.T) {
+	t.Parallel()
+	suite.Run(t, &EventsTestSuite{})
+}
