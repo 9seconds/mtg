@@ -60,10 +60,6 @@ func (d *defaultDialer) DialContext(ctx context.Context, network, address string
 	return tcpConn, nil
 }
 
-func (d *defaultDialer) TCPBufferSize() int {
-	return d.bufferSize
-}
-
 func NewDefaultDialer(timeout time.Duration, bufferSize int) (Dialer, error) {
 	switch {
 	case timeout < 0:

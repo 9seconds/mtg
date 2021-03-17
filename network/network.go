@@ -75,10 +75,6 @@ func (n *network) IdleTimeout() time.Duration {
 	return n.idleTimeout
 }
 
-func (n *network) TCPBufferSize() int {
-	return n.dialer.TCPBufferSize()
-}
-
 func (n *network) dnsResolve(protocol, address string) ([]string, error) {
 	if net.ParseIP(address) != nil {
 		return []string{address}, nil

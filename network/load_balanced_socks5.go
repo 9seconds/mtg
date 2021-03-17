@@ -9,16 +9,11 @@ import (
 )
 
 type loadBalancedSocks5Dialer struct {
-	dialers    []Dialer
-	bufferSize int
+	dialers []Dialer
 }
 
 func (l loadBalancedSocks5Dialer) Dial(network, address string) (net.Conn, error) {
 	return l.DialContext(context.Background(), network, address)
-}
-
-func (l loadBalancedSocks5Dialer) TCPBufferSize() int {
-	return l.bufferSize
 }
 
 func (l loadBalancedSocks5Dialer) DialContext(ctx context.Context, network, address string) (net.Conn, error) {
@@ -50,7 +45,6 @@ func NewLoadBalancedSocks5Dialer(baseDialer Dialer, proxyURLs []*url.URL) (Diale
 	}
 
 	return loadBalancedSocks5Dialer{
-		dialers:    dialers,
-		bufferSize: baseDialer.TCPBufferSize(),
+		dialers: dialers,
 	}, nil
 }

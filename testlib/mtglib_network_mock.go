@@ -33,7 +33,3 @@ func (m *MtglibNetworkMock) MakeHTTPClient(dialFunc func(ctx context.Context,
 func (m *MtglibNetworkMock) IdleTimeout() time.Duration {
 	return m.Called().Get(0).(time.Duration)
 }
-
-func (m *MtglibNetworkMock) TCPBufferSize() int {
-	return m.Called().Int(0)
-}

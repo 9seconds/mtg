@@ -57,7 +57,6 @@ func (suite *LoadBalancedSocks5TestSuite) TestCannotDial() {
 	baseDialer.On("DialContext", mock.Anything, "tcp", "127.0.0.2:1080").
 		Times(network.ProxyDialerOpenThreshold).
 		Return(&net.TCPConn{}, io.EOF)
-	baseDialer.On("TCPBufferSize").Return(network.DefaultBufferSize)
 
 	lbDialer, err := network.NewLoadBalancedSocks5Dialer(baseDialer, []*url.URL{
 		{Scheme: "socks5", User: url.UserPassword("user", "password"), Host: "127.0.0.1:1080"},

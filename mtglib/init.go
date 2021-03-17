@@ -27,7 +27,6 @@ type Network interface {
 	DialContext(ctx context.Context, network, address string) (net.Conn, error)
 	MakeHTTPClient(func(ctx context.Context, network, address string) (net.Conn, error)) *http.Client
 	IdleTimeout() time.Duration
-	TCPBufferSize() int
 }
 
 type AntiReplayCache interface {
