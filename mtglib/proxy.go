@@ -29,6 +29,11 @@ func (p *Proxy) ServeConn(conn net.Conn) {
 	ctx := newStreamContext(p.ctx, p.logger, conn)
 	defer ctx.Close()
 
+	go func() {
+		<-ctx.Done()
+		ctx.Close()
+	}()
+
 	p.eventStream.Send(ctx, EventStart{
 		CreatedAt: time.Now(),
 		ConnID:    ctx.connID,
