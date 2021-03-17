@@ -71,6 +71,10 @@ func (suite *DefaultDialerTestSuite) TestHTTPRequest() {
 	suite.Equal(http.StatusOK, resp.StatusCode)
 }
 
+func (suite *DefaultDialerTestSuite) TestTCPBufferSize() {
+	suite.Equal(network.DefaultBufferSize, suite.d.TCPBufferSize())
+}
+
 func TestDefaultDialer(t *testing.T) {
 	t.Parallel()
 	suite.Run(t, &DefaultDialerTestSuite{})

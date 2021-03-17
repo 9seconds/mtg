@@ -30,6 +30,10 @@ func (d *DialerMock) DialContext(ctx context.Context, network, address string) (
 	return args.Get(0).(net.Conn), args.Error(1)
 }
 
+func (d *DialerMock) TCPBufferSize() int {
+	return d.Called().Int(0)
+}
+
 type HTTPServerTestSuite struct {
 	httpServer *httptest.Server
 }
