@@ -27,7 +27,6 @@ func (n networkHTTPTransport) RoundTrip(req *http.Request) (*http.Response, erro
 type network struct {
 	dialer      Dialer
 	dns         doh.Resolver
-	idleTimeout time.Duration
 	httpTimeout time.Duration
 	userAgent   string
 }
@@ -69,10 +68,6 @@ func (n *network) MakeHTTPClient(dialFunc func(ctx context.Context,
 	}
 
 	return makeHTTPClient(n.userAgent, n.httpTimeout, dialFunc)
-}
-
-func (n *network) IdleTimeout() time.Duration {
-	return n.idleTimeout
 }
 
 func (n *network) dnsResolve(protocol, address string) ([]string, error) {
@@ -131,19 +126,12 @@ func (n *network) dnsResolve(protocol, address string) ([]string, error) {
 
 func NewNetwork(dialer Dialer,
 	userAgent, dohHostname string,
-	httpTimeout, idleTimeout time.Duration) (mtglib.Network, error) {
+	httpTimeout time.Duration) (mtglib.Network, error) {
 	switch {
 	case httpTimeout < 0:
 		return nil, fmt.Errorf("timeout should be positive number %s", httpTimeout)
 	case httpTimeout == 0:
 		httpTimeout = DefaultHTTPTimeout
-	}
-
-	switch {
-	case idleTimeout < 0:
-		return nil, fmt.Errorf("timeout should be positive number %s", idleTimeout)
-	case idleTimeout == 0:
-		idleTimeout = DefaultIdleTimeout
 	}
 
 	if net.ParseIP(dohHostname) == nil {
@@ -152,7 +140,6 @@ func NewNetwork(dialer Dialer,
 
 	return &network{
 		dialer:      dialer,
-		idleTimeout: idleTimeout,
 		httpTimeout: httpTimeout,
 		userAgent:   userAgent,
 		dns: doh.Resolver{

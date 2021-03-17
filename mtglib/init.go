@@ -5,7 +5,6 @@ import (
 	"errors"
 	"net"
 	"net/http"
-	"time"
 )
 
 var (
@@ -26,7 +25,6 @@ type Network interface {
 	Dial(network, address string) (net.Conn, error)
 	DialContext(ctx context.Context, network, address string) (net.Conn, error)
 	MakeHTTPClient(func(ctx context.Context, network, address string) (net.Conn, error)) *http.Client
-	IdleTimeout() time.Duration
 }
 
 type AntiReplayCache interface {

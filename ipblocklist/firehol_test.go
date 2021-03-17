@@ -119,7 +119,7 @@ func (suite *FireholTestSuite) TestRemoteFail() {
 
 func (suite *FireholTestSuite) TestMixed() {
 	dialer, _ := network.NewDefaultDialer(0, 0)
-	ntw, _ := network.NewNetwork(dialer, "mtg", "1.1.1.1", 0, 0)
+	ntw, _ := network.NewNetwork(dialer, "mtg", "1.1.1.1", 0)
 
 	blocklist, err := ipblocklist.NewFirehol(logger.NewNoopLogger(),
 		ntw, 2,

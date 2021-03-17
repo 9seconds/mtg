@@ -4,7 +4,6 @@ import (
 	"context"
 	"net"
 	"net/http"
-	"time"
 
 	"github.com/stretchr/testify/mock"
 )
@@ -28,8 +27,4 @@ func (m *MtglibNetworkMock) DialContext(ctx context.Context, network, address st
 func (m *MtglibNetworkMock) MakeHTTPClient(dialFunc func(ctx context.Context,
 	network, address string) (net.Conn, error)) *http.Client {
 	return m.Called(dialFunc).Get(0).(*http.Client)
-}
-
-func (m *MtglibNetworkMock) IdleTimeout() time.Duration {
-	return m.Called().Get(0).(time.Duration)
 }

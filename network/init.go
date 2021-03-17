@@ -9,7 +9,6 @@ import (
 
 const (
 	DefaultTimeout     = 10 * time.Second
-	DefaultIdleTimeout = time.Minute
 	DefaultHTTPTimeout = 10 * time.Second
 	DefaultBufferSize  = 4096
 

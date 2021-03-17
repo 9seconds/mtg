@@ -14,6 +14,8 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+const statsdSleepTime = 3 * statsd.DefaultFlushInterval
+
 type statsdFakeServer struct {
 	conn *net.UDPConn
 	buf  *bytes.Buffer
@@ -100,7 +102,7 @@ func (suite *StatsdTestSuite) TestEventStartFinish() {
 		RemoteIP:  net.ParseIP("10.0.0.10"),
 	})
 
-	time.Sleep(2 * statsd.DefaultFlushInterval)
+	time.Sleep(statsdSleepTime)
 	suite.Equal("mtg.active_connections:+1|g|#ip_type:ipv4", suite.statsdServer.String())
 
 	suite.statsd.EventFinish(mtglib.EventFinish{
@@ -108,7 +110,7 @@ func (suite *StatsdTestSuite) TestEventStartFinish() {
 		ConnID:    "connID",
 	})
 
-	time.Sleep(2 * statsd.DefaultFlushInterval)
+	time.Sleep(statsdSleepTime)
 	suite.Contains(suite.statsdServer.String(), "mtg.session_duration")
 }
 
@@ -117,7 +119,7 @@ func (suite *StatsdTestSuite) TestEventConcurrencyLimited() {
 		CreatedAt: time.Now(),
 	})
 
-	time.Sleep(2 * statsd.DefaultFlushInterval)
+	time.Sleep(statsdSleepTime)
 	suite.Equal("mtg.concurrency_limited:1|c", suite.statsdServer.String())
 }
 
@@ -127,7 +129,7 @@ func (suite *StatsdTestSuite) TestEventIPBlocklisted() {
 		RemoteIP:  net.ParseIP("10.0.0.10"),
 	})
 
-	time.Sleep(2 * statsd.DefaultFlushInterval)
+	time.Sleep(statsdSleepTime)
 	suite.Equal("mtg.ip_blocklisted:1|c|#ip_type:ipv4", suite.statsdServer.String())
 }
 
