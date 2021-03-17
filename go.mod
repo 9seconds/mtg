@@ -16,6 +16,7 @@ require (
 	github.com/panjf2000/ants v1.3.0 // indirect
 	github.com/pelletier/go-toml v1.8.1
 	github.com/rs/zerolog v1.20.0 // indirect
+	github.com/smira/go-statsd v1.3.2 // indirect
 	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/stretchr/testify v1.7.0
 	github.com/tylertreat/BoomFilters v0.0.0-20200520150052-42a7b4300c0c // indirect
