@@ -8,7 +8,19 @@ import (
 	"time"
 )
 
-var ErrSecretEmpty = errors.New("secret is empty")
+var (
+	ErrSecretEmpty                 = errors.New("secret is empty")
+	ErrSecretInvalid               = errors.New("secret is invalid")
+	ErrNetworkIsNotDefined         = errors.New("network is not defined")
+	ErrAntiReplayCacheIsNotDefined = errors.New("anti-replay cache is not defined")
+	ErrIPBlocklistIsNotDefined     = errors.New("ip blocklist is not defined")
+	ErrEventStreamIsNotDefined     = errors.New("event stream is not defined")
+	ErrLoggerIsNotDefined          = errors.New("logger is not defined")
+)
+
+const (
+	DefaultConcurrency = 4096
+)
 
 type Network interface {
 	Dial(network, address string) (net.Conn, error)

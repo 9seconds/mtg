@@ -18,7 +18,7 @@ import (
 	"github.com/9seconds/mtg/v2/mtglib"
 	"github.com/kentik/patricia"
 	"github.com/kentik/patricia/bool_tree"
-	"github.com/panjf2000/ants"
+	"github.com/panjf2000/ants/v2"
 )
 
 const (
