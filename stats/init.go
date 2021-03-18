@@ -1,6 +1,11 @@
 package stats
 
 const (
+	DefaultMetricPrefix = "mtg"
+
+	DefaultStatsdMetricPrefix = DefaultMetricPrefix + "."
+	DefaultStatsdTagFormat    = "datadog"
+
 	MetricActiveConnection   = "active_connections"
 	MetricSessionDuration    = "session_duration"
 	MetricConcurrencyLimited = "concurrency_limited"

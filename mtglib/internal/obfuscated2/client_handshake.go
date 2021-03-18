@@ -9,7 +9,7 @@ import (
 )
 
 // Connection Type secure. We support only fake tls.
-var clientHandshakeMagic = []byte{0xdd, 0xdd, 0xdd, 0xdd}
+var clientHandshakeConnectionType = []byte{0xdd, 0xdd, 0xdd, 0xdd}
 
 func ClientHandshake(secret []byte, reader io.Reader) (int16, cipher.Stream, cipher.Stream, error) {
 	handshakeFrame := acquireHandshakeFrame()
@@ -42,8 +42,8 @@ func ClientHandshake(secret []byte, reader io.Reader) (int16, cipher.Stream, cip
 
 	decryptor.XORKeyStream(handshakeFrame.data[:], handshakeFrame.data[:])
 
-	if magic := handshakeFrame.magic(); subtle.ConstantTimeCompare(clientHandshakeMagic, magic) != 1 {
-		return 0, nil, nil, fmt.Errorf("unsupported connection type: %s", hex.EncodeToString(magic))
+	if val := handshakeFrame.connectionType(); subtle.ConstantTimeCompare(clientHandshakeConnectionType, val) != 1 {
+		return 0, nil, nil, fmt.Errorf("unsupported connection type: %s", hex.EncodeToString(val))
 	}
 
 	return handshakeFrame.dc(), encryptor, decryptor, nil

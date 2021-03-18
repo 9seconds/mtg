@@ -323,7 +323,7 @@ func NewFirehol(logger mtglib.Logger, network mtglib.Network,
 	}
 
 	if downloadConcurrency == 0 {
-		downloadConcurrency = 1
+		downloadConcurrency = DefaultDownloadConcurrency
 	}
 
 	workerPool, _ := ants.NewPool(int(downloadConcurrency))
