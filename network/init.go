@@ -10,7 +10,7 @@ import (
 const (
 	DefaultTimeout     = 10 * time.Second
 	DefaultHTTPTimeout = 10 * time.Second
-	DefaultBufferSize  = 4096
+	DefaultBufferSize  = 16 * 1024 // 16 kib
 
 	ProxyDialerOpenThreshold        = 5
 	ProxyDialerHalfOpenTimeout      = time.Minute

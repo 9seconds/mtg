@@ -20,6 +20,10 @@ var (
 
 const (
 	DefaultConcurrency = 4096
+	DefaultBufferSize  = 16 * 1024 // 16 kib
+	DefaultCloakPort   = 443
+	DefaultIdleTimeout = time.Minute
+	DefaultPreferIP    = "prefer-ipv6"
 )
 
 type Network interface {
