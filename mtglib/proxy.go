@@ -95,12 +95,7 @@ func (p *Proxy) Shutdown() {
 }
 
 func (p *Proxy) doObfuscated2Handshake(ctx *streamContext) error {
-	handshakeFrame, err := obfuscated2.ReadHandshakeFrame(ctx.clientConn)
-	if err != nil {
-		return fmt.Errorf("cannot read handshake frame: %w", err)
-	}
-
-	dc, encryptor, decryptor, err := obfuscated2.ClientHandshake(p.secret.Key[:], handshakeFrame)
+	dc, encryptor, decryptor, err := obfuscated2.ClientHandshake(p.secret.Key[:], ctx.clientConn)
 	if err != nil {
 		return fmt.Errorf("cannot process client handshake: %w", err)
 	}

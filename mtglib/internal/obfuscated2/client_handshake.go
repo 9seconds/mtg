@@ -5,12 +5,20 @@ import (
 	"crypto/subtle"
 	"encoding/hex"
 	"fmt"
+	"io"
 )
 
 // Connection Type secure. We support only fake tls.
 var clientHandshakeMagic = []byte{0xdd, 0xdd, 0xdd, 0xdd}
 
-func ClientHandshake(secret []byte, handshakeFrame *HandhakeFrame) (int16, cipher.Stream, cipher.Stream, error) {
+func ClientHandshake(secret []byte, reader io.Reader) (int16, cipher.Stream, cipher.Stream, error) {
+	handshakeFrame := acquireHandshakeFrame()
+	defer releaseHandshakeFrame(handshakeFrame)
+
+	if _, err := io.ReadFull(reader, handshakeFrame.data[:]); err != nil {
+		return 0, nil, nil, fmt.Errorf("cannot read frame: %w", err)
+	}
+
 	decHasher := acquireSha256Hasher()
 	defer releaseSha256Hasher(decHasher)
 
@@ -21,17 +29,22 @@ func ClientHandshake(secret []byte, handshakeFrame *HandhakeFrame) (int16, ciphe
 	encHasher := acquireSha256Hasher()
 	defer releaseSha256Hasher(encHasher)
 
-	invertedFrame := handshakeFrame.invert()
+	invertedFrame := acquireHandshakeFrame()
+	defer releaseHandshakeFrame(invertedFrame)
+
+	for i, v := range handshakeFrame.data {
+		invertedFrame.data[handshakeFrameLen-1-i] = v
+	}
+
 	encHasher.Write(invertedFrame.key()) // nolint: errcheck
-	encHasher.Write(secret)               // nolint: errcheck
+	encHasher.Write(secret)              // nolint: errcheck
 	encryptor := makeAesCtr(encHasher.Sum(nil), invertedFrame.iv())
 
-	decryptedFrame := HandhakeFrame{}
-	decryptor.XORKeyStream(decryptedFrame.data[:], handshakeFrame.data[:])
+	decryptor.XORKeyStream(handshakeFrame.data[:], handshakeFrame.data[:])
 
-	if magic := decryptedFrame.magic(); subtle.ConstantTimeCompare(clientHandshakeMagic, magic) != 1 {
+	if magic := handshakeFrame.magic(); subtle.ConstantTimeCompare(clientHandshakeMagic, magic) != 1 {
 		return 0, nil, nil, fmt.Errorf("unsupported connection type: %s", hex.EncodeToString(magic))
 	}
 
-	return decryptedFrame.dc(), encryptor, decryptor, nil
+	return handshakeFrame.dc(), encryptor, decryptor, nil
 }
