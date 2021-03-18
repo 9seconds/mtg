@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net"
 	"net/http"
+	"time"
 )
 
 var (
@@ -44,6 +45,10 @@ type Event interface {
 type EventStream interface {
 	Send(context.Context, Event)
 	Shutdown()
+}
+
+type TimeAttackDetector interface {
+	Valid(time.Time) error
 }
 
 type Logger interface {

@@ -17,12 +17,13 @@ type Proxy struct {
 	streamWaitGroup sync.WaitGroup
 	workerPool      *ants.PoolWithFunc
 
-	secret          Secret
-	network         Network
-	antiReplayCache AntiReplayCache
-	ipBlocklist     IPBlocklist
-	eventStream     EventStream
-	logger          Logger
+	secret             Secret
+	network            Network
+	timeAttackDetector TimeAttackDetector
+	antiReplayCache    AntiReplayCache
+	ipBlocklist        IPBlocklist
+	eventStream        EventStream
+	logger             Logger
 }
 
 func (p *Proxy) ServeConn(conn net.Conn) {
