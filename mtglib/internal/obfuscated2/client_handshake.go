@@ -48,3 +48,12 @@ func ClientHandshake(secret []byte, reader io.Reader) (int16, cipher.Stream, cip
 
 	return handshakeFrame.dc(), encryptor, decryptor, nil
 }
+
+func makeAesCtr(key, iv []byte) cipher.Stream {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		panic(err)
+	}
+
+	return cipher.NewCTR(block, iv)
+}
