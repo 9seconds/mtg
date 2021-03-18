@@ -1,5 +1,7 @@
 package mtglib
 
+import "time"
+
 type ProxyOpts struct {
 	Secret          Secret
 	Network         Network
@@ -8,7 +10,9 @@ type ProxyOpts struct {
 	EventStream     EventStream
 	Logger          Logger
 
+	BufferSize  uint
 	Concurrency uint
 	CloakPort   uint
+	IdleTimeout time.Duration
 	PreferIP    string
 }
