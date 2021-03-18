@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/9seconds/mtg/v2/mtglib/internal/obfuscated2"
 	"github.com/panjf2000/ants/v2"
 )
 
@@ -17,13 +18,12 @@ type Proxy struct {
 	streamWaitGroup sync.WaitGroup
 	workerPool      *ants.PoolWithFunc
 
-	secret             Secret
-	network            Network
-	timeAttackDetector TimeAttackDetector
-	antiReplayCache    AntiReplayCache
-	ipBlocklist        IPBlocklist
-	eventStream        EventStream
-	logger             Logger
+	secret          Secret
+	network         Network
+	antiReplayCache AntiReplayCache
+	ipBlocklist     IPBlocklist
+	eventStream     EventStream
+	logger          Logger
 }
 
 func (p *Proxy) ServeConn(conn net.Conn) {
@@ -49,6 +49,12 @@ func (p *Proxy) ServeConn(conn net.Conn) {
 		})
 		ctx.logger.Info("Stream has been finished")
 	}()
+
+	if err := p.doObfuscated2Handshake(ctx); err != nil {
+		p.logger.InfoError("obfuscated2 handshake is failed", err)
+
+		return
+	}
 }
 
 func (p *Proxy) Serve(listener net.Listener) error {
@@ -86,6 +92,32 @@ func (p *Proxy) Shutdown() {
 	p.ctxCancel()
 	p.streamWaitGroup.Wait()
 	p.workerPool.Release()
+}
+
+func (p *Proxy) doObfuscated2Handshake(ctx *streamContext) error {
+	handshakeFrame, err := obfuscated2.ReadHandshakeFrame(ctx.clientConn)
+	if err != nil {
+		return fmt.Errorf("cannot read handshake frame: %w", err)
+	}
+
+	dc, encryptor, decryptor, err := obfuscated2.ClientHandshake(p.secret.Key[:], handshakeFrame)
+	if err != nil {
+		return fmt.Errorf("cannot process client handshake: %w", err)
+	}
+
+	if dc < 0 {
+		dc = -dc
+	}
+
+	ctx.dc = int(dc)
+	ctx.logger = ctx.logger.BindInt("dc", ctx.dc)
+	ctx.clientConn = &obfuscated2.Conn{
+		Conn:      ctx.clientConn,
+		Encryptor: encryptor,
+		Decryptor: decryptor,
+	}
+
+	return nil
 }
 
 func NewProxy(opts ProxyOpts) (*Proxy, error) {

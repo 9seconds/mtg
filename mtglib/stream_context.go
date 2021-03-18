@@ -13,6 +13,7 @@ type streamContext struct {
 	ctxCancel  context.CancelFunc
 	clientConn net.Conn
 	connID     string
+	dc         int
 	logger     Logger
 }
 
