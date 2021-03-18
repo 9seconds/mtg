@@ -52,6 +52,7 @@ type Logger interface {
 	BindInt(name string, value int) Logger
 	BindStr(name, value string) Logger
 
+	Printf(format string, args ...interface{})
 	Info(msg string)
 	InfoError(msg string, err error)
 	Warning(msg string)

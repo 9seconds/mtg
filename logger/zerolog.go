@@ -1,6 +1,8 @@
 package logger
 
 import (
+	"fmt"
+
 	"github.com/9seconds/mtg/v2/mtglib"
 	"github.com/rs/zerolog"
 )
@@ -62,6 +64,10 @@ func (z *zeroLogContext) BindStr(name, value string) mtglib.Logger {
 		ctxVarName: name,
 		parent:     z,
 	}
+}
+
+func (z *zeroLogContext) Printf(format string, args ...interface{}) {
+	z.Debug(fmt.Sprintf(format, args...))
 }
 
 func (z *zeroLogContext) Info(msg string) {

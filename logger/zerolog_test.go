@@ -41,6 +41,7 @@ func (suite *ZeroLoggerTestSuite) TestLog() {
 	testData := map[string]func(mtglib.Logger){
 		"info":        func(l mtglib.Logger) { l.Info("hello") },
 		"warn":        func(l mtglib.Logger) { l.Warning("hello") },
+		"printf":      func(l mtglib.Logger) { l.Printf("hello") },
 		"debug":       func(l mtglib.Logger) { l.Debug("hello") },
 		"info-error":  func(l mtglib.Logger) { l.InfoError("hello", io.EOF) },
 		"warn-error":  func(l mtglib.Logger) { l.WarningError("hello", io.EOF) },
@@ -64,13 +65,17 @@ func (suite *ZeroLoggerTestSuite) TestLog() {
 			timestamp := time.Unix(msg.Timestamp/1000, (msg.Timestamp%1000)*1_000_000)
 			assert.WithinDuration(t, time.Now(), timestamp, 100*time.Millisecond)
 
+			if level == "printf" {
+				level = "debug"
+			}
+
 			assert.Equal(t, level, msg.Level)
 			assert.Equal(t, name, msg.StrParam)
 			assert.EqualValues(t, 1, msg.IntParam)
 			assert.Equal(t, "name", msg.Logger)
 			assert.Equal(t, "hello", msg.Message)
 
-			if level != name {
+			if level != name && name != "printf" {
 				assert.Equal(t, io.EOF.Error(), msg.Error)
 			} else {
 				assert.Empty(t, msg.Error)

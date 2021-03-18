@@ -18,6 +18,7 @@ func (suite *NoopLoggerTestSuite) TestLog() {
 		suite.Empty(testlib.CaptureStderr(func() {
 			log := logger.NewNoopLogger().Named("name")
 
+			log.BindInt("int", 1).BindStr("str", "1").Printf("info", 1, 2)
 			log.BindInt("int", 1).BindStr("str", "1").Info("info")
 			log.BindInt("int", 1).BindStr("str", "1").Warning("info")
 			log.BindInt("int", 1).BindStr("str", "1").Debug("info")

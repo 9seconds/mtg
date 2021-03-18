@@ -7,6 +7,7 @@ type noopLogger struct{}
 func (n noopLogger) Named(_ string) mtglib.Logger          { return n }
 func (n noopLogger) BindInt(_ string, _ int) mtglib.Logger { return n }
 func (n noopLogger) BindStr(_, _ string) mtglib.Logger     { return n }
+func (n noopLogger) Printf(_ string, _ ...interface{})     {}
 func (n noopLogger) Info(_ string)                         {}
 func (n noopLogger) Warning(_ string)                      {}
 func (n noopLogger) Debug(_ string)                        {}
