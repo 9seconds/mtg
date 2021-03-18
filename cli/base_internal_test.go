@@ -18,11 +18,13 @@ func (suite *BaseTestSuite) SetupTest() {
 }
 
 func (suite *BaseTestSuite) TestReadConfigNok() {
-	suite.Error(suite.b.ReadConfig(filepath.Join("testdata", "unknown"), "dev"))
+	suite.b.ConfigPath = filepath.Join("testdata", "unknown")
+	suite.Error(suite.b.ReadConfig("dev"))
 }
 
 func (suite *BaseTestSuite) TestReadConfig() {
-	suite.NoError(suite.b.ReadConfig(filepath.Join("testdata", "minimal.toml"), "dev"))
+	suite.b.ConfigPath = filepath.Join("testdata", "minimal.toml")
+	suite.NoError(suite.b.ReadConfig("dev"))
 }
 
 func TestBase(t *testing.T) {

@@ -12,12 +12,14 @@ import (
 )
 
 type base struct {
-	Network mtglib.Network
-	Config  *config.Config
+	ConfigPath string `kong:"arg,required,type='existingfile',help='Path to the configuration file.',name='config-path'"` // nolint: lll
+
+	Network mtglib.Network `kong:"-"`
+	Config  *config.Config `kong:"-"`
 }
 
-func (b *base) ReadConfig(path, version string) error {
-	content, err := ioutil.ReadFile(path)
+func (b *base) ReadConfig(version string) error {
+	content, err := ioutil.ReadFile(b.ConfigPath)
 	if err != nil {
 		return fmt.Errorf("cannot read config file: %w", err)
 	}
