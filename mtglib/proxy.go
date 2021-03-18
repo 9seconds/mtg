@@ -87,10 +87,6 @@ func (p *Proxy) Shutdown() {
 	p.workerPool.Release()
 }
 
-type antsLogger struct{}
-
-func (a antsLogger) Printf(msg string, args ...interface{}) {}
-
 func NewProxy(opts ProxyOpts) (*Proxy, error) {
 	switch {
 	case opts.Network == nil:
@@ -126,7 +122,7 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 
 	pool, err := ants.NewPoolWithFunc(int(concurrency), func(arg interface{}) {
 		proxy.ServeConn(arg.(net.Conn))
-	}, ants.WithLogger(antsLogger{}))
+	}, ants.WithLogger(opts.Logger.Named("ants")))
 	if err != nil {
 		return nil, fmt.Errorf("cannot initialize a pool: %w", err)
 	}

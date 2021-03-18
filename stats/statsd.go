@@ -6,13 +6,10 @@ import (
 	"time"
 
 	"github.com/9seconds/mtg/v2/events"
+	"github.com/9seconds/mtg/v2/logger"
 	"github.com/9seconds/mtg/v2/mtglib"
 	statsd "github.com/smira/go-statsd"
 )
-
-type statsdFakeLogger struct{}
-
-func (s statsdFakeLogger) Printf(msg string, args ...interface{}) {}
 
 type statsdProcessor struct {
 	streams map[string]*streamInfo
@@ -92,10 +89,11 @@ func (s StatsdFactory) Make() events.Observer {
 	}
 }
 
-func NewStatsd(address, metricPrefix, tagFormat string) (StatsdFactory, error) {
+func NewStatsd(address string, log logger.StdLikeLogger,
+	metricPrefix, tagFormat string) (StatsdFactory, error) {
 	options := []statsd.Option{
 		statsd.MetricPrefix(metricPrefix),
-		statsd.Logger(statsdFakeLogger{}),
+		statsd.Logger(log),
 	}
 
 	switch strings.ToLower(tagFormat) {

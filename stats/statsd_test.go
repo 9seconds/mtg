@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/9seconds/mtg/v2/events"
+	"github.com/9seconds/mtg/v2/logger"
 	"github.com/9seconds/mtg/v2/mtglib"
 	"github.com/9seconds/mtg/v2/stats"
 	statsd "github.com/smira/go-statsd"
@@ -80,7 +81,8 @@ type StatsdTestSuite struct {
 func (suite *StatsdTestSuite) SetupTest() {
 	suite.statsdServer = statsdNewFakeServer()
 
-	factory, err := stats.NewStatsd(suite.statsdServer.Addr(), "mtg.", "datadog")
+	factory, err := stats.NewStatsd(suite.statsdServer.Addr(),
+		logger.NewNoopLogger(), "mtg.", "datadog")
 	if err != nil {
 		panic(err)
 	}
