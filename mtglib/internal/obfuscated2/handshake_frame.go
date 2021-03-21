@@ -18,6 +18,9 @@ const (
 	handshakeFrameOffsetEnd            = handshakeFrameOffsetDC + handshakeFrameLenDC
 )
 
+// Connection-Type: Secure. We support only fake tls.
+var handshakeConnectionType = []byte{0xdd, 0xdd, 0xdd, 0xdd}
+
 // A structure of obfuscated2 handshake frame is following:
 //
 //    [frameOffsetFirst:frameOffsetKey:frameOffsetIV:frameOffsetMagic:frameOffsetDC:frameOffsetEnd].
