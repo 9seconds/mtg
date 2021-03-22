@@ -5,6 +5,8 @@ import "github.com/9seconds/mtg/v2/mtglib"
 type Observer interface {
 	EventStart(mtglib.EventStart)
 	EventFinish(mtglib.EventFinish)
+	EventConnectedToDC(mtglib.EventConnectedToDC)
+	EventTraffic(mtglib.EventTraffic)
 	EventConcurrencyLimited(mtglib.EventConcurrencyLimited)
 	EventIPBlocklisted(mtglib.EventIPBlocklisted)
 

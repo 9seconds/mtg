@@ -9,12 +9,13 @@ import (
 )
 
 type streamContext struct {
-	ctx        context.Context
-	ctxCancel  context.CancelFunc
-	clientConn net.Conn
-	connID     string
-	dc         int
-	logger     Logger
+	ctx          context.Context
+	ctxCancel    context.CancelFunc
+	clientConn   net.Conn
+	telegramConn net.Conn
+	connID       string
+	dc           int
+	logger       Logger
 }
 
 func (s *streamContext) Deadline() (time.Time, bool) {
@@ -35,7 +36,14 @@ func (s *streamContext) Value(key interface{}) interface{} {
 
 func (s *streamContext) Close() {
 	s.ctxCancel()
-	s.clientConn.Close()
+
+	if s.clientConn != nil {
+		s.clientConn.Close()
+	}
+
+	if s.telegramConn != nil {
+		s.telegramConn.Close()
+	}
 }
 
 func (s *streamContext) ClientIP() net.IP {

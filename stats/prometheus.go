@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/9seconds/mtg/v2/events"
@@ -24,7 +25,47 @@ func (p prometheusProcessor) EventStart(evt mtglib.EventStart) {
 	}
 	p.streams[evt.StreamID()] = sInfo
 
-	p.factory.metricActiveConnections.WithLabelValues(sInfo.IPType()).Inc()
+	p.factory.metricClientConnections.WithLabelValues(sInfo.GetClientIPType()).Inc()
+}
+
+func (p prometheusProcessor) EventConnectedToDC(evt mtglib.EventConnectedToDC) {
+	sInfo, ok := p.streams[evt.StreamID()]
+	if !ok {
+		return
+	}
+
+	sInfo.remoteIP = evt.RemoteIP
+	sInfo.dc = evt.DC
+
+	p.factory.metricTelegramConnections.WithLabelValues(
+		sInfo.GetRemoteIPType(),
+		sInfo.remoteIP.String(),
+		strconv.Itoa(sInfo.dc)).Inc()
+}
+
+func (p prometheusProcessor) EventTraffic(evt mtglib.EventTraffic) {
+	sInfo, ok := p.streams[evt.StreamID()]
+	if !ok {
+		return
+	}
+
+	labels := []string{
+		sInfo.GetRemoteIPType(),
+		sInfo.remoteIP.String(),
+		strconv.Itoa(sInfo.dc),
+	}
+
+	if evt.IsRead {
+		sInfo.bytesRecvFromTelegram += evt.Traffic
+
+		labels = append(labels, TagDirectionClient)
+	} else {
+		sInfo.bytesSentToTelegram += evt.Traffic
+
+		labels = append(labels, TagDirectionTelegram)
+	}
+
+	p.factory.metricTraffic.WithLabelValues(labels...).Add(float64(evt.Traffic))
 }
 
 func (p prometheusProcessor) EventFinish(evt mtglib.EventFinish) {
@@ -37,8 +78,30 @@ func (p prometheusProcessor) EventFinish(evt mtglib.EventFinish) {
 
 	duration := evt.CreatedAt.Sub(sInfo.createdAt)
 
-	p.factory.metricActiveConnections.WithLabelValues(sInfo.IPType()).Dec()
+	p.factory.metricClientConnections.WithLabelValues(sInfo.GetRemoteIPType()).Dec()
 	p.factory.metricSessionDuration.Observe(float64(duration) / float64(time.Second))
+
+	if sInfo.remoteIP == nil {
+		return
+	}
+
+	labels := []string{
+		sInfo.GetRemoteIPType(),
+		sInfo.remoteIP.String(),
+		strconv.Itoa(sInfo.dc),
+	}
+
+	p.factory.metricTelegramConnections.WithLabelValues(labels...).Dec()
+
+	labels = append(labels, TagDirectionClient)
+	p.factory.metricSessionTraffic.
+		WithLabelValues(labels...).
+		Observe(float64(sInfo.bytesRecvFromTelegram))
+
+	labels[3] = TagDirectionTelegram
+	p.factory.metricSessionTraffic.
+		WithLabelValues(labels...).
+		Observe(float64(sInfo.bytesSentToTelegram))
 }
 
 func (p prometheusProcessor) EventConcurrencyLimited(_ mtglib.EventConcurrencyLimited) {
@@ -60,10 +123,13 @@ func (p prometheusProcessor) Shutdown() {
 type PrometheusFactory struct {
 	httpServer *http.Server
 
-	metricActiveConnections  *prometheus.GaugeVec
-	metricIPBlocklisted      *prometheus.CounterVec
-	metricConcurrencyLimited prometheus.Counter
-	metricSessionDuration    prometheus.Histogram
+	metricClientConnections   *prometheus.GaugeVec
+	metricTelegramConnections *prometheus.GaugeVec
+	metricTraffic             *prometheus.CounterVec
+	metricIPBlocklisted       *prometheus.CounterVec
+	metricSessionTraffic      *prometheus.HistogramVec
+	metricConcurrencyLimited  prometheus.Counter
+	metricSessionDuration     prometheus.Histogram
 }
 
 func (p *PrometheusFactory) Make() events.Observer {
@@ -81,7 +147,7 @@ func (p *PrometheusFactory) Close() error {
 	return p.httpServer.Shutdown(context.Background())
 }
 
-func NewPrometheus(metricPrefix, httpPath string) *PrometheusFactory {
+func NewPrometheus(metricPrefix, httpPath string) *PrometheusFactory { // nolint: funlen
 	registry := prometheus.NewPedanticRegistry()
 	httpHandler := promhttp.HandlerFor(registry, promhttp.HandlerOpts{
 		EnableOpenMetrics: true,
@@ -95,11 +161,16 @@ func NewPrometheus(metricPrefix, httpPath string) *PrometheusFactory {
 			Handler: mux,
 		},
 
-		metricActiveConnections: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		metricClientConnections: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: metricPrefix,
-			Name:      MetricActiveConnection,
+			Name:      MetricClientConnections,
 			Help:      "A number of connections under active processing.",
 		}, []string{TagIPType}),
+		metricTelegramConnections: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Namespace: metricPrefix,
+			Name:      MetricTelegramConnections,
+			Help:      "A number of connections to Telegram servers.",
+		}, []string{TagIPType, TagTelegramIP, TagDC}),
 		metricSessionDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
 			Namespace: metricPrefix,
 			Name:      MetricSessionDuration,
@@ -117,6 +188,27 @@ func NewPrometheus(metricPrefix, httpPath string) *PrometheusFactory {
 				300,
 			},
 		}),
+		metricSessionTraffic: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: metricPrefix,
+			Name:      MetricSessionTraffic,
+			Help:      "A traffic size which flew via proxy within a single session.",
+			Buckets: []float64{ // per 1mb
+				1 * 1024 * 1024,
+				2 * 1024 * 1024,
+				3 * 1024 * 1024,
+				4 * 1024 * 1024,
+				5 * 1024 * 1024,
+				6 * 1024 * 1024,
+				7 * 1024 * 1024,
+				8 * 1024 * 1024,
+				9 * 1024 * 1024,
+			},
+		}, []string{TagIPType, TagTelegramIP, TagDC, TagDirection}),
+		metricTraffic: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: metricPrefix,
+			Name:      MetricTraffic,
+			Help:      "Traffic which is sent through this proxy.",
+		}, []string{TagIPType, TagTelegramIP, TagDC, TagDirection}),
 		metricConcurrencyLimited: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: metricPrefix,
 			Name:      MetricConcurrencyLimited,
@@ -129,7 +221,10 @@ func NewPrometheus(metricPrefix, httpPath string) *PrometheusFactory {
 		}, []string{TagIPType}),
 	}
 
-	registry.MustRegister(factory.metricActiveConnections)
+	registry.MustRegister(factory.metricClientConnections)
+	registry.MustRegister(factory.metricTelegramConnections)
+	registry.MustRegister(factory.metricTraffic)
+	registry.MustRegister(factory.metricSessionTraffic)
 	registry.MustRegister(factory.metricSessionDuration)
 	registry.MustRegister(factory.metricConcurrencyLimited)
 	registry.MustRegister(factory.metricIPBlocklisted)

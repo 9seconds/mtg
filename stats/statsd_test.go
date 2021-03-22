@@ -103,17 +103,49 @@ func (suite *StatsdTestSuite) TestEventStartFinish() {
 		ConnID:    "connID",
 		RemoteIP:  net.ParseIP("10.0.0.10"),
 	})
-
 	time.Sleep(statsdSleepTime)
-	suite.Equal("mtg.active_connections:+1|g|#ip_type:ipv4", suite.statsdServer.String())
+	suite.Equal("mtg.client_connections:+1|g|#ip_type:ipv4", suite.statsdServer.String())
+
+	suite.statsd.EventConnectedToDC(mtglib.EventConnectedToDC{
+		CreatedAt: time.Now(),
+		ConnID:    "connID",
+		RemoteIP:  net.ParseIP("10.1.0.10"),
+		DC:        2,
+	})
+	time.Sleep(statsdSleepTime)
+	suite.Contains(suite.statsdServer.String(),
+		"mtg.telegram_connections:+1|g|#ip_type:ipv4,ip:10.1.0.10,dc:2")
+
+	suite.statsd.EventTraffic(mtglib.EventTraffic{
+		CreatedAt: time.Now(),
+		ConnID:    "connID",
+		Traffic:   30,
+		IsRead:    true,
+	})
+	time.Sleep(statsdSleepTime)
+	suite.Contains(suite.statsdServer.String(),
+		"mtg.traffic:30|c|#ip_type:ipv4,ip:10.1.0.10,dc:2,direction:client")
+
+	suite.statsd.EventTraffic(mtglib.EventTraffic{
+		CreatedAt: time.Now(),
+		ConnID:    "connID",
+		Traffic:   90,
+		IsRead:    false,
+	})
+	time.Sleep(statsdSleepTime)
+	suite.Contains(suite.statsdServer.String(),
+		"mtg.traffic:90|c|#ip_type:ipv4,ip:10.1.0.10,dc:2,direction:telegram")
 
 	suite.statsd.EventFinish(mtglib.EventFinish{
 		CreatedAt: time.Now(),
 		ConnID:    "connID",
 	})
-
 	time.Sleep(statsdSleepTime)
 	suite.Contains(suite.statsdServer.String(), "mtg.session_duration")
+	suite.Contains(suite.statsdServer.String(),
+		"mtg.telegram_connections:-1|g|#ip_type:ipv4,ip:10.1.0.10,dc:2")
+	suite.Contains(suite.statsdServer.String(),
+		"mtg.client_connections:-1|g|#ip_type:ipv4")
 }
 
 func (suite *StatsdTestSuite) TestEventConcurrencyLimited() {

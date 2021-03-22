@@ -15,6 +15,28 @@ func (e EventStart) StreamID() string {
 	return e.ConnID
 }
 
+type EventConnectedToDC struct {
+	CreatedAt time.Time
+	ConnID    string
+	RemoteIP  net.IP
+	DC        int
+}
+
+func (e EventConnectedToDC) StreamID() string {
+	return e.ConnID
+}
+
+type EventTraffic struct {
+	CreatedAt time.Time
+	ConnID    string
+	Traffic   uint
+	IsRead    bool
+}
+
+func (e EventTraffic) StreamID() string {
+	return e.ConnID
+}
+
 type EventFinish struct {
 	CreatedAt time.Time
 	ConnID    string

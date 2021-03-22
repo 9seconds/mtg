@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/9seconds/mtg/v2/mtglib/internal/obfuscated2"
+	"github.com/9seconds/mtg/v2/mtglib/internal/telegram"
 	"github.com/panjf2000/ants/v2"
 )
 
@@ -16,10 +17,12 @@ type Proxy struct {
 	ctx             context.Context
 	ctxCancel       context.CancelFunc
 	streamWaitGroup sync.WaitGroup
-	workerPool      *ants.PoolWithFunc
+
+	idleTimeout time.Duration
+	workerPool  *ants.PoolWithFunc
+	telegram    *telegram.Telegram
 
 	secret          Secret
-	network         Network
 	antiReplayCache AntiReplayCache
 	ipBlocklist     IPBlocklist
 	eventStream     EventStream
@@ -52,6 +55,12 @@ func (p *Proxy) ServeConn(conn net.Conn) {
 
 	if err := p.doObfuscated2Handshake(ctx); err != nil {
 		p.logger.InfoError("obfuscated2 handshake is failed", err)
+
+		return
+	}
+
+	if err := p.doTelegramCall(ctx); err != nil {
+		p.logger.WarningError("cannot dial to telegram", err)
 
 		return
 	}
@@ -102,16 +111,45 @@ func (p *Proxy) doObfuscated2Handshake(ctx *streamContext) error {
 
 	ctx.dc = dc
 	ctx.logger = ctx.logger.BindInt("dc", dc)
-	ctx.clientConn = &obfuscated2.Conn{
-		Conn:      ctx.clientConn,
-		Encryptor: encryptor,
-		Decryptor: decryptor,
+	ctx.clientConn = connStandard{
+		conn: obfuscated2.Conn{
+			Conn:      ctx.clientConn,
+			Encryptor: encryptor,
+			Decryptor: decryptor,
+		},
+		idleTimeout: p.idleTimeout,
 	}
 
 	return nil
 }
 
-func NewProxy(opts ProxyOpts) (*Proxy, error) {
+func (p *Proxy) doTelegramCall(ctx *streamContext) error {
+	conn, err := p.telegram.Dial(ctx, ctx.dc)
+	if err != nil {
+		return fmt.Errorf("cannot dial to Telegram: %w", err)
+	}
+
+	ctx.telegramConn = connEventTraffic{
+		Conn: connStandard{
+			conn:        conn,
+			idleTimeout: p.idleTimeout,
+		},
+		connID: ctx.connID,
+		stream: p.eventStream,
+		ctx:    ctx,
+	}
+
+	p.eventStream.Send(ctx, EventConnectedToDC{
+		CreatedAt: time.Now(),
+		ConnID:    ctx.connID,
+		RemoteIP:  conn.RemoteAddr().(*net.TCPAddr).IP,
+		DC:        ctx.dc,
+	})
+
+	return nil
+}
+
+func NewProxy(opts ProxyOpts) (*Proxy, error) { // nolint: cyclop
 	switch {
 	case opts.Network == nil:
 		return nil, ErrNetworkIsNotDefined
@@ -127,9 +165,19 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 		return nil, ErrSecretInvalid
 	}
 
+	tg, err := telegram.New(opts.Network, opts.PreferIP)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build telegram dialer: %w", err)
+	}
+
 	concurrency := opts.Concurrency
 	if concurrency == 0 {
 		concurrency = DefaultConcurrency
+	}
+
+	idleTimeout := opts.IdleTimeout
+	if idleTimeout < 1 {
+		idleTimeout = DefaultIdleTimeout
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -137,11 +185,12 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 		ctx:             ctx,
 		ctxCancel:       cancel,
 		secret:          opts.Secret,
-		network:         opts.Network,
 		antiReplayCache: opts.AntiReplayCache,
 		ipBlocklist:     opts.IPBlocklist,
 		eventStream:     opts.EventStream,
 		logger:          opts.Logger.Named("proxy"),
+		idleTimeout:     idleTimeout,
+		telegram:        tg,
 	}
 
 	pool, err := ants.NewPoolWithFunc(int(concurrency), func(arg interface{}) {

@@ -38,7 +38,7 @@ func (suite *EventStreamTestSuite) SetupTest() {
 	suite.stream = events.NewEventStream(factories)
 }
 
-func (suite *EventStreamTestSuite) TestEventStartOk() {
+func (suite *EventStreamTestSuite) TestEventStart() {
 	evt := mtglib.EventStart{
 		CreatedAt: time.Now(),
 		ConnID:    "connID",
@@ -63,7 +63,61 @@ func (suite *EventStreamTestSuite) TestEventStartOk() {
 	time.Sleep(100 * time.Millisecond)
 }
 
-func (suite *EventStreamTestSuite) TestEventFinishOk() {
+func (suite *EventStreamTestSuite) TestEventConnectedToDC() {
+	evt := mtglib.EventConnectedToDC{
+		CreatedAt: time.Now(),
+		ConnID:    "connID",
+		RemoteIP:  net.ParseIP("10.0.0.1"),
+		DC:        3,
+	}
+
+	for _, v := range []*ObserverMock{suite.observerMock1, suite.observerMock2} {
+		v.
+			On("EventConnectedToDC", mock.Anything).
+			Once().
+			Run(func(args mock.Arguments) {
+				caught := args.Get(0).(mtglib.EventConnectedToDC)
+
+				suite.Equal(evt.CreatedAt, caught.CreatedAt)
+				suite.Equal(evt.ConnID, caught.ConnID)
+				suite.Equal(evt.RemoteIP.String(), caught.RemoteIP.String())
+				suite.Equal(evt.StreamID(), caught.StreamID())
+				suite.Equal(evt.DC, caught.DC)
+			})
+	}
+
+	suite.stream.Send(suite.ctx, evt)
+	time.Sleep(100 * time.Millisecond)
+}
+
+func (suite *EventStreamTestSuite) TestEventTraffic() {
+	evt := mtglib.EventTraffic{
+		CreatedAt: time.Now(),
+		ConnID:    "connID",
+		Traffic:   1024,
+		IsRead:    true,
+	}
+
+	for _, v := range []*ObserverMock{suite.observerMock1, suite.observerMock2} {
+		v.
+			On("EventTraffic", mock.Anything).
+			Once().
+			Run(func(args mock.Arguments) {
+				caught := args.Get(0).(mtglib.EventTraffic)
+
+				suite.Equal(evt.CreatedAt, caught.CreatedAt)
+				suite.Equal(evt.ConnID, caught.ConnID)
+				suite.Equal(evt.StreamID(), caught.StreamID())
+				suite.Equal(evt.Traffic, caught.Traffic)
+				suite.Equal(evt.IsRead, caught.IsRead)
+			})
+	}
+
+	suite.stream.Send(suite.ctx, evt)
+	time.Sleep(100 * time.Millisecond)
+}
+
+func (suite *EventStreamTestSuite) TestEventFinish() {
 	evt := mtglib.EventFinish{
 		CreatedAt: time.Now(),
 		ConnID:    "connID",
@@ -86,7 +140,7 @@ func (suite *EventStreamTestSuite) TestEventFinishOk() {
 	time.Sleep(100 * time.Millisecond)
 }
 
-func (suite *EventStreamTestSuite) TestEventConcurrencyLimitedOk() {
+func (suite *EventStreamTestSuite) TestEventConcurrencyLimited() {
 	evt := mtglib.EventConcurrencyLimited{
 		CreatedAt: time.Now(),
 	}
@@ -106,7 +160,7 @@ func (suite *EventStreamTestSuite) TestEventConcurrencyLimitedOk() {
 	time.Sleep(100 * time.Millisecond)
 }
 
-func (suite *EventStreamTestSuite) TestEventIPBlocklistedOk() {
+func (suite *EventStreamTestSuite) TestEventIPBlocklisted() {
 	evt := mtglib.EventIPBlocklisted{
 		CreatedAt: time.Now(),
 		RemoteIP:  net.ParseIP("10.0.0.10"),

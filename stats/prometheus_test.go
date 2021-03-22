@@ -60,23 +60,60 @@ func (suite *PrometheusTestSuite) TestEventStartFinish() {
 		ConnID:    "connID",
 		RemoteIP:  net.ParseIP("10.0.0.10"),
 	})
-
 	time.Sleep(100 * time.Millisecond)
 
 	data, err := suite.Get()
 	suite.NoError(err)
-	suite.Contains(data, `mtg_active_connections{ip_type="ipv4"} 1`)
+	suite.Contains(data, `mtg_client_connections{ip_type="ipv4"} 1`)
+
+	suite.prometheus.EventConnectedToDC(mtglib.EventConnectedToDC{
+		CreatedAt: time.Now(),
+		ConnID:    "connID",
+		RemoteIP:  net.ParseIP("10.0.0.1"),
+		DC:        4,
+	})
+	time.Sleep(100 * time.Millisecond)
+
+	data, err = suite.Get()
+	suite.NoError(err)
+	suite.Contains(data, `mtg_telegram_connections{dc="4",ip="10.0.0.1",ip_type="ipv4"} 1`)
+
+	suite.prometheus.EventTraffic(mtglib.EventTraffic{
+		CreatedAt: time.Now(),
+		ConnID:    "connID",
+		Traffic:   200,
+		IsRead:    true,
+	})
+	time.Sleep(100 * time.Millisecond)
+
+	data, err = suite.Get()
+	suite.NoError(err)
+	suite.Contains(data, `mtg_traffic{dc="4",direction="client",ip="10.0.0.1",ip_type="ipv4"} 200`)
+
+	suite.prometheus.EventTraffic(mtglib.EventTraffic{
+		CreatedAt: time.Now(),
+		ConnID:    "connID",
+		Traffic:   100,
+		IsRead:    false,
+	})
+	time.Sleep(100 * time.Millisecond)
+
+	data, err = suite.Get()
+	suite.NoError(err)
+	suite.Contains(data, `mtg_traffic{dc="4",direction="telegram",ip="10.0.0.1",ip_type="ipv4"} 100`)
 
 	suite.prometheus.EventFinish(mtglib.EventFinish{
 		CreatedAt: time.Now(),
 		ConnID:    "connID",
 	})
-
 	time.Sleep(100 * time.Millisecond)
 
 	data, err = suite.Get()
 	suite.NoError(err)
-	suite.Contains(data, `mtg_active_connections{ip_type="ipv4"} 0`)
+	suite.Contains(data, `mtg_client_connections{ip_type="ipv4"} 0`)
+	suite.Contains(data, `mtg_telegram_connections{dc="4",ip="10.0.0.1",ip_type="ipv4"} 0`)
+	suite.Contains(data, `mtg_traffic{dc="4",direction="client",ip="10.0.0.1",ip_type="ipv4"} 200`)
+	suite.Contains(data, `mtg_traffic{dc="4",direction="telegram",ip="10.0.0.1",ip_type="ipv4"} 100`)
 }
 
 func (suite *PrometheusTestSuite) TestEventConcurrencyLimited() {

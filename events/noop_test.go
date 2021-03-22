@@ -25,6 +25,18 @@ func (suite *NoopTestSuite) SetupSuite() {
 			ConnID:    "connID",
 			RemoteIP:  net.ParseIP("127.0.0.1"),
 		},
+		"connected-to-dc": mtglib.EventConnectedToDC{
+			CreatedAt: time.Now(),
+			ConnID:    "connID",
+			RemoteIP:  net.ParseIP("127.1.0.1"),
+			DC:        2,
+		},
+		"traffic": mtglib.EventTraffic{
+			CreatedAt: time.Now(),
+			ConnID:    "connID",
+			Traffic:   1000,
+			IsRead:    true,
+		},
 		"finish": mtglib.EventFinish{
 			CreatedAt: time.Now(),
 			ConnID:    "connID",
@@ -62,6 +74,8 @@ func (suite *NoopTestSuite) TestObserver() {
 			switch typedEvt := value.(type) {
 			case mtglib.EventStart:
 				observer.EventStart(typedEvt)
+			case mtglib.EventConnectedToDC:
+				observer.EventConnectedToDC(typedEvt)
 			case mtglib.EventFinish:
 				observer.EventFinish(typedEvt)
 			case mtglib.EventConcurrencyLimited:

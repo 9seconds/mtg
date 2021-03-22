@@ -22,9 +22,47 @@ func (s statsdProcessor) EventStart(evt mtglib.EventStart) {
 		clientIP:  evt.RemoteIP,
 	}
 	s.streams[evt.StreamID()] = sInfo
-	ipTypeTag := statsd.StringTag(TagIPType, sInfo.IPType())
 
-	s.client.GaugeDelta(MetricActiveConnection, 1, ipTypeTag)
+	s.client.GaugeDelta(MetricClientConnections,
+		1,
+		statsd.StringTag(TagIPType, sInfo.GetClientIPType()))
+}
+
+func (s statsdProcessor) EventConnectedToDC(evt mtglib.EventConnectedToDC) {
+	sInfo, ok := s.streams[evt.StreamID()]
+	if !ok {
+		return
+	}
+
+	sInfo.remoteIP = evt.RemoteIP
+	sInfo.dc = evt.DC
+
+	s.client.GaugeDelta(MetricTelegramConnections,
+		1,
+		statsd.StringTag(TagIPType, sInfo.GetRemoteIPType()),
+		statsd.StringTag(TagTelegramIP, sInfo.remoteIP.String()),
+		statsd.IntTag(TagDC, sInfo.dc))
+}
+
+func (s statsdProcessor) EventTraffic(evt mtglib.EventTraffic) {
+	sInfo, ok := s.streams[evt.StreamID()]
+	if !ok {
+		return
+	}
+
+	tags := []statsd.Tag{
+		statsd.StringTag(TagIPType, sInfo.GetRemoteIPType()),
+		statsd.StringTag(TagTelegramIP, sInfo.remoteIP.String()),
+		statsd.IntTag(TagDC, sInfo.dc),
+	}
+
+	if evt.IsRead {
+		tags = append(tags, statsd.StringTag(TagDirection, TagDirectionClient))
+		s.client.Incr(MetricTraffic, int64(evt.Traffic), tags...)
+	} else {
+		tags = append(tags, statsd.StringTag(TagDirection, TagDirectionTelegram))
+		s.client.Incr(MetricTraffic, int64(evt.Traffic), tags...)
+	}
 }
 
 func (s statsdProcessor) EventFinish(evt mtglib.EventFinish) {
@@ -35,11 +73,19 @@ func (s statsdProcessor) EventFinish(evt mtglib.EventFinish) {
 
 	defer delete(s.streams, evt.StreamID())
 
-	duration := evt.CreatedAt.Sub(sInfo.createdAt)
-	ipTypeTag := statsd.StringTag(TagIPType, sInfo.IPType())
+	s.client.GaugeDelta(MetricClientConnections,
+		-1,
+		statsd.StringTag(TagIPType, sInfo.GetClientIPType()))
+	s.client.PrecisionTiming(MetricSessionDuration,
+		evt.CreatedAt.Sub(sInfo.createdAt))
 
-	s.client.GaugeDelta(MetricActiveConnection, -1, ipTypeTag)
-	s.client.PrecisionTiming(MetricSessionDuration, duration)
+	if sInfo.remoteIP != nil {
+		s.client.GaugeDelta(MetricTelegramConnections,
+			-1,
+			statsd.StringTag(TagIPType, sInfo.GetRemoteIPType()),
+			statsd.StringTag(TagTelegramIP, sInfo.remoteIP.String()),
+			statsd.IntTag(TagDC, sInfo.dc))
+	}
 }
 
 func (s statsdProcessor) EventConcurrencyLimited(_ mtglib.EventConcurrencyLimited) {

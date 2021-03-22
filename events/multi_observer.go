@@ -25,6 +25,36 @@ func (m multiObserver) EventStart(evt mtglib.EventStart) {
 	wg.Wait()
 }
 
+func (m multiObserver) EventConnectedToDC(evt mtglib.EventConnectedToDC) {
+	wg := &sync.WaitGroup{}
+	wg.Add(len(m.observers))
+
+	for _, v := range m.observers {
+		go func(obs Observer) {
+			defer wg.Done()
+
+			obs.EventConnectedToDC(evt)
+		}(v)
+	}
+
+	wg.Wait()
+}
+
+func (m multiObserver) EventTraffic(evt mtglib.EventTraffic) {
+	wg := &sync.WaitGroup{}
+	wg.Add(len(m.observers))
+
+	for _, v := range m.observers {
+		go func(obs Observer) {
+			defer wg.Done()
+
+			obs.EventTraffic(evt)
+		}(v)
+	}
+
+	wg.Wait()
+}
+
 func (m multiObserver) EventFinish(evt mtglib.EventFinish) {
 	wg := &sync.WaitGroup{}
 	wg.Add(len(m.observers))

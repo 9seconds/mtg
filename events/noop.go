@@ -18,6 +18,8 @@ func NewNoopStream() mtglib.EventStream {
 type noopObserver struct{}
 
 func (n noopObserver) EventStart(_ mtglib.EventStart)                           {}
+func (n noopObserver) EventConnectedToDC(_ mtglib.EventConnectedToDC)           {}
+func (n noopObserver) EventTraffic(_ mtglib.EventTraffic)                       {}
 func (n noopObserver) EventFinish(_ mtglib.EventFinish)                         {}
 func (n noopObserver) EventConcurrencyLimited(_ mtglib.EventConcurrencyLimited) {}
 func (n noopObserver) EventIPBlocklisted(_ mtglib.EventIPBlocklisted)           {}
