@@ -43,11 +43,9 @@ func (n *network) DialContext(ctx context.Context, protocol, address string) (ne
 		return nil, fmt.Errorf("cannot resolve dns names: %w", err)
 	}
 
-	if len(ips) > 1 {
-		rand.Shuffle(len(ips), func(i, j int) {
-			ips[i], ips[j] = ips[j], ips[i]
-		})
-	}
+	rand.Shuffle(len(ips), func(i, j int) {
+		ips[i], ips[j] = ips[j], ips[i]
+	})
 
 	var conn net.Conn
 	for _, v := range ips {
