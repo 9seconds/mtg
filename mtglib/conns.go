@@ -53,7 +53,7 @@ func (c connStandard) SetWriteDeadline(t time.Time) error {
 }
 
 type connEventTraffic struct {
-	net.Conn
+	connStandard
 
 	connID string
 	stream EventStream
@@ -61,7 +61,7 @@ type connEventTraffic struct {
 }
 
 func (c connEventTraffic) Read(b []byte) (int, error) {
-	n, err := c.Conn.Read(b)
+	n, err := c.connStandard.Read(b)
 
 	if n > 0 {
 		c.stream.Send(c.ctx, EventTraffic{
@@ -72,11 +72,11 @@ func (c connEventTraffic) Read(b []byte) (int, error) {
 		})
 	}
 
-	return n, err // nolint: wrapcheck
+	return n, err
 }
 
 func (c connEventTraffic) Write(b []byte) (int, error) {
-	n, err := c.Conn.Write(b)
+	n, err := c.connStandard.Write(b)
 
 	if n > 0 {
 		c.stream.Send(c.ctx, EventTraffic{
@@ -87,5 +87,5 @@ func (c connEventTraffic) Write(b []byte) (int, error) {
 		})
 	}
 
-	return n, err // nolint: wrapcheck
+	return n, err
 }

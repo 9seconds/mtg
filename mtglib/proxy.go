@@ -130,7 +130,7 @@ func (p *Proxy) doTelegramCall(ctx *streamContext) error {
 	}
 
 	ctx.telegramConn = connEventTraffic{
-		Conn: connStandard{
+		connStandard: connStandard{
 			conn:        conn,
 			idleTimeout: p.idleTimeout,
 		},
