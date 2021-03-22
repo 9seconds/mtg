@@ -2,7 +2,7 @@ package stats_test
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"testing"
@@ -32,7 +32,7 @@ func (suite *PrometheusTestSuite) Get() (string, error) {
 
 	defer resp.Body.Close()
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err // nolint: wrapcheck
 	}

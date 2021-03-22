@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -216,7 +215,7 @@ func (f *Firehol) updateRemoteURL(ctx context.Context, url string,
 	}(ctx, resp.Body)
 
 	defer func(rc io.ReadCloser) {
-		io.Copy(ioutil.Discard, rc) // nolint: errcheck
+		io.Copy(io.Discard, rc) // nolint: errcheck
 		rc.Close()
 	}(resp.Body)
 

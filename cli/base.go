@@ -2,9 +2,9 @@ package cli
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/url"
+	"os"
 
 	"github.com/9seconds/mtg/v2/config"
 	"github.com/9seconds/mtg/v2/mtglib"
@@ -19,7 +19,7 @@ type base struct {
 }
 
 func (b *base) ReadConfig(version string) error {
-	content, err := ioutil.ReadFile(b.ConfigPath)
+	content, err := os.ReadFile(b.ConfigPath)
 	if err != nil {
 		return fmt.Errorf("cannot read config file: %w", err)
 	}

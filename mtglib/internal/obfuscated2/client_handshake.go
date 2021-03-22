@@ -8,7 +8,7 @@ import (
 	"io"
 )
 
-func ClientHandshake(secret []byte, reader io.Reader) (int16, cipher.Stream, cipher.Stream, error) {
+func ClientHandshake(secret []byte, reader io.Reader) (int, cipher.Stream, cipher.Stream, error) {
 	handshake := clientHandhakeFrame{}
 
 	if _, err := io.ReadFull(reader, handshake.data[:]); err != nil {

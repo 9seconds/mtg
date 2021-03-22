@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -123,11 +122,11 @@ func (c *Access) getIP(protocol string) net.IP {
 	}
 
 	defer func() {
-		io.Copy(ioutil.Discard, resp.Body) // nolint: errcheck
+		io.Copy(io.Discard, resp.Body) // nolint: errcheck
 		resp.Body.Close()
 	}()
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil
 	}

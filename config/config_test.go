@@ -1,7 +1,7 @@
 package config_test
 
 import (
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -14,7 +14,7 @@ type ConfigTestSuite struct {
 }
 
 func (suite *ConfigTestSuite) ReadConfig(filename string) []byte {
-	data, err := ioutil.ReadFile(filepath.Join("testdata", filename))
+	data, err := os.ReadFile(filepath.Join("testdata", filename))
 	suite.NoError(err)
 
 	return data

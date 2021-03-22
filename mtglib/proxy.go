@@ -100,12 +100,8 @@ func (p *Proxy) doObfuscated2Handshake(ctx *streamContext) error {
 		return fmt.Errorf("cannot process client handshake: %w", err)
 	}
 
-	if dc < 0 {
-		dc = -dc
-	}
-
-	ctx.dc = int(dc)
-	ctx.logger = ctx.logger.BindInt("dc", ctx.dc)
+	ctx.dc = dc
+	ctx.logger = ctx.logger.BindInt("dc", dc)
 	ctx.clientConn = &obfuscated2.Conn{
 		Conn:      ctx.clientConn,
 		Encryptor: encryptor,

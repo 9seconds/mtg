@@ -35,10 +35,18 @@ type handshakeFrame struct {
 	data [handshakeFrameLen]byte
 }
 
-func (h *handshakeFrame) dc() int16 {
+func (h *handshakeFrame) dc() int {
 	data := h.data[handshakeFrameOffsetDC:handshakeFrameOffsetEnd]
+	idx := int16(binary.LittleEndian.Uint16(data))
 
-	return int16(binary.LittleEndian.Uint16(data))
+	switch {
+	case idx > 0:
+		return int(idx) - 1
+	case idx < 0:
+		return -int(idx + 1)
+	default:
+		return 0
+	}
 }
 
 func (h *handshakeFrame) key() []byte {
