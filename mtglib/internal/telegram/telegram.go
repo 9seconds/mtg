@@ -52,7 +52,7 @@ func (t Telegram) Dial(ctx context.Context, dc int) (net.Conn, error) {
 	return nil, fmt.Errorf("cannot dial to %d dc: %w", dc, err)
 }
 
-func NewTelegramDialer(dialer Dialer, ipPreference string) (*Telegram, error) {
+func New(dialer Dialer, ipPreference string) (*Telegram, error) {
 	var pref preferIP
 
 	switch strings.ToLower(ipPreference) {
