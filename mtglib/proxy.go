@@ -111,13 +111,10 @@ func (p *Proxy) doObfuscated2Handshake(ctx *streamContext) error {
 
 	ctx.dc = dc
 	ctx.logger = ctx.logger.BindInt("dc", dc)
-	ctx.clientConn = connStandard{
-		conn: obfuscated2.Conn{
-			Conn:      ctx.clientConn,
-			Encryptor: encryptor,
-			Decryptor: decryptor,
-		},
-		idleTimeout: p.idleTimeout,
+	ctx.clientConn = &obfuscated2.Conn{
+		Conn:      ctx.clientConn,
+		Encryptor: encryptor,
+		Decryptor: decryptor,
 	}
 
 	return nil
@@ -129,14 +126,22 @@ func (p *Proxy) doTelegramCall(ctx *streamContext) error {
 		return fmt.Errorf("cannot dial to Telegram: %w", err)
 	}
 
-	ctx.telegramConn = connEventTraffic{
-		connStandard: connStandard{
-			conn:        conn,
-			idleTimeout: p.idleTimeout,
+	encryptor, decryptor, err := obfuscated2.ServerHandshake(conn)
+	if err != nil {
+		conn.Close()
+
+		return fmt.Errorf("cannot perform obfuscated2 handshake: %w", err)
+	}
+
+	ctx.telegramConn = &obfuscated2.Conn{
+		Conn: connTelegramTraffic{
+			Conn:   conn,
+			connID: ctx.connID,
+			stream: p.eventStream,
+			ctx:    ctx,
 		},
-		connID: ctx.connID,
-		stream: p.eventStream,
-		ctx:    ctx,
+		Encryptor: encryptor,
+		Decryptor: decryptor,
 	}
 
 	p.eventStream.Send(ctx, EventConnectedToDC{
