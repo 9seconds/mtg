@@ -26,7 +26,7 @@ func (c connTelegramTraffic) Read(b []byte) (int, error) {
 		})
 	}
 
-	return n, err
+	return n, err // nolint: wrapcheck
 }
 
 func (c connTelegramTraffic) Write(b []byte) (int, error) {
@@ -41,5 +41,5 @@ func (c connTelegramTraffic) Write(b []byte) (int, error) {
 		})
 	}
 
-	return n, err
+	return n, err // nolint: wrapcheck
 }

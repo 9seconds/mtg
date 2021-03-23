@@ -60,3 +60,13 @@ func (h *handshakeFrame) iv() []byte {
 func (h *handshakeFrame) connectionType() []byte {
 	return h.data[handshakeFrameOffsetConnectionType:handshakeFrameOffsetDC]
 }
+
+func (h *handshakeFrame) invert() handshakeFrame {
+	copyFrame := *h
+
+	for i := 0; i < handshakeFrameLenKey+handshakeFrameLenIV; i++ {
+		copyFrame.data[handshakeFrameOffsetKey+i] = h.data[handshakeFrameOffsetConnectionType-1-i]
+	}
+
+	return copyFrame
+}

@@ -23,16 +23,15 @@ func (c *clientHandhakeFrame) decryptor(secret []byte) cipher.Stream {
 }
 
 func (c *clientHandhakeFrame) encryptor(secret []byte) cipher.Stream {
-	arr := clientHandhakeFrame{}
-	invertByteSlices(arr.data[:], c.data[:])
+	invertedHandshake := c.invert()
 
 	hasher := acquireSha256Hasher()
 	defer releaseSha256Hasher(hasher)
 
-	hasher.Write(arr.key()) // nolint: errcheck
-	hasher.Write(secret)    // nolint: errcheck
+	hasher.Write(invertedHandshake.key()) // nolint: errcheck
+	hasher.Write(secret)                  // nolint: errcheck
 
-	return makeAesCtr(hasher.Sum(nil), arr.iv())
+	return makeAesCtr(hasher.Sum(nil), invertedHandshake.iv())
 }
 
 func ClientHandshake(secret []byte, reader io.Reader) (int, cipher.Stream, cipher.Stream, error) {

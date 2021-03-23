@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/9seconds/mtg/v2/mtglib/internal/obfuscated2"
+	"github.com/9seconds/mtg/v2/mtglib/internal/relay"
 	"github.com/9seconds/mtg/v2/mtglib/internal/telegram"
 	"github.com/panjf2000/ants/v2"
 )
@@ -19,6 +20,7 @@ type Proxy struct {
 	streamWaitGroup sync.WaitGroup
 
 	idleTimeout time.Duration
+	bufferSize  int
 	workerPool  *ants.PoolWithFunc
 	telegram    *telegram.Telegram
 
@@ -63,6 +65,13 @@ func (p *Proxy) ServeConn(conn net.Conn) {
 		p.logger.WarningError("cannot dial to telegram", err)
 
 		return
+	}
+
+	rel := relay.AcquireRelay(ctx, p.logger.Named("relay"), p.bufferSize, p.idleTimeout)
+	defer relay.ReleaseRelay(rel)
+
+	if err := rel.Process(ctx.clientConn, ctx.telegramConn); err != nil {
+		p.logger.DebugError("relay has been finished", err)
 	}
 }
 
@@ -185,6 +194,11 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) { // nolint: cyclop
 		idleTimeout = DefaultIdleTimeout
 	}
 
+	bufferSize := opts.BufferSize
+	if bufferSize < 1 {
+		bufferSize = DefaultBufferSize
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	proxy := &Proxy{
 		ctx:             ctx,
@@ -195,6 +209,7 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) { // nolint: cyclop
 		eventStream:     opts.EventStream,
 		logger:          opts.Logger.Named("proxy"),
 		idleTimeout:     idleTimeout,
+		bufferSize:      int(bufferSize),
 		telegram:        tg,
 	}
 
