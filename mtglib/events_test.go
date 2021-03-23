@@ -32,6 +32,28 @@ func (suite *EventsTestSuite) TestEventFinish() {
 	suite.Equal("CONNID", evt.StreamID())
 }
 
+func (suite *EventsTestSuite) TestEventConnectedToDC() {
+	evt := mtglib.EventConnectedToDC{
+		CreatedAt: time.Now(),
+		ConnID:    "CONNID",
+		RemoteIP:  net.ParseIP("10.0.0.10"),
+		DC:        3,
+	}
+
+	suite.Equal("CONNID", evt.StreamID())
+}
+
+func (suite *EventsTestSuite) TestEventTraffic() {
+	evt := mtglib.EventTraffic{
+		CreatedAt: time.Now(),
+		ConnID:    "CONNID",
+		Traffic:   3,
+		IsRead:    true,
+	}
+
+	suite.Equal("CONNID", evt.StreamID())
+}
+
 func (suite *EventsTestSuite) TestEventConcurrencyLimited() {
 	suite.Empty(mtglib.EventConcurrencyLimited{}.StreamID())
 }
