@@ -33,7 +33,8 @@ func (suite *TelegramTestSuite) TearDownTest() {
 func (suite *TelegramTestSuite) TestUnknownDC() {
 	testData := []int{
 		-1,
-		5,
+        0,
+		6,
 		100,
 	}
 
@@ -50,10 +51,10 @@ func (suite *TelegramTestSuite) TestUnknownDC() {
 func (suite *TelegramTestSuite) TestDialToCorrectIPs() {
 	testData := map[int][]tgAddr{}
 
-	for i := 0; i < 5; i++ {
+	for i := 1; i <= 5; i++ {
 		testData[i] = []tgAddr{}
-		testData[i] = append(testData[i], v4Addresses[i]...)
-		testData[i] = append(testData[i], v6Addresses[i])
+		testData[i] = append(testData[i], v4Addresses[i-1]...)
+		testData[i] = append(testData[i], v6Addresses[i-1])
 	}
 
 	for i, v := range testData {
@@ -95,7 +96,7 @@ func (suite *TelegramTestSuite) TestDialPreferIPRange() {
 			}
 
 			tg, _ := New(suite.dialerMock, name)
-			_, err := tg.Dial(context.Background(), 0)
+			_, err := tg.Dial(context.Background(), 1)
 
 			assert.True(t, errors.Is(err, io.EOF))
 		})
@@ -122,7 +123,7 @@ func (suite *TelegramTestSuite) TestDialPreferIPPriority() {
 
 			tg, _ := New(suite.dialerMock, name)
 
-			res, err := tg.Dial(context.Background(), 0)
+			res, err := tg.Dial(context.Background(), 1)
 			assert.NoError(t, err)
 			assert.Equal(t, conn, res)
 		})

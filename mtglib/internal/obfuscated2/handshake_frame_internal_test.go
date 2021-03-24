@@ -31,13 +31,13 @@ func (suite *HandshakeFrameTestSuite) TestOk() {
 	suite.Equal("zyjgwaWXlTP6qjVMUP2scQbqdUtspmyH1Hen+2Ess8w", suite.Encode(hf.key()))
 	suite.Equal("z0SZMW/b9fMaokYQe6PbOg", suite.Encode(hf.iv()))
 	suite.Equal("H5lBgQ", suite.Encode(hf.connectionType()))
-	suite.EqualValues(2093, hf.dc())
+	suite.EqualValues(2094, hf.dc())
 
 	inverted := hf.invert()
 	suite.Equal("OtujexBGohrz9dtvMZlEz8yzLGH7p3fUh2ymbEt16gY", suite.Encode(inverted.key()))
 	suite.Equal("caz9UEw1qvozlZelweAozw", suite.Encode(inverted.iv()))
 	suite.Equal("H5lBgQ", suite.Encode(inverted.connectionType()))
-	suite.EqualValues(2093, inverted.dc())
+	suite.EqualValues(2094, inverted.dc())
 }
 
 func TestHandshakeFrame(t *testing.T) {

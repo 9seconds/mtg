@@ -14,16 +14,16 @@ type Telegram struct {
 }
 
 func (t Telegram) Dial(ctx context.Context, dc int) (net.Conn, error) {
-	if dc < 0 || dc > 4 {
+	if dc <= 0 || dc > 5 {
 		return nil, fmt.Errorf("do not know how to dial to %d", dc)
 	}
 
 	var addresses []tgAddr
 
 	if t.preferIP == preferIPOnlyIPv6 {
-		addresses = []tgAddr{v6Addresses[dc]}
+		addresses = []tgAddr{v6Addresses[dc-1]}
 	} else {
-		addresses = append(addresses, v4Addresses[dc]...)
+		addresses = append(addresses, v4Addresses[dc-1]...)
 		rand.Shuffle(len(addresses), func(i, j int) {
 			addresses[i], addresses[j] = addresses[j], addresses[i]
 		})
@@ -31,9 +31,9 @@ func (t Telegram) Dial(ctx context.Context, dc int) (net.Conn, error) {
 
 	switch t.preferIP {
 	case preferIPPreferIPv4:
-		addresses = append(addresses, v6Addresses[dc])
+		addresses = append(addresses, v6Addresses[dc-1])
 	case preferIPPreferIPv6:
-		addresses = append([]tgAddr{v6Addresses[dc]}, addresses...)
+		addresses = append([]tgAddr{v6Addresses[dc-1]}, addresses...)
 	case preferIPOnlyIPv4, preferIPOnlyIPv6:
 	}
 

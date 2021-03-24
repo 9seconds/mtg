@@ -3,6 +3,8 @@ package obfuscated2
 import "encoding/binary"
 
 const (
+	DefaultDC = 2
+
 	handshakeFrameLen = 64
 
 	handshakeFrameLenKey            = 32
@@ -41,11 +43,11 @@ func (h *handshakeFrame) dc() int {
 
 	switch {
 	case idx > 0:
-		return int(idx) - 1
+		return int(idx)
 	case idx < 0:
-		return -int(idx + 1)
+		return -int(idx)
 	default:
-		return 0
+		return DefaultDC
 	}
 }
 
