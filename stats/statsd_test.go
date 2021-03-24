@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"net"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -18,15 +19,16 @@ import (
 const statsdSleepTime = 3 * statsd.DefaultFlushInterval
 
 type statsdFakeServer struct {
-	conn *net.UDPConn
-	buf  *bytes.Buffer
+	conn  *net.UDPConn
+	buf   *bytes.Buffer
+	mutex sync.Mutex
 }
 
-func (s statsdFakeServer) Addr() string {
+func (s *statsdFakeServer) Addr() string {
 	return s.conn.LocalAddr().String()
 }
 
-func (s statsdFakeServer) Close() error {
+func (s *statsdFakeServer) Close() error {
 	if s.conn != nil {
 		return s.conn.Close()
 	}
@@ -34,11 +36,14 @@ func (s statsdFakeServer) Close() error {
 	return nil
 }
 
-func (s statsdFakeServer) String() string {
+func (s *statsdFakeServer) String() string {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	return strings.TrimSpace(s.buf.String())
 }
 
-func statsdNewFakeServer() statsdFakeServer {
+func statsdNewFakeServer() *statsdFakeServer {
 	conn, err := net.ListenUDP("udp", &net.UDPAddr{
 		IP:   net.ParseIP("127.0.0.1"),
 		Port: 0,
@@ -47,7 +52,10 @@ func statsdNewFakeServer() statsdFakeServer {
 		panic(err)
 	}
 
-	buf := &bytes.Buffer{}
+	rv := &statsdFakeServer{
+		conn: conn,
+		buf:  &bytes.Buffer{},
+	}
 
 	go func() {
 		currentBuffer := make([]byte, 4096)
@@ -55,7 +63,9 @@ func statsdNewFakeServer() statsdFakeServer {
 		for {
 			n, _, err := conn.ReadFromUDP(currentBuffer)
 			if n > 0 {
-				buf.Write(currentBuffer[:n])
+				rv.mutex.Lock()
+				rv.buf.Write(currentBuffer[:n])
+				rv.mutex.Unlock()
 			}
 
 			if err != nil {
@@ -64,16 +74,13 @@ func statsdNewFakeServer() statsdFakeServer {
 		}
 	}()
 
-	return statsdFakeServer{
-		conn: conn,
-		buf:  buf,
-	}
+	return rv
 }
 
 type StatsdTestSuite struct {
 	suite.Suite
 
-	statsdServer statsdFakeServer
+	statsdServer *statsdFakeServer
 	factory      stats.StatsdFactory
 	statsd       events.Observer
 }
