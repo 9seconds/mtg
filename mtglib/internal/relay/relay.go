@@ -34,10 +34,10 @@ func (r *Relay) Process(eastConn, westConn io.ReadWriteCloser) error {
 		westConn.Close()
 	}()
 
-	go r.runObserver(r.ctx)
-
 	wg := &sync.WaitGroup{}
-	wg.Add(2) // nolint: gomnd
+	wg.Add(3) // nolint: gomnd
+
+	go r.runObserver(r.ctx, wg)
 
 	go r.transmit(eastConn, westConn, r.westBuffer, "west", wg)
 
@@ -72,7 +72,7 @@ func (r *Relay) transmit(src io.ReadCloser, dst io.WriteCloser,
 	}
 }
 
-func (r *Relay) runObserver(ctx context.Context) {
+func (r *Relay) runObserver(ctx context.Context, wg *sync.WaitGroup) {
 	ticker := time.NewTicker(time.Second)
 
 	defer func() {
@@ -82,6 +82,8 @@ func (r *Relay) runObserver(ctx context.Context) {
 		case <-ticker.C:
 		default:
 		}
+
+		wg.Done()
 	}()
 
 	lastTickAt := time.Now()
