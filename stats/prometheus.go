@@ -78,7 +78,7 @@ func (p prometheusProcessor) EventFinish(evt mtglib.EventFinish) {
 
 	duration := evt.CreatedAt.Sub(sInfo.createdAt)
 
-	p.factory.metricClientConnections.WithLabelValues(sInfo.GetRemoteIPType()).Dec()
+	p.factory.metricClientConnections.WithLabelValues(sInfo.GetClientIPType()).Dec()
 	p.factory.metricSessionDuration.Observe(float64(duration) / float64(time.Second))
 
 	if sInfo.remoteIP == nil {
