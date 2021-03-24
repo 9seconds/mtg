@@ -47,7 +47,9 @@ func (suite *RelayTestSuite) TestCopyFine() {
 	westConn := &rwcMock{}
 	westConn.Write([]byte{100, 101, 102}) // nolint: errcheck
 
-	suite.r.Process(eastConn, westConn)
+	// yes, this test is not good enough. but apparently, if it hangs,
+	// we can debug most of possible issues.
+	_ = suite.r.Process(eastConn, westConn)
 }
 
 func TestRelay(t *testing.T) {
