@@ -17,7 +17,7 @@ type ClientHandshakeTestSuite struct {
 }
 
 func (suite *ClientHandshakeTestSuite) SetupSuite() {
-	suite.NoError(suite.IngestSnapshots("client_snapshots", "snapshot-ok-"))
+	suite.NoError(suite.IngestSnapshots(".", "client-handshake-snapshot-"))
 }
 
 func (suite *ClientHandshakeTestSuite) TestCannotRead() {
