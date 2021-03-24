@@ -32,22 +32,22 @@ func (suite *RelayTestSuite) TestCancelled() {
 	suite.ctxCancel()
 
 	eastConn := &rwcMock{}
-	eastConn.Write([]byte{1, 2, 3, 4, 5})
+	eastConn.Write([]byte{1, 2, 3, 4, 5}) // nolint: errcheck
 
 	westConn := &rwcMock{}
-	westConn.Write([]byte{100, 101, 102})
+	westConn.Write([]byte{100, 101, 102}) // nolint: errcheck
 
 	suite.Nil(suite.r.Process(eastConn, westConn))
 }
 
 func (suite *RelayTestSuite) TestCopyFine() {
 	eastConn := &rwcMock{}
-	eastConn.Write([]byte{1, 2, 3, 4, 5})
+	eastConn.Write([]byte{1, 2, 3, 4, 5}) // nolint: errcheck
 
 	westConn := &rwcMock{}
-	westConn.Write([]byte{100, 101, 102})
+	westConn.Write([]byte{100, 101, 102}) // nolint: errcheck
 
-	suite.NotNil(suite.r.Process(eastConn, westConn))
+	suite.r.Process(eastConn, westConn)
 }
 
 func TestRelay(t *testing.T) {

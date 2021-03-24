@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+const ConnectionIDBytesLength = 16
+
 type streamContext struct {
 	ctx          context.Context
 	ctxCancel    context.CancelFunc
@@ -51,7 +53,7 @@ func (s *streamContext) ClientIP() net.IP {
 }
 
 func newStreamContext(ctx context.Context, logger Logger, clientConn net.Conn) *streamContext {
-	connIDBytes := make([]byte, 16)
+	connIDBytes := make([]byte, ConnectionIDBytesLength)
 
 	if _, err := rand.Read(connIDBytes); err != nil {
 		panic(err)
