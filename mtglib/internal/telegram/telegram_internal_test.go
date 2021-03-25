@@ -33,7 +33,7 @@ func (suite *TelegramTestSuite) TearDownTest() {
 func (suite *TelegramTestSuite) TestUnknownDC() {
 	testData := []int{
 		-1,
-        0,
+		0,
 		6,
 		100,
 	}
