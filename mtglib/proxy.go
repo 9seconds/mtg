@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"sync"
 	"time"
@@ -121,7 +122,7 @@ func (p *Proxy) Shutdown() {
 	p.workerPool.Release()
 }
 
-func (p *Proxy) doFakeTLSHandshake(ctx *streamContext, conn net.Conn) error {
+func (p *Proxy) doFakeTLSHandshake(ctx *streamContext, conn io.ReadWriter) error {
 	rec := record.AcquireRecord()
 	defer record.ReleaseRecord(rec)
 
@@ -202,7 +203,7 @@ func (p *Proxy) doTelegramCall(ctx *streamContext) error {
 	return nil
 }
 
-func NewProxy(opts ProxyOpts) (*Proxy, error) { // nolint: cyclop
+func NewProxy(opts ProxyOpts) (*Proxy, error) { // nolint: cyclop, funlen
 	switch {
 	case opts.Network == nil:
 		return nil, ErrNetworkIsNotDefined

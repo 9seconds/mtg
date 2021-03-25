@@ -13,6 +13,8 @@ const (
 
 	HandshakeTypeClient = 0x01
 	HandshakeTypeServer = 0x02
+
+	ChangeCipherValue = 0x01
 )
 
 var (

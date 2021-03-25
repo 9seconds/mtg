@@ -12,10 +12,10 @@ var bytesBufferPool = sync.Pool{
 }
 
 func acquireBytesBuffer() *bytes.Buffer {
-    return bytesBufferPool.Get().(*bytes.Buffer)
+	return bytesBufferPool.Get().(*bytes.Buffer)
 }
 
 func releaseBytesBuffer(b *bytes.Buffer) {
-    b.Reset()
-    bytesBufferPool.Put(b)
+	b.Reset()
+	bytesBufferPool.Put(b)
 }
