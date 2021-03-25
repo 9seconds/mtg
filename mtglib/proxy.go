@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/9seconds/mtg/v2/mtglib/internal/faketls/clienthello"
+	"github.com/9seconds/mtg/v2/mtglib/internal/faketls/record"
 	"github.com/9seconds/mtg/v2/mtglib/internal/obfuscated2"
 	"github.com/9seconds/mtg/v2/mtglib/internal/relay"
 	"github.com/9seconds/mtg/v2/mtglib/internal/telegram"
@@ -24,11 +26,12 @@ type Proxy struct {
 	workerPool  *ants.PoolWithFunc
 	telegram    *telegram.Telegram
 
-	secret          Secret
-	antiReplayCache AntiReplayCache
-	ipBlocklist     IPBlocklist
-	eventStream     EventStream
-	logger          Logger
+	secret             Secret
+	antiReplayCache    AntiReplayCache
+	timeAttackDetector TimeAttackDetector
+	ipBlocklist        IPBlocklist
+	eventStream        EventStream
+	logger             Logger
 }
 
 func (p *Proxy) ServeConn(conn net.Conn) {
@@ -54,6 +57,12 @@ func (p *Proxy) ServeConn(conn net.Conn) {
 		})
 		ctx.logger.Info("Stream has been finished")
 	}()
+
+	if err := p.doFakeTLSHandshake(ctx); err != nil {
+		p.logger.InfoError("faketls handshake is failed", err)
+
+		return
+	}
 
 	if err := p.doObfuscated2Handshake(ctx); err != nil {
 		p.logger.InfoError("obfuscated2 handshake is failed", err)
@@ -110,6 +119,21 @@ func (p *Proxy) Shutdown() {
 	p.ctxCancel()
 	p.streamWaitGroup.Wait()
 	p.workerPool.Release()
+}
+
+func (p *Proxy) doFakeTLSHandshake(ctx *streamContext) error {
+	clientHelloRecord := record.AcquireRecord()
+	defer record.ReleaseRecord(clientHelloRecord)
+
+	if err := clientHelloRecord.Read(ctx.clientConn); err != nil {
+		return fmt.Errorf("cannot read client hello: %w", err)
+	}
+
+	hello, _ := clienthello.ParseHandshake(p.secret.Key[:],
+		clientHelloRecord.Payload.Bytes())
+	fmt.Println(hello)
+
+	return fmt.Errorf("SUCCESS")
 }
 
 func (p *Proxy) doObfuscated2Handshake(ctx *streamContext) error {
@@ -173,6 +197,8 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) { // nolint: cyclop
 		return nil, ErrIPBlocklistIsNotDefined
 	case opts.EventStream == nil:
 		return nil, ErrEventStreamIsNotDefined
+	case opts.TimeAttackDetector == nil:
+		return nil, ErrTimeAttackDetectorIsNotDefined
 	case opts.Logger == nil:
 		return nil, ErrLoggerIsNotDefined
 	case !opts.Secret.Valid():
@@ -201,16 +227,17 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) { // nolint: cyclop
 
 	ctx, cancel := context.WithCancel(context.Background())
 	proxy := &Proxy{
-		ctx:             ctx,
-		ctxCancel:       cancel,
-		secret:          opts.Secret,
-		antiReplayCache: opts.AntiReplayCache,
-		ipBlocklist:     opts.IPBlocklist,
-		eventStream:     opts.EventStream,
-		logger:          opts.Logger.Named("proxy"),
-		idleTimeout:     idleTimeout,
-		bufferSize:      int(bufferSize),
-		telegram:        tg,
+		ctx:                ctx,
+		ctxCancel:          cancel,
+		secret:             opts.Secret,
+		antiReplayCache:    opts.AntiReplayCache,
+		timeAttackDetector: opts.TimeAttackDetector,
+		ipBlocklist:        opts.IPBlocklist,
+		eventStream:        opts.EventStream,
+		logger:             opts.Logger.Named("proxy"),
+		idleTimeout:        idleTimeout,
+		bufferSize:         int(bufferSize),
+		telegram:           tg,
 	}
 
 	pool, err := ants.NewPoolWithFunc(int(concurrency), func(arg interface{}) {

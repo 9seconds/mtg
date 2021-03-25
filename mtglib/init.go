@@ -9,13 +9,14 @@ import (
 )
 
 var (
-	ErrSecretEmpty                 = errors.New("secret is empty")
-	ErrSecretInvalid               = errors.New("secret is invalid")
-	ErrNetworkIsNotDefined         = errors.New("network is not defined")
-	ErrAntiReplayCacheIsNotDefined = errors.New("anti-replay cache is not defined")
-	ErrIPBlocklistIsNotDefined     = errors.New("ip blocklist is not defined")
-	ErrEventStreamIsNotDefined     = errors.New("event stream is not defined")
-	ErrLoggerIsNotDefined          = errors.New("logger is not defined")
+	ErrSecretEmpty                    = errors.New("secret is empty")
+	ErrSecretInvalid                  = errors.New("secret is invalid")
+	ErrNetworkIsNotDefined            = errors.New("network is not defined")
+	ErrAntiReplayCacheIsNotDefined    = errors.New("anti-replay cache is not defined")
+	ErrTimeAttackDetectorIsNotDefined = errors.New("time attack detector is not defined")
+	ErrIPBlocklistIsNotDefined        = errors.New("ip blocklist is not defined")
+	ErrEventStreamIsNotDefined        = errors.New("event stream is not defined")
+	ErrLoggerIsNotDefined             = errors.New("logger is not defined")
 )
 
 const (
