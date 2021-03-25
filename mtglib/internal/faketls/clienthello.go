@@ -1,4 +1,4 @@
-package clienthello
+package faketls
 
 import (
 	"crypto/hmac"
@@ -16,10 +16,10 @@ type ClientHello struct {
 	SessionID []byte
 }
 
-func ParseHandshake(secret, handshake []byte) (ClientHello, error) {
+func ParseClientHello(secret, handshake []byte) (ClientHello, error) {
 	hello := ClientHello{}
 
-	if len(handshake) < MinLen {
+	if len(handshake) < ClientHelloMinLen {
 		return hello, fmt.Errorf("lengh of handshake is too small: %d", len(handshake))
 	}
 
@@ -27,9 +27,9 @@ func ParseHandshake(secret, handshake []byte) (ClientHello, error) {
 		return hello, fmt.Errorf("unknown handshake type %#x", handshake[0])
 	}
 
-	copy(hello.Digest[:], handshake[RandomOffset:])
+	copy(hello.Digest[:], handshake[ClientHelloRandomOffset:])
 
-	for i := RandomOffset; i < RandomOffset+RandomLen; i++ {
+	for i := ClientHelloRandomOffset; i < ClientHelloRandomOffset+RandomLen; i++ {
 		handshake[i] = 0
 	}
 
@@ -60,8 +60,8 @@ func ParseHandshake(secret, handshake []byte) (ClientHello, error) {
 	timestamp := int64(binary.LittleEndian.Uint32(computedDigest[RandomLen-4:]))
 	hello.Time = time.Unix(timestamp, 0)
 
-	hello.SessionID = make([]byte, handshake[SessionIDOffset])
-	copy(hello.SessionID, handshake[SessionIDOffset+1:])
+	hello.SessionID = make([]byte, handshake[ClientHelloSessionIDOffset])
+	copy(hello.SessionID, handshake[ClientHelloSessionIDOffset+1:])
 
 	return hello, nil
 }

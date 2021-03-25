@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/9seconds/mtg/v2/mtglib/internal/faketls/clienthello"
+	"github.com/9seconds/mtg/v2/mtglib/internal/faketls"
 	"github.com/9seconds/mtg/v2/mtglib/internal/faketls/record"
 	"github.com/9seconds/mtg/v2/mtglib/internal/obfuscated2"
 	"github.com/9seconds/mtg/v2/mtglib/internal/relay"
@@ -58,7 +58,7 @@ func (p *Proxy) ServeConn(conn net.Conn) {
 		ctx.logger.Info("Stream has been finished")
 	}()
 
-	if err := p.doFakeTLSHandshake(ctx); err != nil {
+	if err := p.doFakeTLSHandshake(ctx, ctx.clientConn); err != nil {
 		p.logger.InfoError("faketls handshake is failed", err)
 
 		return
@@ -121,17 +121,28 @@ func (p *Proxy) Shutdown() {
 	p.workerPool.Release()
 }
 
-func (p *Proxy) doFakeTLSHandshake(ctx *streamContext) error {
+func (p *Proxy) doFakeTLSHandshake(ctx *streamContext, conn net.Conn) error {
 	clientHelloRecord := record.AcquireRecord()
 	defer record.ReleaseRecord(clientHelloRecord)
 
-	if err := clientHelloRecord.Read(ctx.clientConn); err != nil {
+	if err := clientHelloRecord.Read(conn); err != nil {
 		return fmt.Errorf("cannot read client hello: %w", err)
 	}
 
-	hello, _ := clienthello.ParseHandshake(p.secret.Key[:],
+	hello, err := faketls.ParseClientHello(p.secret.Key[:],
 		clientHelloRecord.Payload.Bytes())
-	fmt.Println(hello)
+	if err != nil {
+		return fmt.Errorf("cannot parse client hello: %w", err)
+	}
+
+	if err := p.timeAttackDetector.Valid(hello.Time); err != nil {
+		return fmt.Errorf("invalid time: %w", err)
+	}
+	if p.antiReplayCache.SeenBefore(hello.SessionID) {
+		p.logger.Warning("anti replay attack was detected")
+
+		return fmt.Errorf("anti replay attack from %s", ctx.ClientIP().String())
+	}
 
 	return fmt.Errorf("SUCCESS")
 }
