@@ -11,9 +11,10 @@ import (
 )
 
 type ClientHello struct {
-	Time      time.Time
-	Digest    [RandomLen]byte
-	SessionID []byte
+	Time        time.Time
+	Random      [RandomLen]byte
+	SessionID   []byte
+	CipherSuite uint16
 }
 
 func ParseClientHello(secret, handshake []byte) (ClientHello, error) {
@@ -27,7 +28,7 @@ func ParseClientHello(secret, handshake []byte) (ClientHello, error) {
 		return hello, fmt.Errorf("unknown handshake type %#x", handshake[0])
 	}
 
-	copy(hello.Digest[:], handshake[ClientHelloRandomOffset:])
+	copy(hello.Random[:], handshake[ClientHelloRandomOffset:])
 
 	for i := ClientHelloRandomOffset; i < ClientHelloRandomOffset+RandomLen; i++ {
 		handshake[i] = 0
@@ -45,23 +46,26 @@ func ParseClientHello(secret, handshake []byte) (ClientHello, error) {
 	mac := hmac.New(sha256.New, secret)
 	rec.Dump(mac)
 
-	computedDigest := mac.Sum(nil)
+	computedRandom := mac.Sum(nil)
 
 	for i := 0; i < RandomLen; i++ {
-		computedDigest[i] ^= hello.Digest[i]
+		computedRandom[i] ^= hello.Random[i]
 	}
 
 	for i := 0; i < RandomLen-4; i++ {
-		if computedDigest[i] != 0 {
+		if computedRandom[i] != 0 {
 			return hello, ErrBadDigest
 		}
 	}
 
-	timestamp := int64(binary.LittleEndian.Uint32(computedDigest[RandomLen-4:]))
+	timestamp := int64(binary.LittleEndian.Uint32(computedRandom[RandomLen-4:]))
 	hello.Time = time.Unix(timestamp, 0)
 
 	hello.SessionID = make([]byte, handshake[ClientHelloSessionIDOffset])
 	copy(hello.SessionID, handshake[ClientHelloSessionIDOffset+1:])
+
+	cipherSuiteOffset := ClientHelloSessionIDOffset + 1 + len(hello.SessionID) + 2
+	hello.CipherSuite = binary.BigEndian.Uint16(handshake[cipherSuiteOffset : cipherSuiteOffset+2])
 
 	return hello, nil
 }

@@ -122,15 +122,14 @@ func (p *Proxy) Shutdown() {
 }
 
 func (p *Proxy) doFakeTLSHandshake(ctx *streamContext, conn net.Conn) error {
-	clientHelloRecord := record.AcquireRecord()
-	defer record.ReleaseRecord(clientHelloRecord)
+	rec := record.AcquireRecord()
+	defer record.ReleaseRecord(rec)
 
-	if err := clientHelloRecord.Read(conn); err != nil {
+	if err := rec.Read(conn); err != nil {
 		return fmt.Errorf("cannot read client hello: %w", err)
 	}
 
-	hello, err := faketls.ParseClientHello(p.secret.Key[:],
-		clientHelloRecord.Payload.Bytes())
+	hello, err := faketls.ParseClientHello(p.secret.Key[:], rec.Payload.Bytes())
 	if err != nil {
 		return fmt.Errorf("cannot parse client hello: %w", err)
 	}
@@ -138,13 +137,18 @@ func (p *Proxy) doFakeTLSHandshake(ctx *streamContext, conn net.Conn) error {
 	if err := p.timeAttackDetector.Valid(hello.Time); err != nil {
 		return fmt.Errorf("invalid time: %w", err)
 	}
+
 	if p.antiReplayCache.SeenBefore(hello.SessionID) {
 		p.logger.Warning("anti replay attack was detected")
 
 		return fmt.Errorf("anti replay attack from %s", ctx.ClientIP().String())
 	}
 
-	return fmt.Errorf("SUCCESS")
+	if err := faketls.SendWelcomePacket(conn, p.secret.Key[:], hello); err != nil {
+		return fmt.Errorf("cannot send a welcome packet: %w", err)
+	}
+
+	return nil
 }
 
 func (p *Proxy) doObfuscated2Handshake(ctx *streamContext) error {
