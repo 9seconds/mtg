@@ -95,6 +95,8 @@ func (f *Firehol) Run(updateEach time.Duration) {
 
 	if err := f.update(); err != nil {
 		f.logger.WarningError("cannot update blocklist", err)
+	} else {
+		f.logger.Info("blocklist was updated")
 	}
 
 	for {
@@ -104,6 +106,8 @@ func (f *Firehol) Run(updateEach time.Duration) {
 		case <-ticker.C:
 			if err := f.update(); err != nil {
 				f.logger.WarningError("cannot update blocklist", err)
+			} else {
+				f.logger.Info("blocklist was updated")
 			}
 		}
 	}
