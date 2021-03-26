@@ -11,9 +11,9 @@ type ProxyOpts struct {
 	EventStream        EventStream
 	Logger             Logger
 
-	BufferSize  uint
-	Concurrency uint
-	CloakPort   uint
-	IdleTimeout time.Duration
-	PreferIP    string
+	BufferSize         uint
+	Concurrency        uint
+	DomainFrontingPort uint
+	IdleTimeout        time.Duration
+	PreferIP           string
 }

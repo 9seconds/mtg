@@ -46,7 +46,7 @@ prefer-ip = "prefer-ipv6"
 
 # FakeTLS uses domain fronting protection. So it needs to know a port to
 # access.
-cloak-port = 443
+domain-fronting-port = 443
 
 # network defines different network-related settings
 [network]

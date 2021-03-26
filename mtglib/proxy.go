@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"strconv"
 	"sync"
 	"time"
 
@@ -21,10 +22,11 @@ type Proxy struct {
 	ctxCancel       context.CancelFunc
 	streamWaitGroup sync.WaitGroup
 
-	idleTimeout time.Duration
-	bufferSize  int
-	workerPool  *ants.PoolWithFunc
-	telegram    *telegram.Telegram
+	idleTimeout        time.Duration
+	bufferSize         int
+	domainFrontAddress string
+	workerPool         *ants.PoolWithFunc
+	telegram           *telegram.Telegram
 
 	secret             Secret
 	network            Network
@@ -59,9 +61,7 @@ func (p *Proxy) ServeConn(conn net.Conn) {
 		ctx.logger.Info("Stream has been finished")
 	}()
 
-	if err := p.doFakeTLSHandshake(ctx); err != nil {
-		p.logger.InfoError("faketls handshake is failed", err)
-
+	if !p.doFakeTLSHandshake(ctx) {
 		return
 	}
 
@@ -77,7 +77,8 @@ func (p *Proxy) ServeConn(conn net.Conn) {
 		return
 	}
 
-	rel := relay.AcquireRelay(ctx, p.logger.Named("relay"), p.bufferSize, p.idleTimeout)
+	rel := relay.AcquireRelay(ctx,
+		p.logger.Named("relay"), p.bufferSize, p.idleTimeout)
 	defer relay.ReleaseRelay(rel)
 
 	if err := rel.Process(ctx.clientConn, ctx.telegramConn); err != nil {
@@ -122,38 +123,52 @@ func (p *Proxy) Shutdown() {
 	p.workerPool.Release()
 }
 
-func (p *Proxy) doFakeTLSHandshake(ctx *streamContext) error {
+func (p *Proxy) doFakeTLSHandshake(ctx *streamContext) bool {
 	rec := record.AcquireRecord()
 	defer record.ReleaseRecord(rec)
 
-	if err := rec.Read(ctx.clientConn); err != nil {
-		return fmt.Errorf("cannot read client hello: %w", err)
+	rewind := newConnRewind(ctx.clientConn)
+
+	if err := rec.Read(rewind); err != nil {
+		p.logger.InfoError("cannot read client hello", err)
+		p.doDomainFronting(ctx, rewind)
+
+		return false
 	}
 
 	hello, err := faketls.ParseClientHello(p.secret.Key[:], rec.Payload.Bytes())
 	if err != nil {
-		return fmt.Errorf("cannot parse client hello: %w", err)
+		p.logger.InfoError("cannot parse client hello", err)
+		p.doDomainFronting(ctx, rewind)
+
+		return false
 	}
 
 	if err := p.timeAttackDetector.Valid(hello.Time); err != nil {
-		return fmt.Errorf("invalid time: %w", err)
+		p.logger.InfoError("invalid faketls time", err)
+		p.doDomainFronting(ctx, rewind)
+
+		return false
 	}
 
 	if p.antiReplayCache.SeenBefore(hello.SessionID) {
-		return errReplayAttackDetected
+		p.logger.Warning("replay attack has been detected!")
+		p.doDomainFronting(ctx, rewind)
+
+		return false
 	}
 
-	if err := faketls.SendWelcomePacket(ctx.clientConn, p.secret.Key[:], hello); err != nil {
+	if err := faketls.SendWelcomePacket(rewind, p.secret.Key[:], hello); err != nil {
 		p.logger.InfoError("cannot send welcome packet", err)
 
-		return errCannotSendWelcomePacket
+		return false
 	}
 
 	ctx.clientConn = &faketls.Conn{
 		Conn: ctx.clientConn,
 	}
 
-	return nil
+	return true
 }
 
 func (p *Proxy) doObfuscated2Handshake(ctx *streamContext) error {
@@ -207,6 +222,25 @@ func (p *Proxy) doTelegramCall(ctx *streamContext) error {
 	return nil
 }
 
+func (p *Proxy) doDomainFronting(ctx context.Context, conn *connRewind) {
+	conn.Rewind()
+
+	frontConn, err := p.network.DialContext(ctx, "tcp", p.domainFrontAddress)
+	if err != nil {
+		p.logger.WarningError("cannot dial to the fronting domain", err)
+
+		return
+	}
+
+	rel := relay.AcquireRelay(ctx,
+		p.logger.Named("domain-fronting"), p.bufferSize, p.idleTimeout)
+	defer relay.ReleaseRelay(rel)
+
+	if err := rel.Process(conn, frontConn); err != nil {
+		p.logger.DebugError("domain fronting relay has been finished", err)
+	}
+}
+
 func NewProxy(opts ProxyOpts) (*Proxy, error) { // nolint: cyclop, funlen
 	switch {
 	case opts.Network == nil:
@@ -245,6 +279,11 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) { // nolint: cyclop, funlen
 		bufferSize = DefaultBufferSize
 	}
 
+	domainFrontingPort := int(opts.DomainFrontingPort)
+	if domainFrontingPort == 0 {
+		domainFrontingPort = DefaultDomainFrontingPort
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	proxy := &Proxy{
 		ctx:                ctx,
@@ -256,9 +295,11 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) { // nolint: cyclop, funlen
 		ipBlocklist:        opts.IPBlocklist,
 		eventStream:        opts.EventStream,
 		logger:             opts.Logger.Named("proxy"),
-		idleTimeout:        idleTimeout,
-		bufferSize:         int(bufferSize),
-		telegram:           tg,
+		domainFrontAddress: net.JoinHostPort(opts.Secret.Host,
+			strconv.Itoa(domainFrontingPort)),
+		idleTimeout: idleTimeout,
+		bufferSize:  int(bufferSize),
+		telegram:    tg,
 	}
 
 	pool, err := ants.NewPoolWithFunc(int(concurrency), func(arg interface{}) {

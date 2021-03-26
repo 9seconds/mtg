@@ -10,14 +10,14 @@ import (
 )
 
 type Config struct {
-	Debug       bool          `json:"debug"`
-	Secret      mtglib.Secret `json:"secret"`
-	BindTo      TypeHostPort  `json:"bind-to"`
-	TCPBuffer   TypeBytes     `json:"tcp-buffer"`
-	PreferIP    TypePreferIP  `json:"prefer-ip"`
-	CloakPort   TypePort      `json:"cloak-port"`
-	Concurrency uint          `json:"concurrency"`
-	Defense     struct {
+	Debug              bool          `json:"debug"`
+	Secret             mtglib.Secret `json:"secret"`
+	BindTo             TypeHostPort  `json:"bind-to"`
+	TCPBuffer          TypeBytes     `json:"tcp-buffer"`
+	PreferIP           TypePreferIP  `json:"prefer-ip"`
+	DomainFrontingPort TypePort      `json:"domain-fronting-port"`
+	Concurrency        uint          `json:"concurrency"`
+	Defense            struct {
 		Time struct {
 			Enabled       bool         `json:"enabled"`
 			AllowSkewness TypeDuration `json:"allow-skewness"`
@@ -85,14 +85,14 @@ func (c *Config) String() string {
 }
 
 type configRaw struct {
-	Debug       bool   `toml:"debug" json:"debug,omitempty"`
-	Secret      string `toml:"secret" json:"secret"`
-	BindTo      string `toml:"bind-to" json:"bind-to"`
-	TCPBuffer   string `toml:"tcp-buffer" json:"tcp-buffer,omitempty"`
-	PreferIP    string `toml:"prefer-ip" json:"prefer-ip,omitempty"`
-	CloakPort   uint   `toml:"cloak-port" json:"cloak-port,omitempty"`
-	Concurrency uint   `toml:"concurrency" json:"concurrency,omitempty"`
-	Defense     struct {
+	Debug              bool   `toml:"debug" json:"debug,omitempty"`
+	Secret             string `toml:"secret" json:"secret"`
+	BindTo             string `toml:"bind-to" json:"bind-to"`
+	TCPBuffer          string `toml:"tcp-buffer" json:"tcp-buffer,omitempty"`
+	PreferIP           string `toml:"prefer-ip" json:"prefer-ip,omitempty"`
+	DomainFrontingPort uint   `toml:"domain-fronting-port" json:"domain-fronting-port,omitempty"`
+	Concurrency        uint   `toml:"concurrency" json:"concurrency,omitempty"`
+	Defense            struct {
 		Time struct {
 			Enabled       bool   `toml:"enabled" json:"enabled,omitempty"`
 			AllowSkewness string `toml:"allow-skewness" json:"allow-skewness,omitempty"`

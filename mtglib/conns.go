@@ -1,8 +1,11 @@
 package mtglib
 
 import (
+	"bytes"
 	"context"
+	"io"
 	"net"
+	"sync"
 	"time"
 )
 
@@ -42,4 +45,35 @@ func (c connTelegramTraffic) Write(b []byte) (int, error) {
 	}
 
 	return n, err // nolint: wrapcheck
+}
+
+type connRewind struct {
+	net.Conn
+
+	active io.Reader
+	buf    bytes.Buffer
+	mutex  sync.RWMutex
+}
+
+func (c *connRewind) Read(p []byte) (int, error) {
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
+
+	return c.active.Read(p)
+}
+
+func (c *connRewind) Rewind() {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	c.active = io.MultiReader(&c.buf, c.Conn)
+}
+
+func newConnRewind(conn net.Conn) *connRewind {
+	rv := &connRewind{
+		Conn: conn,
+	}
+	rv.active = io.TeeReader(conn, &rv.buf)
+
+	return rv
 }

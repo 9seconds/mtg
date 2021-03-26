@@ -46,11 +46,11 @@ func (c *Proxy) Execute() error { // nolint: funlen
 		TimeAttackDetector: timeattack.NewNoop(),
 		EventStream:        events.NewNoopStream(),
 
-		Secret:      c.Config.Secret,
-		BufferSize:  c.Config.TCPBuffer.Value(mtglib.DefaultBufferSize),
-		CloakPort:   c.Config.CloakPort.Value(mtglib.DefaultCloakPort),
-		IdleTimeout: c.Config.Network.Timeout.Idle.Value(mtglib.DefaultIdleTimeout),
-		PreferIP:    c.Config.PreferIP.Value(mtglib.DefaultPreferIP),
+		Secret:             c.Config.Secret,
+		BufferSize:         c.Config.TCPBuffer.Value(mtglib.DefaultBufferSize),
+		DomainFrontingPort: c.Config.DomainFrontingPort.Value(mtglib.DefaultDomainFrontingPort),
+		IdleTimeout:        c.Config.Network.Timeout.Idle.Value(mtglib.DefaultIdleTimeout),
+		PreferIP:           c.Config.PreferIP.Value(mtglib.DefaultPreferIP),
 	}
 
 	defer func() {
