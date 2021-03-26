@@ -31,11 +31,9 @@ func (c *Conn) Read(p []byte) (int, error) {
 		switch rec.Type { // nolint: exhaustive
 		case record.TypeChangeCipherSpec:
 		case record.TypeApplicationData:
-			rec.Payload.WriteTo(&c.readBuffer)
+			rec.Payload.WriteTo(&c.readBuffer) // nolint: errcheck
 
-			n, err := c.readBuffer.Read(p)
-
-			return n, err
+			return c.readBuffer.Read(p)
 		default:
 			return 0, fmt.Errorf("unsupported record type %v", rec.Type)
 		}
@@ -60,7 +58,7 @@ func (c *Conn) Write(p []byte) (int, error) {
 		rec.Payload.Write(p[:chunkSize])
 
 		if err := rec.Dump(c.Conn); err != nil {
-			return 0, err
+			return written, err // nolint: wrapcheck
 		}
 
 		written += chunkSize
