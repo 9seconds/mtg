@@ -37,6 +37,12 @@ func (c *Proxy) Execute() error { // nolint: funlen
 	zerolog.TimestampFieldName = "timestamp"
 	zerolog.LevelFieldName = "level"
 
+	if c.Config.Debug {
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	} else {
+		zerolog.SetGlobalLevel(zerolog.WarnLevel)
+	}
+
 	ctx := utils.RootContext()
 	opts := mtglib.ProxyOpts{
 		Logger:             logger.NewZeroLogger(zerolog.New(os.Stdout).With().Timestamp().Logger()),
