@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"net"
 	"sync"
 	"time"
@@ -59,7 +58,7 @@ func (p *Proxy) ServeConn(conn net.Conn) {
 		ctx.logger.Info("Stream has been finished")
 	}()
 
-	if err := p.doFakeTLSHandshake(ctx, ctx.clientConn); err != nil {
+	if err := p.doFakeTLSHandshake(ctx); err != nil {
 		p.logger.InfoError("faketls handshake is failed", err)
 
 		return
@@ -122,11 +121,11 @@ func (p *Proxy) Shutdown() {
 	p.workerPool.Release()
 }
 
-func (p *Proxy) doFakeTLSHandshake(ctx *streamContext, conn io.ReadWriter) error {
+func (p *Proxy) doFakeTLSHandshake(ctx *streamContext) error {
 	rec := record.AcquireRecord()
 	defer record.ReleaseRecord(rec)
 
-	if err := rec.Read(conn); err != nil {
+	if err := rec.Read(ctx.clientConn); err != nil {
 		return fmt.Errorf("cannot read client hello: %w", err)
 	}
 
@@ -145,8 +144,12 @@ func (p *Proxy) doFakeTLSHandshake(ctx *streamContext, conn io.ReadWriter) error
 		return fmt.Errorf("anti replay attack from %s", ctx.ClientIP().String())
 	}
 
-	if err := faketls.SendWelcomePacket(conn, p.secret.Key[:], hello); err != nil {
+	if err := faketls.SendWelcomePacket(ctx.clientConn, p.secret.Key[:], hello); err != nil {
 		return fmt.Errorf("cannot send a welcome packet: %w", err)
+	}
+
+	ctx.clientConn = &faketls.Conn{
+		Conn: ctx.clientConn,
 	}
 
 	return nil

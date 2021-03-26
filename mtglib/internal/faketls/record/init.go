@@ -2,6 +2,8 @@ package record
 
 import "fmt"
 
+const TLSMaxRecordSize = 65535 // max uint16
+
 type Type uint8
 
 const (

@@ -9,11 +9,10 @@ type conn struct {
 }
 
 func (c conn) Read(p []byte) (int, error) {
-	ctx := c.relay.ctx
 	n, err := c.ReadWriteCloser.Read(p)
 
 	select {
-	case <-ctx.Done():
+	case <-c.relay.ctx.Done():
 	case c.relay.tickChannel <- struct{}{}:
 	}
 
@@ -21,11 +20,10 @@ func (c conn) Read(p []byte) (int, error) {
 }
 
 func (c conn) Write(p []byte) (int, error) {
-	ctx := c.relay.ctx
 	n, err := c.ReadWriteCloser.Write(p)
 
 	select {
-	case <-ctx.Done():
+	case <-c.relay.ctx.Done():
 	case c.relay.tickChannel <- struct{}{}:
 	}
 
