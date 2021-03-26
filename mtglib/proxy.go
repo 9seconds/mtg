@@ -144,6 +144,13 @@ func (p *Proxy) doFakeTLSHandshake(ctx *streamContext) bool {
 		return false
 	}
 
+	if hello.Host != "" && hello.Host != p.secret.Host {
+		p.logger.BindStr("hostname", hello.Host).Info("incorrect domain was found in SNI")
+		p.doDomainFronting(ctx, rewind)
+
+		return false
+	}
+
 	if err := p.timeAttackDetector.Valid(hello.Time); err != nil {
 		p.logger.InfoError("invalid faketls time", err)
 		p.doDomainFronting(ctx, rewind)

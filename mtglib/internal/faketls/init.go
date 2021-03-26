@@ -7,7 +7,7 @@ const (
 
 	ClientHelloRandomOffset    = 6
 	ClientHelloSessionIDOffset = ClientHelloRandomOffset + RandomLen
-	ClientHelloMinLen          = ClientHelloSessionIDOffset + 1
+	ClientHelloMinLen          = 4
 
 	WelcomePacketRandomOffset = 11
 
@@ -15,6 +15,8 @@ const (
 	HandshakeTypeServer = 0x02
 
 	ChangeCipherValue = 0x01
+
+	ExtensionSNI = 0x00
 )
 
 var (

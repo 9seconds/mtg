@@ -36,7 +36,7 @@ var (
 			{network: "tcp4", address: "149.154.167.91:443"},
 		},
 		{
-            {network: "tcp4", address: "149.154.171.5:443"},
+			{network: "tcp4", address: "149.154.171.5:443"},
 		},
 	}
 	v6Addresses = [5]tgAddr{

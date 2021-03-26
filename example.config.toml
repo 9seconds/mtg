@@ -13,7 +13,7 @@
 # Debug starts application in debug mode. It starts to be quite verbose
 # in output. Actually, the idea is that you run it in debug mode only if
 # you have any issue.
-debug = false
+debug = true
 
 # A secret. Please remember that mtg supports only FakeTLS mode, legacy
 # simple and secured mode are prohibited. For you it means that secret

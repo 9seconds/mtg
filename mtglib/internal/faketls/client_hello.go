@@ -14,6 +14,7 @@ type ClientHello struct {
 	Time        time.Time
 	Random      [RandomLen]byte
 	SessionID   []byte
+	Host        string
 	CipherSuite uint16
 }
 
@@ -26,6 +27,15 @@ func ParseClientHello(secret, handshake []byte) (ClientHello, error) {
 
 	if handshake[0] != HandshakeTypeClient {
 		return hello, fmt.Errorf("unknown handshake type %#x", handshake[0])
+	}
+
+	handshakeSizeBytes := [4]byte{0, handshake[1], handshake[2], handshake[3]}
+	handshakeLength := binary.BigEndian.Uint32(handshakeSizeBytes[:])
+
+	if len(handshake)-4 != int(handshakeLength) {
+		return hello,
+			fmt.Errorf("incorrect handshake size. manifested=%d, real=%d",
+				handshakeLength, len(handshake)-4) // nolint: gomnd
 	}
 
 	copy(hello.Random[:], handshake[ClientHelloRandomOffset:])
@@ -61,11 +71,48 @@ func ParseClientHello(secret, handshake []byte) (ClientHello, error) {
 	timestamp := int64(binary.LittleEndian.Uint32(computedRandom[RandomLen-4:]))
 	hello.Time = time.Unix(timestamp, 0)
 
-	hello.SessionID = make([]byte, handshake[ClientHelloSessionIDOffset])
-	copy(hello.SessionID, handshake[ClientHelloSessionIDOffset+1:])
-
-	cipherSuiteOffset := ClientHelloSessionIDOffset + len(hello.SessionID) + 3 // nolint: gomnd
-	hello.CipherSuite = binary.BigEndian.Uint16(handshake[cipherSuiteOffset : cipherSuiteOffset+2])
+	parseSessionID(&hello, handshake)
+	parseCipherSuite(&hello, handshake)
+	parseSNI(&hello, handshake)
 
 	return hello, nil
+}
+
+func parseSessionID(hello *ClientHello, handshake []byte) {
+	hello.SessionID = make([]byte, handshake[ClientHelloSessionIDOffset])
+	copy(hello.SessionID, handshake[ClientHelloSessionIDOffset+1:])
+}
+
+func parseCipherSuite(hello *ClientHello, handshake []byte) {
+	cipherSuiteOffset := ClientHelloSessionIDOffset + len(hello.SessionID) + 3 // nolint: gomnd
+	hello.CipherSuite = binary.BigEndian.Uint16(handshake[cipherSuiteOffset : cipherSuiteOffset+2])
+}
+
+func parseSNI(hello *ClientHello, handshake []byte) {
+	cipherSuiteOffset := ClientHelloSessionIDOffset + len(hello.SessionID) + 1
+	handshake = handshake[cipherSuiteOffset:]
+
+	cipherSuiteLength := binary.BigEndian.Uint16(handshake[:2])
+	handshake = handshake[2+cipherSuiteLength:]
+
+	compressionMethodsLength := int(handshake[0])
+	handshake = handshake[1+compressionMethodsLength:]
+
+	extensionsLength := binary.BigEndian.Uint16(handshake[:2])
+	handshake = handshake[2 : 2+extensionsLength]
+
+	for len(handshake) > 0 {
+		if binary.BigEndian.Uint16(handshake[:2]) != ExtensionSNI {
+			extensionsLength := binary.BigEndian.Uint16(handshake[2:4])
+			handshake = handshake[4+extensionsLength:]
+
+			continue
+		}
+
+		hostnameLength := binary.BigEndian.Uint16(handshake[7:9])
+		handshake = handshake[9:]
+		hello.Host = string(handshake[:int(hostnameLength)])
+
+		return
+	}
 }
