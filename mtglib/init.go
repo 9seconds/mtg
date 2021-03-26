@@ -17,6 +17,9 @@ var (
 	ErrIPBlocklistIsNotDefined        = errors.New("ip blocklist is not defined")
 	ErrEventStreamIsNotDefined        = errors.New("event stream is not defined")
 	ErrLoggerIsNotDefined             = errors.New("logger is not defined")
+
+	errCannotSendWelcomePacket = errors.New("cannot send welcome packet")
+	errReplayAttackDetected    = errors.New("replay attack detected")
 )
 
 const (

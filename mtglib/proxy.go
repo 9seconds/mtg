@@ -27,6 +27,7 @@ type Proxy struct {
 	telegram    *telegram.Telegram
 
 	secret             Secret
+	network            Network
 	antiReplayCache    AntiReplayCache
 	timeAttackDetector TimeAttackDetector
 	ipBlocklist        IPBlocklist
@@ -139,13 +140,13 @@ func (p *Proxy) doFakeTLSHandshake(ctx *streamContext) error {
 	}
 
 	if p.antiReplayCache.SeenBefore(hello.SessionID) {
-		p.logger.Warning("anti replay attack was detected")
-
-		return fmt.Errorf("anti replay attack from %s", ctx.ClientIP().String())
+		return errReplayAttackDetected
 	}
 
 	if err := faketls.SendWelcomePacket(ctx.clientConn, p.secret.Key[:], hello); err != nil {
-		return fmt.Errorf("cannot send a welcome packet: %w", err)
+		p.logger.InfoError("cannot send welcome packet", err)
+
+		return errCannotSendWelcomePacket
 	}
 
 	ctx.clientConn = &faketls.Conn{
@@ -249,6 +250,7 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) { // nolint: cyclop, funlen
 		ctx:                ctx,
 		ctxCancel:          cancel,
 		secret:             opts.Secret,
+		network:            opts.Network,
 		antiReplayCache:    opts.AntiReplayCache,
 		timeAttackDetector: opts.TimeAttackDetector,
 		ipBlocklist:        opts.IPBlocklist,
