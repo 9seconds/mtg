@@ -6,21 +6,27 @@ const (
 	DefaultStatsdMetricPrefix = DefaultMetricPrefix + "."
 	DefaultStatsdTagFormat    = "datadog"
 
-	MetricClientConnections   = "client_connections"
-	MetricTelegramConnections = "telegram_connections"
-	MetricTraffic             = "traffic"
-	MetricSessionDuration     = "session_duration"
-	MetricSessionTraffic      = "session_traffic"
-	MetricConcurrencyLimited  = "concurrency_limited"
-	MetricIPBlocklisted       = "ip_blocklisted"
+	MetricClientConnections           = "client_connections"
+	MetricTelegramConnections         = "telegram_connections"
+	MetricDomainDisguisingConnections = "domain_disguising_connections"
 
-	TagIPType     = "ip_type"
-	TagTelegramIP = "ip"
-	TagDC         = "dc"
-	TagDirection  = "direction"
+	MetricTelegramTraffic         = "telegram_traffic"
+	MetricDomainDisguisingTraffic = "domain_disguising_traffic"
 
-	TagIPTypeIPv4        = "ipv4"
-	TagIPTypeIPv6        = "ipv6"
-	TagDirectionTelegram = "telegram"
-	TagDirectionClient   = "client"
+	MetricDomainDisguising   = "domain_disguising"
+	MetricConcurrencyLimited = "concurrency_limited"
+	MetricIPBlocklisted      = "ip_blocklisted"
+	MetricReplayAttacks      = "replay_attacks"
+
+	TagIPFamily     = "ip_family"
+	TagIPFamilyIPv4 = "ipv4"
+	TagIPFamilyIPv6 = "ipv6"
+
+	TagTelegramIP = "telegram_ip"
+
+	TagDC = "dc"
+
+	TagDirection           = "direction"
+	TagDirectionToClient   = "to_client"
+	TagDirectionFromClient = "from_client"
 )

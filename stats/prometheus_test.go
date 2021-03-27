@@ -64,7 +64,7 @@ func (suite *PrometheusTestSuite) TestEventStartFinish() {
 
 	data, err := suite.Get()
 	suite.NoError(err)
-	suite.Contains(data, `mtg_client_connections{ip_type="ipv4"} 1`)
+	suite.Contains(data, `mtg_client_connections{ip_family="ipv4"} 1`)
 
 	suite.prometheus.EventConnectedToDC(mtglib.EventConnectedToDC{
 		CreatedAt: time.Now(),
@@ -76,9 +76,9 @@ func (suite *PrometheusTestSuite) TestEventStartFinish() {
 
 	data, err = suite.Get()
 	suite.NoError(err)
-	suite.Contains(data, `mtg_telegram_connections{dc="4",ip="10.0.0.1",ip_type="ipv4"} 1`)
+	suite.Contains(data, `mtg_telegram_connections{dc="4",telegram_ip="10.0.0.1"} 1`)
 
-	suite.prometheus.EventTraffic(mtglib.EventTraffic{
+	suite.prometheus.EventTelegramTraffic(mtglib.EventTelegramTraffic{
 		CreatedAt: time.Now(),
 		ConnID:    "connID",
 		Traffic:   200,
@@ -88,9 +88,9 @@ func (suite *PrometheusTestSuite) TestEventStartFinish() {
 
 	data, err = suite.Get()
 	suite.NoError(err)
-	suite.Contains(data, `mtg_traffic{dc="4",direction="client",ip="10.0.0.1",ip_type="ipv4"} 200`)
+	suite.Contains(data, `mtg_telegram_traffic{dc="4",direction="to_client",telegram_ip="10.0.0.1"} 200`)
 
-	suite.prometheus.EventTraffic(mtglib.EventTraffic{
+	suite.prometheus.EventTelegramTraffic(mtglib.EventTelegramTraffic{
 		CreatedAt: time.Now(),
 		ConnID:    "connID",
 		Traffic:   100,
@@ -100,7 +100,7 @@ func (suite *PrometheusTestSuite) TestEventStartFinish() {
 
 	data, err = suite.Get()
 	suite.NoError(err)
-	suite.Contains(data, `mtg_traffic{dc="4",direction="telegram",ip="10.0.0.1",ip_type="ipv4"} 100`)
+	suite.Contains(data, `mtg_telegram_traffic{dc="4",direction="from_client",telegram_ip="10.0.0.1"} 100`)
 
 	suite.prometheus.EventFinish(mtglib.EventFinish{
 		CreatedAt: time.Now(),
@@ -110,10 +110,8 @@ func (suite *PrometheusTestSuite) TestEventStartFinish() {
 
 	data, err = suite.Get()
 	suite.NoError(err)
-	suite.Contains(data, `mtg_client_connections{ip_type="ipv4"} 0`)
-	suite.Contains(data, `mtg_telegram_connections{dc="4",ip="10.0.0.1",ip_type="ipv4"} 0`)
-	suite.Contains(data, `mtg_traffic{dc="4",direction="client",ip="10.0.0.1",ip_type="ipv4"} 200`)
-	suite.Contains(data, `mtg_traffic{dc="4",direction="telegram",ip="10.0.0.1",ip_type="ipv4"} 100`)
+	suite.Contains(data, `mtg_client_connections{ip_family="ipv4"} 0`)
+	suite.Contains(data, `mtg_telegram_connections{dc="4",telegram_ip="10.0.0.1"} 0`)
 }
 
 func (suite *PrometheusTestSuite) TestEventConcurrencyLimited() {
@@ -138,7 +136,7 @@ func (suite *PrometheusTestSuite) TestEventIPBlocklisted() {
 
 	data, err := suite.Get()
 	suite.NoError(err)
-	suite.Contains(data, `mtg_ip_blocklisted{ip_type="ipv6"} 1`)
+	suite.Contains(data, `mtg_ip_blocklisted 1`)
 }
 
 func TestPrometheus(t *testing.T) {

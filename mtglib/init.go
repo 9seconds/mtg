@@ -45,6 +45,7 @@ type IPBlocklist interface {
 
 type Event interface {
 	StreamID() string
+	Timestamp() time.Time
 }
 
 type EventStream interface {

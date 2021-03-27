@@ -73,8 +73,8 @@ func eventStreamProcessor(ctx context.Context, eventChan <-chan mtglib.Event, ob
 				observer.EventStart(typedEvt)
 			case mtglib.EventConnectedToDC:
 				observer.EventConnectedToDC(typedEvt)
-			case mtglib.EventTraffic:
-				observer.EventTraffic(typedEvt)
+			case mtglib.EventTelegramTraffic:
+				observer.EventTelegramTraffic(typedEvt)
 			case mtglib.EventFinish:
 				observer.EventFinish(typedEvt)
 			case mtglib.EventIPBlocklisted:

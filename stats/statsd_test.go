@@ -111,7 +111,7 @@ func (suite *StatsdTestSuite) TestEventStartFinish() {
 		RemoteIP:  net.ParseIP("10.0.0.10"),
 	})
 	time.Sleep(statsdSleepTime)
-	suite.Equal("mtg.client_connections:+1|g|#ip_type:ipv4", suite.statsdServer.String())
+	suite.Equal("mtg.client_connections:+1|g|#ip_family:ipv4", suite.statsdServer.String())
 
 	suite.statsd.EventConnectedToDC(mtglib.EventConnectedToDC{
 		CreatedAt: time.Now(),
@@ -121,9 +121,9 @@ func (suite *StatsdTestSuite) TestEventStartFinish() {
 	})
 	time.Sleep(statsdSleepTime)
 	suite.Contains(suite.statsdServer.String(),
-		"mtg.telegram_connections:+1|g|#ip_type:ipv4,ip:10.1.0.10,dc:2")
+		"mtg.telegram_connections:+1|g|#telegram_ip:10.1.0.10,dc:2")
 
-	suite.statsd.EventTraffic(mtglib.EventTraffic{
+	suite.statsd.EventTelegramTraffic(mtglib.EventTelegramTraffic{
 		CreatedAt: time.Now(),
 		ConnID:    "connID",
 		Traffic:   30,
@@ -131,9 +131,9 @@ func (suite *StatsdTestSuite) TestEventStartFinish() {
 	})
 	time.Sleep(statsdSleepTime)
 	suite.Contains(suite.statsdServer.String(),
-		"mtg.traffic:30|c|#ip_type:ipv4,ip:10.1.0.10,dc:2,direction:client")
+		"mtg.telegram_traffic:30|c|#telegram_ip:10.1.0.10,dc:2,direction:to_client")
 
-	suite.statsd.EventTraffic(mtglib.EventTraffic{
+	suite.statsd.EventTelegramTraffic(mtglib.EventTelegramTraffic{
 		CreatedAt: time.Now(),
 		ConnID:    "connID",
 		Traffic:   90,
@@ -141,18 +141,17 @@ func (suite *StatsdTestSuite) TestEventStartFinish() {
 	})
 	time.Sleep(statsdSleepTime)
 	suite.Contains(suite.statsdServer.String(),
-		"mtg.traffic:90|c|#ip_type:ipv4,ip:10.1.0.10,dc:2,direction:telegram")
+		"mtg.telegram_traffic:90|c|#telegram_ip:10.1.0.10,dc:2,direction:from_client")
 
 	suite.statsd.EventFinish(mtglib.EventFinish{
 		CreatedAt: time.Now(),
 		ConnID:    "connID",
 	})
 	time.Sleep(statsdSleepTime)
-	suite.Contains(suite.statsdServer.String(), "mtg.session_duration")
 	suite.Contains(suite.statsdServer.String(),
-		"mtg.telegram_connections:-1|g|#ip_type:ipv4,ip:10.1.0.10,dc:2")
+		"mtg.telegram_connections:-1|g|#telegram_ip:10.1.0.10,dc:2")
 	suite.Contains(suite.statsdServer.String(),
-		"mtg.client_connections:-1|g|#ip_type:ipv4")
+		"mtg.client_connections:-1|g|#ip_family:ipv4")
 }
 
 func (suite *StatsdTestSuite) TestEventConcurrencyLimited() {
@@ -171,7 +170,7 @@ func (suite *StatsdTestSuite) TestEventIPBlocklisted() {
 	})
 
 	time.Sleep(statsdSleepTime)
-	suite.Equal("mtg.ip_blocklisted:1|c|#ip_type:ipv4", suite.statsdServer.String())
+	suite.Equal("mtg.ip_blocklisted:1|c", suite.statsdServer.String())
 }
 
 func TestStatsd(t *testing.T) {

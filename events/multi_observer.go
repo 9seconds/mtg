@@ -40,7 +40,7 @@ func (m multiObserver) EventConnectedToDC(evt mtglib.EventConnectedToDC) {
 	wg.Wait()
 }
 
-func (m multiObserver) EventTraffic(evt mtglib.EventTraffic) {
+func (m multiObserver) EventTelegramTraffic(evt mtglib.EventTelegramTraffic) {
 	wg := &sync.WaitGroup{}
 	wg.Add(len(m.observers))
 
@@ -48,7 +48,7 @@ func (m multiObserver) EventTraffic(evt mtglib.EventTraffic) {
 		go func(obs Observer) {
 			defer wg.Done()
 
-			obs.EventTraffic(evt)
+			obs.EventTelegramTraffic(evt)
 		}(v)
 	}
 

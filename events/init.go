@@ -6,7 +6,7 @@ type Observer interface {
 	EventStart(mtglib.EventStart)
 	EventFinish(mtglib.EventFinish)
 	EventConnectedToDC(mtglib.EventConnectedToDC)
-	EventTraffic(mtglib.EventTraffic)
+	EventTelegramTraffic(mtglib.EventTelegramTraffic)
 	EventConcurrencyLimited(mtglib.EventConcurrencyLimited)
 	EventIPBlocklisted(mtglib.EventIPBlocklisted)
 

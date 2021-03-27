@@ -31,7 +31,7 @@ func (suite *NoopTestSuite) SetupSuite() {
 			RemoteIP:  net.ParseIP("127.1.0.1"),
 			DC:        2,
 		},
-		"traffic": mtglib.EventTraffic{
+		"telegram-traffic": mtglib.EventTelegramTraffic{
 			CreatedAt: time.Now(),
 			ConnID:    "connID",
 			Traffic:   1000,

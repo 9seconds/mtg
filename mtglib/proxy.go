@@ -95,6 +95,9 @@ func (p *Proxy) Serve(listener net.Listener) error {
 
 		if addr := conn.RemoteAddr().(*net.TCPAddr).IP; p.ipBlocklist.Contains(addr) {
 			conn.Close()
+			p.logger.
+				BindStr("ip", conn.RemoteAddr().(*net.TCPAddr).IP.String()).
+				Info("ip was blacklisted")
 			p.eventStream.Send(p.ctx, EventIPBlocklisted{
 				CreatedAt: time.Now(),
 				RemoteIP:  addr,
@@ -110,6 +113,9 @@ func (p *Proxy) Serve(listener net.Listener) error {
 		case errors.Is(err, ants.ErrPoolClosed):
 			return nil
 		case errors.Is(err, ants.ErrPoolOverload):
+			p.logger.
+				BindStr("ip", conn.RemoteAddr().(*net.TCPAddr).IP.String()).
+				Info("connection was concurrency limited")
 			p.eventStream.Send(p.ctx, EventConcurrencyLimited{
 				CreatedAt: time.Now(),
 			})

@@ -21,6 +21,7 @@ func (suite *EventsTestSuite) TestEventStart() {
 	}
 
 	suite.Equal("CONNID", evt.StreamID())
+	suite.WithinDuration(time.Now(), evt.Timestamp(), 10*time.Millisecond)
 }
 
 func (suite *EventsTestSuite) TestEventFinish() {
@@ -30,6 +31,7 @@ func (suite *EventsTestSuite) TestEventFinish() {
 	}
 
 	suite.Equal("CONNID", evt.StreamID())
+	suite.WithinDuration(time.Now(), evt.Timestamp(), 10*time.Millisecond)
 }
 
 func (suite *EventsTestSuite) TestEventConnectedToDC() {
@@ -41,10 +43,11 @@ func (suite *EventsTestSuite) TestEventConnectedToDC() {
 	}
 
 	suite.Equal("CONNID", evt.StreamID())
+	suite.WithinDuration(time.Now(), evt.Timestamp(), 10*time.Millisecond)
 }
 
-func (suite *EventsTestSuite) TestEventTraffic() {
-	evt := mtglib.EventTraffic{
+func (suite *EventsTestSuite) TestEventTelegramTraffic() {
+	evt := mtglib.EventTelegramTraffic{
 		CreatedAt: time.Now(),
 		ConnID:    "CONNID",
 		Traffic:   3,
@@ -52,14 +55,26 @@ func (suite *EventsTestSuite) TestEventTraffic() {
 	}
 
 	suite.Equal("CONNID", evt.StreamID())
+	suite.WithinDuration(time.Now(), evt.Timestamp(), 10*time.Millisecond)
 }
 
 func (suite *EventsTestSuite) TestEventConcurrencyLimited() {
-	suite.Empty(mtglib.EventConcurrencyLimited{}.StreamID())
+	evt := mtglib.EventConcurrencyLimited{
+		CreatedAt: time.Now(),
+	}
+
+	suite.Empty(evt.StreamID())
+	suite.WithinDuration(time.Now(), evt.Timestamp(), 10*time.Millisecond)
 }
 
 func (suite *EventsTestSuite) TestEventIPBlocklisted() {
-	suite.Empty(mtglib.EventIPBlocklisted{}.StreamID())
+	evt := mtglib.EventIPBlocklisted{
+		CreatedAt: time.Now(),
+		RemoteIP:  net.ParseIP("10.0.0.10"),
+	}
+
+	suite.Empty(evt.StreamID())
+	suite.WithinDuration(time.Now(), evt.Timestamp(), 10*time.Millisecond)
 }
 
 func TestEvents(t *testing.T) {
