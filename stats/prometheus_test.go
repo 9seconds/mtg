@@ -78,7 +78,7 @@ func (suite *PrometheusTestSuite) TestEventStartFinish() {
 	suite.NoError(err)
 	suite.Contains(data, `mtg_telegram_connections{dc="4",telegram_ip="10.0.0.1"} 1`)
 
-	suite.prometheus.EventTelegramTraffic(mtglib.EventTelegramTraffic{
+	suite.prometheus.EventTraffic(mtglib.EventTraffic{
 		CreatedAt: time.Now(),
 		ConnID:    "connID",
 		Traffic:   200,
@@ -90,7 +90,7 @@ func (suite *PrometheusTestSuite) TestEventStartFinish() {
 	suite.NoError(err)
 	suite.Contains(data, `mtg_telegram_traffic{dc="4",direction="to_client",telegram_ip="10.0.0.1"} 200`)
 
-	suite.prometheus.EventTelegramTraffic(mtglib.EventTelegramTraffic{
+	suite.prometheus.EventTraffic(mtglib.EventTraffic{
 		CreatedAt: time.Now(),
 		ConnID:    "connID",
 		Traffic:   100,

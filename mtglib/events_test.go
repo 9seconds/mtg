@@ -46,8 +46,8 @@ func (suite *EventsTestSuite) TestEventConnectedToDC() {
 	suite.WithinDuration(time.Now(), evt.Timestamp(), 10*time.Millisecond)
 }
 
-func (suite *EventsTestSuite) TestEventTelegramTraffic() {
-	evt := mtglib.EventTelegramTraffic{
+func (suite *EventsTestSuite) TestEventTraffic() {
+	evt := mtglib.EventTraffic{
 		CreatedAt: time.Now(),
 		ConnID:    "CONNID",
 		Traffic:   3,

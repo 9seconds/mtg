@@ -34,18 +34,18 @@ func (e EventConnectedToDC) Timestamp() time.Time {
 	return e.CreatedAt
 }
 
-type EventTelegramTraffic struct {
+type EventTraffic struct {
 	CreatedAt time.Time
 	ConnID    string
 	Traffic   uint
 	IsRead    bool
 }
 
-func (e EventTelegramTraffic) StreamID() string {
+func (e EventTraffic) StreamID() string {
 	return e.ConnID
 }
 
-func (e EventTelegramTraffic) Timestamp() time.Time {
+func (e EventTraffic) Timestamp() time.Time {
 	return e.CreatedAt
 }
 

@@ -21,7 +21,7 @@ func (c connTelegramTraffic) Read(b []byte) (int, error) {
 	n, err := c.Conn.Read(b)
 
 	if n > 0 {
-		c.stream.Send(c.ctx, EventTelegramTraffic{
+		c.stream.Send(c.ctx, EventTraffic{
 			CreatedAt: time.Now(),
 			ConnID:    c.connID,
 			Traffic:   uint(n),
@@ -36,7 +36,7 @@ func (c connTelegramTraffic) Write(b []byte) (int, error) {
 	n, err := c.Conn.Write(b)
 
 	if n > 0 {
-		c.stream.Send(c.ctx, EventTelegramTraffic{
+		c.stream.Send(c.ctx, EventTraffic{
 			CreatedAt: time.Now(),
 			ConnID:    c.connID,
 			Traffic:   uint(n),

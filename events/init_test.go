@@ -17,7 +17,7 @@ func (o *ObserverMock) EventConnectedToDC(evt mtglib.EventConnectedToDC) {
 	o.Called(evt)
 }
 
-func (o *ObserverMock) EventTelegramTraffic(evt mtglib.EventTelegramTraffic) {
+func (o *ObserverMock) EventTraffic(evt mtglib.EventTraffic) {
 	o.Called(evt)
 }
 

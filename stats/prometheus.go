@@ -41,7 +41,7 @@ func (p prometheusProcessor) EventConnectedToDC(evt mtglib.EventConnectedToDC) {
 		Inc()
 }
 
-func (p prometheusProcessor) EventTelegramTraffic(evt mtglib.EventTelegramTraffic) {
+func (p prometheusProcessor) EventTraffic(evt mtglib.EventTraffic) {
 	info, ok := p.streams[evt.StreamID()]
 	if !ok {
 		return

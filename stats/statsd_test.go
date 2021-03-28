@@ -123,7 +123,7 @@ func (suite *StatsdTestSuite) TestEventStartFinish() {
 	suite.Contains(suite.statsdServer.String(),
 		"mtg.telegram_connections:+1|g|#telegram_ip:10.1.0.10,dc:2")
 
-	suite.statsd.EventTelegramTraffic(mtglib.EventTelegramTraffic{
+	suite.statsd.EventTraffic(mtglib.EventTraffic{
 		CreatedAt: time.Now(),
 		ConnID:    "connID",
 		Traffic:   30,
@@ -133,7 +133,7 @@ func (suite *StatsdTestSuite) TestEventStartFinish() {
 	suite.Contains(suite.statsdServer.String(),
 		"mtg.telegram_traffic:30|c|#telegram_ip:10.1.0.10,dc:2,direction:to_client")
 
-	suite.statsd.EventTelegramTraffic(mtglib.EventTelegramTraffic{
+	suite.statsd.EventTraffic(mtglib.EventTraffic{
 		CreatedAt: time.Now(),
 		ConnID:    "connID",
 		Traffic:   90,

@@ -90,8 +90,8 @@ func (suite *EventStreamTestSuite) TestEventConnectedToDC() {
 	time.Sleep(100 * time.Millisecond)
 }
 
-func (suite *EventStreamTestSuite) TestEventTelegramTraffic() {
-	evt := mtglib.EventTelegramTraffic{
+func (suite *EventStreamTestSuite) TestEventTraffic() {
+	evt := mtglib.EventTraffic{
 		CreatedAt: time.Now(),
 		ConnID:    "connID",
 		Traffic:   1024,
@@ -100,10 +100,10 @@ func (suite *EventStreamTestSuite) TestEventTelegramTraffic() {
 
 	for _, v := range []*ObserverMock{suite.observerMock1, suite.observerMock2} {
 		v.
-			On("EventTelegramTraffic", mock.Anything).
+			On("EventTraffic", mock.Anything).
 			Once().
 			Run(func(args mock.Arguments) {
-				caught := args.Get(0).(mtglib.EventTelegramTraffic)
+				caught := args.Get(0).(mtglib.EventTraffic)
 
 				suite.Equal(evt.CreatedAt, caught.CreatedAt)
 				suite.Equal(evt.ConnID, caught.ConnID)

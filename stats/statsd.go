@@ -42,7 +42,7 @@ func (s statsdProcessor) EventConnectedToDC(evt mtglib.EventConnectedToDC) {
 		info.TV(TagDC))
 }
 
-func (s statsdProcessor) EventTelegramTraffic(evt mtglib.EventTelegramTraffic) {
+func (s statsdProcessor) EventTraffic(evt mtglib.EventTraffic) {
 	info, ok := s.streams[evt.StreamID()]
 	if !ok {
 		return
