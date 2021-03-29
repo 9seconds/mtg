@@ -206,6 +206,28 @@ func (suite *EventStreamTestSuite) TestEventIPBlocklisted() {
 	time.Sleep(100 * time.Millisecond)
 }
 
+func (suite *EventStreamTestSuite) TestEventReplayAttack() {
+	evt := mtglib.EventReplayAttack{
+		CreatedAt: time.Now(),
+		ConnID:    "CONNID",
+	}
+
+	for _, v := range []*ObserverMock{suite.observerMock1, suite.observerMock2} {
+		v.
+			On("EventReplayAttack", mock.Anything).
+			Once().
+			Run(func(args mock.Arguments) {
+				caught := args.Get(0).(mtglib.EventReplayAttack)
+
+				suite.Equal(evt.CreatedAt, caught.CreatedAt)
+				suite.Equal(evt.StreamID(), caught.StreamID())
+			})
+	}
+
+	suite.stream.Send(suite.ctx, evt)
+	time.Sleep(100 * time.Millisecond)
+}
+
 func (suite *EventStreamTestSuite) TearDownTest() {
 	suite.stream.Shutdown()
 	suite.ctxCancel()

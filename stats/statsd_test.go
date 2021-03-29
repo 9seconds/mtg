@@ -228,6 +228,16 @@ func (suite *StatsdTestSuite) TestEventIPBlocklisted() {
 	suite.Equal("mtg.ip_blocklisted:1|c", suite.statsdServer.String())
 }
 
+func (suite *StatsdTestSuite) TestEventReplayAttack() {
+	suite.statsd.EventReplayAttack(mtglib.EventReplayAttack{
+		CreatedAt: time.Now(),
+		ConnID:    "connID",
+	})
+
+	time.Sleep(statsdSleepTime)
+	suite.Equal("mtg.replay_attacks:1|c", suite.statsdServer.String())
+}
+
 func TestStatsd(t *testing.T) {
 	t.Parallel()
 	suite.Run(t, &StatsdTestSuite{})

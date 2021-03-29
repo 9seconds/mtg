@@ -110,8 +110,12 @@ func (p prometheusProcessor) EventConcurrencyLimited(_ mtglib.EventConcurrencyLi
 	p.factory.metricConcurrencyLimited.Inc()
 }
 
-func (p prometheusProcessor) EventIPBlocklisted(evt mtglib.EventIPBlocklisted) {
+func (p prometheusProcessor) EventIPBlocklisted(_ mtglib.EventIPBlocklisted) {
 	p.factory.metricIPBlocklisted.Inc()
+}
+
+func (p prometheusProcessor) EventReplayAttack(_ mtglib.EventReplayAttack) {
+	p.factory.metricReplayAttacks.Inc()
 }
 
 func (p prometheusProcessor) Shutdown() {

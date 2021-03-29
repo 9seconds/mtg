@@ -10,6 +10,7 @@ type Observer interface {
 	EventTraffic(mtglib.EventTraffic)
 	EventConcurrencyLimited(mtglib.EventConcurrencyLimited)
 	EventIPBlocklisted(mtglib.EventIPBlocklisted)
+	EventReplayAttack(mtglib.EventReplayAttack)
 
 	Shutdown()
 }

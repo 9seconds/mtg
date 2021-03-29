@@ -99,3 +99,16 @@ func (e EventIPBlocklisted) StreamID() string {
 func (e EventIPBlocklisted) Timestamp() time.Time {
 	return e.CreatedAt
 }
+
+type EventReplayAttack struct {
+	CreatedAt time.Time
+	ConnID    string
+}
+
+func (e EventReplayAttack) StreamID() string {
+	return e.ConnID
+}
+
+func (e EventReplayAttack) Timestamp() time.Time {
+	return e.CreatedAt
+}

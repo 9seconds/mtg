@@ -115,6 +115,21 @@ func (m multiObserver) EventIPBlocklisted(evt mtglib.EventIPBlocklisted) {
 	wg.Wait()
 }
 
+func (m multiObserver) EventReplayAttack(evt mtglib.EventReplayAttack) {
+	wg := &sync.WaitGroup{}
+	wg.Add(len(m.observers))
+
+	for _, v := range m.observers {
+		go func(obs Observer) {
+			defer wg.Done()
+
+			obs.EventReplayAttack(evt)
+		}(v)
+	}
+
+	wg.Wait()
+}
+
 func (m multiObserver) Shutdown() {
 	for _, v := range m.observers {
 		v.Shutdown()

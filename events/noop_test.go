@@ -45,10 +45,16 @@ func (suite *NoopTestSuite) SetupSuite() {
 			CreatedAt: time.Now(),
 			ConnID:    "connID",
 		},
-		"concurrency-limited": mtglib.EventConcurrencyLimited{},
+		"concurrency-limited": mtglib.EventConcurrencyLimited{
+			CreatedAt: time.Now(),
+		},
 		"ip-blacklisted": mtglib.EventIPBlocklisted{
 			RemoteIP:  net.ParseIP("10.0.0.10"),
 			CreatedAt: time.Now(),
+		},
+		"replay-attack": mtglib.EventReplayAttack{
+			CreatedAt: time.Now(),
+			ConnID:    "connID",
 		},
 	}
 	suite.ctx = context.Background()
@@ -88,6 +94,8 @@ func (suite *NoopTestSuite) TestObserver() {
 				observer.EventConcurrencyLimited(typedEvt)
 			case mtglib.EventIPBlocklisted:
 				observer.EventIPBlocklisted(typedEvt)
+			case mtglib.EventReplayAttack:
+				observer.EventReplayAttack(typedEvt)
 			}
 		})
 	}

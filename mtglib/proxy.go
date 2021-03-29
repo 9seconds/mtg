@@ -166,6 +166,10 @@ func (p *Proxy) doFakeTLSHandshake(ctx *streamContext) bool {
 
 	if p.antiReplayCache.SeenBefore(hello.SessionID) {
 		p.logger.Warning("replay attack has been detected!")
+		p.eventStream.Send(p.ctx, EventReplayAttack{
+			CreatedAt: time.Now(),
+			ConnID:    ctx.connID,
+		})
 		p.doDomainFronting(ctx, rewind)
 
 		return false

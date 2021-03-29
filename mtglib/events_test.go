@@ -87,6 +87,16 @@ func (suite *EventsTestSuite) TestEventIPBlocklisted() {
 	suite.WithinDuration(time.Now(), evt.Timestamp(), 10*time.Millisecond)
 }
 
+func (suite *EventsTestSuite) TestEventReplayAttack() {
+	evt := mtglib.EventReplayAttack{
+		CreatedAt: time.Now(),
+		ConnID:    "CONNID",
+	}
+
+	suite.Equal("CONNID", evt.StreamID())
+	suite.WithinDuration(time.Now(), evt.Timestamp(), 10*time.Millisecond)
+}
+
 func TestEvents(t *testing.T) {
 	t.Parallel()
 	suite.Run(t, &EventsTestSuite{})

@@ -198,6 +198,19 @@ func (suite *PrometheusTestSuite) TestEventIPBlocklisted() {
 	suite.Contains(data, `mtg_ip_blocklisted 1`)
 }
 
+func (suite *PrometheusTestSuite) TestEventReplayAttack() {
+	suite.prometheus.EventReplayAttack(mtglib.EventReplayAttack{
+		CreatedAt: time.Now(),
+		ConnID:    "connID",
+	})
+
+	time.Sleep(100 * time.Millisecond)
+
+	data, err := suite.Get()
+	suite.NoError(err)
+	suite.Contains(data, `mtg_replay_attacks 1`)
+}
+
 func TestPrometheus(t *testing.T) {
 	t.Parallel()
 	suite.Run(t, &PrometheusTestSuite{})
