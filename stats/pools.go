@@ -4,17 +4,15 @@ import "sync"
 
 var streamInfoPool = sync.Pool{
 	New: func() interface{} {
-		return &streamInfo{
-			tags: map[string]string{},
-		}
+		return streamInfo{}
 	},
 }
 
-func acquireStreamInfo() *streamInfo {
-	return streamInfoPool.Get().(*streamInfo)
+func acquireStreamInfo() streamInfo {
+	return streamInfoPool.Get().(streamInfo)
 }
 
-func releaseStreamInfo(info *streamInfo) {
+func releaseStreamInfo(info streamInfo) {
 	info.Reset()
 	streamInfoPool.Put(info)
 }

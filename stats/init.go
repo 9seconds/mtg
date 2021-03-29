@@ -6,14 +6,14 @@ const (
 	DefaultStatsdMetricPrefix = DefaultMetricPrefix + "."
 	DefaultStatsdTagFormat    = "datadog"
 
-	MetricClientConnections           = "client_connections"
-	MetricTelegramConnections         = "telegram_connections"
-	MetricDomainDisguisingConnections = "domain_disguising_connections"
+	MetricClientConnections         = "client_connections"
+	MetricTelegramConnections       = "telegram_connections"
+	MetricDomainFrontingConnections = "domain_fronting_connections"
 
-	MetricTelegramTraffic         = "telegram_traffic"
-	MetricDomainDisguisingTraffic = "domain_disguising_traffic"
+	MetricTelegramTraffic       = "telegram_traffic"
+	MetricDomainFrontingTraffic = "domain_fronting_traffic"
 
-	MetricDomainDisguising   = "domain_disguising"
+	MetricDomainFronting     = "domain_fronting"
 	MetricConcurrencyLimited = "concurrency_limited"
 	MetricIPBlocklisted      = "ip_blocklisted"
 	MetricReplayAttacks      = "replay_attacks"

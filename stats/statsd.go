@@ -2,6 +2,7 @@ package stats
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -12,19 +13,24 @@ import (
 )
 
 type statsdProcessor struct {
-	streams map[string]*streamInfo
+	streams map[string]streamInfo
 	client  *statsd.Client
 }
 
 func (s statsdProcessor) EventStart(evt mtglib.EventStart) {
 	info := acquireStreamInfo()
-	info.SetStartTime(evt.CreatedAt)
-	info.SetClientIP(evt.RemoteIP)
+
+	if evt.RemoteIP.To4() != nil {
+		info[TagIPFamily] = TagIPFamilyIPv4
+	} else {
+		info[TagIPFamily] = TagIPFamilyIPv6
+	}
+
 	s.streams[evt.StreamID()] = info
 
 	s.client.GaugeDelta(MetricClientConnections,
 		1,
-		info.TV(TagIPFamily))
+		info.T(TagIPFamily))
 }
 
 func (s statsdProcessor) EventConnectedToDC(evt mtglib.EventConnectedToDC) {
@@ -33,13 +39,13 @@ func (s statsdProcessor) EventConnectedToDC(evt mtglib.EventConnectedToDC) {
 		return
 	}
 
-	info.SetTelegramIP(evt.RemoteIP)
-	info.SetDC(evt.DC)
+	info[TagTelegramIP] = evt.RemoteIP.String()
+	info[TagDC] = strconv.Itoa(evt.DC)
 
 	s.client.GaugeDelta(MetricTelegramConnections,
 		1,
-		info.TV(TagTelegramIP),
-		info.TV(TagDC))
+		info.T(TagTelegramIP),
+		info.T(TagDC))
 }
 
 func (s statsdProcessor) EventTraffic(evt mtglib.EventTraffic) {
@@ -50,8 +56,8 @@ func (s statsdProcessor) EventTraffic(evt mtglib.EventTraffic) {
 
 	s.client.Incr(MetricTelegramTraffic,
 		int64(evt.Traffic),
-		info.TV(TagTelegramIP),
-		info.TV(TagDC),
+		info.T(TagTelegramIP),
+		info.T(TagDC),
 		statsd.StringTag(TagDirection, getDirection(evt.IsRead)))
 }
 
@@ -68,13 +74,13 @@ func (s statsdProcessor) EventFinish(evt mtglib.EventFinish) {
 
 	s.client.GaugeDelta(MetricClientConnections,
 		-1,
-		info.TV(TagIPFamily))
+		info.T(TagIPFamily))
 
-	if info.V(TagTelegramIP) != "" {
+	if _, ok := info[TagTelegramIP]; ok {
 		s.client.GaugeDelta(MetricTelegramConnections,
 			-1,
-			info.TV(TagTelegramIP),
-			info.TV(TagDC))
+			info.T(TagTelegramIP),
+			info.T(TagDC))
 	}
 }
 
@@ -113,7 +119,7 @@ func (s StatsdFactory) Close() error {
 func (s StatsdFactory) Make() events.Observer {
 	return statsdProcessor{
 		client:  s.client,
-		streams: make(map[string]*streamInfo),
+		streams: make(map[string]streamInfo),
 	}
 }
 

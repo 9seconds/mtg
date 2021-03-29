@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"net/http"
+	"strconv"
 
 	"github.com/9seconds/mtg/v2/events"
 	"github.com/9seconds/mtg/v2/mtglib"
@@ -12,18 +13,23 @@ import (
 )
 
 type prometheusProcessor struct {
-	streams map[string]*streamInfo
+	streams map[string]streamInfo
 	factory *PrometheusFactory
 }
 
 func (p prometheusProcessor) EventStart(evt mtglib.EventStart) {
 	info := acquireStreamInfo()
-	info.SetStartTime(evt.CreatedAt)
-	info.SetClientIP(evt.RemoteIP)
+
+	if evt.RemoteIP.To4() != nil {
+		info[TagIPFamily] = TagIPFamilyIPv4
+	} else {
+		info[TagIPFamily] = TagIPFamilyIPv6
+	}
+
 	p.streams[evt.StreamID()] = info
 
 	p.factory.metricClientConnections.
-		WithLabelValues(info.V(TagIPFamily)).
+		WithLabelValues(info[TagIPFamily]).
 		Inc()
 }
 
@@ -33,11 +39,11 @@ func (p prometheusProcessor) EventConnectedToDC(evt mtglib.EventConnectedToDC) {
 		return
 	}
 
-	info.SetTelegramIP(evt.RemoteIP)
-	info.SetDC(evt.DC)
+	info[TagTelegramIP] = evt.RemoteIP.String()
+	info[TagDC] = strconv.Itoa(evt.DC)
 
 	p.factory.metricTelegramConnections.
-		WithLabelValues(info.V(TagTelegramIP), info.V(TagDC)).
+		WithLabelValues(info[TagTelegramIP], info[TagDC]).
 		Inc()
 }
 
@@ -48,7 +54,7 @@ func (p prometheusProcessor) EventTraffic(evt mtglib.EventTraffic) {
 	}
 
 	p.factory.metricTelegramTraffic.
-		WithLabelValues(info.V(TagTelegramIP), info.V(TagDC), getDirection(evt.IsRead)).
+		WithLabelValues(info[TagTelegramIP], info[TagDC], getDirection(evt.IsRead)).
 		Add(float64(evt.Traffic))
 }
 
@@ -64,12 +70,12 @@ func (p prometheusProcessor) EventFinish(evt mtglib.EventFinish) {
 	}()
 
 	p.factory.metricClientConnections.
-		WithLabelValues(info.V(TagIPFamily)).
+		WithLabelValues(info[TagIPFamily]).
 		Dec()
 
-	if info.V(TagTelegramIP) != "" {
+	if telegramIP, ok := info[TagTelegramIP]; ok {
 		p.factory.metricTelegramConnections.
-			WithLabelValues(info.V(TagTelegramIP), info.V(TagDC)).
+			WithLabelValues(telegramIP, info[TagDC]).
 			Dec()
 	}
 }
@@ -83,20 +89,20 @@ func (p prometheusProcessor) EventIPBlocklisted(evt mtglib.EventIPBlocklisted) {
 }
 
 func (p prometheusProcessor) Shutdown() {
-	p.streams = make(map[string]*streamInfo)
+	p.streams = make(map[string]streamInfo)
 }
 
 type PrometheusFactory struct {
 	httpServer *http.Server
 
-	metricClientConnections           *prometheus.GaugeVec
-	metricTelegramConnections         *prometheus.GaugeVec
-	metricDomainDisguisingConnections *prometheus.GaugeVec
+	metricClientConnections         *prometheus.GaugeVec
+	metricTelegramConnections       *prometheus.GaugeVec
+	metricDomainFrontingConnections *prometheus.GaugeVec
 
-	metricTelegramTraffic         *prometheus.CounterVec
-	metricDomainDisguisingTraffic *prometheus.CounterVec
+	metricTelegramTraffic       *prometheus.CounterVec
+	metricDomainFrontingTraffic *prometheus.CounterVec
 
-	metricDomainDisguising   prometheus.Counter
+	metricDomainFronting     prometheus.Counter
 	metricConcurrencyLimited prometheus.Counter
 	metricIPBlocklisted      prometheus.Counter
 	metricReplayAttacks      prometheus.Counter
@@ -104,7 +110,7 @@ type PrometheusFactory struct {
 
 func (p *PrometheusFactory) Make() events.Observer {
 	return prometheusProcessor{
-		streams: make(map[string]*streamInfo),
+		streams: make(map[string]streamInfo),
 		factory: p,
 	}
 }
@@ -141,10 +147,10 @@ func NewPrometheus(metricPrefix, httpPath string) *PrometheusFactory { // nolint
 			Name:      MetricTelegramConnections,
 			Help:      "A number of connections to Telegram servers.",
 		}, []string{TagTelegramIP, TagDC}),
-		metricDomainDisguisingConnections: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		metricDomainFrontingConnections: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: metricPrefix,
-			Name:      MetricDomainDisguisingConnections,
-			Help:      "A number of connections which talk with disguising domain.",
+			Name:      MetricDomainFronting,
+			Help:      "A number of connections which talk with front domain.",
 		}, []string{TagIPFamily}),
 
 		metricTelegramTraffic: prometheus.NewCounterVec(prometheus.CounterOpts{
@@ -152,16 +158,16 @@ func NewPrometheus(metricPrefix, httpPath string) *PrometheusFactory { // nolint
 			Name:      MetricTelegramTraffic,
 			Help:      "Traffic which is generated talking with Telegram servers.",
 		}, []string{TagTelegramIP, TagDC, TagDirection}),
-		metricDomainDisguisingTraffic: prometheus.NewCounterVec(prometheus.CounterOpts{
+		metricDomainFrontingTraffic: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: metricPrefix,
-			Name:      MetricDomainDisguisingTraffic,
-			Help:      "Traffic which is generated talking with disguising domain.",
+			Name:      MetricDomainFrontingTraffic,
+			Help:      "Traffic which is generated talking with front domain.",
 		}, []string{TagDirection}),
 
-		metricDomainDisguising: prometheus.NewCounter(prometheus.CounterOpts{
+		metricDomainFronting: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: metricPrefix,
-			Name:      MetricDomainDisguising,
-			Help:      "A number of routings to disguising domain.",
+			Name:      MetricDomainFronting,
+			Help:      "A number of routings to front domain.",
 		}),
 		metricConcurrencyLimited: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: metricPrefix,
@@ -182,12 +188,12 @@ func NewPrometheus(metricPrefix, httpPath string) *PrometheusFactory { // nolint
 
 	registry.MustRegister(factory.metricClientConnections)
 	registry.MustRegister(factory.metricTelegramConnections)
-	registry.MustRegister(factory.metricDomainDisguisingConnections)
+	registry.MustRegister(factory.metricDomainFrontingConnections)
 
 	registry.MustRegister(factory.metricTelegramTraffic)
-	registry.MustRegister(factory.metricDomainDisguisingTraffic)
+	registry.MustRegister(factory.metricDomainFrontingTraffic)
 
-	registry.MustRegister(factory.metricDomainDisguising)
+	registry.MustRegister(factory.metricDomainFronting)
 	registry.MustRegister(factory.metricConcurrencyLimited)
 	registry.MustRegister(factory.metricIPBlocklisted)
 	registry.MustRegister(factory.metricReplayAttacks)
