@@ -61,21 +61,24 @@ func (r *Record) Read(reader io.Reader) error {
 }
 
 func (r *Record) Dump(writer io.Writer) error {
-	buf := acquireBytesBuffer()
-	defer releaseBytesBuffer(buf)
+	buf := [2]byte{byte(r.Type), 0}
+	if _, err := writer.Write(buf[:1]); err != nil {
+		return fmt.Errorf("cannot dump record type: %w", err)
+	}
 
-	bufSlice := [2]byte{byte(r.Type), 0}
-	buf.Write(bufSlice[:1])
+	binary.BigEndian.PutUint16(buf[:], uint16(r.Version))
 
-	binary.BigEndian.PutUint16(bufSlice[:], uint16(r.Version))
-	buf.Write(bufSlice[:])
+	if _, err := writer.Write(buf[:]); err != nil {
+		return fmt.Errorf("cannot dump version: %w", err)
+	}
 
-	binary.BigEndian.PutUint16(bufSlice[:], uint16(r.Payload.Len()))
-	buf.Write(bufSlice[:])
+	binary.BigEndian.PutUint16(buf[:], uint16(r.Payload.Len()))
 
-	buf.Write(r.Payload.Bytes())
+	if _, err := writer.Write(buf[:]); err != nil {
+		return fmt.Errorf("cannot dump payload length: %w", err)
+	}
 
-	if _, err := buf.WriteTo(writer); err != nil {
+	if _, err := writer.Write(r.Payload.Bytes()); err != nil {
 		return fmt.Errorf("cannot dump record: %w", err)
 	}
 
