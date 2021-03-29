@@ -29,11 +29,11 @@ func (c *Conn) Read(p []byte) (int, error) {
 		}
 
 		switch rec.Type { // nolint: exhaustive
-		case record.TypeChangeCipherSpec:
 		case record.TypeApplicationData:
 			rec.Payload.WriteTo(&c.readBuffer) // nolint: errcheck
 
 			return c.readBuffer.Read(p)
+		case record.TypeChangeCipherSpec:
 		default:
 			return 0, fmt.Errorf("unsupported record type %v", rec.Type)
 		}

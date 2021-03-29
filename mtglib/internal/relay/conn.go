@@ -1,19 +1,23 @@
 package relay
 
-import "io"
+import (
+	"context"
+	"io"
+)
 
 type conn struct {
 	io.ReadWriteCloser
 
-	relay *Relay
+	ctx         context.Context
+	tickChannel chan struct{}
 }
 
 func (c conn) Read(p []byte) (int, error) {
 	n, err := c.ReadWriteCloser.Read(p)
 
 	select {
-	case <-c.relay.ctx.Done():
-	case c.relay.tickChannel <- struct{}{}:
+	case <-c.ctx.Done():
+	case c.tickChannel <- struct{}{}:
 	}
 
 	return n, err // nolint: wrapcheck
@@ -23,8 +27,8 @@ func (c conn) Write(p []byte) (int, error) {
 	n, err := c.ReadWriteCloser.Write(p)
 
 	select {
-	case <-c.relay.ctx.Done():
-	case c.relay.tickChannel <- struct{}{}:
+	case <-c.ctx.Done():
+	case c.tickChannel <- struct{}{}:
 	}
 
 	return n, err // nolint: wrapcheck

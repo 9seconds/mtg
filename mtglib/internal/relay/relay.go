@@ -21,11 +21,13 @@ type Relay struct {
 func (r *Relay) Process(eastConn, westConn io.ReadWriteCloser) error {
 	eastConn = conn{
 		ReadWriteCloser: eastConn,
-		relay:           r,
+		ctx:             r.ctx,
+		tickChannel:     r.tickChannel,
 	}
 	westConn = conn{
 		ReadWriteCloser: westConn,
-		relay:           r,
+		ctx:             r.ctx,
+		tickChannel:     r.tickChannel,
 	}
 
 	defer func() {
@@ -37,7 +39,7 @@ func (r *Relay) Process(eastConn, westConn io.ReadWriteCloser) error {
 	wg := &sync.WaitGroup{}
 	wg.Add(3) // nolint: gomnd
 
-	go r.runObserver(r.ctx, wg)
+	go r.runObserver(wg)
 
 	go r.transmit(eastConn, westConn, r.westBuffer, "west", wg)
 
@@ -66,13 +68,18 @@ func (r *Relay) transmit(src io.ReadCloser, dst io.WriteCloser,
 
 		select {
 		case <-r.ctx.Done():
+			err = r.ctx.Err()
+		default:
+		}
+
+		select {
 		case r.errorChannel <- err:
 		default:
 		}
 	}
 }
 
-func (r *Relay) runObserver(ctx context.Context, wg *sync.WaitGroup) {
+func (r *Relay) runObserver(wg *sync.WaitGroup) {
 	ticker := time.NewTicker(time.Second)
 
 	defer func() {
@@ -90,7 +97,7 @@ func (r *Relay) runObserver(ctx context.Context, wg *sync.WaitGroup) {
 
 	for {
 		select {
-		case <-ctx.Done():
+		case <-r.ctx.Done():
 			return
 		case <-r.tickChannel:
 			lastTickAt = time.Now()
