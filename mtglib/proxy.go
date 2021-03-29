@@ -328,7 +328,7 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) { // nolint: cyclop, funlen
 		ipBlocklist:        opts.IPBlocklist,
 		eventStream:        opts.EventStream,
 		logger:             opts.Logger.Named("proxy"),
-		domainFrontingPort: int(domainFrontingPort),
+		domainFrontingPort: domainFrontingPort,
 		idleTimeout:        idleTimeout,
 		bufferSize:         int(bufferSize),
 		telegram:           tg,
@@ -336,7 +336,9 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) { // nolint: cyclop, funlen
 
 	pool, err := ants.NewPoolWithFunc(int(concurrency), func(arg interface{}) {
 		proxy.ServeConn(arg.(net.Conn))
-	}, ants.WithLogger(opts.Logger.Named("ants")))
+	},
+		ants.WithLogger(opts.Logger.Named("ants")),
+		ants.WithNonblocking(true))
 	if err != nil {
 		return nil, fmt.Errorf("cannot initialize a pool: %w", err)
 	}
