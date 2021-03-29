@@ -36,11 +36,6 @@ func AcquireRelay(ctx context.Context, logger Logger, bufferSize int, idleTimeou
 }
 
 func ReleaseRelay(r *Relay) {
-	r.ctxCancel()
-
-	r.ctx = nil
-	r.ctxCancel = nil
-	r.logger = nil
-
+	r.Reset()
 	relayPool.Put(r)
 }

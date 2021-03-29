@@ -11,6 +11,7 @@ type Relay struct {
 	ctx          context.Context
 	ctxCancel    context.CancelFunc
 	logger       Logger
+	processMutex sync.Mutex
 	eastBuffer   []byte
 	westBuffer   []byte
 	tickChannel  chan struct{}
@@ -18,7 +19,23 @@ type Relay struct {
 	tickTimeout  time.Duration
 }
 
+func (r *Relay) Reset() {
+	r.processMutex.Lock()
+	defer r.processMutex.Unlock()
+
+	if r.ctxCancel != nil {
+		r.ctxCancel()
+	}
+
+	r.ctx = nil
+	r.ctxCancel = nil
+	r.logger = nil
+}
+
 func (r *Relay) Process(eastConn, westConn io.ReadWriteCloser) error {
+	r.processMutex.Lock()
+	defer r.processMutex.Unlock()
+
 	eastConn = conn{
 		ReadWriteCloser: eastConn,
 		ctx:             r.ctx,
@@ -30,16 +47,10 @@ func (r *Relay) Process(eastConn, westConn io.ReadWriteCloser) error {
 		tickChannel:     r.tickChannel,
 	}
 
-	defer func() {
-		r.ctxCancel()
-		eastConn.Close()
-		westConn.Close()
-	}()
-
 	wg := &sync.WaitGroup{}
 	wg.Add(3) // nolint: gomnd
 
-	go r.runObserver(wg)
+	go r.runObserver(eastConn, westConn, wg)
 
 	go r.transmit(eastConn, westConn, r.westBuffer, "west", wg)
 
@@ -58,9 +69,10 @@ func (r *Relay) Process(eastConn, westConn io.ReadWriteCloser) error {
 func (r *Relay) transmit(src io.ReadCloser, dst io.WriteCloser,
 	buffer []byte, direction string, wg *sync.WaitGroup) {
 	defer func() {
-		wg.Done()
 		src.Close()
 		dst.Close()
+		wg.Done()
+		r.ctxCancel()
 	}()
 
 	if _, err := io.CopyBuffer(dst, src, buffer); err != nil {
@@ -79,10 +91,13 @@ func (r *Relay) transmit(src io.ReadCloser, dst io.WriteCloser,
 	}
 }
 
-func (r *Relay) runObserver(wg *sync.WaitGroup) {
+func (r *Relay) runObserver(one, another io.Closer, wg *sync.WaitGroup) {
 	ticker := time.NewTicker(time.Second)
 
 	defer func() {
+		one.Close()
+		another.Close()
+
 		ticker.Stop()
 
 		select {
