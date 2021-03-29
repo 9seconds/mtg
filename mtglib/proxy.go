@@ -215,7 +215,7 @@ func (p *Proxy) doTelegramCall(ctx *streamContext) error {
 	}
 
 	ctx.telegramConn = obfuscated2.Conn{
-		Conn: connTelegramTraffic{
+		Conn: connTraffic{
 			Conn:   conn,
 			connID: ctx.connID,
 			stream: p.eventStream,
@@ -235,7 +235,12 @@ func (p *Proxy) doTelegramCall(ctx *streamContext) error {
 	return nil
 }
 
-func (p *Proxy) doDomainFronting(ctx context.Context, conn *connRewind) {
+func (p *Proxy) doDomainFronting(ctx *streamContext, conn *connRewind) {
+	p.eventStream.Send(p.ctx, EventDomainFronting{
+		CreatedAt: time.Now(),
+		ConnID:    ctx.connID,
+	})
+
 	conn.Rewind()
 
 	frontConn, err := p.network.DialContext(ctx, "tcp", p.domainFrontAddress)
@@ -243,6 +248,13 @@ func (p *Proxy) doDomainFronting(ctx context.Context, conn *connRewind) {
 		p.logger.WarningError("cannot dial to the fronting domain", err)
 
 		return
+	}
+
+	frontConn = connTraffic{
+		Conn:   frontConn,
+		ctx:    ctx,
+		connID: ctx.connID,
+		stream: p.eventStream,
 	}
 
 	rel := relay.AcquireRelay(ctx,

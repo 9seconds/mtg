@@ -60,7 +60,7 @@ func NewEventStream(observerFactories []ObserverFactory) mtglib.EventStream {
 	return rv
 }
 
-func eventStreamProcessor(ctx context.Context, eventChan <-chan mtglib.Event, observer Observer) {
+func eventStreamProcessor(ctx context.Context, eventChan <-chan mtglib.Event, observer Observer) { // nolint: cyclop
 	defer observer.Shutdown()
 
 	for {
@@ -69,14 +69,16 @@ func eventStreamProcessor(ctx context.Context, eventChan <-chan mtglib.Event, ob
 			return
 		case evt := <-eventChan:
 			switch typedEvt := evt.(type) {
-			case mtglib.EventStart:
-				observer.EventStart(typedEvt)
-			case mtglib.EventConnectedToDC:
-				observer.EventConnectedToDC(typedEvt)
 			case mtglib.EventTraffic:
 				observer.EventTraffic(typedEvt)
+			case mtglib.EventStart:
+				observer.EventStart(typedEvt)
 			case mtglib.EventFinish:
 				observer.EventFinish(typedEvt)
+			case mtglib.EventConnectedToDC:
+				observer.EventConnectedToDC(typedEvt)
+			case mtglib.EventDomainFronting:
+				observer.EventDomainFronting(typedEvt)
 			case mtglib.EventIPBlocklisted:
 				observer.EventIPBlocklisted(typedEvt)
 			case mtglib.EventConcurrencyLimited:

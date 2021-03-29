@@ -13,7 +13,7 @@ import (
 )
 
 type prometheusProcessor struct {
-	streams map[string]streamInfo
+	streams map[string]*streamInfo
 	factory *PrometheusFactory
 }
 
@@ -21,15 +21,15 @@ func (p prometheusProcessor) EventStart(evt mtglib.EventStart) {
 	info := acquireStreamInfo()
 
 	if evt.RemoteIP.To4() != nil {
-		info[TagIPFamily] = TagIPFamilyIPv4
+		info.tags[TagIPFamily] = TagIPFamilyIPv4
 	} else {
-		info[TagIPFamily] = TagIPFamilyIPv6
+		info.tags[TagIPFamily] = TagIPFamilyIPv6
 	}
 
 	p.streams[evt.StreamID()] = info
 
 	p.factory.metricClientConnections.
-		WithLabelValues(info[TagIPFamily]).
+		WithLabelValues(info.tags[TagIPFamily]).
 		Inc()
 }
 
@@ -39,11 +39,25 @@ func (p prometheusProcessor) EventConnectedToDC(evt mtglib.EventConnectedToDC) {
 		return
 	}
 
-	info[TagTelegramIP] = evt.RemoteIP.String()
-	info[TagDC] = strconv.Itoa(evt.DC)
+	info.tags[TagTelegramIP] = evt.RemoteIP.String()
+	info.tags[TagDC] = strconv.Itoa(evt.DC)
 
 	p.factory.metricTelegramConnections.
-		WithLabelValues(info[TagTelegramIP], info[TagDC]).
+		WithLabelValues(info.tags[TagTelegramIP], info.tags[TagDC]).
+		Inc()
+}
+
+func (p prometheusProcessor) EventDomainFronting(evt mtglib.EventDomainFronting) {
+	info, ok := p.streams[evt.StreamID()]
+	if !ok {
+		return
+	}
+
+	info.isDomainFronted = true
+
+	p.factory.metricDomainFronting.Inc()
+	p.factory.metricDomainFrontingConnections.
+		WithLabelValues(info.tags[TagIPFamily]).
 		Inc()
 }
 
@@ -53,9 +67,17 @@ func (p prometheusProcessor) EventTraffic(evt mtglib.EventTraffic) {
 		return
 	}
 
-	p.factory.metricTelegramTraffic.
-		WithLabelValues(info[TagTelegramIP], info[TagDC], getDirection(evt.IsRead)).
-		Add(float64(evt.Traffic))
+	direction := getDirection(evt.IsRead)
+
+	if info.isDomainFronted {
+		p.factory.metricDomainFrontingTraffic.
+			WithLabelValues(direction).
+			Add(float64(evt.Traffic))
+	} else {
+		p.factory.metricTelegramTraffic.
+			WithLabelValues(info.tags[TagTelegramIP], info.tags[TagDC], direction).
+			Add(float64(evt.Traffic))
+	}
 }
 
 func (p prometheusProcessor) EventFinish(evt mtglib.EventFinish) {
@@ -70,12 +92,16 @@ func (p prometheusProcessor) EventFinish(evt mtglib.EventFinish) {
 	}()
 
 	p.factory.metricClientConnections.
-		WithLabelValues(info[TagIPFamily]).
+		WithLabelValues(info.tags[TagIPFamily]).
 		Dec()
 
-	if telegramIP, ok := info[TagTelegramIP]; ok {
+	if info.isDomainFronted {
+		p.factory.metricDomainFrontingConnections.
+			WithLabelValues(info.tags[TagIPFamily]).
+			Dec()
+	} else if telegramIP, ok := info.tags[TagTelegramIP]; ok {
 		p.factory.metricTelegramConnections.
-			WithLabelValues(telegramIP, info[TagDC]).
+			WithLabelValues(telegramIP, info.tags[TagDC]).
 			Dec()
 	}
 }
@@ -89,7 +115,11 @@ func (p prometheusProcessor) EventIPBlocklisted(evt mtglib.EventIPBlocklisted) {
 }
 
 func (p prometheusProcessor) Shutdown() {
-	p.streams = make(map[string]streamInfo)
+	for _, v := range p.streams {
+		releaseStreamInfo(v)
+	}
+
+	p.streams = make(map[string]*streamInfo)
 }
 
 type PrometheusFactory struct {
@@ -110,7 +140,7 @@ type PrometheusFactory struct {
 
 func (p *PrometheusFactory) Make() events.Observer {
 	return prometheusProcessor{
-		streams: make(map[string]streamInfo),
+		streams: make(map[string]*streamInfo),
 		factory: p,
 	}
 }
@@ -149,8 +179,8 @@ func NewPrometheus(metricPrefix, httpPath string) *PrometheusFactory { // nolint
 		}, []string{TagTelegramIP, TagDC}),
 		metricDomainFrontingConnections: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: metricPrefix,
-			Name:      MetricDomainFronting,
-			Help:      "A number of connections which talk with front domain.",
+			Name:      MetricDomainFrontingConnections,
+			Help:      "A number of connections which talk to front domain.",
 		}, []string{TagIPFamily}),
 
 		metricTelegramTraffic: prometheus.NewCounterVec(prometheus.CounterOpts{

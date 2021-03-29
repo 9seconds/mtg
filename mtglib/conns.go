@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-type connTelegramTraffic struct {
+type connTraffic struct {
 	net.Conn
 
 	connID string
@@ -17,7 +17,7 @@ type connTelegramTraffic struct {
 	ctx    context.Context
 }
 
-func (c connTelegramTraffic) Read(b []byte) (int, error) {
+func (c connTraffic) Read(b []byte) (int, error) {
 	n, err := c.Conn.Read(b)
 
 	if n > 0 {
@@ -32,7 +32,7 @@ func (c connTelegramTraffic) Read(b []byte) (int, error) {
 	return n, err // nolint: wrapcheck
 }
 
-func (c connTelegramTraffic) Write(b []byte) (int, error) {
+func (c connTraffic) Write(b []byte) (int, error) {
 	n, err := c.Conn.Write(b)
 
 	if n > 0 {

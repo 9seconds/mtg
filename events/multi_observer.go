@@ -40,6 +40,21 @@ func (m multiObserver) EventConnectedToDC(evt mtglib.EventConnectedToDC) {
 	wg.Wait()
 }
 
+func (m multiObserver) EventDomainFronting(evt mtglib.EventDomainFronting) {
+	wg := &sync.WaitGroup{}
+	wg.Add(len(m.observers))
+
+	for _, v := range m.observers {
+		go func(obs Observer) {
+			defer wg.Done()
+
+			obs.EventDomainFronting(evt)
+		}(v)
+	}
+
+	wg.Wait()
+}
+
 func (m multiObserver) EventTraffic(evt mtglib.EventTraffic) {
 	wg := &sync.WaitGroup{}
 	wg.Add(len(m.observers))

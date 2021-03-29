@@ -54,7 +54,7 @@ func (suite *PrometheusTestSuite) TearDownTest() {
 	suite.httpListener.Close()
 }
 
-func (suite *PrometheusTestSuite) TestEventStartFinish() {
+func (suite *PrometheusTestSuite) TestTelegramPath() {
 	suite.prometheus.EventStart(mtglib.EventStart{
 		CreatedAt: time.Now(),
 		ConnID:    "connID",
@@ -112,6 +112,65 @@ func (suite *PrometheusTestSuite) TestEventStartFinish() {
 	suite.NoError(err)
 	suite.Contains(data, `mtg_client_connections{ip_family="ipv4"} 0`)
 	suite.Contains(data, `mtg_telegram_connections{dc="4",telegram_ip="10.0.0.1"} 0`)
+}
+
+func (suite *PrometheusTestSuite) TestDomainFrontingPath() {
+	suite.prometheus.EventStart(mtglib.EventStart{
+		CreatedAt: time.Now(),
+		ConnID:    "connID",
+		RemoteIP:  net.ParseIP("10.0.0.10"),
+	})
+	time.Sleep(100 * time.Millisecond)
+
+	data, err := suite.Get()
+	suite.NoError(err)
+	suite.Contains(data, `mtg_client_connections{ip_family="ipv4"} 1`)
+
+	suite.prometheus.EventDomainFronting(mtglib.EventDomainFronting{
+		CreatedAt: time.Now(),
+		ConnID:    "connID",
+	})
+	time.Sleep(100 * time.Millisecond)
+
+	data, err = suite.Get()
+	suite.NoError(err)
+	suite.Contains(data, `mtg_domain_fronting 1`)
+	suite.Contains(data, `mtg_domain_fronting_connections{ip_family="ipv4"} 1`)
+
+	suite.prometheus.EventTraffic(mtglib.EventTraffic{
+		CreatedAt: time.Now(),
+		ConnID:    "connID",
+		Traffic:   200,
+		IsRead:    true,
+	})
+	time.Sleep(100 * time.Millisecond)
+
+	data, err = suite.Get()
+	suite.NoError(err)
+	suite.Contains(data, `mtg_domain_fronting_traffic{direction="to_client"} 200`)
+
+	suite.prometheus.EventTraffic(mtglib.EventTraffic{
+		CreatedAt: time.Now(),
+		ConnID:    "connID",
+		Traffic:   100,
+		IsRead:    false,
+	})
+	time.Sleep(100 * time.Millisecond)
+
+	data, err = suite.Get()
+	suite.NoError(err)
+	suite.Contains(data, `mtg_domain_fronting_traffic{direction="from_client"} 100`)
+
+	suite.prometheus.EventFinish(mtglib.EventFinish{
+		CreatedAt: time.Now(),
+		ConnID:    "connID",
+	})
+	time.Sleep(100 * time.Millisecond)
+
+	data, err = suite.Get()
+	suite.NoError(err)
+	suite.Contains(data, `mtg_client_connections{ip_family="ipv4"} 0`)
+	suite.Contains(data, `mtg_domain_fronting_connections{ip_family="ipv4"} 0`)
 }
 
 func (suite *PrometheusTestSuite) TestEventConcurrencyLimited() {

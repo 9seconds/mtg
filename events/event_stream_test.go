@@ -90,6 +90,29 @@ func (suite *EventStreamTestSuite) TestEventConnectedToDC() {
 	time.Sleep(100 * time.Millisecond)
 }
 
+func (suite *EventStreamTestSuite) TestEventDomainFronting() {
+	evt := mtglib.EventDomainFronting{
+		CreatedAt: time.Now(),
+		ConnID:    "connID",
+	}
+
+	for _, v := range []*ObserverMock{suite.observerMock1, suite.observerMock2} {
+		v.
+			On("EventDomainFronting", mock.Anything).
+			Once().
+			Run(func(args mock.Arguments) {
+				caught := args.Get(0).(mtglib.EventDomainFronting)
+
+				suite.Equal(evt.CreatedAt, caught.CreatedAt)
+				suite.Equal(evt.ConnID, caught.ConnID)
+				suite.Equal(evt.StreamID(), caught.StreamID())
+			})
+	}
+
+	suite.stream.Send(suite.ctx, evt)
+	time.Sleep(100 * time.Millisecond)
+}
+
 func (suite *EventStreamTestSuite) TestEventTraffic() {
 	evt := mtglib.EventTraffic{
 		CreatedAt: time.Now(),

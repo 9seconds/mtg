@@ -58,6 +58,16 @@ func (suite *EventsTestSuite) TestEventTraffic() {
 	suite.WithinDuration(time.Now(), evt.Timestamp(), 10*time.Millisecond)
 }
 
+func (suite *EventsTestSuite) TestEventDomainFronting() {
+	evt := mtglib.EventDomainFronting{
+		CreatedAt: time.Now(),
+		ConnID:    "CONNID",
+	}
+
+	suite.Equal("CONNID", evt.StreamID())
+	suite.WithinDuration(time.Now(), evt.Timestamp(), 10*time.Millisecond)
+}
+
 func (suite *EventsTestSuite) TestEventConcurrencyLimited() {
 	evt := mtglib.EventConcurrencyLimited{
 		CreatedAt: time.Now(),

@@ -62,6 +62,19 @@ func (e EventFinish) Timestamp() time.Time {
 	return e.CreatedAt
 }
 
+type EventDomainFronting struct {
+	CreatedAt time.Time
+	ConnID    string
+}
+
+func (e EventDomainFronting) StreamID() string {
+	return e.ConnID
+}
+
+func (e EventDomainFronting) Timestamp() time.Time {
+	return e.CreatedAt
+}
+
 type EventConcurrencyLimited struct {
 	CreatedAt time.Time
 }

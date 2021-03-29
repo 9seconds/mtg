@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-const statsdSleepTime = 3 * statsd.DefaultFlushInterval
+const statsdSleepTime = 4 * statsd.DefaultFlushInterval
 
 type statsdFakeServer struct {
 	conn  *net.UDPConn
@@ -104,7 +104,7 @@ func (suite *StatsdTestSuite) TearDownTest() {
 	suite.statsdServer.Close()
 }
 
-func (suite *StatsdTestSuite) TestEventStartFinish() {
+func (suite *StatsdTestSuite) TestTelegramPath() {
 	suite.statsd.EventStart(mtglib.EventStart{
 		CreatedAt: time.Now(),
 		ConnID:    "connID",
@@ -152,6 +152,61 @@ func (suite *StatsdTestSuite) TestEventStartFinish() {
 		"mtg.telegram_connections:-1|g|#telegram_ip:10.1.0.10,dc:2")
 	suite.Contains(suite.statsdServer.String(),
 		"mtg.client_connections:-1|g|#ip_family:ipv4")
+
+	suite.NotContains(suite.statsdServer.String(), "domain_fronting_traffic")
+	suite.NotContains(suite.statsdServer.String(), "domain_fronting_connections")
+}
+
+func (suite *StatsdTestSuite) TestDomainFrontingPath() {
+	suite.statsd.EventStart(mtglib.EventStart{
+		CreatedAt: time.Now(),
+		ConnID:    "connID",
+		RemoteIP:  net.ParseIP("10.0.0.10"),
+	})
+	time.Sleep(statsdSleepTime)
+	suite.Equal("mtg.client_connections:+1|g|#ip_family:ipv4", suite.statsdServer.String())
+
+	suite.statsd.EventDomainFronting(mtglib.EventDomainFronting{
+		CreatedAt: time.Now(),
+		ConnID:    "connID",
+	})
+	time.Sleep(statsdSleepTime)
+	suite.Contains(suite.statsdServer.String(), "mtg.domain_fronting:1|c")
+	suite.Contains(suite.statsdServer.String(),
+		`mtg.domain_fronting_connections:+1|g|#ip_family:ipv4`)
+
+	suite.statsd.EventTraffic(mtglib.EventTraffic{
+		CreatedAt: time.Now(),
+		ConnID:    "connID",
+		Traffic:   30,
+		IsRead:    true,
+	})
+	time.Sleep(statsdSleepTime)
+	suite.Contains(suite.statsdServer.String(),
+		`mtg.domain_fronting_traffic:30|c|#direction:to_client`)
+
+	suite.statsd.EventTraffic(mtglib.EventTraffic{
+		CreatedAt: time.Now(),
+		ConnID:    "connID",
+		Traffic:   90,
+		IsRead:    false,
+	})
+	time.Sleep(statsdSleepTime)
+	suite.Contains(suite.statsdServer.String(),
+		`mtg.domain_fronting_traffic:90|c|#direction:from_client`)
+
+	suite.statsd.EventFinish(mtglib.EventFinish{
+		CreatedAt: time.Now(),
+		ConnID:    "connID",
+	})
+	time.Sleep(statsdSleepTime)
+	suite.Contains(suite.statsdServer.String(),
+		"mtg.domain_fronting_connections:-1|g|#ip_family:ipv4")
+	suite.Contains(suite.statsdServer.String(),
+		"mtg.client_connections:-1|g|#ip_family:ipv4")
+
+	suite.NotContains(suite.statsdServer.String(), "telegram_traffic")
+	suite.NotContains(suite.statsdServer.String(), "telegram_connections")
 }
 
 func (suite *StatsdTestSuite) TestEventConcurrencyLimited() {

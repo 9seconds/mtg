@@ -13,7 +13,7 @@ import (
 )
 
 type statsdProcessor struct {
-	streams map[string]streamInfo
+	streams map[string]*streamInfo
 	client  *statsd.Client
 }
 
@@ -21,9 +21,9 @@ func (s statsdProcessor) EventStart(evt mtglib.EventStart) {
 	info := acquireStreamInfo()
 
 	if evt.RemoteIP.To4() != nil {
-		info[TagIPFamily] = TagIPFamilyIPv4
+		info.tags[TagIPFamily] = TagIPFamilyIPv4
 	} else {
-		info[TagIPFamily] = TagIPFamilyIPv6
+		info.tags[TagIPFamily] = TagIPFamilyIPv6
 	}
 
 	s.streams[evt.StreamID()] = info
@@ -39,13 +39,27 @@ func (s statsdProcessor) EventConnectedToDC(evt mtglib.EventConnectedToDC) {
 		return
 	}
 
-	info[TagTelegramIP] = evt.RemoteIP.String()
-	info[TagDC] = strconv.Itoa(evt.DC)
+	info.tags[TagTelegramIP] = evt.RemoteIP.String()
+	info.tags[TagDC] = strconv.Itoa(evt.DC)
 
 	s.client.GaugeDelta(MetricTelegramConnections,
 		1,
 		info.T(TagTelegramIP),
 		info.T(TagDC))
+}
+
+func (s statsdProcessor) EventDomainFronting(evt mtglib.EventDomainFronting) {
+	info, ok := s.streams[evt.StreamID()]
+	if !ok {
+		return
+	}
+
+	info.isDomainFronted = true
+
+	s.client.Incr(MetricDomainFronting, 1)
+	s.client.GaugeDelta(MetricDomainFrontingConnections,
+		1,
+		info.T(TagIPFamily))
 }
 
 func (s statsdProcessor) EventTraffic(evt mtglib.EventTraffic) {
@@ -54,11 +68,19 @@ func (s statsdProcessor) EventTraffic(evt mtglib.EventTraffic) {
 		return
 	}
 
-	s.client.Incr(MetricTelegramTraffic,
-		int64(evt.Traffic),
-		info.T(TagTelegramIP),
-		info.T(TagDC),
-		statsd.StringTag(TagDirection, getDirection(evt.IsRead)))
+	directionTag := statsd.StringTag(TagDirection, getDirection(evt.IsRead))
+
+	if info.isDomainFronted {
+		s.client.Incr(MetricDomainFrontingTraffic,
+			int64(evt.Traffic),
+			directionTag)
+	} else {
+		s.client.Incr(MetricTelegramTraffic,
+			int64(evt.Traffic),
+			info.T(TagTelegramIP),
+			info.T(TagDC),
+			directionTag)
+	}
 }
 
 func (s statsdProcessor) EventFinish(evt mtglib.EventFinish) {
@@ -76,7 +98,11 @@ func (s statsdProcessor) EventFinish(evt mtglib.EventFinish) {
 		-1,
 		info.T(TagIPFamily))
 
-	if _, ok := info[TagTelegramIP]; ok {
+	if info.isDomainFronted {
+		s.client.GaugeDelta(MetricDomainFrontingConnections,
+			-1,
+			info.T(TagIPFamily))
+	} else if _, ok := info.tags[TagTelegramIP]; ok {
 		s.client.GaugeDelta(MetricTelegramConnections,
 			-1,
 			info.T(TagTelegramIP),
@@ -119,7 +145,7 @@ func (s StatsdFactory) Close() error {
 func (s StatsdFactory) Make() events.Observer {
 	return statsdProcessor{
 		client:  s.client,
-		streams: make(map[string]streamInfo),
+		streams: make(map[string]*streamInfo),
 	}
 }
 

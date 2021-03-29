@@ -31,6 +31,10 @@ func (suite *NoopTestSuite) SetupSuite() {
 			RemoteIP:  net.ParseIP("127.1.0.1"),
 			DC:        2,
 		},
+		"domain-fronting": mtglib.EventDomainFronting{
+			CreatedAt: time.Now(),
+			ConnID:    "connID",
+		},
 		"traffic": mtglib.EventTraffic{
 			CreatedAt: time.Now(),
 			ConnID:    "connID",
@@ -76,6 +80,8 @@ func (suite *NoopTestSuite) TestObserver() {
 				observer.EventStart(typedEvt)
 			case mtglib.EventConnectedToDC:
 				observer.EventConnectedToDC(typedEvt)
+			case mtglib.EventDomainFronting:
+				observer.EventDomainFronting(typedEvt)
 			case mtglib.EventFinish:
 				observer.EventFinish(typedEvt)
 			case mtglib.EventConcurrencyLimited:
