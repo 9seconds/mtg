@@ -58,7 +58,7 @@ func (suite *ClientHandshakeTestSuite) TestOk() {
 					copy(writeData, arr)
 				})
 
-			conn := &obfuscated2.Conn{
+			conn := obfuscated2.Conn{
 				Conn:      connMock,
 				Encryptor: encryptor,
 				Decryptor: decryptor,

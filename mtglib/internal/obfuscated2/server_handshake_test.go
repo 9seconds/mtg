@@ -17,7 +17,7 @@ type ServerHandshakeTestSuite struct {
 	suite.Suite
 
 	connMock  *testlib.NetConnMock
-	proxyConn *obfuscated2.Conn
+	proxyConn obfuscated2.Conn
 	encryptor cipher.Stream
 	decryptor cipher.Stream
 }
@@ -29,7 +29,7 @@ func (suite *ServerHandshakeTestSuite) SetupTest() {
 	encryptor, decryptor, err := obfuscated2.ServerHandshake(buf)
 	suite.NoError(err)
 
-	suite.proxyConn = &obfuscated2.Conn{
+	suite.proxyConn = obfuscated2.Conn{
 		Conn:      suite.connMock,
 		Encryptor: encryptor,
 		Decryptor: decryptor,
