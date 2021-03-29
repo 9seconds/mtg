@@ -24,7 +24,7 @@ type Proxy struct {
 
 	idleTimeout        time.Duration
 	bufferSize         int
-	domainFrontAddress string
+	domainFrontingPort int
 	workerPool         *ants.PoolWithFunc
 	telegram           *telegram.Telegram
 
@@ -35,6 +35,10 @@ type Proxy struct {
 	ipBlocklist        IPBlocklist
 	eventStream        EventStream
 	logger             Logger
+}
+
+func (p *Proxy) DomainFrontingAddress() string {
+	return net.JoinHostPort(p.secret.Host, strconv.Itoa(p.domainFrontingPort))
 }
 
 func (p *Proxy) ServeConn(conn net.Conn) {
@@ -247,7 +251,7 @@ func (p *Proxy) doDomainFronting(ctx *streamContext, conn *connRewind) {
 
 	conn.Rewind()
 
-	frontConn, err := p.network.DialContext(ctx, "tcp", p.domainFrontAddress)
+	frontConn, err := p.network.DialContext(ctx, "tcp", p.DomainFrontingAddress())
 	if err != nil {
 		p.logger.WarningError("cannot dial to the fronting domain", err)
 
@@ -324,11 +328,10 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) { // nolint: cyclop, funlen
 		ipBlocklist:        opts.IPBlocklist,
 		eventStream:        opts.EventStream,
 		logger:             opts.Logger.Named("proxy"),
-		domainFrontAddress: net.JoinHostPort(opts.Secret.Host,
-			strconv.Itoa(domainFrontingPort)),
-		idleTimeout: idleTimeout,
-		bufferSize:  int(bufferSize),
-		telegram:    tg,
+		domainFrontingPort: int(domainFrontingPort),
+		idleTimeout:        idleTimeout,
+		bufferSize:         int(bufferSize),
+		telegram:           tg,
 	}
 
 	pool, err := ants.NewPoolWithFunc(int(concurrency), func(arg interface{}) {
