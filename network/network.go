@@ -25,9 +25,9 @@ func (n networkHTTPTransport) RoundTrip(req *http.Request) (*http.Response, erro
 
 type network struct {
 	dialer      Dialer
-	dns         dnsResolver
 	httpTimeout time.Duration
 	userAgent   string
+	dns         *dnsResolver
 }
 
 func (n *network) Dial(protocol, address string) (net.Conn, error) {

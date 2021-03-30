@@ -2,27 +2,38 @@ package network
 
 import (
 	"net/http"
+	"sync"
 	"time"
 
 	doh "github.com/babolivier/go-doh-client"
-	"github.com/dgraph-io/ristretto"
 )
 
-const (
-	dnsResolverSize     = 1024 * 1024 // 1mb
-	dnsResolverKeepTime = 10 * time.Minute
-)
+const dnsResolverKeepTime = 10 * time.Minute
 
-type dnsResolver struct {
-	resolver doh.Resolver
-	cache    *ristretto.Cache
+type dnsResolverCacheEntry struct {
+	ips       []string
+	createdAt time.Time
 }
 
-func (d dnsResolver) LookupA(hostname string) []string {
-	key := "\x00." + hostname
+func (c dnsResolverCacheEntry) Ok() bool {
+	return time.Since(c.createdAt) < dnsResolverKeepTime
+}
 
-	if value, ok := d.cache.Get(key); ok {
-		return value.([]string)
+type dnsResolver struct {
+	resolver   doh.Resolver
+	cache      map[string]dnsResolverCacheEntry
+	cacheMutex sync.RWMutex
+}
+
+func (d *dnsResolver) LookupA(hostname string) []string {
+	key := "\x00" + hostname
+
+	d.cacheMutex.RLock()
+	entry, ok := d.cache[key]
+	d.cacheMutex.RUnlock()
+
+	if ok && entry.Ok() {
+		return entry.ips
 	}
 
 	var ips []string
@@ -32,17 +43,26 @@ func (d dnsResolver) LookupA(hostname string) []string {
 			ips = append(ips, v.IP4)
 		}
 
-		d.cache.SetWithTTL(key, ips, 0, dnsResolverKeepTime)
+		d.cacheMutex.Lock()
+		d.cache[key] = dnsResolverCacheEntry{
+			ips:       ips,
+			createdAt: time.Now(),
+		}
+		d.cacheMutex.Unlock()
 	}
 
 	return ips
 }
 
-func (d dnsResolver) LookupAAAA(hostname string) []string {
-	key := "\x01." + hostname
+func (d *dnsResolver) LookupAAAA(hostname string) []string {
+	key := "\x01" + hostname
 
-	if value, ok := d.cache.Get(key); ok {
-		return value.([]string)
+	d.cacheMutex.RLock()
+	entry, ok := d.cache[key]
+	d.cacheMutex.RUnlock()
+
+	if ok && entry.Ok() {
+		return entry.ips
 	}
 
 	var ips []string
@@ -52,37 +72,24 @@ func (d dnsResolver) LookupAAAA(hostname string) []string {
 			ips = append(ips, v.IP6)
 		}
 
-		d.cache.SetWithTTL(key, ips, 0, dnsResolverKeepTime)
+		d.cacheMutex.Lock()
+		d.cache[key] = dnsResolverCacheEntry{
+			ips:       ips,
+			createdAt: time.Now(),
+		}
+		d.cacheMutex.Unlock()
 	}
 
 	return ips
 }
 
-func newDNSResolver(hostname string, httpClient *http.Client) dnsResolver {
-	cache, err := ristretto.NewCache(&ristretto.Config{
-		NumCounters: 10 * dnsResolverSize, // nolint: gomnd // taken from official doc as a best practice value
-		MaxCost:     dnsResolverSize,
-		BufferItems: 64, // nolint: gomnd // taken from official doc as a best practice value
-		Cost: func(value interface{}) int64 {
-			var cost int64
-
-			for _, v := range value.([]string) {
-				cost += int64(len([]byte(v)))
-			}
-
-			return cost
-		},
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	return dnsResolver{
+func newDNSResolver(hostname string, httpClient *http.Client) *dnsResolver {
+	return &dnsResolver{
 		resolver: doh.Resolver{
 			Host:       hostname,
 			Class:      doh.IN,
 			HTTPClient: httpClient,
 		},
-		cache: cache,
+		cache: map[string]dnsResolverCacheEntry{},
 	}
 }

@@ -12,7 +12,7 @@ import (
 type DNSResolverTestSuite struct {
 	suite.Suite
 
-	d dnsResolver
+	d *dnsResolver
 }
 
 func (suite *DNSResolverTestSuite) TestLookupA() {
