@@ -9,3 +9,4 @@ mtg
 vendor/
 ccbuilds/
 .bin/
+coverage.txt
