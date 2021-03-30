@@ -9,13 +9,13 @@ import (
 	"github.com/OneOfOne/xxhash"
 )
 
-type eventStream struct {
+type EventStream struct {
 	ctx       context.Context
 	ctxCancel context.CancelFunc
 	chans     []chan mtglib.Event
 }
 
-func (e eventStream) Send(ctx context.Context, evt mtglib.Event) {
+func (e EventStream) Send(ctx context.Context, evt mtglib.Event) {
 	var chanNo uint32
 
 	if streamID := evt.StreamID(); streamID != "" {
@@ -31,17 +31,17 @@ func (e eventStream) Send(ctx context.Context, evt mtglib.Event) {
 	}
 }
 
-func (e eventStream) Shutdown() {
+func (e EventStream) Shutdown() {
 	e.ctxCancel()
 }
 
-func NewEventStream(observerFactories []ObserverFactory) mtglib.EventStream {
+func NewEventStream(observerFactories []ObserverFactory) EventStream {
 	if len(observerFactories) == 0 {
 		observerFactories = append(observerFactories, NewNoopObserver)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	rv := eventStream{
+	rv := EventStream{
 		ctx:       ctx,
 		ctxCancel: cancel,
 		chans:     make([]chan mtglib.Event, runtime.NumCPU()),

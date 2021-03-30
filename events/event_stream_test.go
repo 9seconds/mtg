@@ -19,7 +19,7 @@ type EventStreamTestSuite struct {
 	ctxCancel     context.CancelFunc
 	observerMock1 *ObserverMock
 	observerMock2 *ObserverMock
-	stream        mtglib.EventStream
+	stream        events.EventStream
 }
 
 func (suite *EventStreamTestSuite) SetupTest() {

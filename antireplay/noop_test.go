@@ -18,8 +18,6 @@ func (suite *NoopTestSuite) TestOp() {
 	suite.False(filter.SeenBefore([]byte{4, 5, 6}))
 	suite.False(filter.SeenBefore([]byte{1, 2, 3}))
 	suite.False(filter.SeenBefore([]byte{4, 5, 6}))
-
-	filter.Shutdown()
 }
 
 func TestNoop(t *testing.T) {

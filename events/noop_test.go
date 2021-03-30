@@ -70,8 +70,6 @@ func (suite *NoopTestSuite) TestStream() {
 			stream.Send(suite.ctx, value)
 		})
 	}
-
-	stream.Shutdown()
 }
 
 func (suite *NoopTestSuite) TestObserver() {

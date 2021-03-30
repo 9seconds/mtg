@@ -9,6 +9,7 @@ require (
 	github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5
 	github.com/babolivier/go-doh-client v0.0.0-20201028162107-a76cff4cb8b6
 	github.com/d4l3k/messagediff v1.2.1 // indirect
+	github.com/dgraph-io/ristretto v0.0.3 // indirect
 	github.com/jarcoal/httpmock v1.0.8
 	github.com/kentik/patricia v0.0.0-20201202224819-f9447a6e25f1
 	github.com/libp2p/go-reuseport v0.0.2

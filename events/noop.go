@@ -9,7 +9,6 @@ import (
 type noop struct{}
 
 func (n noop) Send(ctx context.Context, evt mtglib.Event) {}
-func (n noop) Shutdown()                                  {}
 
 func NewNoopStream() mtglib.EventStream {
 	return noop{}

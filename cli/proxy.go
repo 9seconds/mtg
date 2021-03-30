@@ -59,12 +59,6 @@ func (c *Proxy) Execute() error { // nolint: funlen
 		PreferIP:           c.Config.PreferIP.Value(mtglib.DefaultPreferIP),
 	}
 
-	defer func() {
-		opts.AntiReplayCache.Shutdown()
-		opts.IPBlocklist.Shutdown()
-		opts.EventStream.Shutdown()
-	}()
-
 	if opts.Concurrency == 0 {
 		opts.Concurrency = mtglib.DefaultConcurrency
 	}

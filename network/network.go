@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/9seconds/mtg/v2/mtglib"
-	doh "github.com/babolivier/go-doh-client"
 )
 
 type networkHTTPTransport struct {
@@ -26,7 +25,7 @@ func (n networkHTTPTransport) RoundTrip(req *http.Request) (*http.Response, erro
 
 type network struct {
 	dialer      Dialer
-	dns         doh.Resolver
+	dns         dnsResolver
 	httpTimeout time.Duration
 	userAgent   string
 }
@@ -84,14 +83,11 @@ func (n *network) dnsResolve(protocol, address string) ([]string, error) {
 		go func() {
 			defer wg.Done()
 
-			if recs, _, err := n.dns.LookupA(address); err == nil {
-				mutex.Lock()
-				defer mutex.Unlock()
+			resolved := n.dns.LookupA(address)
 
-				for _, v := range recs {
-					ips = append(ips, v.IP4)
-				}
-			}
+			mutex.Lock()
+			ips = append(ips, resolved...)
+			mutex.Unlock()
 		}()
 	}
 
@@ -102,14 +98,11 @@ func (n *network) dnsResolve(protocol, address string) ([]string, error) {
 		go func() {
 			defer wg.Done()
 
-			if recs, _, err := n.dns.LookupAAAA(address); err == nil {
-				mutex.Lock()
-				defer mutex.Unlock()
+			resolved := n.dns.LookupAAAA(address)
 
-				for _, v := range recs {
-					ips = append(ips, v.IP6)
-				}
-			}
+			mutex.Lock()
+			ips = append(ips, resolved...)
+			mutex.Unlock()
 		}()
 	}
 
@@ -140,11 +133,8 @@ func NewNetwork(dialer Dialer,
 		dialer:      dialer,
 		httpTimeout: httpTimeout,
 		userAgent:   userAgent,
-		dns: doh.Resolver{
-			Host:       dohHostname,
-			Class:      doh.IN,
-			HTTPClient: makeHTTPClient(userAgent, DNSTimeout, dialer.DialContext),
-		},
+		dns: newDNSResolver(dohHostname,
+			makeHTTPClient(userAgent, DNSTimeout, dialer.DialContext)),
 	}, nil
 }
 

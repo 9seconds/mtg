@@ -18,8 +18,6 @@ func (suite *StableBloomFilterTestSuite) TestOp() {
 	suite.False(filter.SeenBefore([]byte{4, 5, 6}))
 	suite.True(filter.SeenBefore([]byte{1, 2, 3}))
 	suite.True(filter.SeenBefore([]byte{4, 5, 6}))
-
-	filter.Shutdown()
 }
 
 func TestStableBloomFilter(t *testing.T) {
