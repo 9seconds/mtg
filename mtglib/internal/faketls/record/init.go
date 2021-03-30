@@ -55,7 +55,7 @@ func (v Version) String() string {
 		return "tls1.3"
 	}
 
-	return fmt.Sprintf("tls(%d)", uint16(v))
+	return fmt.Sprintf("tls?(%d)", uint16(v))
 }
 
 func (v Version) Valid() error {
