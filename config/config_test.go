@@ -42,6 +42,12 @@ func (suite *ConfigTestSuite) TestParseMinimalConfig() {
 	suite.Equal("0.0.0.0:3128", conf.BindTo.String())
 }
 
+func (suite *ConfigTestSuite) TestString() {
+	conf, err := config.Parse(suite.ReadConfig("minimal.toml"))
+	suite.NoError(err)
+	suite.NotEmpty(conf.String())
+}
+
 func TestConfig(t *testing.T) {
 	t.Parallel()
 	suite.Run(t, &ConfigTestSuite{})
