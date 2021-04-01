@@ -69,7 +69,7 @@ func (suite *ConnTestSuite) TestReadContextDone() {
 
 	suite.tickChannel <- struct{}{}
 
-	suite.c.Read(suite.buf)
+	suite.c.Read(suite.buf) // nolint: errcheck
 }
 
 func (suite *ConnTestSuite) TestWriteOk() {
@@ -105,7 +105,7 @@ func (suite *ConnTestSuite) TestWriteContextDone() {
 
 	suite.tickChannel <- struct{}{}
 
-	suite.c.Write(suite.buf)
+	suite.c.Write(suite.buf) // nolint: errcheck
 }
 
 func (suite *ConnTestSuite) TearDownTest() {

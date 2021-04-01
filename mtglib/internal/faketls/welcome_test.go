@@ -70,8 +70,8 @@ func (suite *WelcomeTestSuite) TestOk() {
 	copy(welcomePacket[11:], empty)
 
 	mac := hmac.New(sha256.New, suite.secret.Key[:])
-	mac.Write(suite.h.Random[:])
-	mac.Write(welcomePacket)
+	mac.Write(suite.h.Random[:]) // nolint: errcheck
+	mac.Write(welcomePacket)     // nolint: errcheck
 
 	suite.Equal(random, mac.Sum(nil))
 }
