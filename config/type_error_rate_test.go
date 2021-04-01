@@ -35,6 +35,8 @@ func (suite *TypeErrorRateTestSuite) TestUnmarshalFail() {
 			assert.Error(t, json.Unmarshal(data, &typeErrorRateTestStruct{}))
 		})
 	}
+
+	suite.Error(json.Unmarshal([]byte("test"), &typeErrorRateTestStruct{}))
 }
 
 func (suite *TypeErrorRateTestSuite) TestUnmarshalOk() {
