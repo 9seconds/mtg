@@ -2,10 +2,13 @@ package relay_test
 
 import (
 	"context"
+	"io"
 	"testing"
 	"time"
 
 	"github.com/9seconds/mtg/v2/mtglib/internal/relay"
+	"github.com/9seconds/mtg/v2/testlib"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -50,6 +53,22 @@ func (suite *RelayTestSuite) TestCopyFine() {
 	// yes, this test is not good enough. but apparently, if it hangs,
 	// we can debug most of possible issues.
 	_ = suite.r.Process(eastConn, westConn)
+}
+
+func (suite *RelayTestSuite) TestTimeout() {
+	eastConn := &rwcMock{}
+	eastConn.Write([]byte{1, 2, 3, 4, 5}) // nolint: errcheck
+
+	westConn := &testlib.NetConnMock{}
+	westConn.On("Close").Return(nil)
+	westConn.On("Read", mock.Anything).Return(0, io.EOF).Run(func(_ mock.Arguments) {
+		time.Sleep(2 * time.Second)
+	})
+	westConn.On("Write", mock.Anything).Return(0, io.EOF).Run(func(_ mock.Arguments) {
+		time.Sleep(2 * time.Second)
+	})
+
+	suite.Error(suite.r.Process(eastConn, westConn))
 }
 
 func TestRelay(t *testing.T) {
