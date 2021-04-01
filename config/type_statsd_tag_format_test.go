@@ -14,11 +14,17 @@ type typeStatsdTagFormatTestStruct struct {
 	Value config.TypeStatsdTagFormat `json:"value"`
 }
 
-type TypeStatsdTagFormat struct {
+type TypeStatsdTagFormatTestSuite struct {
 	suite.Suite
 }
 
-func (suite *TypeStatsdTagFormat) TestUnmarshalFail() {
+func (suite *TypeStatsdTagFormatTestSuite) TestUnmarshalNil() {
+	typ := &config.TypeStatsdTagFormat{}
+	suite.NoError(typ.UnmarshalText(nil))
+	suite.Equal("lalala", typ.Value("lalala"))
+}
+
+func (suite *TypeStatsdTagFormatTestSuite) TestUnmarshalFail() {
 	testData := []string{
 		"p",
 		"ipv4",
@@ -38,7 +44,7 @@ func (suite *TypeStatsdTagFormat) TestUnmarshalFail() {
 	}
 }
 
-func (suite *TypeStatsdTagFormat) TestUnmarshalOk() {
+func (suite *TypeStatsdTagFormatTestSuite) TestUnmarshalOk() {
 	testData := []string{
 		config.TypeStatsdTagFormatDatadog,
 		config.TypeStatsdTagFormatInfluxdb,
@@ -70,7 +76,7 @@ func (suite *TypeStatsdTagFormat) TestUnmarshalOk() {
 	}
 }
 
-func (suite *TypeStatsdTagFormat) TestMarshalOk() {
+func (suite *TypeStatsdTagFormatTestSuite) TestMarshalOk() {
 	testData := []string{
 		config.TypeStatsdTagFormatDatadog,
 		config.TypeStatsdTagFormatInfluxdb,
@@ -104,7 +110,7 @@ func (suite *TypeStatsdTagFormat) TestMarshalOk() {
 	}
 }
 
-func (suite *TypeStatsdTagFormat) TestValue() {
+func (suite *TypeStatsdTagFormatTestSuite) TestValue() {
 	testStruct := &typePreferIPTestStruct{}
 
 	suite.EqualValues(config.TypePreferIPPreferIPv4,
@@ -126,5 +132,5 @@ func (suite *TypeStatsdTagFormat) TestValue() {
 
 func TestTypeStatsdTagFormat(t *testing.T) {
 	t.Parallel()
-	suite.Run(t, &TypeStatsdTagFormat{})
+	suite.Run(t, &TypeStatsdTagFormatTestSuite{})
 }
