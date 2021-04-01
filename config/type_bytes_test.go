@@ -17,6 +17,12 @@ type TypeBytesTestSuite struct {
 	suite.Suite
 }
 
+func (suite *TypeBytesTestSuite) TestUnmarshalNil() {
+	typ := &config.TypeBytes{}
+	suite.NoError(typ.UnmarshalText(nil))
+	suite.Empty(typ.String())
+}
+
 func (suite *TypeBytesTestSuite) TestUnmarshalFail() {
 	testData := []string{
 		"1m",

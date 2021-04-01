@@ -30,12 +30,12 @@ func (suite *TypeBlocklistURITestSuite) TestUnmarshalNil() {
 
 func (suite *TypeBlocklistURITestSuite) TestUnknownSchema() {
 	typ := &config.TypeBlocklistURI{}
-    suite.Error(typ.UnmarshalText([]byte("gopher://lalala")))
+	suite.Error(typ.UnmarshalText([]byte("gopher://lalala")))
 }
 
 func (suite *TypeBlocklistURITestSuite) TestEmptyHost() {
 	typ := &config.TypeBlocklistURI{}
-    suite.Error(typ.UnmarshalText([]byte("https:///path")))
+	suite.Error(typ.UnmarshalText([]byte("https:///path")))
 }
 
 func (suite *TypeBlocklistURITestSuite) TestUnmarshalFail() {
