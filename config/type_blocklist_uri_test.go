@@ -38,6 +38,11 @@ func (suite *TypeBlocklistURITestSuite) TestEmptyHost() {
 	suite.Error(typ.UnmarshalText([]byte("https:///path")))
 }
 
+func (suite *TypeBlocklistURITestSuite) TestIncorrectURL() {
+	typ := &config.TypeBlocklistURI{}
+	suite.Error(typ.UnmarshalText([]byte("h:/--")))
+}
+
 func (suite *TypeBlocklistURITestSuite) TestUnmarshalFail() {
 	rnd := make([]byte, 48)
 
