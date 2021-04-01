@@ -38,6 +38,10 @@ func (c TypeBytes) MarshalText() ([]byte, error) {
 }
 
 func (c TypeBytes) String() string {
+	if c.value == 0 {
+		return ""
+	}
+
 	return strings.ToLower(c.value.String())
 }
 

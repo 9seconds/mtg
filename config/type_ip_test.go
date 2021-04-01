@@ -94,6 +94,7 @@ func (suite *TypeIPTestSuite) TestMarshalOk() {
 
 func (suite *TypeIPTestSuite) TestValue() {
 	testStruct := &typeIPTestStruct{}
+	suite.Empty(testStruct.Value.String())
 
 	suite.Nil(testStruct.Value.Value(nil))
 	suite.Equal("127.1.0.1", testStruct.Value.Value(net.ParseIP("127.1.0.1")).String())
