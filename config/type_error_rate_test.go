@@ -36,7 +36,11 @@ func (suite *TypeErrorRateTestSuite) TestUnmarshalFail() {
 		})
 	}
 
-	suite.Error(json.Unmarshal([]byte("test"), &typeErrorRateTestStruct{}))
+	data, err := json.Marshal(map[string]string{
+		"value": "hello",
+	})
+	suite.NoError(err)
+	suite.Error(json.Unmarshal(data, &typeErrorRateTestStruct{}))
 }
 
 func (suite *TypeErrorRateTestSuite) TestUnmarshalOk() {
