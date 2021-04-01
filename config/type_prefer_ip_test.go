@@ -18,6 +18,12 @@ type TypePreferIPTestSuite struct {
 	suite.Suite
 }
 
+func (suite *TypePreferIPTestSuite) TestUnmarshalNil() {
+	typ := &config.TypePreferIP{}
+	suite.NoError(typ.UnmarshalText(nil))
+	suite.Empty(typ.String())
+}
+
 func (suite *TypePreferIPTestSuite) TestUnmarshalFail() {
 	testData := []string{
 		"p",
