@@ -18,6 +18,12 @@ type TypeDurationTestSuite struct {
 	suite.Suite
 }
 
+func (suite *TypeDurationTestSuite) TestUnmarshalNil() {
+	typ := &config.TypeDuration{}
+	suite.NoError(typ.UnmarshalText(nil))
+	suite.EqualValues(0, typ.Value(0))
+}
+
 func (suite *TypeDurationTestSuite) TestUnmarshalFail() {
 	testData := []string{
 		"1t",
