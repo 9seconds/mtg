@@ -18,6 +18,15 @@ type TypeURLTestSuite struct {
 	suite.Suite
 }
 
+func (suite *TypeURLTestSuite) TestUnmarshalNil() {
+	u, _ := url.Parse("https://google.com")
+
+	typ := &config.TypeURL{}
+	suite.NoError(typ.UnmarshalText(nil))
+	suite.Empty(typ.String())
+	suite.Equal("https://google.com", typ.Value(u).String())
+}
+
 func (suite *TypeURLTestSuite) TestUnmarshalFail() {
 	testData := []string{
 		"http:/aaa.com",
@@ -26,6 +35,7 @@ func (suite *TypeURLTestSuite) TestUnmarshalFail() {
 		"://111",
 		"http://aaa.com:xxx",
 		"gopher://aaa.com:888",
+		"gopher://aaa.com",
 	}
 
 	for _, v := range testData {
