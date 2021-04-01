@@ -17,6 +17,12 @@ type TypeMetricPrefixTestSuite struct {
 	suite.Suite
 }
 
+func (suite *TypeMetricPrefixTestSuite) TestUnmarshalNil() {
+	typ := &config.TypeMetricPrefix{}
+	suite.NoError(typ.UnmarshalText(nil))
+	suite.Empty(typ.String())
+}
+
 func (suite *TypeMetricPrefixTestSuite) TestUnmarshalFail() {
 	testData := []string{
 		"aaa.aaa",
