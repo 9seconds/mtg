@@ -14,7 +14,7 @@ func (c *TypePort) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 
-	intValue, err := strconv.ParseUint(string(data), 10, 16)
+	intValue, err := strconv.ParseUint(string(data), 10, 64)
 	if err != nil {
 		return fmt.Errorf("port number is not a number: %w", err)
 	}

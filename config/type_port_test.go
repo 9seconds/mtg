@@ -18,6 +18,12 @@ type TypePortTestSuite struct {
 	suite.Suite
 }
 
+func (suite *TypePortTestSuite) TestUnmarshalNil() {
+	typ := &config.TypePort{}
+	suite.NoError(typ.UnmarshalJSON(nil))
+	suite.Equal("0", typ.String())
+}
+
 func (suite *TypePortTestSuite) TestUnmarshalFail() {
 	testData := []int{
 		-1,
