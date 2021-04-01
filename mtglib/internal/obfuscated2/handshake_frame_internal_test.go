@@ -1,9 +1,12 @@
 package obfuscated2
 
 import (
+	"crypto/rand"
 	"encoding/base64"
+	"strconv"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -38,6 +41,30 @@ func (suite *HandshakeFrameTestSuite) TestOk() {
 	suite.Equal("caz9UEw1qvozlZelweAozw", suite.Encode(inverted.iv()))
 	suite.Equal("H5lBgQ", suite.Encode(inverted.connectionType()))
 	suite.EqualValues(2094, inverted.dc())
+}
+
+func (suite *HandshakeFrameTestSuite) TestDC() {
+	testData := map[int16]int{
+		1:  1,
+		-1: 1,
+		0:  DefaultDC,
+	}
+
+	for k, v := range testData {
+		incoming := k
+		expected := v
+
+		suite.T().Run(strconv.Itoa(int(incoming)), func(t *testing.T) {
+			frame := handshakeFrame{}
+
+			rand.Read(frame.data[:]) // nolint: errcheck
+
+			frame.data[handshakeFrameOffsetDC] = byte(incoming)
+			frame.data[handshakeFrameOffsetDC+1] = byte(incoming >> 8)
+
+			assert.Equal(t, expected, frame.dc())
+		})
+	}
 }
 
 func TestHandshakeFrame(t *testing.T) {

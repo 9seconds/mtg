@@ -1,7 +1,5 @@
 package obfuscated2
 
-import "encoding/binary"
-
 const (
 	DefaultDC = 2
 
@@ -10,14 +8,12 @@ const (
 	handshakeFrameLenKey            = 32
 	handshakeFrameLenIV             = 16
 	handshakeFrameLenConnectionType = 4
-	handshakeFrameLenDC             = 2
 
 	handshakeFrameOffsetStart          = 8
 	handshakeFrameOffsetKey            = handshakeFrameOffsetStart
 	handshakeFrameOffsetIV             = handshakeFrameOffsetKey + handshakeFrameLenKey
 	handshakeFrameOffsetConnectionType = handshakeFrameOffsetIV + handshakeFrameLenIV
 	handshakeFrameOffsetDC             = handshakeFrameOffsetConnectionType + handshakeFrameLenConnectionType
-	handshakeFrameOffsetEnd            = handshakeFrameOffsetDC + handshakeFrameLenDC
 )
 
 // Connection-Type: Secure. We support only fake tls.
@@ -38,8 +34,7 @@ type handshakeFrame struct {
 }
 
 func (h *handshakeFrame) dc() int {
-	data := h.data[handshakeFrameOffsetDC:handshakeFrameOffsetEnd]
-	idx := int16(binary.LittleEndian.Uint16(data))
+	idx := int16(h.data[handshakeFrameOffsetDC]) | int16(h.data[handshakeFrameOffsetDC+1])<<8 // nolint: gomnd, lll // little endian for int16 is here
 
 	switch {
 	case idx > 0:
