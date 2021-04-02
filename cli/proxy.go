@@ -7,12 +7,12 @@ import (
 
 	"github.com/9seconds/mtg/v2/antireplay"
 	"github.com/9seconds/mtg/v2/events"
+	"github.com/9seconds/mtg/v2/internal/utils"
 	"github.com/9seconds/mtg/v2/ipblocklist"
 	"github.com/9seconds/mtg/v2/logger"
 	"github.com/9seconds/mtg/v2/mtglib"
 	"github.com/9seconds/mtg/v2/stats"
 	"github.com/9seconds/mtg/v2/timeattack"
-	"github.com/9seconds/mtg/v2/utils"
 	"github.com/rs/zerolog"
 )
 
