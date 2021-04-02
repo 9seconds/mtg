@@ -1,6 +1,7 @@
 package mtglib
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"io"
@@ -11,6 +12,18 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
+
+type ConnRewindBaseConn struct {
+	testlib.NetConnMock
+
+	readBuffer bytes.Buffer
+}
+
+func (c *ConnRewindBaseConn) Read(p []byte) (int, error) {
+	c.Called(p)
+
+	return c.readBuffer.Read(p)
+}
 
 type ConnTrafficTestSuite struct {
 	suite.Suite
@@ -144,7 +157,51 @@ func (suite *ConnTrafficTestSuite) TestWriteNothingErr() {
 	suite.Equal(0, n)
 }
 
+type ConnRewindTestSuite struct {
+	suite.Suite
+
+	connMock *ConnRewindBaseConn
+	conn     *connRewind
+}
+
+func (suite *ConnRewindTestSuite) SetupTest() {
+	suite.connMock = &ConnRewindBaseConn{}
+	suite.conn = newConnRewind(suite.connMock)
+}
+
+func (suite *ConnRewindTestSuite) TearDownTest() {
+	suite.connMock.AssertExpectations(suite.T())
+}
+
+func (suite *ConnRewindTestSuite) TestRead() {
+	suite.connMock.On("Read", mock.Anything)
+	suite.connMock.readBuffer.Write([]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10})
+
+	buf := make([]byte, 2)
+
+	n, err := suite.conn.Read(buf)
+	suite.NoError(err)
+	suite.Equal(2, n)
+	suite.Equal([]byte{1, 2}, buf)
+
+	n, err = suite.conn.Read(buf)
+	suite.NoError(err)
+	suite.Equal(2, n)
+	suite.Equal([]byte{3, 4}, buf)
+
+	suite.conn.Rewind()
+
+	data, err := io.ReadAll(suite.conn)
+	suite.NoError(err)
+	suite.Equal([]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}, data)
+}
+
 func TestConnTraffic(t *testing.T) {
 	t.Parallel()
 	suite.Run(t, &ConnTrafficTestSuite{})
+}
+
+func TestConnRewind(t *testing.T) {
+	t.Parallel()
+	suite.Run(t, &ConnRewindTestSuite{})
 }
