@@ -42,6 +42,9 @@ func (p *Proxy) DomainFrontingAddress() string {
 }
 
 func (p *Proxy) ServeConn(conn net.Conn) {
+	p.streamWaitGroup.Add(1)
+	defer p.streamWaitGroup.Done()
+
 	ctx := newStreamContext(p.ctx, p.logger, conn)
 	defer ctx.Close()
 
@@ -91,20 +94,24 @@ func (p *Proxy) ServeConn(conn net.Conn) {
 }
 
 func (p *Proxy) Serve(listener net.Listener) error {
+	p.streamWaitGroup.Add(1)
+	defer p.streamWaitGroup.Done()
+
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
 			return fmt.Errorf("cannot accept a new connection: %w", err)
 		}
 
-		if addr := conn.RemoteAddr().(*net.TCPAddr).IP; p.ipBlocklist.Contains(addr) {
+		ipAddr := conn.RemoteAddr().(*net.TCPAddr).IP
+		logger := p.logger.BindStr("ip", ipAddr.String())
+
+		if p.ipBlocklist.Contains(ipAddr) {
 			conn.Close()
-			p.logger.
-				BindStr("ip", conn.RemoteAddr().(*net.TCPAddr).IP.String()).
-				Info("ip was blacklisted")
+			logger.Info("ip was blacklisted")
 			p.eventStream.Send(p.ctx, EventIPBlocklisted{
 				CreatedAt: time.Now(),
-				RemoteIP:  addr,
+				RemoteIP:  ipAddr,
 			})
 
 			continue
@@ -117,12 +124,16 @@ func (p *Proxy) Serve(listener net.Listener) error {
 		case errors.Is(err, ants.ErrPoolClosed):
 			return nil
 		case errors.Is(err, ants.ErrPoolOverload):
-			p.logger.
-				BindStr("ip", conn.RemoteAddr().(*net.TCPAddr).IP.String()).
-				Info("connection was concurrency limited")
+			logger.Info("connection was concurrency limited")
 			p.eventStream.Send(p.ctx, EventConcurrencyLimited{
 				CreatedAt: time.Now(),
 			})
+		}
+
+		select {
+		case <-p.ctx.Done():
+			return p.ctx.Err()
+		default:
 		}
 	}
 }
@@ -292,9 +303,9 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) { // nolint: cyclop, funlen
 		return nil, ErrSecretInvalid
 	}
 
-	tg, err := telegram.New(opts.Network, opts.PreferIP)
-	if err != nil {
-		return nil, fmt.Errorf("cannot build telegram dialer: %w", err)
+	preferIP := opts.PreferIP
+	if preferIP == "" {
+		preferIP = DefaultPreferIP
 	}
 
 	concurrency := opts.Concurrency
@@ -315,6 +326,11 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) { // nolint: cyclop, funlen
 	domainFrontingPort := int(opts.DomainFrontingPort)
 	if domainFrontingPort == 0 {
 		domainFrontingPort = DefaultDomainFrontingPort
+	}
+
+	tg, err := telegram.New(opts.Network, preferIP)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build telegram dialer: %w", err)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -340,7 +356,7 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) { // nolint: cyclop, funlen
 		ants.WithLogger(opts.Logger.Named("ants")),
 		ants.WithNonblocking(true))
 	if err != nil {
-		return nil, fmt.Errorf("cannot initialize a pool: %w", err)
+		panic(err)
 	}
 
 	proxy.workerPool = pool
