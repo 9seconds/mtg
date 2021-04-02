@@ -10,10 +10,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/9seconds/mtg/v2/internal/testlib"
 	"github.com/9seconds/mtg/v2/ipblocklist"
 	"github.com/9seconds/mtg/v2/logger"
 	"github.com/9seconds/mtg/v2/network"
-	"github.com/9seconds/mtg/v2/testlib"
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"

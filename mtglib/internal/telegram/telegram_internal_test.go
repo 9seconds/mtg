@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/9seconds/mtg/v2/testlib"
+	"github.com/9seconds/mtg/v2/internal/testlib"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
