@@ -5,13 +5,12 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
-	"strings"
 )
 
 const (
 	SecretKeyLength = 16
 
-	secretFakeTLSFirstByte byte = 238
+	secretFakeTLSFirstByte byte = 0xee
 )
 
 var secretEmptyKey [SecretKeyLength]byte
@@ -35,31 +34,26 @@ func (s *Secret) UnmarshalText(data []byte) error {
 		return ErrSecretEmpty
 	}
 
-	var (
-		decoded []byte
-		err     error
-	)
-
-	if strings.HasPrefix(text, "ee") {
-		decoded, err = hex.DecodeString(strings.TrimPrefix(text, "ee"))
+	decoded, err := hex.DecodeString(text)
+	if err != nil {
+		decoded, err = base64.RawURLEncoding.DecodeString(text)
 	}
 
-	if err != nil || len(decoded) <= SecretKeyLength {
-		decoded, err = base64.RawURLEncoding.DecodeString(text)
+	if err != nil {
+		return fmt.Errorf("incorrect secret format: %w", err)
+	}
 
-		if err != nil {
-			return fmt.Errorf("incorrect secret format: %w", err)
-		}
+	if len(decoded) < 2 { // nolint: gomnd // we need at least 1 byte here
+		return fmt.Errorf("secret is truncated, length=%d", len(decoded))
+	}
 
-		if len(decoded) <= SecretKeyLength {
-			return fmt.Errorf("secret has incorrect length %d", len(text))
-		}
+	if decoded[0] != secretFakeTLSFirstByte {
+		return fmt.Errorf("incorrect first byte of secret: %#x", decoded[0])
+	}
 
-		if decoded[0] != secretFakeTLSFirstByte {
-			return fmt.Errorf("incorrect first byte: %v", decoded[0])
-		}
-
-		decoded = decoded[1:]
+	decoded = decoded[1:]
+	if len(decoded) < SecretKeyLength {
+		return fmt.Errorf("secret has incorrect length %d", len(decoded))
 	}
 
 	copy(s.Key[:], decoded[:SecretKeyLength])

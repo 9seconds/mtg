@@ -45,8 +45,14 @@ func (suite *SecretTestSuite) TestParseSecret() {
 }
 
 func (suite *SecretTestSuite) TestSerialize() {
+	s := mtglib.Secret{}
+
+	data, err := s.MarshalText()
+	suite.NoError(err)
+	suite.Empty(data)
+
 	secretData, _ := hex.DecodeString("d11c6cbbd9efe7fed5bc0db220b09665")
-	s := mtglib.Secret{
+	s = mtglib.Secret{
 		Host: "google.com",
 	}
 
@@ -77,6 +83,10 @@ func (suite *SecretTestSuite) TestIncorrectSecret() {
 		"+ueJ0q91t5XOnFYP8Xac3A",
 		"eed11c6cbbd9efe7fed5bc0db220b09665",
 		"ed11c6cbbd9efe7fed5bc0db220b09665",
+		"",
+		"+**",
+		"ee",
+		"efd11c6cbbd9efe7fed5bc0db220b09665",
 	}
 
 	for _, v := range testData {
