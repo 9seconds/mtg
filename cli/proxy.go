@@ -18,10 +18,6 @@ import (
 
 type Proxy struct {
 	base
-
-	prometheusListener net.Listener
-	prometheus         *stats.PrometheusFactory
-	statsdFactory      *stats.StatsdFactory
 }
 
 func (c *Proxy) Run(cli *CLI, version string) error {
@@ -32,7 +28,7 @@ func (c *Proxy) Run(cli *CLI, version string) error {
 	return c.Execute()
 }
 
-func (c *Proxy) Execute() error { // nolint: funlen
+func (c *Proxy) Execute() error {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnixMs
 	zerolog.TimestampFieldName = "timestamp"
 	zerolog.LevelFieldName = "level"
@@ -57,10 +53,6 @@ func (c *Proxy) Execute() error { // nolint: funlen
 		DomainFrontingPort: c.Config.DomainFrontingPort.Value(mtglib.DefaultDomainFrontingPort),
 		IdleTimeout:        c.Config.Network.Timeout.Idle.Value(mtglib.DefaultIdleTimeout),
 		PreferIP:           c.Config.PreferIP.Value(mtglib.DefaultPreferIP),
-	}
-
-	if opts.Concurrency == 0 {
-		opts.Concurrency = mtglib.DefaultConcurrency
 	}
 
 	opts.Logger.BindStr("configuration", c.Config.String()).Debug("configuration")
@@ -89,20 +81,8 @@ func (c *Proxy) Execute() error { // nolint: funlen
 	go proxy.Serve(listener) // nolint: errcheck
 
 	<-ctx.Done()
-
 	listener.Close()
-
-	if c.prometheusListener != nil {
-		c.prometheusListener.Close()
-	}
-
-	if c.prometheus != nil {
-		c.prometheus.Close()
-	}
-
-	if c.statsdFactory != nil {
-		c.statsdFactory.Close()
-	}
+	proxy.Shutdown()
 
 	return nil
 }
@@ -173,8 +153,6 @@ func (c *Proxy) setupEventStream(opts *mtglib.ProxyOpts) error {
 			return fmt.Errorf("cannot build statsd observer: %w", err)
 		}
 
-		c.statsdFactory = &statsdFactory
-
 		factories = append(factories, statsdFactory.Make)
 	}
 
@@ -190,9 +168,6 @@ func (c *Proxy) setupEventStream(opts *mtglib.ProxyOpts) error {
 		}
 
 		go prometheus.Serve(listener) // nolint: errcheck
-
-		c.prometheusListener = listener
-		c.prometheus = prometheus
 
 		factories = append(factories, prometheus.Make)
 	}
