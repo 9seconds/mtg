@@ -9,7 +9,7 @@ GOLANGCI_LINT_VERSION := v1.37.1
 VERSION_GO         := $(shell go version)
 VERSION_DATE       := $(shell date -Ru)
 VERSION_TAG        := $(shell git describe --tags --always)
-COMMON_BUILD_FLAGS := -mod=readonly -ldflags="-s -w -X 'main.version=$(VERSION_TAG) ($(VERSION_GO)) [$(VERSION_DATE)]'"
+COMMON_BUILD_FLAGS := -mod=readonly -ldflags="-extldflags '-static' -s -w -X 'main.version=$(VERSION_TAG) ($(VERSION_GO)) [$(VERSION_DATE)]'"
 
 GOBIN  := $(ROOT_DIR)/.bin
 GOTOOL := env "GOBIN=$(GOBIN)" "PATH=$(ROOT_DIR)/.bin:$(PATH)"
@@ -27,7 +27,11 @@ $(APP_NAME): build
 
 .PHONY: static
 static:
-	@env CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo $(COMMON_BUILD_FLAGS) -o "$(APP_NAME)"
+	@env CGO_ENABLED=0 GOOS=linux go build \
+		$(COMMON_BUILD_FLAGS) \
+		-tags netgo \
+		-a \
+		-o "$(APP_NAME)"
 
 $(APP_NAME)-%: GOOS=$(shell echo -n "$@" | sed 's?$(APP_NAME)-??' | cut -f1 -d-)
 $(APP_NAME)-%: GOARCH=$(shell echo -n "$@" | sed 's?$(APP_NAME)-??' | cut -f2 -d-)
@@ -35,6 +39,8 @@ $(APP_NAME)-%: ccbuilds
 	@env "GOOS=$(GOOS)" "GOARCH=$(GOARCH)" \
 		go build \
 		$(COMMON_BUILD_FLAGS) \
+		-tags netgo \
+		-a \
 		-o "./ccbuilds/$(APP_NAME)-$(GOOS)-$(GOARCH)"
 
 .PHONY: ccbuilds
