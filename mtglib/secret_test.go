@@ -82,6 +82,7 @@ func (suite *SecretTestSuite) TestIncorrectSecret() {
 		"ddd11c6cbbd9efe7fed5bc0db220b09665",
 		"+ueJ0q91t5XOnFYP8Xac3A",
 		"eed11c6cbbd9efe7fed5bc0db220b09665",
+		"eed11c6cbbd9efe7fed5bc0db220b096",
 		"ed11c6cbbd9efe7fed5bc0db220b09665",
 		"",
 		"+**",
