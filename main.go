@@ -4,7 +4,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/9seconds/mtg/v2/cli"
+	"github.com/9seconds/mtg/v2/internal/cli"
 	"github.com/9seconds/mtg/v2/internal/utils"
 	"github.com/alecthomas/kong"
 )

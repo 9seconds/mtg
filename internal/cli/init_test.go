@@ -3,7 +3,7 @@ package cli_test
 import (
 	"net/http"
 
-	"github.com/9seconds/mtg/v2/cli"
+	"github.com/9seconds/mtg/v2/internal/cli"
 	"github.com/9seconds/mtg/v2/internal/testlib"
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/mock"
