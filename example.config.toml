@@ -137,10 +137,10 @@ enabled = true
 # approximate we try hard to store data quite dense but it is possible
 # that we can go over this limit for 10-20% under some conditions and
 # architectures.
-max-size = "16mb"
+max-size = "1mib"
 # we use stable bloom filters for anti-replay cache. This helps
 # to maintain a desired error ratio.
-error-rate = 0.0001
+error-rate = 0.001
 
 # You can protect proxies by using different blocklists. If client has
 # ip from the given range, we do not try to do a proper handshake. We

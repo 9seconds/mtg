@@ -3,5 +3,5 @@ package timeattack
 import "time"
 
 const (
-	DefaultDuration = time.Second
+	DefaultDuration = 5 * time.Second
 )
