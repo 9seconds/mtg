@@ -69,6 +69,12 @@ type AntiReplayCache interface {
 	SeenBefore(data []byte) bool
 }
 
+// IPBlocklist filters requests based on IP address.
+//
+// If this filter has an IP address, then mtg closes a request without
+// reading anything from a socket. It also does not give such request to
+// a worker pool, so in worst cases you can expect that you invoke this
+// object more frequent than defined proxy concurrency.
 type IPBlocklist interface {
 	Contains(net.IP) bool
 }

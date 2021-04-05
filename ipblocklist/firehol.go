@@ -27,6 +27,19 @@ const (
 
 var fireholRegexpComment = regexp.MustCompile(`\s*#.*?$`)
 
+// Firehol is IPBlocklist which uses lists from FireHOL:
+// https://iplists.firehol.org/
+//
+// It can use both local files and remote URLs. This is not necessary
+// that blocklists should be taken from this website, we expect only
+// compatible formats here.
+//
+// Example of the format:
+//
+//     # this is a comment
+//     # to ignore
+//     127.0.0.1   # you can specify an IP
+//     10.0.0.0/8  # or cidr
 type Firehol struct {
 	ctx       context.Context
 	ctxCancel context.CancelFunc
@@ -44,6 +57,12 @@ type Firehol struct {
 	treeV6 *bool_tree.TreeV6
 }
 
+// Shutdown stop a background update process.
+func (f *Firehol) Shutdown() {
+	f.ctxCancel()
+}
+
+// Contains is given IP list can be found in FireHOL blocklists.
 func (f *Firehol) Contains(ip net.IP) bool {
 	if ip == nil {
 		return true
@@ -61,27 +80,15 @@ func (f *Firehol) Contains(ip net.IP) bool {
 	return f.containsIPv6(ip.To16())
 }
 
-func (f *Firehol) containsIPv4(addr net.IP) bool {
-	ip := patricia.NewIPv4AddressFromBytes(addr, 32)
-
-	if ok, _, err := f.treeV4.FindDeepestTag(ip); ok && err == nil {
-		return true
-	}
-
-	return false
-}
-
-func (f *Firehol) containsIPv6(addr net.IP) bool {
-	ip := patricia.NewIPv6Address(addr, 128)
-
-	if ok, _, err := f.treeV6.FindDeepestTag(ip); ok && err == nil {
-		return true
-	}
-
-	return false
-}
-
+// Run starts a background update process.
+//
+// This is a blocking method so you probably want to run it in a
+// goroutine.
 func (f *Firehol) Run(updateEach time.Duration) {
+	if updateEach == 0 {
+		updateEach = DefaultFireholUpdateEach
+	}
+
 	ticker := time.NewTicker(updateEach)
 
 	defer func() {
@@ -113,8 +120,24 @@ func (f *Firehol) Run(updateEach time.Duration) {
 	}
 }
 
-func (f *Firehol) Shutdown() {
-	f.ctxCancel()
+func (f *Firehol) containsIPv4(addr net.IP) bool {
+	ip := patricia.NewIPv4AddressFromBytes(addr, 32)
+
+	if ok, _, err := f.treeV4.FindDeepestTag(ip); ok && err == nil {
+		return true
+	}
+
+	return false
+}
+
+func (f *Firehol) containsIPv6(addr net.IP) bool {
+	ip := patricia.NewIPv6Address(addr, 128)
+
+	if ok, _, err := f.treeV6.FindDeepestTag(ip); ok && err == nil {
+		return true
+	}
+
+	return false
 }
 
 func (f *Firehol) update() error { // nolint: funlen, cyclop
@@ -302,6 +325,10 @@ func (f *Firehol) updateAddToTrees(ip net.IP, cidr uint,
 	return nil
 }
 
+// NewFirehol creates a new instance of FireHOL IP blocklist.
+//
+// This method does not start an update process so please execute Run
+// when it is necessary.
 func NewFirehol(logger mtglib.Logger, network mtglib.Network,
 	downloadConcurrency uint,
 	remoteURLs []string,
@@ -326,7 +353,7 @@ func NewFirehol(logger mtglib.Logger, network mtglib.Network,
 	}
 
 	if downloadConcurrency == 0 {
-		downloadConcurrency = DefaultDownloadConcurrency
+		downloadConcurrency = DefaultFireholDownloadConcurrency
 	}
 
 	workerPool, _ := ants.NewPool(int(downloadConcurrency))

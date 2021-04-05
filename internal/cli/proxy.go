@@ -133,7 +133,7 @@ func (c *Proxy) setupIPBlocklist(opts *mtglib.ProxyOpts) error {
 		return err // nolint: wrapcheck
 	}
 
-	go firehol.Run(c.Config.Defense.Blocklist.UpdateEach.Value(ipblocklist.DefaultUpdateEach))
+	go firehol.Run(c.Config.Defense.Blocklist.UpdateEach.Value(ipblocklist.DefaultFireholUpdateEach))
 
 	opts.IPBlocklist = firehol
 

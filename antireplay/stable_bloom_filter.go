@@ -30,9 +30,18 @@ func (s *stableBloomFilter) SeenBefore(digest []byte) bool {
 // hardcore math which proves that if you choose this P correctly, you
 // can maintain the same error rate for a stream of elements.
 //
-// byteSize is the number of bytes you want to give to a bloom filter  .
-// errorRate is desired false-positive error rate                      .
+// byteSize is the number of bytes you want to give to a bloom filter.
+// errorRate is desired false-positive error rate. If you want to use
+// default values, please pass 0 for byteSize and <0 for errorRate.
 func NewStableBloomFilter(byteSize uint, errorRate float64) mtglib.AntiReplayCache {
+	if byteSize == 0 {
+		byteSize = DefaultStableBloomFilterMaxSize
+	}
+
+	if errorRate < 0 {
+		errorRate = DefaultStableBloomFilterErrorRate
+	}
+
 	sf := boom.NewDefaultStableBloomFilter(byteSize*8, errorRate) // nolint: gomnd
 	sf.SetHash(xxhash.New64())
 
