@@ -114,6 +114,7 @@ func (z *zeroLogContext) attachCtx(evt *zerolog.Event) {
 	}
 }
 
+// NewZeroLogger returns a logger which is using rs/zerolog library.
 func NewZeroLogger(log zerolog.Logger) mtglib.Logger {
 	return &zeroLogContext{
 		log: &log,

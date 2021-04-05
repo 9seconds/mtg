@@ -15,6 +15,7 @@ func (n noopLogger) InfoError(_ string, _ error)           {}
 func (n noopLogger) WarningError(_ string, _ error)        {}
 func (n noopLogger) DebugError(_ string, _ error)          {}
 
+// NewNoopLogger returns a logger which discards all events.
 func NewNoopLogger() mtglib.Logger {
 	return noopLogger{}
 }

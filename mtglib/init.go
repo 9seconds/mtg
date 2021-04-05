@@ -76,6 +76,8 @@ type AntiReplayCache interface {
 // a worker pool, so in worst cases you can expect that you invoke this
 // object more frequent than defined proxy concurrency.
 type IPBlocklist interface {
+	// Contains checks if given IP address belongs to this blocklist If.
+	// it is, a connection is terminated                               .
 	Contains(net.IP) bool
 }
 
@@ -107,6 +109,26 @@ type TimeAttackDetector interface {
 	Valid(time.Time) error
 }
 
+// Logger defines an interface of the logger used by mtglib.
+//
+// Each logger has a name. It is possible to stack names to organize
+// poor-man namespaces. Also, each logger must be able to bind
+// parameters to avoid pushing them all the time.
+//
+// Example
+//
+//     logger := SomeLogger{}
+//     logger = logger.BindStr("ip", net.IP{127, 0, 0, 1})
+//     logger.Info("Hello")
+//
+// In that case, ip is bound as a parameter. It is a great idea to
+// put this parameter somewhere in a log message.
+//
+//     logger1 = logger.BindStr("param1", "11")
+//     logger2 = logger.BindInt("param2", 11)
+//
+// logger1 should see no param2 and vice versa, logger2 should not see param1
+// If you attach a parameter to a logger, parents should not know about that.
 type Logger interface {
 	Named(name string) Logger
 
