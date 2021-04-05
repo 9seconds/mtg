@@ -9,12 +9,23 @@ import (
 	"github.com/OneOfOne/xxhash"
 )
 
+// EventStream is a default implementation of the mtglib.EventStream
+// interface.
+//
+// EventStream manages a set of goroutines, observers. Main
+// responsibility of the event stream is to route an event to relevant
+// observer based on some hash so each observer will have all events
+// which belong to some stream id.
+//
+// Thus, EventStream can spawn many observers.
 type EventStream struct {
 	ctx       context.Context
 	ctxCancel context.CancelFunc
 	chans     []chan mtglib.Event
 }
 
+// Send starts delivering of the message to observer with respect to a
+// given context If context is closed, message could be not delivered.
 func (e EventStream) Send(ctx context.Context, evt mtglib.Event) {
 	var chanNo uint32
 
@@ -31,10 +42,16 @@ func (e EventStream) Send(ctx context.Context, evt mtglib.Event) {
 	}
 }
 
+// Shutdown stops an event stream pipeline.
 func (e EventStream) Shutdown() {
 	e.ctxCancel()
 }
 
+// NewEventStream builds a new default event stream.
+//
+// If you give an empty array of observers, then NoopObserver is going
+// to be used. If you give many observers, then they will process a
+// message concurrently.
 func NewEventStream(observerFactories []ObserverFactory) EventStream {
 	if len(observerFactories) == 0 {
 		observerFactories = append(observerFactories, NewNoopObserver)

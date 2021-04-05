@@ -10,6 +10,7 @@ type noop struct{}
 
 func (n noop) Send(ctx context.Context, evt mtglib.Event) {}
 
+// NewNoopStream creates a stream which discards each message.
 func NewNoopStream() mtglib.EventStream {
 	return noop{}
 }
@@ -26,6 +27,7 @@ func (n noopObserver) EventIPBlocklisted(_ mtglib.EventIPBlocklisted)           
 func (n noopObserver) EventReplayAttack(_ mtglib.EventReplayAttack)             {}
 func (n noopObserver) Shutdown()                                                {}
 
+// NewNoopObserver creates an observer which discards each message.
 func NewNoopObserver() Observer {
 	return noopObserver{}
 }

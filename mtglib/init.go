@@ -78,7 +78,22 @@ type Event interface {
 	Timestamp() time.Time
 }
 
+// EventStream is an abstraction that accepts a set of events produced
+// by mtg. Its main goal is to inject your logging or monitoring system.
+//
+// The idea is simple. When mtg works, it emits a set of events during
+// a lifecycle of the requestor: EventStart, EventFinish etc. mtg is a
+// producer which puts these events into a stream. Responsibility of
+// the stream is to deliver this event to consumers/observers. There
+// might be many different observers (for example, you want to have both
+// statsd and prometheus), mtg should know nothing about them.
 type EventStream interface {
+	// Send delivers an event to observers. Given context has to be
+	// respected. If the context is closed, all blocking operations should
+	// be released ASAP.
+	//
+	// It is possible that context is closed but the message is delivered.
+	// EventStream implementations should solve this issue somehow.
 	Send(context.Context, Event)
 }
 
