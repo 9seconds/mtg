@@ -93,8 +93,8 @@ func (c *Proxy) setupAntiReplayCache(opts *mtglib.ProxyOpts) {
 	}
 
 	opts.AntiReplayCache = antireplay.NewStableBloomFilter(
-		c.Config.Defense.AntiReplay.MaxSize.Value(antireplay.DefaultMaxSize),
-		c.Config.Defense.AntiReplay.ErrorRate.Value(antireplay.DefaultErrorRate),
+		c.Config.Defense.AntiReplay.MaxSize.Value(antireplay.DefaultStableBloomFilterMaxSize),
+		c.Config.Defense.AntiReplay.ErrorRate.Value(antireplay.DefaultStableBloomFilterErrorRate),
 	)
 }
 

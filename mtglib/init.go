@@ -33,7 +33,39 @@ type Network interface {
 	MakeHTTPClient(func(ctx context.Context, network, address string) (net.Conn, error)) *http.Client
 }
 
+// AntiReplayCache is an interface that is used to detect replay attacks
+// based on some traffic fingerprints.
+//
+// Replay attacks are probe attacks whose main goal is to identify if
+// server software can be classified in some way. For example, if you
+// send some HTTP request to a web server, then you can expect that this
+// server will respond with HTTP response back.
+//
+// There is a problem though. Let's imagine, that connection is
+// encrypted. Let's imagine, that it is encrypted with some static key
+// like ShadowSocks (https://shadowsocks.org/assets/whitepaper.pdf).
+// In that case, in theory, if you repeat the same bytes, you can get
+// the same responses. Let's imagine, that you've cracked the key. then
+// if you send the same bytes, you can decrypt a response and see its
+// structure. Based on its structure you can identify if this server is
+// SOCKS5, MTPROTO proxy etc.
+//
+// This is just one example, maybe not the best or not the most
+// relevant. In real life, different organizations use such replay
+// attacks to perform some reverse engineering of the proxy, do some
+// statical analysis to identify server software.
+//
+// There are many ways how to protect your proxy against them. One
+// is domain fronting which is a core part of mtg. Another one is to
+// collect some 'handshake fingerprints' and forbid duplication.
+//
+// So, it one is sending the same byte flow right after you (or a couple
+// of hours after), mtg should detect that and reject this connection
+// (or redirect to fronting domain).
 type AntiReplayCache interface {
+	// Seen before checks if this set of bytes was observed before or
+	// not. If it is required to store this information somewhere else,
+	// then it has to do that.
 	SeenBefore(data []byte) bool
 }
 
