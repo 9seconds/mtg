@@ -32,6 +32,16 @@ func (l loadBalancedSocks5Dialer) DialContext(ctx context.Context, network, addr
 	return nil, ErrCannotDialWithAllProxies
 }
 
+// NewLoadBalancedSocks5Dialer builds a new load balancing SOCKS5
+// dialer.
+//
+// The main difference from one which is made by NewSocks5Dialer is that
+// we actually have a list of these proxies. When dial is requested,
+// any proxy is picked and used. If proxy fails for some reason, we try
+// another one.
+//
+// So, it is mostly useful if you have some routes with proxies which
+// are not always online or having buggy network.
 func NewLoadBalancedSocks5Dialer(baseDialer Dialer, proxyURLs []*url.URL) (Dialer, error) {
 	dialers := make([]Dialer, 0, len(proxyURLs))
 

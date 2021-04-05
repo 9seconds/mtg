@@ -27,9 +27,33 @@ const (
 	DefaultPreferIP           = "prefer-ipv6"
 )
 
+// Network defines a knowledge how to work with a network. It may sound
+// fun but it encapsulates all the knowledge how to properly establish
+// connections to remote hosts and configure HTTP clients.
+//
+// For example, if you want to use SOCKS5 proxy, you probably want to
+// have all traffic routed to this proxy: telegram connections, http
+// requests and so on. This knowledge is encapsulated into instances of
+// such interface.
+//
+// mtglib uses Network for:
+//
+// 1. Dialing to Telegram
+//
+// 2. Dialing to front domain
+//
+// 3. Doing HTTP requests (for example, for FireHOL ipblocklist).
 type Network interface {
+	// Dial establishes context-free TCP connections.
 	Dial(network, address string) (net.Conn, error)
+
+	// DialContext dials using a context. This is a preferrable
+	// way of establishing TCP connections.
 	DialContext(ctx context.Context, network, address string) (net.Conn, error)
+
+	// MakeHTTPClient build an HTTP client with given dial function. If
+	// nothing is provided, then DialContext of this interface is going
+	// to be used.
 	MakeHTTPClient(func(ctx context.Context, network, address string) (net.Conn, error)) *http.Client
 }
 

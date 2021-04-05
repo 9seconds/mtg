@@ -60,6 +60,11 @@ func (d *defaultDialer) DialContext(ctx context.Context, network, address string
 	return tcpConn, nil
 }
 
+// NewDefaultDialer build a new dialer which dials bypassing proxies
+// etc.
+//
+// The most default one you can imagine. But it has tunes TCP
+// connections and setups SO_REUSEPORT.
 func NewDefaultDialer(timeout time.Duration, bufferSize int) (Dialer, error) {
 	switch {
 	case timeout < 0:
