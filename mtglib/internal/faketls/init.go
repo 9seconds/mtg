@@ -1,6 +1,9 @@
 package faketls
 
-import "errors"
+import (
+	"bytes"
+	"errors"
+)
 
 const (
 	RandomLen = 32
@@ -34,4 +37,5 @@ var (
 		0x00, 0x1d, // x25519 curve
 		0x00, 0x20, // 32 bytes of key
 	}
+	clientHelloEmptyRandom = bytes.Repeat([]byte{0}, RandomLen)
 )

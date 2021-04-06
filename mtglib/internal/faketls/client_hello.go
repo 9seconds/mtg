@@ -3,6 +3,7 @@ package faketls
 import (
 	"crypto/hmac"
 	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/binary"
 	"fmt"
 	"time"
@@ -39,10 +40,7 @@ func ParseClientHello(secret, handshake []byte) (ClientHello, error) {
 	}
 
 	copy(hello.Random[:], handshake[ClientHelloRandomOffset:])
-
-	for i := ClientHelloRandomOffset; i < ClientHelloRandomOffset+RandomLen; i++ {
-		handshake[i] = 0
-	}
+	copy(handshake[ClientHelloRandomOffset:], clientHelloEmptyRandom)
 
 	rec := record.AcquireRecord()
 	defer record.ReleaseRecord(rec)
@@ -62,10 +60,8 @@ func ParseClientHello(secret, handshake []byte) (ClientHello, error) {
 		computedRandom[i] ^= hello.Random[i]
 	}
 
-	for i := 0; i < RandomLen-4; i++ {
-		if computedRandom[i] != 0 {
-			return hello, ErrBadDigest
-		}
+	if subtle.ConstantTimeCompare(clientHelloEmptyRandom[:RandomLen-4], computedRandom[:RandomLen-4]) != 1 {
+		return hello, ErrBadDigest
 	}
 
 	timestamp := int64(binary.LittleEndian.Uint32(computedRandom[RandomLen-4:]))
