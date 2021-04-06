@@ -29,6 +29,9 @@ func (d detector) Valid(then time.Time) error {
 	return nil
 }
 
+// NewDetector returns a new TimeAttackDetector which validates that
+// timestamp belongs to intervar [X-duration, X+duration], so a small
+// timeshift is acceptable.
 func NewDetector(duration time.Duration) mtglib.TimeAttackDetector {
 	return detector{
 		Duration: duration,

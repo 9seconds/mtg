@@ -129,7 +129,15 @@ type EventStream interface {
 	Send(context.Context, Event)
 }
 
+// TimeAttackDetector is an abstraction that checks a time, taken from
+// the faketls client hello message. This timestamp is encoded into
+// client-generated random bytes and can be extracted after some client
+// hello verification.
+//
+// This is mostly to prevent replay attacks.
 type TimeAttackDetector interface {
+	// Valid returns an error if timestamp is invalid or should not be
+	// accepted.
 	Valid(time.Time) error
 }
 
