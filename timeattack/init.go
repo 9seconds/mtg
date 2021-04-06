@@ -1,4 +1,4 @@
-// TimeAttack has implementation of mtglib.TimeAttackDetector>
+// TimeAttack has implementation of mtglib.TimeAttackDetector.
 package timeattack
 
 import "time"

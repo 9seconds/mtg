@@ -126,6 +126,12 @@ func (p prometheusProcessor) Shutdown() {
 	p.streams = make(map[string]*streamInfo)
 }
 
+// PrometheusFactory is a factory of events.Observers which collect
+// information in a format suitable for Prometheus.
+//
+// This factory can also serve on a given listener. In that case it
+// starts HTTP server with a single endpoint - a Prometheus-compatible
+// scrape output.
 type PrometheusFactory struct {
 	httpServer *http.Server
 
@@ -142,6 +148,7 @@ type PrometheusFactory struct {
 	metricReplayAttacks      prometheus.Counter
 }
 
+// Make builds a new observer.
 func (p *PrometheusFactory) Make() events.Observer {
 	return prometheusProcessor{
 		streams: make(map[string]*streamInfo),
@@ -149,14 +156,19 @@ func (p *PrometheusFactory) Make() events.Observer {
 	}
 }
 
+// Serve starts an HTTP server on a given listener.
 func (p *PrometheusFactory) Serve(listener net.Listener) error {
 	return p.httpServer.Serve(listener)
 }
 
+// Close stops a factory. Please pay attention that underlying listener
+// is not closed.
 func (p *PrometheusFactory) Close() error {
 	return p.httpServer.Shutdown(context.Background())
 }
 
+// NewPrometheus builds an events.ObserverFactory which can serve HTTP
+// endpoint with Prometheus scrape data.
 func NewPrometheus(metricPrefix, httpPath string) *PrometheusFactory { // nolint: funlen
 	registry := prometheus.NewPedanticRegistry()
 	httpHandler := promhttp.HandlerFor(registry, promhttp.HandlerOpts{

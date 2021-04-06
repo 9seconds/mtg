@@ -138,14 +138,23 @@ func (s statsdProcessor) Shutdown() {
 	}
 }
 
+// StatsdFactory is a factory of events.Observers which dumps
+// information to statsd.
+//
+// Please beware that we support ONLY UDP endpoints there. And this
+// factory won't use mtglib.Network so it won't use a proxy if you
+// provide any. If you need it, I would recommend starting a local
+// statsd and route metrics further by features of the chosen server.
 type StatsdFactory struct {
 	client *statsd.Client
 }
 
+// Close stops sending requests to statsd.
 func (s StatsdFactory) Close() error {
 	return s.client.Close()
 }
 
+// Make build a new observer.
 func (s StatsdFactory) Make() events.Observer {
 	return statsdProcessor{
 		client:  s.client,
@@ -153,6 +162,10 @@ func (s StatsdFactory) Make() events.Observer {
 	}
 }
 
+// NewStatsd builds an events.ObserverFactory that sends events
+// to statsd.
+//
+// Valid tagFormats are 'datadog', 'influxdb' and 'graphite'.
 func NewStatsd(address string, log logger.StdLikeLogger,
 	metricPrefix, tagFormat string) (StatsdFactory, error) {
 	options := []statsd.Option{
