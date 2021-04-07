@@ -8,14 +8,12 @@ import (
 	"time"
 )
 
-const ConnectionIDBytesLength = 16
-
 type streamContext struct {
 	ctx          context.Context
 	ctxCancel    context.CancelFunc
 	clientConn   net.Conn
 	telegramConn net.Conn
-	connID       string
+	streamID     string
 	dc           int
 	logger       Logger
 }
@@ -64,10 +62,10 @@ func newStreamContext(ctx context.Context, logger Logger, clientConn net.Conn) *
 		ctx:        ctx,
 		ctxCancel:  cancel,
 		clientConn: clientConn,
-		connID:     base64.RawURLEncoding.EncodeToString(connIDBytes),
+		streamID:   base64.RawURLEncoding.EncodeToString(connIDBytes),
 	}
 	streamCtx.logger = logger.
-		BindStr("stream-id", streamCtx.connID).
+		BindStr("stream-id", streamCtx.streamID).
 		BindStr("client-ip", streamCtx.ClientIP().String())
 
 	return streamCtx

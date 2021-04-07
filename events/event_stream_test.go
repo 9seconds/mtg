@@ -39,11 +39,7 @@ func (suite *EventStreamTestSuite) SetupTest() {
 }
 
 func (suite *EventStreamTestSuite) TestEventStart() {
-	evt := mtglib.EventStart{
-		CreatedAt: time.Now(),
-		ConnID:    "connID",
-		RemoteIP:  net.ParseIP("10.0.0.1"),
-	}
+	evt := mtglib.NewEventStart("connID", net.ParseIP("10.0.0.1"))
 
 	for _, v := range []*ObserverMock{suite.observerMock1, suite.observerMock2} {
 		v.
@@ -52,10 +48,9 @@ func (suite *EventStreamTestSuite) TestEventStart() {
 			Run(func(args mock.Arguments) {
 				caught := args.Get(0).(mtglib.EventStart)
 
-				suite.Equal(evt.CreatedAt, caught.CreatedAt)
-				suite.Equal(evt.ConnID, caught.ConnID)
 				suite.Equal(evt.RemoteIP.String(), caught.RemoteIP.String())
 				suite.Equal(evt.StreamID(), caught.StreamID())
+				suite.Equal(evt.Timestamp(), caught.Timestamp())
 			})
 	}
 
@@ -64,12 +59,7 @@ func (suite *EventStreamTestSuite) TestEventStart() {
 }
 
 func (suite *EventStreamTestSuite) TestEventConnectedToDC() {
-	evt := mtglib.EventConnectedToDC{
-		CreatedAt: time.Now(),
-		ConnID:    "connID",
-		RemoteIP:  net.ParseIP("10.0.0.1"),
-		DC:        3,
-	}
+	evt := mtglib.NewEventConnectedToDC("connID", net.ParseIP("10.0.0.1"), 3)
 
 	for _, v := range []*ObserverMock{suite.observerMock1, suite.observerMock2} {
 		v.
@@ -78,11 +68,10 @@ func (suite *EventStreamTestSuite) TestEventConnectedToDC() {
 			Run(func(args mock.Arguments) {
 				caught := args.Get(0).(mtglib.EventConnectedToDC)
 
-				suite.Equal(evt.CreatedAt, caught.CreatedAt)
-				suite.Equal(evt.ConnID, caught.ConnID)
 				suite.Equal(evt.RemoteIP.String(), caught.RemoteIP.String())
 				suite.Equal(evt.StreamID(), caught.StreamID())
 				suite.Equal(evt.DC, caught.DC)
+				suite.Equal(evt.Timestamp(), caught.Timestamp())
 			})
 	}
 
@@ -91,10 +80,7 @@ func (suite *EventStreamTestSuite) TestEventConnectedToDC() {
 }
 
 func (suite *EventStreamTestSuite) TestEventDomainFronting() {
-	evt := mtglib.EventDomainFronting{
-		CreatedAt: time.Now(),
-		ConnID:    "connID",
-	}
+	evt := mtglib.NewEventDomainFronting("connID")
 
 	for _, v := range []*ObserverMock{suite.observerMock1, suite.observerMock2} {
 		v.
@@ -103,9 +89,8 @@ func (suite *EventStreamTestSuite) TestEventDomainFronting() {
 			Run(func(args mock.Arguments) {
 				caught := args.Get(0).(mtglib.EventDomainFronting)
 
-				suite.Equal(evt.CreatedAt, caught.CreatedAt)
-				suite.Equal(evt.ConnID, caught.ConnID)
 				suite.Equal(evt.StreamID(), caught.StreamID())
+				suite.Equal(evt.Timestamp(), caught.Timestamp())
 			})
 	}
 
@@ -114,12 +99,7 @@ func (suite *EventStreamTestSuite) TestEventDomainFronting() {
 }
 
 func (suite *EventStreamTestSuite) TestEventTraffic() {
-	evt := mtglib.EventTraffic{
-		CreatedAt: time.Now(),
-		ConnID:    "connID",
-		Traffic:   1024,
-		IsRead:    true,
-	}
+	evt := mtglib.NewEventTraffic("connID", 1024, true)
 
 	for _, v := range []*ObserverMock{suite.observerMock1, suite.observerMock2} {
 		v.
@@ -128,9 +108,8 @@ func (suite *EventStreamTestSuite) TestEventTraffic() {
 			Run(func(args mock.Arguments) {
 				caught := args.Get(0).(mtglib.EventTraffic)
 
-				suite.Equal(evt.CreatedAt, caught.CreatedAt)
-				suite.Equal(evt.ConnID, caught.ConnID)
 				suite.Equal(evt.StreamID(), caught.StreamID())
+				suite.Equal(evt.Timestamp(), caught.Timestamp())
 				suite.Equal(evt.Traffic, caught.Traffic)
 				suite.Equal(evt.IsRead, caught.IsRead)
 			})
@@ -141,10 +120,7 @@ func (suite *EventStreamTestSuite) TestEventTraffic() {
 }
 
 func (suite *EventStreamTestSuite) TestEventFinish() {
-	evt := mtglib.EventFinish{
-		CreatedAt: time.Now(),
-		ConnID:    "connID",
-	}
+	evt := mtglib.NewEventFinish("connID")
 
 	for _, v := range []*ObserverMock{suite.observerMock1, suite.observerMock2} {
 		v.
@@ -153,9 +129,8 @@ func (suite *EventStreamTestSuite) TestEventFinish() {
 			Run(func(args mock.Arguments) {
 				caught := args.Get(0).(mtglib.EventFinish)
 
-				suite.Equal(evt.CreatedAt, caught.CreatedAt)
-				suite.Equal(evt.ConnID, caught.ConnID)
 				suite.Equal(evt.StreamID(), caught.StreamID())
+				suite.Equal(evt.Timestamp(), caught.Timestamp())
 			})
 	}
 
@@ -164,9 +139,7 @@ func (suite *EventStreamTestSuite) TestEventFinish() {
 }
 
 func (suite *EventStreamTestSuite) TestEventConcurrencyLimited() {
-	evt := mtglib.EventConcurrencyLimited{
-		CreatedAt: time.Now(),
-	}
+	evt := mtglib.NewEventConcurrencyLimited()
 
 	for _, v := range []*ObserverMock{suite.observerMock1, suite.observerMock2} {
 		v.
@@ -175,7 +148,8 @@ func (suite *EventStreamTestSuite) TestEventConcurrencyLimited() {
 			Run(func(args mock.Arguments) {
 				caught := args.Get(0).(mtglib.EventConcurrencyLimited)
 
-				suite.Equal(evt.CreatedAt, caught.CreatedAt)
+				suite.Equal(evt.Timestamp(), caught.Timestamp())
+				suite.Empty(evt.StreamID())
 			})
 	}
 
@@ -184,10 +158,7 @@ func (suite *EventStreamTestSuite) TestEventConcurrencyLimited() {
 }
 
 func (suite *EventStreamTestSuite) TestEventIPBlocklisted() {
-	evt := mtglib.EventIPBlocklisted{
-		CreatedAt: time.Now(),
-		RemoteIP:  net.ParseIP("10.0.0.10"),
-	}
+	evt := mtglib.NewEventIPBlocklisted(net.ParseIP("10.0.0.10"))
 
 	for _, v := range []*ObserverMock{suite.observerMock1, suite.observerMock2} {
 		v.
@@ -196,8 +167,8 @@ func (suite *EventStreamTestSuite) TestEventIPBlocklisted() {
 			Run(func(args mock.Arguments) {
 				caught := args.Get(0).(mtglib.EventIPBlocklisted)
 
-				suite.Equal(evt.CreatedAt, caught.CreatedAt)
 				suite.Equal(evt.StreamID(), caught.StreamID())
+				suite.Equal(evt.Timestamp(), caught.Timestamp())
 				suite.Equal(evt.RemoteIP.String(), caught.RemoteIP.String())
 			})
 	}
@@ -207,10 +178,7 @@ func (suite *EventStreamTestSuite) TestEventIPBlocklisted() {
 }
 
 func (suite *EventStreamTestSuite) TestEventReplayAttack() {
-	evt := mtglib.EventReplayAttack{
-		CreatedAt: time.Now(),
-		ConnID:    "CONNID",
-	}
+	evt := mtglib.NewEventReplayAttack("CONNID")
 
 	for _, v := range []*ObserverMock{suite.observerMock1, suite.observerMock2} {
 		v.
@@ -219,8 +187,8 @@ func (suite *EventStreamTestSuite) TestEventReplayAttack() {
 			Run(func(args mock.Arguments) {
 				caught := args.Get(0).(mtglib.EventReplayAttack)
 
-				suite.Equal(evt.CreatedAt, caught.CreatedAt)
 				suite.Equal(evt.StreamID(), caught.StreamID())
+				suite.Equal(evt.Timestamp(), caught.Timestamp())
 			})
 	}
 

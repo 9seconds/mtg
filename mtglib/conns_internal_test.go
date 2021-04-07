@@ -37,10 +37,10 @@ func (suite *ConnTrafficTestSuite) SetupTest() {
 	suite.eventStreamMock = &EventStreamMock{}
 	suite.connMock = &testlib.NetConnMock{}
 	suite.conn = connTraffic{
-		Conn:   suite.connMock,
-		connID: "CONNID",
-		ctx:    context.Background(),
-		stream: suite.eventStreamMock,
+		Conn:     suite.connMock,
+		streamID: "CONNID",
+		ctx:      context.Background(),
+		stream:   suite.eventStreamMock,
 	}
 }
 

@@ -14,84 +14,56 @@ type EventsTestSuite struct {
 }
 
 func (suite *EventsTestSuite) TestEventStart() {
-	evt := mtglib.EventStart{
-		CreatedAt: time.Now(),
-		ConnID:    "CONNID",
-		RemoteIP:  net.ParseIP("10.0.0.10"),
-	}
+	evt := mtglib.NewEventStart("CONNID", net.ParseIP("10.0.0.10"))
 
 	suite.Equal("CONNID", evt.StreamID())
 	suite.WithinDuration(time.Now(), evt.Timestamp(), 10*time.Millisecond)
 }
 
 func (suite *EventsTestSuite) TestEventFinish() {
-	evt := mtglib.EventFinish{
-		CreatedAt: time.Now(),
-		ConnID:    "CONNID",
-	}
+	evt := mtglib.NewEventFinish("CONNID")
 
 	suite.Equal("CONNID", evt.StreamID())
 	suite.WithinDuration(time.Now(), evt.Timestamp(), 10*time.Millisecond)
 }
 
 func (suite *EventsTestSuite) TestEventConnectedToDC() {
-	evt := mtglib.EventConnectedToDC{
-		CreatedAt: time.Now(),
-		ConnID:    "CONNID",
-		RemoteIP:  net.ParseIP("10.0.0.10"),
-		DC:        3,
-	}
+	evt := mtglib.NewEventConnectedToDC("CONNID", net.ParseIP("10.0.0.10"), 3)
 
 	suite.Equal("CONNID", evt.StreamID())
 	suite.WithinDuration(time.Now(), evt.Timestamp(), 10*time.Millisecond)
 }
 
 func (suite *EventsTestSuite) TestEventTraffic() {
-	evt := mtglib.EventTraffic{
-		CreatedAt: time.Now(),
-		ConnID:    "CONNID",
-		Traffic:   3,
-		IsRead:    true,
-	}
+	evt := mtglib.NewEventTraffic("CONNID", 1000, true)
 
 	suite.Equal("CONNID", evt.StreamID())
 	suite.WithinDuration(time.Now(), evt.Timestamp(), 10*time.Millisecond)
 }
 
 func (suite *EventsTestSuite) TestEventDomainFronting() {
-	evt := mtglib.EventDomainFronting{
-		CreatedAt: time.Now(),
-		ConnID:    "CONNID",
-	}
+	evt := mtglib.NewEventDomainFronting("CONNID")
 
 	suite.Equal("CONNID", evt.StreamID())
 	suite.WithinDuration(time.Now(), evt.Timestamp(), 10*time.Millisecond)
 }
 
 func (suite *EventsTestSuite) TestEventConcurrencyLimited() {
-	evt := mtglib.EventConcurrencyLimited{
-		CreatedAt: time.Now(),
-	}
+	evt := mtglib.NewEventConcurrencyLimited()
 
 	suite.Empty(evt.StreamID())
 	suite.WithinDuration(time.Now(), evt.Timestamp(), 10*time.Millisecond)
 }
 
 func (suite *EventsTestSuite) TestEventIPBlocklisted() {
-	evt := mtglib.EventIPBlocklisted{
-		CreatedAt: time.Now(),
-		RemoteIP:  net.ParseIP("10.0.0.10"),
-	}
+	evt := mtglib.NewEventIPBlocklisted(net.ParseIP("10.0.0.10"))
 
 	suite.Empty(evt.StreamID())
 	suite.WithinDuration(time.Now(), evt.Timestamp(), 10*time.Millisecond)
 }
 
 func (suite *EventsTestSuite) TestEventReplayAttack() {
-	evt := mtglib.EventReplayAttack{
-		CreatedAt: time.Now(),
-		ConnID:    "CONNID",
-	}
+	evt := mtglib.NewEventReplayAttack("CONNID")
 
 	suite.Equal("CONNID", evt.StreamID())
 	suite.WithinDuration(time.Now(), evt.Timestamp(), 10*time.Millisecond)

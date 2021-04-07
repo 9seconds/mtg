@@ -53,18 +53,11 @@ func (p *Proxy) ServeConn(conn net.Conn) {
 		ctx.Close()
 	}()
 
-	p.eventStream.Send(ctx, EventStart{
-		CreatedAt: time.Now(),
-		ConnID:    ctx.connID,
-		RemoteIP:  ctx.ClientIP(),
-	})
+	p.eventStream.Send(ctx, NewEventStart(ctx.streamID, ctx.ClientIP()))
 	ctx.logger.Info("Stream has been started")
 
 	defer func() {
-		p.eventStream.Send(ctx, EventFinish{
-			CreatedAt: time.Now(),
-			ConnID:    ctx.connID,
-		})
+		p.eventStream.Send(ctx, NewEventFinish(ctx.streamID))
 		ctx.logger.Info("Stream has been finished")
 	}()
 
@@ -109,10 +102,7 @@ func (p *Proxy) Serve(listener net.Listener) error {
 		if p.ipBlocklist.Contains(ipAddr) {
 			conn.Close()
 			logger.Info("ip was blacklisted")
-			p.eventStream.Send(p.ctx, EventIPBlocklisted{
-				CreatedAt: time.Now(),
-				RemoteIP:  ipAddr,
-			})
+			p.eventStream.Send(p.ctx, NewEventIPBlocklisted(ipAddr))
 
 			continue
 		}
@@ -125,9 +115,7 @@ func (p *Proxy) Serve(listener net.Listener) error {
 			return nil
 		case errors.Is(err, ants.ErrPoolOverload):
 			logger.Info("connection was concurrency limited")
-			p.eventStream.Send(p.ctx, EventConcurrencyLimited{
-				CreatedAt: time.Now(),
-			})
+			p.eventStream.Send(p.ctx, NewEventConcurrencyLimited())
 		}
 
 		select {
@@ -181,10 +169,7 @@ func (p *Proxy) doFakeTLSHandshake(ctx *streamContext) bool {
 
 	if p.antiReplayCache.SeenBefore(hello.SessionID) {
 		p.logger.Warning("replay attack has been detected!")
-		p.eventStream.Send(p.ctx, EventReplayAttack{
-			CreatedAt: time.Now(),
-			ConnID:    ctx.connID,
-		})
+		p.eventStream.Send(p.ctx, NewEventReplayAttack(ctx.streamID))
 		p.doDomainFronting(ctx, rewind)
 
 		return false
@@ -235,31 +220,23 @@ func (p *Proxy) doTelegramCall(ctx *streamContext) error {
 
 	ctx.telegramConn = obfuscated2.Conn{
 		Conn: connTraffic{
-			Conn:   conn,
-			connID: ctx.connID,
-			stream: p.eventStream,
-			ctx:    ctx,
+			Conn:     conn,
+			streamID: ctx.streamID,
+			stream:   p.eventStream,
+			ctx:      ctx,
 		},
 		Encryptor: encryptor,
 		Decryptor: decryptor,
 	}
 
-	p.eventStream.Send(ctx, EventConnectedToDC{
-		CreatedAt: time.Now(),
-		ConnID:    ctx.connID,
-		RemoteIP:  conn.RemoteAddr().(*net.TCPAddr).IP,
-		DC:        ctx.dc,
-	})
+	p.eventStream.Send(ctx,
+		NewEventConnectedToDC(ctx.streamID, conn.RemoteAddr().(*net.TCPAddr).IP, ctx.dc))
 
 	return nil
 }
 
 func (p *Proxy) doDomainFronting(ctx *streamContext, conn *connRewind) {
-	p.eventStream.Send(p.ctx, EventDomainFronting{
-		CreatedAt: time.Now(),
-		ConnID:    ctx.connID,
-	})
-
+	p.eventStream.Send(p.ctx, NewEventDomainFronting(ctx.streamID))
 	conn.Rewind()
 
 	frontConn, err := p.network.DialContext(ctx, "tcp", p.DomainFrontingAddress())
@@ -270,10 +247,10 @@ func (p *Proxy) doDomainFronting(ctx *streamContext, conn *connRewind) {
 	}
 
 	frontConn = connTraffic{
-		Conn:   frontConn,
-		ctx:    ctx,
-		connID: ctx.connID,
-		stream: p.eventStream,
+		Conn:     frontConn,
+		ctx:      ctx,
+		streamID: ctx.streamID,
+		stream:   p.eventStream,
 	}
 
 	rel := relay.AcquireRelay(ctx,

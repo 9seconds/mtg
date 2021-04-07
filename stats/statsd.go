@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/9seconds/mtg/v2/events"
 	"github.com/9seconds/mtg/v2/logger"
@@ -123,14 +122,10 @@ func (s statsdProcessor) EventReplayAttack(_ mtglib.EventReplayAttack) {
 }
 
 func (s statsdProcessor) Shutdown() {
-	now := time.Now()
 	events := make([]mtglib.EventFinish, 0, len(s.streams))
 
 	for k := range s.streams {
-		events = append(events, mtglib.EventFinish{
-			CreatedAt: now,
-			ConnID:    k,
-		})
+		events = append(events, mtglib.NewEventFinish(k))
 	}
 
 	for i := range events {

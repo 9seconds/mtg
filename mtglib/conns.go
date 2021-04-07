@@ -6,27 +6,21 @@ import (
 	"io"
 	"net"
 	"sync"
-	"time"
 )
 
 type connTraffic struct {
 	net.Conn
 
-	connID string
-	stream EventStream
-	ctx    context.Context
+	streamID string
+	stream   EventStream
+	ctx      context.Context
 }
 
 func (c connTraffic) Read(b []byte) (int, error) {
 	n, err := c.Conn.Read(b)
 
 	if n > 0 {
-		c.stream.Send(c.ctx, EventTraffic{
-			CreatedAt: time.Now(),
-			ConnID:    c.connID,
-			Traffic:   uint(n),
-			IsRead:    true,
-		})
+		c.stream.Send(c.ctx, NewEventTraffic(c.streamID, uint(n), true))
 	}
 
 	return n, err // nolint: wrapcheck
@@ -36,12 +30,7 @@ func (c connTraffic) Write(b []byte) (int, error) {
 	n, err := c.Conn.Write(b)
 
 	if n > 0 {
-		c.stream.Send(c.ctx, EventTraffic{
-			CreatedAt: time.Now(),
-			ConnID:    c.connID,
-			Traffic:   uint(n),
-			IsRead:    false,
-		})
+		c.stream.Send(c.ctx, NewEventTraffic(c.streamID, uint(n), false))
 	}
 
 	return n, err // nolint: wrapcheck

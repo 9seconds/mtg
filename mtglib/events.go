@@ -5,110 +5,133 @@ import (
 	"time"
 )
 
+type eventBase struct {
+	streamID  string
+	timestamp time.Time
+}
+
+func (e eventBase) StreamID() string {
+	return e.streamID
+}
+
+func (e eventBase) Timestamp() time.Time {
+	return e.timestamp
+}
+
 type EventStart struct {
-	CreatedAt time.Time
-	ConnID    string
-	RemoteIP  net.IP
-}
+	eventBase
 
-func (e EventStart) StreamID() string {
-	return e.ConnID
-}
-
-func (e EventStart) Timestamp() time.Time {
-	return e.CreatedAt
+	RemoteIP net.IP
 }
 
 type EventConnectedToDC struct {
-	CreatedAt time.Time
-	ConnID    string
-	RemoteIP  net.IP
-	DC        int
-}
+	eventBase
 
-func (e EventConnectedToDC) StreamID() string {
-	return e.ConnID
-}
-
-func (e EventConnectedToDC) Timestamp() time.Time {
-	return e.CreatedAt
+	RemoteIP net.IP
+	DC       int
 }
 
 type EventTraffic struct {
-	CreatedAt time.Time
-	ConnID    string
-	Traffic   uint
-	IsRead    bool
-}
+	eventBase
 
-func (e EventTraffic) StreamID() string {
-	return e.ConnID
-}
-
-func (e EventTraffic) Timestamp() time.Time {
-	return e.CreatedAt
+	Traffic uint
+	IsRead  bool
 }
 
 type EventFinish struct {
-	CreatedAt time.Time
-	ConnID    string
-}
-
-func (e EventFinish) StreamID() string {
-	return e.ConnID
-}
-
-func (e EventFinish) Timestamp() time.Time {
-	return e.CreatedAt
+	eventBase
 }
 
 type EventDomainFronting struct {
-	CreatedAt time.Time
-	ConnID    string
-}
-
-func (e EventDomainFronting) StreamID() string {
-	return e.ConnID
-}
-
-func (e EventDomainFronting) Timestamp() time.Time {
-	return e.CreatedAt
+	eventBase
 }
 
 type EventConcurrencyLimited struct {
-	CreatedAt time.Time
-}
-
-func (e EventConcurrencyLimited) StreamID() string {
-	return ""
-}
-
-func (e EventConcurrencyLimited) Timestamp() time.Time {
-	return e.CreatedAt
+	eventBase
 }
 
 type EventIPBlocklisted struct {
-	CreatedAt time.Time
-	RemoteIP  net.IP
-}
+	eventBase
 
-func (e EventIPBlocklisted) StreamID() string {
-	return ""
-}
-
-func (e EventIPBlocklisted) Timestamp() time.Time {
-	return e.CreatedAt
+	RemoteIP net.IP
 }
 
 type EventReplayAttack struct {
-	CreatedAt time.Time
-	ConnID    string
+	eventBase
 }
 
-func (e EventReplayAttack) StreamID() string {
-	return e.ConnID
+func NewEventStart(streamID string, remoteIP net.IP) EventStart {
+	return EventStart{
+		eventBase: eventBase{
+			timestamp: time.Now(),
+			streamID:  streamID,
+		},
+		RemoteIP: remoteIP,
+	}
 }
 
-func (e EventReplayAttack) Timestamp() time.Time {
-	return e.CreatedAt
+func NewEventConnectedToDC(streamID string, remoteIP net.IP, dc int) EventConnectedToDC {
+	return EventConnectedToDC{
+		eventBase: eventBase{
+			timestamp: time.Now(),
+			streamID:  streamID,
+		},
+		RemoteIP: remoteIP,
+		DC:       dc,
+	}
+}
+
+func NewEventTraffic(streamID string, traffic uint, isRead bool) EventTraffic {
+	return EventTraffic{
+		eventBase: eventBase{
+			timestamp: time.Now(),
+			streamID:  streamID,
+		},
+		Traffic: traffic,
+		IsRead:  isRead,
+	}
+}
+
+func NewEventFinish(streamID string) EventFinish {
+	return EventFinish{
+		eventBase: eventBase{
+			timestamp: time.Now(),
+			streamID:  streamID,
+		},
+	}
+}
+
+func NewEventDomainFronting(streamID string) EventDomainFronting {
+	return EventDomainFronting{
+		eventBase: eventBase{
+			timestamp: time.Now(),
+			streamID:  streamID,
+		},
+	}
+}
+
+func NewEventConcurrencyLimited() EventConcurrencyLimited {
+	return EventConcurrencyLimited{
+		eventBase: eventBase{
+			timestamp: time.Now(),
+		},
+	}
+}
+
+func NewEventIPBlocklisted(remoteIP net.IP) EventIPBlocklisted {
+	return EventIPBlocklisted{
+		eventBase: eventBase{
+			timestamp: time.Now(),
+		},
+		RemoteIP: remoteIP,
+	}
+}
+
+func NewEventReplayAttack(streamID string) EventReplayAttack {
+	return EventReplayAttack{
+		eventBase: eventBase{
+			timestamp: time.Now(),
+			streamID:  streamID,
+		},
+	}
 }

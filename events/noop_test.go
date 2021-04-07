@@ -4,7 +4,6 @@ import (
 	"context"
 	"net"
 	"testing"
-	"time"
 
 	"github.com/9seconds/mtg/v2/events"
 	"github.com/9seconds/mtg/v2/mtglib"
@@ -20,42 +19,14 @@ type NoopTestSuite struct {
 
 func (suite *NoopTestSuite) SetupSuite() {
 	suite.testData = map[string]mtglib.Event{
-		"start": mtglib.EventStart{
-			CreatedAt: time.Now(),
-			ConnID:    "connID",
-			RemoteIP:  net.ParseIP("127.0.0.1"),
-		},
-		"connected-to-dc": mtglib.EventConnectedToDC{
-			CreatedAt: time.Now(),
-			ConnID:    "connID",
-			RemoteIP:  net.ParseIP("127.1.0.1"),
-			DC:        2,
-		},
-		"domain-fronting": mtglib.EventDomainFronting{
-			CreatedAt: time.Now(),
-			ConnID:    "connID",
-		},
-		"traffic": mtglib.EventTraffic{
-			CreatedAt: time.Now(),
-			ConnID:    "connID",
-			Traffic:   1000,
-			IsRead:    true,
-		},
-		"finish": mtglib.EventFinish{
-			CreatedAt: time.Now(),
-			ConnID:    "connID",
-		},
-		"concurrency-limited": mtglib.EventConcurrencyLimited{
-			CreatedAt: time.Now(),
-		},
-		"ip-blacklisted": mtglib.EventIPBlocklisted{
-			RemoteIP:  net.ParseIP("10.0.0.10"),
-			CreatedAt: time.Now(),
-		},
-		"replay-attack": mtglib.EventReplayAttack{
-			CreatedAt: time.Now(),
-			ConnID:    "connID",
-		},
+		"start":               mtglib.NewEventStart("connID", net.ParseIP("127.0.0.1")),
+		"connected-to-dc":     mtglib.NewEventConnectedToDC("connID", net.ParseIP("127.1.0.1"), 2),
+		"domain-fronting":     mtglib.NewEventDomainFronting("connID"),
+		"traffic":             mtglib.NewEventTraffic("connID", 1000, true),
+		"finish":              mtglib.NewEventFinish("connID"),
+		"concurrency-limited": mtglib.NewEventConcurrencyLimited(),
+		"ip-blacklisted":      mtglib.NewEventIPBlocklisted(net.ParseIP("10.0.0.10")),
+		"replay-attack":       mtglib.NewEventReplayAttack("connID"),
 	}
 	suite.ctx = context.Background()
 }

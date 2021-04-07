@@ -7,11 +7,7 @@ import (
 	"fmt"
 )
 
-const (
-	SecretKeyLength = 16
-
-	secretFakeTLSFirstByte byte = 0xee
-)
+const secretFakeTLSFirstByte byte = 0xee
 
 var secretEmptyKey [SecretKeyLength]byte
 

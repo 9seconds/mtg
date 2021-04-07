@@ -9,22 +9,66 @@ import (
 )
 
 var (
-	ErrSecretEmpty                    = errors.New("secret is empty")
-	ErrSecretInvalid                  = errors.New("secret is invalid")
-	ErrNetworkIsNotDefined            = errors.New("network is not defined")
-	ErrAntiReplayCacheIsNotDefined    = errors.New("anti-replay cache is not defined")
+	// ErrSecretEmpty is returned if you are trying to create a proxy
+	// but do not provide a secret.
+	ErrSecretEmpty = errors.New("secret is empty")
+
+	// ErrSecretInvalid is returned if you are trying to create a proxy
+	// but secret value is invalid (no host or payload are zeroes).
+	ErrSecretInvalid = errors.New("secret is invalid")
+
+	// ErrNetworkIsNotDefined is returned if you are trying to create a
+	// proxy but network value is undefined.
+	ErrNetworkIsNotDefined = errors.New("network is not defined")
+
+	// ErrAntiReplayCacheIsNotDefined is returned if you are trying to
+	// create a proxy but anti replay cache value is undefined.
+	ErrAntiReplayCacheIsNotDefined = errors.New("anti-replay cache is not defined")
+
+	// ErrTimeAttackDetectorIsNotDefined is returned if you are trying to
+	// create a proxy but time attack detector is not defined.
 	ErrTimeAttackDetectorIsNotDefined = errors.New("time attack detector is not defined")
-	ErrIPBlocklistIsNotDefined        = errors.New("ip blocklist is not defined")
-	ErrEventStreamIsNotDefined        = errors.New("event stream is not defined")
-	ErrLoggerIsNotDefined             = errors.New("logger is not defined")
+
+	// ErrIPBlocklistIsNotDefined is returned if you are trying to
+	// create a proxy but ip blocklist instance is not defined.
+	ErrIPBlocklistIsNotDefined = errors.New("ip blocklist is not defined")
+
+	// ErrEventStreamIsNotDefined is returned if you are trying to create a
+	// proxy but event stream instance is not defined.
+	ErrEventStreamIsNotDefined = errors.New("event stream is not defined")
+
+	// ErrLoggerIsNotDefined is returned if you are trying to
+	// create a proxy but logger is not defined.
+	ErrLoggerIsNotDefined = errors.New("logger is not defined")
 )
 
 const (
-	DefaultConcurrency        = 4096
-	DefaultBufferSize         = 16 * 1024 // 16 kib
+	// DefaultConcurrency is a default max count of simultaneously
+	// connected clients.
+	DefaultConcurrency = 4096
+
+	// DefaultBufferSize is a default size of a copy buffer.
+	DefaultBufferSize = 16 * 1024 // 16 kib
+
+	// DefaultDomainFrontingPort is a default port (HTTPS) to connect to in
+	// case of probe-resistance activity.
 	DefaultDomainFrontingPort = 443
-	DefaultIdleTimeout        = time.Minute
-	DefaultPreferIP           = "prefer-ipv6"
+
+	// DefaultIdleTimeout is a default timeout for closing a connection
+	// in case of idling.
+	DefaultIdleTimeout = time.Minute
+
+	// DefaultPreferIP is a default value for Telegram IP connectivity
+	// preference.
+	DefaultPreferIP = "prefer-ipv6"
+
+	// SecretKeyLength defines a length of the secret bytes used
+	// by Telegram and a proxy.
+	SecretKeyLength = 16
+
+	// ConnectionIDBytesLength defines a count of random bytes
+	// used to generate a stream/connection ids.
+	ConnectionIDBytesLength = 16
 )
 
 // Network defines a knowledge how to work with a network. It may sound
@@ -105,8 +149,24 @@ type IPBlocklist interface {
 	Contains(net.IP) bool
 }
 
+// Event is a data structure which is populated during mtg request
+// processing lifecycle. Each request popluates many events:
+//
+// 1. Client connected
+//
+// 2. Request is finished
+//
+// 3. Connection to Telegram server is established
+//
+// and so on. All these events are data structures but all of them
+// must conform the same interface.
 type Event interface {
+	// StreamID returns an identifier of the stream, connection,
+	// request, you name it. All events within the same stream returns
+	// the same stream id.
 	StreamID() string
+
+	// Timestamp returns a timestamp when this event was generated.
 	Timestamp() time.Time
 }
 
