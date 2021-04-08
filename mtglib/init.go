@@ -1,3 +1,20 @@
+// mtglib defines a package with MTPROTO proxy.
+//
+// Since mtg itself is build as an example of how to work with mtglib,
+// it worth to telling a couple of words about a project organization.
+//
+// A core object of the project is mtglib.Proxy. This is a proxy you
+// expect: that one which you configure, set to serve on a listener
+// and/or shutdown on application termination.
+//
+// But it also has a core logic unrelated to Telegram per se: anti
+// replay cache, network connectivity (who knows, maybe you want to have
+// a native VMESS integration) and so on.
+//
+// You can supply such parts to a proxy with interfaces. The rest of
+// the packages in mtg define some default implementations of these
+// interfaces. But if you want to integrate it with, let say, influxdb,
+// you can do it easily.
 package mtglib
 
 import (
