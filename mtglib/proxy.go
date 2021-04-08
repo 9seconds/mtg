@@ -17,6 +17,7 @@ import (
 	"github.com/panjf2000/ants/v2"
 )
 
+// Proxy is an MTPROTO proxy structure.
 type Proxy struct {
 	ctx             context.Context
 	ctxCancel       context.CancelFunc
@@ -37,10 +38,13 @@ type Proxy struct {
 	logger             Logger
 }
 
+// DomainFrontingAddress returns a host:port pair for a fronting domain.
 func (p *Proxy) DomainFrontingAddress() string {
 	return net.JoinHostPort(p.secret.Host, strconv.Itoa(p.domainFrontingPort))
 }
 
+// ServeConn serves a connection. We do not check IP blocklist and
+// concurrency limit here.
 func (p *Proxy) ServeConn(conn net.Conn) {
 	p.streamWaitGroup.Add(1)
 	defer p.streamWaitGroup.Done()
@@ -86,6 +90,7 @@ func (p *Proxy) ServeConn(conn net.Conn) {
 	}
 }
 
+// Serve starts a proxy on a given listener.
 func (p *Proxy) Serve(listener net.Listener) error {
 	p.streamWaitGroup.Add(1)
 	defer p.streamWaitGroup.Done()
@@ -93,7 +98,12 @@ func (p *Proxy) Serve(listener net.Listener) error {
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			return fmt.Errorf("cannot accept a new connection: %w", err)
+			select {
+			case <-p.ctx.Done():
+				return nil
+			default:
+				return fmt.Errorf("cannot accept a new connection: %w", err)
+			}
 		}
 
 		ipAddr := conn.RemoteAddr().(*net.TCPAddr).IP
@@ -117,15 +127,11 @@ func (p *Proxy) Serve(listener net.Listener) error {
 			logger.Info("connection was concurrency limited")
 			p.eventStream.Send(p.ctx, NewEventConcurrencyLimited())
 		}
-
-		select {
-		case <-p.ctx.Done():
-			return p.ctx.Err()
-		default:
-		}
 	}
 }
 
+// Shutdown 'gracefully' shutdowns all connections. Please remember that
+// it does not close an underlying listener.
 func (p *Proxy) Shutdown() {
 	p.ctxCancel()
 	p.streamWaitGroup.Wait()
@@ -262,6 +268,7 @@ func (p *Proxy) doDomainFronting(ctx *streamContext, conn *connRewind) {
 	}
 }
 
+// NewProxy makes a new proxy instance.
 func NewProxy(opts ProxyOpts) (*Proxy, error) {
 	if err := opts.valid(); err != nil {
 		return nil, fmt.Errorf("invalid settings: %w", err)

@@ -2,20 +2,89 @@ package mtglib
 
 import "time"
 
+// ProxyOpts is a structure with settings to mtg proxy.
+//
+// This is not required per se, but this is to shorten function
+// signature and give an ability to conveniently provide default values.
 type ProxyOpts struct {
-	Secret             Secret
-	Network            Network
-	AntiReplayCache    AntiReplayCache
-	TimeAttackDetector TimeAttackDetector
-	IPBlocklist        IPBlocklist
-	EventStream        EventStream
-	Logger             Logger
+	// Secret defines a secret which should be used by a proxy.
+	//
+	// This is a mandatory setting.
+	Secret Secret
 
-	BufferSize         uint
-	Concurrency        uint
+	// Network defines a network instance which should be used for all
+	// network communications made by proxies.
+	//
+	// This is a mandatory setting.
+	Network Network
+
+	// AntiReplayCache defines an instance of antireplay cache.
+	//
+	// This is a mandatory setting.
+	AntiReplayCache AntiReplayCache
+
+	// TimeAttackDetector defines an instance of timeattack detector.
+	//
+	// This is a mandatory setting.
+	TimeAttackDetector TimeAttackDetector
+
+	// IPBlocklist defines an instance of IP blocklist.
+	//
+	// This is a mandatory setting.
+	IPBlocklist IPBlocklist
+
+	// EventStream defines an instance of event stream.
+	//
+	// This ia a mandatory setting.
+	EventStream EventStream
+
+	// Logger defines an instance of the logger.
+	//
+	// This is a mandatory setting.
+	Logger Logger
+
+	// BufferSize is a size of the copy buffer in bytes.
+	//
+	// Please remember that we multiply this number in 2, because when
+	// we relay between proxies, we have to create 2 intermediate
+	// buffers: to and from.
+	//
+	// This is an optional setting.
+	BufferSize uint
+
+	// Concurrency is a size of the worker pool for connection management.
+	//
+	// If we have more connections than this number, they are going to be
+	// rejected.
+	//
+	// This is an optional setting.
+	Concurrency uint
+
+	// DomainFrontingPort is a port we use to connect to a fronting
+	// domain.
+	//
+	// This is required because secret does not specify a port. It
+	// specifies a hostname only.
+	//
+	// This is an optional setting.
 	DomainFrontingPort uint
-	IdleTimeout        time.Duration
-	PreferIP           string
+
+	// IdleTimeout is a timeout for relay when we have to break a
+	// stream.
+	//
+	// This is a timeout for any activity. So, if we have any message
+	// which will pass to either direction, a timer is reset. If we have
+	// no any reads or writes for this timeout, a connection will be
+	// aborted.
+	//
+	// This is an optional setting.
+	IdleTimeout time.Duration
+
+	// PreferIP defines an IP connectivity preference. Valid values are:
+	// 'prefer-ipv4', 'prefer-ipv6', 'only-ipv4', 'only-ipv6'.
+	//
+	// This is an optional setting.
+	PreferIP string
 }
 
 func (p ProxyOpts) valid() error {
