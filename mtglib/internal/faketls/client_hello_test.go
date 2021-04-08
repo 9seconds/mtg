@@ -153,6 +153,38 @@ func (suite *ClientHelloTestSuite) TestSnapshotBad() {
 	}
 }
 
+func (suite *ClientHelloTestSuite) TestValidateHostname() {
+	hello := faketls.ClientHello{
+		Time: time.Now(),
+	}
+	suite.NoError(hello.Valid("hostname", time.Second))
+
+	hello.Host = "hostname"
+	suite.Error(hello.Valid("hostname2", time.Second))
+	suite.NoError(hello.Valid("hostname", time.Second))
+}
+
+func (suite *ClientHelloTestSuite) TestValidateTime() {
+	testData := []time.Duration{
+		-2 * time.Second,
+		2 * time.Second,
+	}
+
+	for _, v := range testData {
+		value := v
+
+		suite.T().Run(value.String(), func(t *testing.T) {
+			hello := faketls.ClientHello{
+				Host: "hostname",
+				Time: time.Now().Add(value),
+			}
+			suite.Error(hello.Valid("hostname", 500*time.Millisecond))
+			suite.Error(hello.Valid("hostname", time.Second))
+			suite.NoError(hello.Valid("hostname", 3*time.Second))
+		})
+	}
+}
+
 func TestClientHello(t *testing.T) {
 	t.Parallel()
 	suite.Run(t, &ClientHelloTestSuite{})
