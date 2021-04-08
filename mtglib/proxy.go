@@ -262,50 +262,12 @@ func (p *Proxy) doDomainFronting(ctx *streamContext, conn *connRewind) {
 	}
 }
 
-func NewProxy(opts ProxyOpts) (*Proxy, error) { // nolint: cyclop, funlen
-	switch {
-	case opts.Network == nil:
-		return nil, ErrNetworkIsNotDefined
-	case opts.AntiReplayCache == nil:
-		return nil, ErrAntiReplayCacheIsNotDefined
-	case opts.IPBlocklist == nil:
-		return nil, ErrIPBlocklistIsNotDefined
-	case opts.EventStream == nil:
-		return nil, ErrEventStreamIsNotDefined
-	case opts.TimeAttackDetector == nil:
-		return nil, ErrTimeAttackDetectorIsNotDefined
-	case opts.Logger == nil:
-		return nil, ErrLoggerIsNotDefined
-	case !opts.Secret.Valid():
-		return nil, ErrSecretInvalid
+func NewProxy(opts ProxyOpts) (*Proxy, error) {
+	if err := opts.valid(); err != nil {
+		return nil, fmt.Errorf("invalid settings: %w", err)
 	}
 
-	preferIP := opts.PreferIP
-	if preferIP == "" {
-		preferIP = DefaultPreferIP
-	}
-
-	concurrency := opts.Concurrency
-	if concurrency == 0 {
-		concurrency = DefaultConcurrency
-	}
-
-	idleTimeout := opts.IdleTimeout
-	if idleTimeout < 1 {
-		idleTimeout = DefaultIdleTimeout
-	}
-
-	bufferSize := opts.BufferSize
-	if bufferSize < 1 {
-		bufferSize = DefaultBufferSize
-	}
-
-	domainFrontingPort := int(opts.DomainFrontingPort)
-	if domainFrontingPort == 0 {
-		domainFrontingPort = DefaultDomainFrontingPort
-	}
-
-	tg, err := telegram.New(opts.Network, preferIP)
+	tg, err := telegram.New(opts.Network, opts.getPreferIP())
 	if err != nil {
 		return nil, fmt.Errorf("cannot build telegram dialer: %w", err)
 	}
@@ -320,17 +282,18 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) { // nolint: cyclop, funlen
 		timeAttackDetector: opts.TimeAttackDetector,
 		ipBlocklist:        opts.IPBlocklist,
 		eventStream:        opts.EventStream,
-		logger:             opts.Logger.Named("proxy"),
-		domainFrontingPort: domainFrontingPort,
-		idleTimeout:        idleTimeout,
-		bufferSize:         int(bufferSize),
+		logger:             opts.getLogger("proxy"),
+		domainFrontingPort: opts.getDomainFrontingPort(),
+		idleTimeout:        opts.getIdleTimeout(),
+		bufferSize:         opts.getBufferSize(),
 		telegram:           tg,
 	}
 
-	pool, err := ants.NewPoolWithFunc(int(concurrency), func(arg interface{}) {
-		proxy.ServeConn(arg.(net.Conn))
-	},
-		ants.WithLogger(opts.Logger.Named("ants")),
+	pool, err := ants.NewPoolWithFunc(opts.getConcurrency(),
+		func(arg interface{}) {
+			proxy.ServeConn(arg.(net.Conn))
+		},
+		ants.WithLogger(opts.getLogger("ants")),
 		ants.WithNonblocking(true))
 	if err != nil {
 		panic(err)
