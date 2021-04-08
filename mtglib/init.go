@@ -239,16 +239,38 @@ type TimeAttackDetector interface {
 // logger1 should see no param2 and vice versa, logger2 should not see param1
 // If you attach a parameter to a logger, parents should not know about that.
 type Logger interface {
+	// Named returns a new logger with a bound name. Name chaining is
+	// allowed and appreciated.
 	Named(name string) Logger
 
+	// BindInt binds new integer parameter to a new logger instance.
 	BindInt(name string, value int) Logger
+
+	// BindStr binds new string parameter to a new logger instance.
 	BindStr(name, value string) Logger
 
+	// Printf is to support log.Logger behavior.
 	Printf(format string, args ...interface{})
+
+	// Info puts a message about some normal situation.
 	Info(msg string)
+
+	// InfoError puts a message about some normal situation but this
+	// situation is related to a given error.
 	InfoError(msg string, err error)
+
+	// Warning puts a message about some extraordinary situation
+	// worth to look at.
 	Warning(msg string)
+
+	// WarningError puts a message about some extraordinary situation
+	// worth to look at. This situation is related to a given error.
 	WarningError(msg string, err error)
+
+	// Debug puts a message useful for debugging only.
 	Debug(msg string)
+
+	// Debug puts a message useful for debugging only. This message is
+	// related to a given error.
 	DebugError(msg string, err error)
 }
