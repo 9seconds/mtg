@@ -16,7 +16,6 @@ import (
 	"github.com/9seconds/mtg/v2/logger"
 	"github.com/9seconds/mtg/v2/mtglib"
 	"github.com/9seconds/mtg/v2/network"
-	"github.com/9seconds/mtg/v2/timeattack"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -46,13 +45,12 @@ func (suite *ProxyTestSuite) SetupSuite() {
 	suite.NoError(err)
 
 	suite.opts = &mtglib.ProxyOpts{
-		Secret:             mtglib.GenerateSecret("httpbin.org"),
-		Network:            ntw,
-		AntiReplayCache:    antireplay.NewNoop(),
-		TimeAttackDetector: timeattack.NewNoop(),
-		IPBlocklist:        ipblocklist.NewNoop(),
-		EventStream:        events.NewNoopStream(),
-		Logger:             logger.NewNoopLogger(),
+		Secret:          mtglib.GenerateSecret("httpbin.org"),
+		Network:         ntw,
+		AntiReplayCache: antireplay.NewNoop(),
+		IPBlocklist:     ipblocklist.NewNoop(),
+		EventStream:     events.NewNoopStream(),
+		Logger:          logger.NewNoopLogger(),
 	}
 
 	proxy, err := mtglib.NewProxy(*suite.opts)
@@ -113,14 +111,6 @@ func (suite *ProxyTestSuite) TestCannotInitNoIPBlocklist() {
 func (suite *ProxyTestSuite) TestCannotInitNoEventStream() {
 	opts := *suite.opts
 	opts.EventStream = nil
-
-	_, err := mtglib.NewProxy(opts)
-	suite.Error(err)
-}
-
-func (suite *ProxyTestSuite) TestCannotInitNoTimeAttackDetector() {
-	opts := *suite.opts
-	opts.TimeAttackDetector = nil
 
 	_, err := mtglib.NewProxy(opts)
 	suite.Error(err)

@@ -12,7 +12,6 @@ import (
 	"github.com/9seconds/mtg/v2/logger"
 	"github.com/9seconds/mtg/v2/mtglib"
 	"github.com/9seconds/mtg/v2/stats"
-	"github.com/9seconds/mtg/v2/timeattack"
 	"github.com/rs/zerolog"
 )
 
@@ -41,12 +40,11 @@ func (c *Proxy) Execute() error {
 
 	ctx := utils.RootContext()
 	opts := mtglib.ProxyOpts{
-		Logger:             logger.NewZeroLogger(zerolog.New(os.Stdout).With().Timestamp().Logger()),
-		Network:            c.Network,
-		AntiReplayCache:    antireplay.NewNoop(),
-		IPBlocklist:        ipblocklist.NewNoop(),
-		TimeAttackDetector: timeattack.NewNoop(),
-		EventStream:        events.NewNoopStream(),
+		Logger:          logger.NewZeroLogger(zerolog.New(os.Stdout).With().Timestamp().Logger()),
+		Network:         c.Network,
+		AntiReplayCache: antireplay.NewNoop(),
+		IPBlocklist:     ipblocklist.NewNoop(),
+		EventStream:     events.NewNoopStream(),
 
 		Secret:             c.Config.Secret,
 		BufferSize:         c.Config.TCPBuffer.Value(mtglib.DefaultBufferSize),
@@ -58,7 +56,6 @@ func (c *Proxy) Execute() error {
 	opts.Logger.BindStr("configuration", c.Config.String()).Debug("configuration")
 
 	c.setupAntiReplayCache(&opts)
-	c.setupTimeAttackDetector(&opts)
 
 	if err := c.setupIPBlocklist(&opts); err != nil {
 		return fmt.Errorf("cannot setup ipblocklist: %w", err)
@@ -95,16 +92,6 @@ func (c *Proxy) setupAntiReplayCache(opts *mtglib.ProxyOpts) {
 	opts.AntiReplayCache = antireplay.NewStableBloomFilter(
 		c.Config.Defense.AntiReplay.MaxSize.Value(antireplay.DefaultStableBloomFilterMaxSize),
 		c.Config.Defense.AntiReplay.ErrorRate.Value(antireplay.DefaultStableBloomFilterErrorRate),
-	)
-}
-
-func (c *Proxy) setupTimeAttackDetector(opts *mtglib.ProxyOpts) {
-	if !c.Config.Defense.Time.Enabled {
-		return
-	}
-
-	opts.TimeAttackDetector = timeattack.NewDetector(
-		c.Config.Defense.Time.AllowSkewness.Value(timeattack.DefaultDuration),
 	)
 }
 

@@ -23,19 +23,19 @@ type Proxy struct {
 	ctxCancel       context.CancelFunc
 	streamWaitGroup sync.WaitGroup
 
-	idleTimeout        time.Duration
-	bufferSize         int
-	domainFrontingPort int
-	workerPool         *ants.PoolWithFunc
-	telegram           *telegram.Telegram
+	idleTimeout          time.Duration
+	tolerateTimeSkewness time.Duration
+	bufferSize           int
+	domainFrontingPort   int
+	workerPool           *ants.PoolWithFunc
+	telegram             *telegram.Telegram
 
-	secret             Secret
-	network            Network
-	antiReplayCache    AntiReplayCache
-	timeAttackDetector TimeAttackDetector
-	ipBlocklist        IPBlocklist
-	eventStream        EventStream
-	logger             Logger
+	secret          Secret
+	network         Network
+	antiReplayCache AntiReplayCache
+	ipBlocklist     IPBlocklist
+	eventStream     EventStream
+	logger          Logger
 }
 
 // DomainFrontingAddress returns a host:port pair for a fronting domain.
@@ -159,15 +159,11 @@ func (p *Proxy) doFakeTLSHandshake(ctx *streamContext) bool {
 		return false
 	}
 
-	if hello.Host != "" && hello.Host != p.secret.Host {
-		p.logger.BindStr("hostname", hello.Host).Info("incorrect domain was found in SNI")
-		p.doDomainFronting(ctx, rewind)
-
-		return false
-	}
-
-	if err := p.timeAttackDetector.Valid(hello.Time); err != nil {
-		p.logger.InfoError("invalid faketls time", err)
+	if err := hello.Valid(p.secret.Host, p.tolerateTimeSkewness); err != nil {
+		p.logger.
+			BindStr("hostname", hello.Host).
+			BindStr("hello-time", hello.Time.String()).
+			InfoError("invalid faketls client hello", err)
 		p.doDomainFronting(ctx, rewind)
 
 		return false
@@ -281,19 +277,19 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	proxy := &Proxy{
-		ctx:                ctx,
-		ctxCancel:          cancel,
-		secret:             opts.Secret,
-		network:            opts.Network,
-		antiReplayCache:    opts.AntiReplayCache,
-		timeAttackDetector: opts.TimeAttackDetector,
-		ipBlocklist:        opts.IPBlocklist,
-		eventStream:        opts.EventStream,
-		logger:             opts.getLogger("proxy"),
-		domainFrontingPort: opts.getDomainFrontingPort(),
-		idleTimeout:        opts.getIdleTimeout(),
-		bufferSize:         opts.getBufferSize(),
-		telegram:           tg,
+		ctx:                  ctx,
+		ctxCancel:            cancel,
+		secret:               opts.Secret,
+		network:              opts.Network,
+		antiReplayCache:      opts.AntiReplayCache,
+		ipBlocklist:          opts.IPBlocklist,
+		eventStream:          opts.EventStream,
+		logger:               opts.getLogger("proxy"),
+		domainFrontingPort:   opts.getDomainFrontingPort(),
+		tolerateTimeSkewness: opts.getTolerateTimeSkewness(),
+		idleTimeout:          opts.getIdleTimeout(),
+		bufferSize:           opts.getBufferSize(),
+		telegram:             tg,
 	}
 
 	pool, err := ants.NewPoolWithFunc(opts.getConcurrency(),

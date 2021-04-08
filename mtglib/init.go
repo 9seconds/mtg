@@ -42,10 +42,6 @@ var (
 	// create a proxy but anti replay cache value is undefined.
 	ErrAntiReplayCacheIsNotDefined = errors.New("anti-replay cache is not defined")
 
-	// ErrTimeAttackDetectorIsNotDefined is returned if you are trying to
-	// create a proxy but time attack detector is not defined.
-	ErrTimeAttackDetectorIsNotDefined = errors.New("time attack detector is not defined")
-
 	// ErrIPBlocklistIsNotDefined is returned if you are trying to
 	// create a proxy but ip blocklist instance is not defined.
 	ErrIPBlocklistIsNotDefined = errors.New("ip blocklist is not defined")
@@ -74,6 +70,10 @@ const (
 	// DefaultIdleTimeout is a default timeout for closing a connection
 	// in case of idling.
 	DefaultIdleTimeout = time.Minute
+
+	// DefaultTolerateTimeSkewness is a default timeout for time
+	// skewness on a faketls timeout verification.
+	DefaultTolerateTimeSkewness = 3 * time.Second
 
 	// DefaultPreferIP is a default value for Telegram IP connectivity
 	// preference.
@@ -204,18 +204,6 @@ type EventStream interface {
 	// It is possible that context is closed but the message is delivered.
 	// EventStream implementations should solve this issue somehow.
 	Send(context.Context, Event)
-}
-
-// TimeAttackDetector is an abstraction that checks a time, taken from
-// the faketls client hello message. This timestamp is encoded into
-// client-generated random bytes and can be extracted after some client
-// hello verification.
-//
-// This is mostly to prevent replay attacks.
-type TimeAttackDetector interface {
-	// Valid returns an error if timestamp is invalid or should not be
-	// accepted.
-	Valid(time.Time) error
 }
 
 // Logger defines an interface of the logger used by mtglib.

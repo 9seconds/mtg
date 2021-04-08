@@ -19,6 +19,26 @@ type ClientHello struct {
 	CipherSuite uint16
 }
 
+func (c ClientHello) Valid(hostname string, tolerateTimeSkewness time.Duration) error {
+	if c.Host != "" && c.Host != hostname {
+		return fmt.Errorf("incorrect hostname %s", hostname)
+	}
+
+	now := time.Now()
+
+	timeDiff := now.Sub(c.Time)
+	if timeDiff < 0 {
+		timeDiff = -timeDiff
+	}
+
+	if timeDiff > tolerateTimeSkewness {
+		return fmt.Errorf("incorrect timestamp. got=%d, now=%d, diff=%s",
+			c.Time.Unix(), now.Unix(), timeDiff.String())
+	}
+
+	return nil
+}
+
 func ParseClientHello(secret, handshake []byte) (ClientHello, error) {
 	hello := ClientHello{}
 

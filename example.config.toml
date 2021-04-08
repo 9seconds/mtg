@@ -48,6 +48,14 @@ prefer-ip = "prefer-ipv6"
 # access.
 domain-fronting-port = 443
 
+# FakeTLS can compare timestamps to prevent probes. Each message has
+# encrypted timestamp. So, mtg can compare this timestamp and decide if
+# we need to proceed with connection or not.
+#
+# Sometimes time can be skewed so we accept all messages within a
+# time range of this parameter.
+tolerate-time-skewness = "5s"
+
 # network defines different network-related settings
 [network]
 # please be aware that mtg needs to do some external requests. For
@@ -110,19 +118,6 @@ proxies = [
 tcp = "5s"
 http = "10s"
 idle = "1m"
-
-# FakeTLS can compare timestamps to prevent probes. Each message has
-# encrypted timestamp. So, mtg can compare this timestamp and decide if
-# we need to proceed with connection or not.
-#
-# Please ensure that you have some ntp active on this host. Otherwise,
-# you can endup with badly performing proxy.
-[defense.time]
-# You can enable/disable that. A good idea is always enable.
-enabled = true
-# Time can be skewed by many reasons. So, this is a time interval
-# when message is cosidered as a good one.
-allow-skewness = "5s"
 
 # Some countries do active probing on Telegram connections. This technique
 # allows to protect from such effort.

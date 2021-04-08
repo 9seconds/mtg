@@ -23,11 +23,6 @@ type ProxyOpts struct {
 	// This is a mandatory setting.
 	AntiReplayCache AntiReplayCache
 
-	// TimeAttackDetector defines an instance of timeattack detector.
-	//
-	// This is a mandatory setting.
-	TimeAttackDetector TimeAttackDetector
-
 	// IPBlocklist defines an instance of IP blocklist.
 	//
 	// This is a mandatory setting.
@@ -80,6 +75,15 @@ type ProxyOpts struct {
 	// This is an optional setting.
 	IdleTimeout time.Duration
 
+	// TolerateTimeSkewness is a time boundary that defines a time
+	// range where faketls timestamp is acceptable.
+	//
+	// This means that if if you got a timestamp X, now is Y, then
+	// if |X-Y| < TolerateTimeSkewness, then you accept a packet.
+	//
+	// This is an optional setting.
+	TolerateTimeSkewness time.Duration
+
 	// PreferIP defines an IP connectivity preference. Valid values are:
 	// 'prefer-ipv4', 'prefer-ipv6', 'only-ipv4', 'only-ipv6'.
 	//
@@ -97,8 +101,6 @@ func (p ProxyOpts) valid() error {
 		return ErrIPBlocklistIsNotDefined
 	case p.EventStream == nil:
 		return ErrEventStreamIsNotDefined
-	case p.TimeAttackDetector == nil:
-		return ErrTimeAttackDetectorIsNotDefined
 	case p.Logger == nil:
 		return ErrLoggerIsNotDefined
 	case !p.Secret.Valid():
@@ -138,6 +140,14 @@ func (p ProxyOpts) getIdleTimeout() time.Duration {
 	}
 
 	return p.IdleTimeout
+}
+
+func (p ProxyOpts) getTolerateTimeSkewness() time.Duration {
+	if p.TolerateTimeSkewness == 0 {
+		return DefaultTolerateTimeSkewness
+	}
+
+	return p.TolerateTimeSkewness
 }
 
 func (p ProxyOpts) getPreferIP() string {
