@@ -5,7 +5,7 @@ Highly-opionated (ex-bullshit-free) MTPROTO proxy for
 
 [![CI](https://github.com/9seconds/mtg/actions/workflows/ci.yaml/badge.svg?branch=master)](https://github.com/9seconds/mtg/actions/workflows/ci.yaml)
 [![codecov](https://codecov.io/gh/9seconds/mtg/branch/master/graph/badge.svg?token=JfdDyGVpT4)](https://codecov.io/gh/9seconds/mtg)
-[![Go Reference](https://pkg.go.dev/badge/github.com/9seconds/mtg.svg)](https://pkg.go.dev/github.com/9seconds/mtg)
+[![Go Reference](https://pkg.go.dev/badge/github.com/9seconds/mtg.svg)](https://pkg.go.dev/github.com/9seconds/mtg/v2)
 
 **If you use v1.0 or upgrade broke you proxy, please read the chapter
 [Version 2](#version-2)**
