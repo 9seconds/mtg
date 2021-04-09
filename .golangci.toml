@@ -10,4 +10,4 @@ format = "colored-line-number"
 
 [linters]
 enable-all = true
-disable = ["gochecknoglobals", "gas", "gomnd", "goerr113", "exhaustivestruct"]
+disable = ["gochecknoglobals", "gas", "goerr113", "exhaustivestruct"]
