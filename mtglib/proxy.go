@@ -270,7 +270,7 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 		return nil, fmt.Errorf("invalid settings: %w", err)
 	}
 
-	tg, err := telegram.New(opts.Network, opts.getPreferIP())
+	tg, err := telegram.New(opts.Network, opts.getPreferIP(), opts.UseTestDCs)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build telegram dialer: %w", err)
 	}

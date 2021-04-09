@@ -23,7 +23,7 @@ type TelegramTestSuite struct {
 
 func (suite *TelegramTestSuite) SetupTest() {
 	suite.dialerMock = &testlib.MtglibNetworkMock{}
-	suite.t, _ = New(suite.dialerMock, "prefer-ipv4")
+	suite.t, _ = New(suite.dialerMock, "prefer-ipv4", false)
 }
 
 func (suite *TelegramTestSuite) TearDownTest() {
@@ -53,8 +53,8 @@ func (suite *TelegramTestSuite) TestDialToCorrectIPs() {
 
 	for i := 1; i <= 5; i++ {
 		testData[i] = []tgAddr{}
-		testData[i] = append(testData[i], v4Addresses[i-1]...)
-		testData[i] = append(testData[i], v6Addresses[i-1])
+		testData[i] = append(testData[i], productionV4Addresses[i-1]...)
+		testData[i] = append(testData[i], productionV6Addresses[i-1]...)
 	}
 
 	for i, v := range testData {
@@ -77,10 +77,10 @@ func (suite *TelegramTestSuite) TestDialToCorrectIPs() {
 
 func (suite *TelegramTestSuite) TestDialPreferIPRange() {
 	testData := map[string][]tgAddr{
-		"prefer-ipv4": {v4Addresses[0][0], v6Addresses[0]},
-		"prefer-ipv6": {v6Addresses[0], v4Addresses[0][0]},
-		"only-ipv4":   {v4Addresses[0][0]},
-		"only-ipv6":   {v6Addresses[0]},
+		"prefer-ipv4": {testV4Addresses[0][0], testV6Addresses[0][0]},
+		"prefer-ipv6": {testV6Addresses[0][0], testV4Addresses[0][0]},
+		"only-ipv4":   {testV4Addresses[0][0]},
+		"only-ipv6":   {testV6Addresses[0][0]},
 	}
 
 	for k, v := range testData {
@@ -95,7 +95,7 @@ func (suite *TelegramTestSuite) TestDialPreferIPRange() {
 					Return((*net.TCPConn)(nil), io.EOF)
 			}
 
-			tg, _ := New(suite.dialerMock, name)
+			tg, _ := New(suite.dialerMock, name, true)
 			_, err := tg.Dial(context.Background(), 1)
 
 			assert.True(t, errors.Is(err, io.EOF))
@@ -105,8 +105,8 @@ func (suite *TelegramTestSuite) TestDialPreferIPRange() {
 
 func (suite *TelegramTestSuite) TestDialPreferIPPriority() {
 	testData := map[string]tgAddr{
-		"prefer-ipv4": v4Addresses[0][0],
-		"prefer-ipv6": v6Addresses[0],
+		"prefer-ipv4": productionV4Addresses[0][0],
+		"prefer-ipv6": productionV6Addresses[0][0],
 	}
 
 	for k, v := range testData {
@@ -121,7 +121,7 @@ func (suite *TelegramTestSuite) TestDialPreferIPPriority() {
 				Once().
 				Return(conn, nil)
 
-			tg, _ := New(suite.dialerMock, name)
+			tg, _ := New(suite.dialerMock, name, false)
 
 			res, err := tg.Dial(context.Background(), 1)
 			assert.NoError(t, err)
@@ -131,7 +131,7 @@ func (suite *TelegramTestSuite) TestDialPreferIPPriority() {
 }
 
 func (suite *TelegramTestSuite) TestUnknownPreferIP() {
-	_, err := New(suite.dialerMock, "xxx")
+	_, err := New(suite.dialerMock, "xxx", false)
 	suite.Error(err)
 }
 

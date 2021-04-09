@@ -89,6 +89,15 @@ type ProxyOpts struct {
 	//
 	// This is an optional setting.
 	PreferIP string
+
+	// UseTestDCs defines if we have to connect to production or to staging
+	// DCs of Telegram.
+	//
+	// This is required if you use mtglib as an integration library for
+	// your Telegram-related projects.
+	//
+	// This is an optional setting.
+	UseTestDCs bool
 }
 
 func (p ProxyOpts) valid() error {
