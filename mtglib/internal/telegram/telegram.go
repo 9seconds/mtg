@@ -3,7 +3,6 @@ package telegram
 import (
 	"context"
 	"fmt"
-	"math/rand"
 	"net"
 	"strings"
 )
@@ -11,30 +10,21 @@ import (
 type Telegram struct {
 	dialer   Dialer
 	preferIP preferIP
+	pool     addressPool
 }
 
 func (t Telegram) Dial(ctx context.Context, dc int) (net.Conn, error) {
-	if dc <= 0 || dc > 5 {
-		return nil, fmt.Errorf("do not know how to dial to %d", dc)
-	}
-
 	var addresses []tgAddr
 
-	if t.preferIP == preferIPOnlyIPv6 {
-		addresses = []tgAddr{v6Addresses[dc-1]}
-	} else {
-		addresses = append(addresses, v4Addresses[dc-1]...)
-		rand.Shuffle(len(addresses), func(i, j int) {
-			addresses[i], addresses[j] = addresses[j], addresses[i]
-		})
-	}
-
 	switch t.preferIP {
+	case preferIPOnlyIPv4:
+		addresses = t.pool.getV4(dc)
+	case preferIPOnlyIPv6:
+		addresses = t.pool.getV6(dc)
 	case preferIPPreferIPv4:
-		addresses = append(addresses, v6Addresses[dc-1])
+		addresses = append(t.pool.getV4(dc), t.pool.getV6(dc)...)
 	case preferIPPreferIPv6:
-		addresses = append([]tgAddr{v6Addresses[dc-1]}, addresses...)
-	case preferIPOnlyIPv4, preferIPOnlyIPv6:
+		addresses = append(t.pool.getV6(dc), t.pool.getV4(dc)...)
 	}
 
 	var (
@@ -52,7 +42,7 @@ func (t Telegram) Dial(ctx context.Context, dc int) (net.Conn, error) {
 	return nil, fmt.Errorf("cannot dial to %d dc: %w", dc, err)
 }
 
-func New(dialer Dialer, ipPreference string) (*Telegram, error) {
+func New(dialer Dialer, ipPreference string, useTestDCs bool) (*Telegram, error) {
 	var pref preferIP
 
 	switch strings.ToLower(ipPreference) {
@@ -68,8 +58,18 @@ func New(dialer Dialer, ipPreference string) (*Telegram, error) {
 		return nil, fmt.Errorf("unknown ip preference %s", ipPreference)
 	}
 
+	pool := addressPool{
+		v4: productionV4Addresses,
+		v6: productionV6Addresses,
+	}
+	if useTestDCs {
+		pool.v4 = testV4Addresses
+		pool.v6 = testV6Addresses
+	}
+
 	return &Telegram{
 		dialer:   dialer,
 		preferIP: pref,
+		pool:     pool,
 	}, nil
 }
