@@ -32,5 +32,5 @@ func (c Conn) Write(p []byte) (int, error) {
 	payload := buf.Bytes()
 	c.Encryptor.XORKeyStream(payload, payload)
 
-	return c.Conn.Write(payload)
+	return c.Conn.Write(payload) // nolint: wrapcheck
 }

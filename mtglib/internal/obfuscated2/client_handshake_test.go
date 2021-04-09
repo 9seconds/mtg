@@ -47,14 +47,18 @@ func (suite *ClientHandshakeTestSuite) TestOk() {
 				Once().
 				Return(len(snapshot.Decrypted.Text.data), nil).
 				Run(func(args mock.Arguments) {
-					arr := args.Get(0).([]byte)
+					arr, ok := args.Get(0).([]byte)
+
+					suite.True(ok)
 					copy(arr, snapshot.Decrypted.Cipher.data)
 				})
 			connMock.On("Write", mock.Anything).
 				Once().
 				Return(len(snapshot.Encrypted.Text.data), nil).
 				Run(func(args mock.Arguments) {
-					arr := args.Get(0).([]byte)
+					arr, ok := args.Get(0).([]byte)
+
+					suite.True(ok)
 					copy(writeData, arr)
 				})
 

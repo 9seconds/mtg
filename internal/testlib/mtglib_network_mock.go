@@ -15,13 +15,13 @@ type MtglibNetworkMock struct {
 func (m *MtglibNetworkMock) Dial(network, address string) (net.Conn, error) {
 	args := m.Called(network, address)
 
-	return args.Get(0).(net.Conn), args.Error(1)
+	return args.Get(0).(net.Conn), args.Error(1) // nolint: wrapcheck
 }
 
 func (m *MtglibNetworkMock) DialContext(ctx context.Context, network, address string) (net.Conn, error) {
 	args := m.Called(ctx, network, address)
 
-	return args.Get(0).(net.Conn), args.Error(1)
+	return args.Get(0).(net.Conn), args.Error(1) // nolint: wrapcheck
 }
 
 func (m *MtglibNetworkMock) MakeHTTPClient(dialFunc func(ctx context.Context,

@@ -24,7 +24,7 @@ func (n *NetConnMock) Write(b []byte) (int, error) {
 }
 
 func (n *NetConnMock) Close() error {
-	return n.Called().Error(0)
+	return n.Called().Error(0) // nolint: wrapcheck
 }
 
 func (n *NetConnMock) LocalAddr() net.Addr {
@@ -36,13 +36,13 @@ func (n *NetConnMock) RemoteAddr() net.Addr {
 }
 
 func (n *NetConnMock) SetDeadline(t time.Time) error {
-	return n.Called(t).Error(0)
+	return n.Called(t).Error(0) // nolint: wrapcheck
 }
 
 func (n *NetConnMock) SetReadDeadline(t time.Time) error {
-	return n.Called(t).Error(0)
+	return n.Called(t).Error(0) // nolint: wrapcheck
 }
 
 func (n *NetConnMock) SetWriteDeadline(t time.Time) error {
-	return n.Called(t).Error(0)
+	return n.Called(t).Error(0) // nolint: wrapcheck
 }

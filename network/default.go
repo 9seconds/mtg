@@ -31,7 +31,10 @@ func (d *defaultDialer) DialContext(ctx context.Context, network, address string
 		return nil, fmt.Errorf("cannot dial to %s: %w", address, err)
 	}
 
-	tcpConn := conn.(*net.TCPConn)
+	tcpConn, ok := conn.(*net.TCPConn)
+	if !ok {
+		panic("conn type is not tcp")
+	}
 
 	if err := tcpConn.SetNoDelay(true); err != nil {
 		conn.Close()

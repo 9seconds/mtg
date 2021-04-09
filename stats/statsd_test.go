@@ -30,7 +30,7 @@ func (s *statsdFakeServer) Addr() string {
 
 func (s *statsdFakeServer) Close() error {
 	if s.conn != nil {
-		return s.conn.Close()
+		return s.conn.Close() // nolint: wrapcheck
 	}
 
 	return nil

@@ -18,7 +18,11 @@ var relayPool = sync.Pool{
 func AcquireRelay(ctx context.Context, logger Logger, bufferSize int, idleTimeout time.Duration) *Relay {
 	ctx, cancel := context.WithCancel(ctx)
 
-	r := relayPool.Get().(*Relay)
+	r, ok := relayPool.Get().(*Relay)
+	if !ok {
+		panic("Relay pool has no relay!")
+	}
+
 	r.ctx = ctx
 	r.ctxCancel = cancel
 	r.logger = logger

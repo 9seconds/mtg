@@ -62,14 +62,14 @@ func (b *base) makeNetwork(conf *config.Config, version string) (mtglib.Network,
 
 	switch len(proxyURLs) {
 	case 0:
-		return network.NewNetwork(baseDialer, userAgent, dohIP, httpTimeout)
+		return network.NewNetwork(baseDialer, userAgent, dohIP, httpTimeout) // nolint: wrapcheck
 	case 1:
 		socksDialer, err := network.NewSocks5Dialer(baseDialer, proxyURLs[0])
 		if err != nil {
 			return nil, fmt.Errorf("cannot build socks5 dialer: %w", err)
 		}
 
-		return network.NewNetwork(socksDialer, userAgent, dohIP, httpTimeout)
+		return network.NewNetwork(socksDialer, userAgent, dohIP, httpTimeout) // nolint: wrapcheck
 	}
 
 	socksDialer, err := network.NewLoadBalancedSocks5Dialer(baseDialer, proxyURLs)
@@ -77,5 +77,5 @@ func (b *base) makeNetwork(conf *config.Config, version string) (mtglib.Network,
 		return nil, fmt.Errorf("cannot build socks5 dialer: %w", err)
 	}
 
-	return network.NewNetwork(socksDialer, userAgent, dohIP, httpTimeout)
+	return network.NewNetwork(socksDialer, userAgent, dohIP, httpTimeout) // nolint: wrapcheck
 }

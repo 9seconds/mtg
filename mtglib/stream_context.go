@@ -27,7 +27,7 @@ func (s *streamContext) Done() <-chan struct{} {
 }
 
 func (s *streamContext) Err() error {
-	return s.ctx.Err()
+	return s.ctx.Err() // nolint: wrapcheck
 }
 
 func (s *streamContext) Value(key interface{}) interface{} {

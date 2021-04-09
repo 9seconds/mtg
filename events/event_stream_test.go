@@ -46,8 +46,9 @@ func (suite *EventStreamTestSuite) TestEventStart() {
 			On("EventStart", mock.Anything).
 			Once().
 			Run(func(args mock.Arguments) {
-				caught := args.Get(0).(mtglib.EventStart)
+				caught, ok := args.Get(0).(mtglib.EventStart)
 
+				suite.True(ok)
 				suite.Equal(evt.RemoteIP.String(), caught.RemoteIP.String())
 				suite.Equal(evt.StreamID(), caught.StreamID())
 				suite.Equal(evt.Timestamp(), caught.Timestamp())
@@ -66,8 +67,9 @@ func (suite *EventStreamTestSuite) TestEventConnectedToDC() {
 			On("EventConnectedToDC", mock.Anything).
 			Once().
 			Run(func(args mock.Arguments) {
-				caught := args.Get(0).(mtglib.EventConnectedToDC)
+				caught, ok := args.Get(0).(mtglib.EventConnectedToDC)
 
+				suite.True(ok)
 				suite.Equal(evt.RemoteIP.String(), caught.RemoteIP.String())
 				suite.Equal(evt.StreamID(), caught.StreamID())
 				suite.Equal(evt.DC, caught.DC)
@@ -87,8 +89,9 @@ func (suite *EventStreamTestSuite) TestEventDomainFronting() {
 			On("EventDomainFronting", mock.Anything).
 			Once().
 			Run(func(args mock.Arguments) {
-				caught := args.Get(0).(mtglib.EventDomainFronting)
+				caught, ok := args.Get(0).(mtglib.EventDomainFronting)
 
+				suite.True(ok)
 				suite.Equal(evt.StreamID(), caught.StreamID())
 				suite.Equal(evt.Timestamp(), caught.Timestamp())
 			})
@@ -106,8 +109,9 @@ func (suite *EventStreamTestSuite) TestEventTraffic() {
 			On("EventTraffic", mock.Anything).
 			Once().
 			Run(func(args mock.Arguments) {
-				caught := args.Get(0).(mtglib.EventTraffic)
+				caught, ok := args.Get(0).(mtglib.EventTraffic)
 
+				suite.True(ok)
 				suite.Equal(evt.StreamID(), caught.StreamID())
 				suite.Equal(evt.Timestamp(), caught.Timestamp())
 				suite.Equal(evt.Traffic, caught.Traffic)
@@ -127,8 +131,9 @@ func (suite *EventStreamTestSuite) TestEventFinish() {
 			On("EventFinish", mock.Anything).
 			Once().
 			Run(func(args mock.Arguments) {
-				caught := args.Get(0).(mtglib.EventFinish)
+				caught, ok := args.Get(0).(mtglib.EventFinish)
 
+				suite.True(ok)
 				suite.Equal(evt.StreamID(), caught.StreamID())
 				suite.Equal(evt.Timestamp(), caught.Timestamp())
 			})
@@ -146,8 +151,9 @@ func (suite *EventStreamTestSuite) TestEventConcurrencyLimited() {
 			On("EventConcurrencyLimited", mock.Anything).
 			Once().
 			Run(func(args mock.Arguments) {
-				caught := args.Get(0).(mtglib.EventConcurrencyLimited)
+				caught, ok := args.Get(0).(mtglib.EventConcurrencyLimited)
 
+				suite.True(ok)
 				suite.Equal(evt.Timestamp(), caught.Timestamp())
 				suite.Empty(evt.StreamID())
 			})
@@ -165,8 +171,9 @@ func (suite *EventStreamTestSuite) TestEventIPBlocklisted() {
 			On("EventIPBlocklisted", mock.Anything).
 			Once().
 			Run(func(args mock.Arguments) {
-				caught := args.Get(0).(mtglib.EventIPBlocklisted)
+				caught, ok := args.Get(0).(mtglib.EventIPBlocklisted)
 
+				suite.True(ok)
 				suite.Equal(evt.StreamID(), caught.StreamID())
 				suite.Equal(evt.Timestamp(), caught.Timestamp())
 				suite.Equal(evt.RemoteIP.String(), caught.RemoteIP.String())
@@ -185,8 +192,9 @@ func (suite *EventStreamTestSuite) TestEventReplayAttack() {
 			On("EventReplayAttack", mock.Anything).
 			Once().
 			Run(func(args mock.Arguments) {
-				caught := args.Get(0).(mtglib.EventReplayAttack)
+				caught, ok := args.Get(0).(mtglib.EventReplayAttack)
 
+				suite.True(ok)
 				suite.Equal(evt.StreamID(), caught.StreamID())
 				suite.Equal(evt.Timestamp(), caught.Timestamp())
 			})

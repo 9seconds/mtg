@@ -102,7 +102,7 @@ func (c *Access) Execute(cli *CLI) error {
 
 func (c *Access) getIP(protocol string) net.IP {
 	client := c.Network.MakeHTTPClient(func(ctx context.Context, network, address string) (net.Conn, error) {
-		return c.Network.DialContext(ctx, protocol, address)
+		return c.Network.DialContext(ctx, protocol, address) // nolint: wrapcheck
 	})
 
 	req, err := http.NewRequest(http.MethodGet, "https://ifconfig.co", nil) // nolint: noctx

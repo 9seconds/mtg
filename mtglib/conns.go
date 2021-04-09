@@ -48,7 +48,7 @@ func (c *connRewind) Read(p []byte) (int, error) {
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
 
-	return c.active.Read(p)
+	return c.active.Read(p) // nolint: wrapcheck
 }
 
 func (c *connRewind) Rewind() {

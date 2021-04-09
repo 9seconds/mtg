@@ -22,7 +22,7 @@ type ConnRewindBaseConn struct {
 func (c *ConnRewindBaseConn) Read(p []byte) (int, error) {
 	c.Called(p)
 
-	return c.readBuffer.Read(p)
+	return c.readBuffer.Read(p) // nolint: wrapcheck
 }
 
 type ConnTrafficTestSuite struct {
@@ -54,8 +54,9 @@ func (suite *ConnTrafficTestSuite) TestReadOk() {
 		On("Send", mock.Anything, mock.Anything).
 		Once().
 		Run(func(args mock.Arguments) {
-			evt := args.Get(1).(EventTraffic)
+			evt, ok := args.Get(1).(EventTraffic)
 
+			suite.True(ok)
 			suite.Equal("CONNID", evt.StreamID())
 			suite.WithinDuration(time.Now(), evt.Timestamp(), time.Second)
 			suite.EqualValues(10, evt.Traffic)
@@ -68,13 +69,14 @@ func (suite *ConnTrafficTestSuite) TestReadOk() {
 	suite.Equal(10, n)
 }
 
-func (suite *ConnTrafficTestSuite) TestReadErr() {
+func (suite *ConnTrafficTestSuite) TestReadErr() { // nolint: dupl
 	suite.eventStreamMock.
 		On("Send", mock.Anything, mock.Anything).
 		Once().
 		Run(func(args mock.Arguments) {
-			evt := args.Get(1).(EventTraffic)
+			evt, ok := args.Get(1).(EventTraffic)
 
+			suite.True(ok)
 			suite.Equal("CONNID", evt.StreamID())
 			suite.WithinDuration(time.Now(), evt.Timestamp(), time.Second)
 			suite.EqualValues(10, evt.Traffic)
@@ -108,8 +110,9 @@ func (suite *ConnTrafficTestSuite) TestWriteOk() {
 		On("Send", mock.Anything, mock.Anything).
 		Once().
 		Run(func(args mock.Arguments) {
-			evt := args.Get(1).(EventTraffic)
+			evt, ok := args.Get(1).(EventTraffic)
 
+			suite.True(ok)
 			suite.Equal("CONNID", evt.StreamID())
 			suite.WithinDuration(time.Now(), evt.Timestamp(), time.Second)
 			suite.EqualValues(10, evt.Traffic)
@@ -122,13 +125,14 @@ func (suite *ConnTrafficTestSuite) TestWriteOk() {
 	suite.Equal(10, n)
 }
 
-func (suite *ConnTrafficTestSuite) TestWriteErr() {
+func (suite *ConnTrafficTestSuite) TestWriteErr() { // nolint: dupl
 	suite.eventStreamMock.
 		On("Send", mock.Anything, mock.Anything).
 		Once().
 		Run(func(args mock.Arguments) {
-			evt := args.Get(1).(EventTraffic)
+			evt, ok := args.Get(1).(EventTraffic)
 
+			suite.True(ok)
 			suite.Equal("CONNID", evt.StreamID())
 			suite.WithinDuration(time.Now(), evt.Timestamp(), time.Second)
 			suite.EqualValues(10, evt.Traffic)

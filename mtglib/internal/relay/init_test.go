@@ -25,7 +25,7 @@ func (r *rwcMock) Read(p []byte) (int, error) {
 		return 0, io.EOF
 	}
 
-	return r.Buffer.Read(p)
+	return r.Buffer.Read(p) // nolint: wrapcheck
 }
 
 func (r *rwcMock) Write(p []byte) (int, error) {
@@ -36,7 +36,7 @@ func (r *rwcMock) Write(p []byte) (int, error) {
 		return 0, io.EOF
 	}
 
-	return r.Buffer.Write(p)
+	return r.Buffer.Write(p) // nolint: wrapcheck
 }
 
 func (r *rwcMock) Close() error {

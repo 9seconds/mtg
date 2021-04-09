@@ -56,7 +56,7 @@ func (c *circuitBreakerDialer) doClosed(ctx context.Context,
 			conn.Close()
 		}
 
-		return nil, ctx.Err()
+		return nil, ctx.Err() // nolint: wrapcheck
 	case c.stateMutexChan <- true:
 		defer func() {
 			<-c.stateMutexChan
@@ -66,7 +66,7 @@ func (c *circuitBreakerDialer) doClosed(ctx context.Context,
 	if err == nil {
 		c.switchState(circuitBreakerStateClosed)
 
-		return conn, err // nolint: wrapcheck
+		return conn, nil
 	}
 
 	c.failuresCount++
@@ -91,7 +91,7 @@ func (c *circuitBreakerDialer) doHalfOpened(ctx context.Context, network, addres
 			conn.Close()
 		}
 
-		return nil, ctx.Err()
+		return nil, ctx.Err() // nolint: wrapcheck
 	case c.stateMutexChan <- true:
 		defer func() {
 			<-c.stateMutexChan

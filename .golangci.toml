@@ -3,7 +3,6 @@ concurrency = 4
 deadline = "2m"
 tests = true
 skip-dirs = ["vendor"]
-skip-files = ["version.go"]
 
 [output]
 format = "colored-line-number"

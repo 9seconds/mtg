@@ -45,8 +45,8 @@ func SendWelcomePacket(writer io.Writer, secret []byte, clientHello ClientHello)
 	packet := buf.Bytes()
 	mac := hmac.New(sha256.New, secret)
 
-	mac.Write(clientHello.Random[:]) // nolint: errcheck
-	mac.Write(packet)                // nolint: errcheck
+	mac.Write(clientHello.Random[:])
+	mac.Write(packet)
 
 	copy(packet[WelcomePacketRandomOffset:], mac.Sum(nil))
 

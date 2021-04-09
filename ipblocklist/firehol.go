@@ -68,12 +68,10 @@ func (f *Firehol) Contains(ip net.IP) bool {
 		return true
 	}
 
-	ip4 := ip.To4()
-
 	f.rwMutex.RLock()
 	defer f.rwMutex.RUnlock()
 
-	if ip4 != nil {
+	if ip4 := ip.To4(); ip4 != nil {
 		return f.containsIPv4(ip4)
 	}
 

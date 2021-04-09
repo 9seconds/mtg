@@ -16,8 +16,8 @@ func (c *clientHandhakeFrame) decryptor(secret []byte) cipher.Stream {
 	hasher := acquireSha256Hasher()
 	defer releaseSha256Hasher(hasher)
 
-	hasher.Write(c.key()) // nolint: errcheck
-	hasher.Write(secret)  // nolint: errcheck
+	hasher.Write(c.key())
+	hasher.Write(secret)
 
 	return makeAesCtr(hasher.Sum(nil), c.iv())
 }
@@ -28,8 +28,8 @@ func (c *clientHandhakeFrame) encryptor(secret []byte) cipher.Stream {
 	hasher := acquireSha256Hasher()
 	defer releaseSha256Hasher(hasher)
 
-	hasher.Write(invertedHandshake.key()) // nolint: errcheck
-	hasher.Write(secret)                  // nolint: errcheck
+	hasher.Write(invertedHandshake.key())
+	hasher.Write(secret)
 
 	return makeAesCtr(hasher.Sum(nil), invertedHandshake.iv())
 }

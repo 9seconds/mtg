@@ -24,13 +24,13 @@ type ConnMock struct {
 func (m *ConnMock) Read(p []byte) (int, error) {
 	m.Called(p)
 
-	return m.readBuffer.Read(p)
+	return m.readBuffer.Read(p) // nolint: wrapcheck
 }
 
 func (m *ConnMock) Write(p []byte) (int, error) {
 	m.Called(p)
 
-	return m.writeBuffer.Write(p)
+	return m.writeBuffer.Write(p) // nolint: wrapcheck
 }
 
 type ConnTestSuite struct {

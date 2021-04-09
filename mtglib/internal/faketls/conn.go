@@ -32,7 +32,7 @@ func (c *Conn) Read(p []byte) (int, error) {
 		case record.TypeApplicationData:
 			rec.Payload.WriteTo(&c.readBuffer) // nolint: errcheck
 
-			return c.readBuffer.Read(p)
+			return c.readBuffer.Read(p) // nolint: wrapcheck
 		case record.TypeChangeCipherSpec:
 		default:
 			return 0, fmt.Errorf("unsupported record type %v", rec.Type)
