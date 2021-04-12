@@ -332,9 +332,9 @@ Here goes a list of metrics with their types but without a prefix.
 
 Tag meaning:
 
-| Name        | Values                 | Description                                   |
-|-------------|------------------------|-----------------------------------------------|
-| ip_family   | ipv4, ipv6             | A version of the IP protocol.                 |
-| dc          |                        | A number of the Telegram DC for a connection. |
-| telegram_ip |                        | IP address of the Telegram server.            |
-| direction   | to_client, from_client | A direction of the traffic flow.              |
+| Name        | Values                     | Description                                   |
+|-------------|----------------------------|-----------------------------------------------|
+| ip_family   | `ipv4`, `ipv6`             | A version of the IP protocol.                 |
+| dc          |                            | A number of the Telegram DC for a connection. |
+| telegram_ip |                            | IP address of the Telegram server.            |
+| direction   | `to_client`, `from_client` | A direction of the traffic flow.              |
