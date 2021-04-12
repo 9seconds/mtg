@@ -10,6 +10,7 @@ require (
 	github.com/babolivier/go-doh-client v0.0.0-20201028162107-a76cff4cb8b6
 	github.com/d4l3k/messagediff v1.2.1 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/gotd/td v0.34.0
 	github.com/jarcoal/httpmock v1.0.8
 	github.com/kentik/patricia v0.0.0-20201202224819-f9447a6e25f1
 	github.com/libp2p/go-reuseport v0.0.2
