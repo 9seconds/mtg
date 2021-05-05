@@ -9,7 +9,7 @@ GOLANGCI_LINT_VERSION := v1.39.0
 VERSION_GO         := $(shell go version)
 VERSION_DATE       := $(shell date -Ru)
 VERSION_TAG        := $(shell git describe --tags --always)
-COMMON_BUILD_FLAGS := -mod=readonly -ldflags="-extldflags '-static' -s -w -X 'main.version=$(VERSION_TAG) ($(VERSION_GO)) [$(VERSION_DATE)]'"
+COMMON_BUILD_FLAGS := -trimpath -mod=readonly -ldflags="-extldflags '-static' -s -w -X 'main.version=$(VERSION_TAG) ($(VERSION_GO)) [$(VERSION_DATE)]'"
 
 GOBIN  := $(ROOT_DIR)/.bin
 GOTOOL := env "GOBIN=$(GOBIN)" "PATH=$(ROOT_DIR)/.bin:$(PATH)"
