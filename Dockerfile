@@ -24,9 +24,8 @@ RUN set -x \
 FROM scratch
 
 ENTRYPOINT ["/mtg"]
-ENV MTG_BIND=0.0.0.0:3128 \
-    MTG_STATS_BIND=0.0.0.0:3129
-EXPOSE 3128 3129
+CMD ["run", "/config.toml"]
 
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=build /app/mtg /mtg
+COPY --from=build /app/example.config.toml /config.toml

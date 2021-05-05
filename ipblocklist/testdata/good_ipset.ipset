@@ -1,0 +1,7 @@
+#
+# This is very good ipset
+#
+
+10.0.0.10  # just an example
+10.1.0.0/24
+2001:0db8:85a3:0000:0000:8a2e:0370:7334
