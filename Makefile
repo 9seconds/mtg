@@ -103,5 +103,5 @@ install-tools-gofumpt:
 		$(GOTOOL) go get -u mvdan.cc/gofumpt
 
 .PHONY: update-deps
-upgrade-deps:
-	$go get -u && go mod tidy
+update-deps:
+	@go get -u && go mod tidy
