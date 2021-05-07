@@ -10,3 +10,4 @@ vendor/
 ccbuilds/
 .bin/
 coverage.txt
+dist/
