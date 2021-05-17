@@ -68,11 +68,12 @@ func (r *Relay) Process(eastConn, westConn io.ReadWriteCloser) error {
 
 func (r *Relay) transmit(src io.ReadCloser, dst io.WriteCloser,
 	buffer []byte, direction string, wg *sync.WaitGroup) {
+	defer wg.Done()
+
 	defer func() {
+		r.ctxCancel()
 		src.Close()
 		dst.Close()
-		wg.Done()
-		r.ctxCancel()
 	}()
 
 	if _, err := io.CopyBuffer(dst, src, buffer); err != nil {
@@ -92,6 +93,8 @@ func (r *Relay) transmit(src io.ReadCloser, dst io.WriteCloser,
 }
 
 func (r *Relay) runObserver(one, another io.Closer, wg *sync.WaitGroup) {
+	defer wg.Done()
+
 	ticker := time.NewTicker(time.Second)
 
 	defer func() {
@@ -104,8 +107,6 @@ func (r *Relay) runObserver(one, another io.Closer, wg *sync.WaitGroup) {
 		case <-ticker.C:
 		default:
 		}
-
-		wg.Done()
 	}()
 
 	lastTickAt := time.Now()
