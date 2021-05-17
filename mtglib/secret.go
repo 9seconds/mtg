@@ -56,7 +56,7 @@ func (s Secret) MarshalText() ([]byte, error) {
 	return nil, nil
 }
 
-// MarshalText is to support text.Unmarshaller interface.
+// UnmarshalText is to support text.Unmarshaller interface.
 func (s *Secret) UnmarshalText(data []byte) error {
 	text := string(data)
 	if text == "" {

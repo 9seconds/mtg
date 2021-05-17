@@ -26,10 +26,10 @@ type accessResponse struct {
 type accessResponseURLs struct {
 	IP        net.IP `json:"ip"`
 	Port      uint   `json:"port"`
-	TgURL     string `json:"tg_url"`
-	TgQrCode  string `json:"tg_qrcode"`
-	TmeURL    string `json:"tme_url"`
-	TmeQrCode string `json:"tme_qrcode"`
+	TgURL     string `json:"tg_url"`     // nolint: tagliatelle
+	TgQrCode  string `json:"tg_qrcode"`  // nolint: tagliatelle
+	TmeURL    string `json:"tme_url"`    // nolint: tagliatelle
+	TmeQrCode string `json:"tme_qrcode"` // nolint: tagliatelle
 }
 
 type Access struct {

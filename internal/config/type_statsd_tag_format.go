@@ -6,8 +6,16 @@ import (
 )
 
 const (
+	// TypeStatsdTagFormatInfluxdb defines a tag format compatible with
+	// InfluxDB.
 	TypeStatsdTagFormatInfluxdb = "influxdb"
-	TypeStatsdTagFormatDatadog  = "datadog"
+
+	// TypeStatsdTagFormatDatadog defines a tag format compatible with
+	// DataDog.
+	TypeStatsdTagFormatDatadog = "datadog"
+
+	// TypeStatsdTagFormatGraphite defines a tag format compatible with
+	// Graphite.
 	TypeStatsdTagFormatGraphite = "graphite"
 )
 

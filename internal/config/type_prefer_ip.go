@@ -6,10 +6,21 @@ import (
 )
 
 const (
+	// TypePreferIPPreferIPv4 states that you prefer to use IPv4 addresses
+	// but IPv6 is also possible.
 	TypePreferIPPreferIPv4 = "prefer-ipv4"
+
+	// TypePreferIPPreferIPv6 states that you prefer to use IPv6 addresses
+	// but IPv4 is also possible.
 	TypePreferIPPreferIPv6 = "prefer-ipv6"
-	TypePreferOnlyIPv4     = "only-ipv4"
-	TypePreferOnlyIPv6     = "only-ipv6"
+
+	// TypePreferOnlyIPv4 states that you prefer to use IPv4 addresses
+	// only.
+	TypePreferOnlyIPv4 = "only-ipv4"
+
+	// TypePreferOnlyIPv6 states that you prefer to use IPv6 addresses
+	// only.
+	TypePreferOnlyIPv6 = "only-ipv6"
 )
 
 type TypePreferIP struct {

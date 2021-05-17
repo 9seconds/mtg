@@ -6,25 +6,43 @@ import (
 )
 
 const (
+	// RandomLen defines a size of the random digest in TLS Hellos.
 	RandomLen = 32
 
-	ClientHelloRandomOffset    = 6
-	ClientHelloSessionIDOffset = ClientHelloRandomOffset + RandomLen
-	ClientHelloMinLen          = 4
+	// ClientHelloRandomOffset is an offset in ClientHello record where
+	// random digest is started.
+	ClientHelloRandomOffset = 6
 
+	// ClientHelloSessionIDOffset is an offset in ClientHello record where
+	// SessionID is started.
+	ClientHelloSessionIDOffset = ClientHelloRandomOffset + RandomLen
+
+	// ClientHelloMinLen is a minimal possible length of
+	// ClientHello record.
+	ClientHelloMinLen = 4
+
+	// WelcomePacketRandomOffset is an offset of random in ServerHello
+	// packet (including record envelope).
 	WelcomePacketRandomOffset = 11
 
+	// HandshakeTypeClient is a value representing a client handshake.
 	HandshakeTypeClient = 0x01
+
+	// HandshakeTypeServer is a value representing a server handshake.
 	HandshakeTypeServer = 0x02
 
+	// ChangeCipherValue is a value representing a change cipher
+	// specification record.
 	ChangeCipherValue = 0x01
 
+	// ExtensionSNI is a value for TLS extension 'SNI'.
 	ExtensionSNI = 0x00
 )
 
 var (
-	ErrBadDigest        = errors.New("bad digest")
-	ErrAntiReplayAttack = errors.New("antireplay attack was detected")
+	// ErrBadDigest is returned if given TLS Client Hello mismatches with a
+	// derived one.
+	ErrBadDigest = errors.New("bad digest")
 
 	serverHelloSuffix = []byte{
 		0x00,       // no compression
