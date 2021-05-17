@@ -90,8 +90,12 @@ const (
 	MetricReplayAttacks = "replay_attacks"
 
 	// TagIPFamily defines a name of the 'ip_family' tag and all values.
-	TagIPFamily     = "ip_family"
+	TagIPFamily = "ip_family"
+
+	// TagIPFamilyIPv4 defines a value of 'ip_family' of IPv4.
 	TagIPFamilyIPv4 = "ipv4"
+
+	// TagIPFamilyIPv6 defines a value of 'ip_family' of IPv6.
 	TagIPFamilyIPv6 = "ipv6"
 
 	// TagTelegramIP defines a name of the 'telegram_ip' tag.
@@ -101,7 +105,13 @@ const (
 	TagDC = "dc"
 
 	// TagDirection defines a name of the 'direction' tag.
-	TagDirection           = "direction"
-	TagDirectionToClient   = "to_client"
+	TagDirection = "direction"
+
+	// TagDirectionToClient defines that traffic is sent from Telegram to a
+	// client.
+	TagDirectionToClient = "to_client"
+
+	// TagDirectionFromClient defines that traffic is sent from a client to
+	// Telegram.
 	TagDirectionFromClient = "from_client"
 )

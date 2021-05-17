@@ -166,7 +166,7 @@ func (suite *ProxyTestSuite) TestHTTPSRequest() {
 
 	jsonStruct := struct {
 		Headers struct {
-			TraceID string `json:"X-Amzn-Trace-Id"`
+			TraceID string `json:"X-Amzn-Trace-Id"` // nolint: tagliatelle
 		} `json:"headers"`
 	}{}
 

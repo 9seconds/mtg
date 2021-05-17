@@ -1,6 +1,8 @@
 package obfuscated2
 
 const (
+	// DefaultDC defines a number of the default DC to use. This value used
+	// only if a value from obfuscated2 handshake frame is 0 (default).
 	DefaultDC = 2
 
 	handshakeFrameLen = 64

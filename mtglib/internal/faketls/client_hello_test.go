@@ -18,9 +18,9 @@ import (
 type ClientHelloSnapshot struct {
 	Time        int    `json:"time"`
 	Random      string `json:"random"`
-	SessionID   string `json:"session-id"`
+	SessionID   string `json:"sessionId"`
 	Host        string `json:"host"`
-	CipherSuite int    `json:"cipher-suite"`
+	CipherSuite int    `json:"cipherSuite"`
 	Full        string `json:"full"`
 }
 
