@@ -14,22 +14,14 @@ type typeStatsdTagFormatTestStruct struct {
 	Value config.TypeStatsdTagFormat `json:"value"`
 }
 
-type TypeStatsdTagFormatTestSuite struct {
+type StatsdTagFormatTestSuite struct {
 	suite.Suite
 }
 
-func (suite *TypeStatsdTagFormatTestSuite) TestUnmarshalNil() {
-	typ := &config.TypeStatsdTagFormat{}
-	suite.NoError(typ.UnmarshalText(nil))
-	suite.Equal("lalala", typ.Value("lalala"))
-}
-
-func (suite *TypeStatsdTagFormatTestSuite) TestUnmarshalFail() {
+func (suite *StatsdTagFormatTestSuite) TestUnmarshalFail() {
 	testData := []string{
-		"p",
-		"ipv4",
-		"onlyipv4",
-		"ipv6prefer",
+		"",
+		"dogdog",
 	}
 
 	for _, v := range testData {
@@ -44,17 +36,14 @@ func (suite *TypeStatsdTagFormatTestSuite) TestUnmarshalFail() {
 	}
 }
 
-func (suite *TypeStatsdTagFormatTestSuite) TestUnmarshalOk() {
+func (suite *StatsdTagFormatTestSuite) TestUnmarshalOk() {
 	testData := []string{
-		config.TypeStatsdTagFormatDatadog,
 		config.TypeStatsdTagFormatInfluxdb,
 		config.TypeStatsdTagFormatGraphite,
-		strings.ToUpper(config.TypeStatsdTagFormatDatadog),
+		config.TypeStatsdTagFormatDatadog,
 		strings.ToUpper(config.TypeStatsdTagFormatInfluxdb),
 		strings.ToUpper(config.TypeStatsdTagFormatGraphite),
-		strings.ToLower(config.TypeStatsdTagFormatDatadog),
-		strings.ToLower(config.TypeStatsdTagFormatInfluxdb),
-		strings.ToLower(config.TypeStatsdTagFormatGraphite),
+		strings.ToUpper(config.TypeStatsdTagFormatDatadog),
 	}
 
 	for _, v := range testData {
@@ -67,70 +56,53 @@ func (suite *TypeStatsdTagFormatTestSuite) TestUnmarshalOk() {
 
 		suite.T().Run(v, func(t *testing.T) {
 			testStruct := &typeStatsdTagFormatTestStruct{}
-
 			assert.NoError(t, json.Unmarshal(data, testStruct))
-			assert.EqualValues(t,
-				strings.ToLower(value),
-				testStruct.Value.Value(config.TypeStatsdTagFormatDatadog))
+			assert.Equal(t, strings.ToLower(value), testStruct.Value.Value)
 		})
 	}
 }
 
-func (suite *TypeStatsdTagFormatTestSuite) TestMarshalOk() {
+func (suite *StatsdTagFormatTestSuite) TestMarshalOk() {
 	testData := []string{
-		config.TypeStatsdTagFormatDatadog,
 		config.TypeStatsdTagFormatInfluxdb,
 		config.TypeStatsdTagFormatGraphite,
-		strings.ToUpper(config.TypeStatsdTagFormatDatadog),
-		strings.ToUpper(config.TypeStatsdTagFormatInfluxdb),
-		strings.ToUpper(config.TypeStatsdTagFormatGraphite),
-		strings.ToLower(config.TypeStatsdTagFormatDatadog),
-		strings.ToLower(config.TypeStatsdTagFormatInfluxdb),
-		strings.ToLower(config.TypeStatsdTagFormatGraphite),
+		config.TypeStatsdTagFormatDatadog,
 	}
 
 	for _, v := range testData {
 		value := v
 
-		data, err := json.Marshal(map[string]string{
-			"value": v,
-		})
-		suite.NoError(err)
-
 		suite.T().Run(v, func(t *testing.T) {
-			testStruct := &typeStatsdTagFormatTestStruct{}
+			testStruct := &typeStatsdTagFormatTestStruct{
+				Value: config.TypeStatsdTagFormat{
+					Value: value,
+				},
+			}
 
-			assert.NoError(t, json.Unmarshal(data, testStruct))
-			assert.Equal(t, strings.ToLower(value), testStruct.Value.String())
-
-			marshalled, err := testStruct.Value.MarshalText()
+			encodedJSON, err := json.Marshal(testStruct)
 			assert.NoError(t, err)
-			assert.Equal(t, strings.ToLower(value), string(marshalled))
+
+			expectedJSON, err := json.Marshal(map[string]string{
+				"value": value,
+			})
+			assert.NoError(t, err)
+
+			assert.JSONEq(t, string(expectedJSON), string(encodedJSON))
 		})
 	}
 }
 
-func (suite *TypeStatsdTagFormatTestSuite) TestValue() {
-	testStruct := &typePreferIPTestStruct{}
+func (suite *StatsdTagFormatTestSuite) TestGet() {
+	value := config.TypeStatsdTagFormat{}
+	suite.Equal(config.TypeStatsdTagFormatDatadog,
+		value.Get(config.TypeStatsdTagFormatDatadog))
 
-	suite.EqualValues(config.TypePreferIPPreferIPv4,
-		testStruct.Value.Value(config.TypePreferIPPreferIPv4))
-	suite.EqualValues(config.TypePreferIPPreferIPv6,
-		testStruct.Value.Value(config.TypePreferIPPreferIPv6))
-
-	data, err := json.Marshal(map[string]string{
-		"value": config.TypePreferOnlyIPv4,
-	})
-	suite.NoError(err)
-	suite.NoError(json.Unmarshal(data, testStruct))
-
-	suite.EqualValues(config.TypePreferOnlyIPv4,
-		testStruct.Value.Value(config.TypePreferOnlyIPv6))
-	suite.EqualValues(config.TypePreferOnlyIPv4,
-		testStruct.Value.Value(config.TypePreferIPPreferIPv6))
+	suite.NoError(value.Set(config.TypeStatsdTagFormatInfluxdb))
+	suite.Equal(config.TypeStatsdTagFormatInfluxdb,
+		value.Get(config.TypeStatsdTagFormatDatadog))
 }
 
 func TestTypeStatsdTagFormat(t *testing.T) {
 	t.Parallel()
-	suite.Run(t, &TypeStatsdTagFormatTestSuite{})
+	suite.Run(t, &StatsdTagFormatTestSuite{})
 }

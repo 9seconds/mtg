@@ -8,61 +8,70 @@ import (
 )
 
 type TypeBlocklistURI struct {
-	value string
+	Value string
 }
 
-func (c *TypeBlocklistURI) UnmarshalText(data []byte) error {
-	if len(data) == 0 {
-		return nil
-	}
+func (t *TypeBlocklistURI) Set(value string) error {
+	if stat, err := os.Stat(value); err == nil || os.IsExist(err) {
+        switch {
+        case stat.IsDir():
+            return fmt.Errorf("value is correct filepath but directory")
+        case stat.Mode().Perm() & 0o400 == 0:
+            return fmt.Errorf("value is correct filepath but not readable")
+        }
 
-	text := string(data)
-	if filepath.IsAbs(text) {
-		if _, err := os.Stat(text); os.IsNotExist(err) {
-			return fmt.Errorf("filepath %s does not exist", text)
+		value, err = filepath.Abs(value)
+		if err != nil {
+			return fmt.Errorf(
+				"value is correct filepath but cannot resolve absolute (%s): %w",
+				value, err)
 		}
 
-		c.value = text
+		t.Value = value
 
 		return nil
 	}
 
-	parsedURL, err := url.Parse(text)
+	parsedURL, err := url.Parse(value)
 	if err != nil {
-		return fmt.Errorf("incorrect url: %w", err)
+		return fmt.Errorf("incorrect url (%s): %w", value, err)
 	}
 
 	switch parsedURL.Scheme {
-	case "http", "https": // nolint: goconst
+	case "http", "https":
 	default:
-		return fmt.Errorf("unknown schema %s", parsedURL.Scheme)
+		return fmt.Errorf("unknown schema %s (%s)", parsedURL.Scheme, value)
 	}
 
 	if parsedURL.Host == "" {
-		return fmt.Errorf("incorrect url %s", text)
+		return fmt.Errorf("incorrect url %s", value)
 	}
 
-	c.value = parsedURL.String()
+	t.Value = parsedURL.String()
 
 	return nil
 }
 
-func (c TypeBlocklistURI) MarshalText() ([]byte, error) {
-	return []byte(c.value), nil
-}
-
-func (c TypeBlocklistURI) String() string {
-	return c.value
-}
-
-func (c TypeBlocklistURI) IsRemote() bool {
-	return !filepath.IsAbs(c.value)
-}
-
-func (c TypeBlocklistURI) Value(defaultValue string) string {
-	if c.value == "" {
+func (t TypeBlocklistURI) Get(defaultValue string) string {
+	if t.Value == "" {
 		return defaultValue
 	}
 
-	return c.value
+	return t.Value
+}
+
+func (t TypeBlocklistURI) IsRemote() bool {
+	return !filepath.IsAbs(t.Value)
+}
+
+func (t *TypeBlocklistURI) UnmarshalText(data []byte) error {
+	return t.Set(string(data))
+}
+
+func (t TypeBlocklistURI) MarshalText() ([]byte, error) {
+	return []byte(t.String()), nil
+}
+
+func (t TypeBlocklistURI) String() string {
+	return t.Value
 }

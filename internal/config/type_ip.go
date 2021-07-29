@@ -6,40 +6,40 @@ import (
 )
 
 type TypeIP struct {
-	value net.IP
+	Value net.IP
 }
 
-func (c *TypeIP) UnmarshalText(data []byte) error {
-	if len(data) == 0 {
-		return nil
-	}
-
-	ip := net.ParseIP(string(data))
+func (t *TypeIP) Set(value string) error {
+	ip := net.ParseIP(value)
 	if ip == nil {
-		return fmt.Errorf("incorrect ip address: %s", string(data))
+		return fmt.Errorf("incorret ip %s", value)
 	}
 
-	c.value = ip
+    t.Value = ip
 
 	return nil
 }
 
-func (c *TypeIP) MarshalText() ([]byte, error) {
-	return []byte(c.String()), nil
-}
-
-func (c TypeIP) String() string {
-	if len(c.value) > 0 {
-		return c.value.String()
-	}
-
-	return ""
-}
-
-func (c TypeIP) Value(defaultValue net.IP) net.IP {
-	if c.value == nil {
+func (t *TypeIP) Get(defaultValue net.IP) net.IP {
+	if len(t.Value) == 0 {
 		return defaultValue
 	}
 
-	return c.value
+	return t.Value
+}
+
+func (t *TypeIP) UnmarshalText(data []byte) error {
+	return t.Set(string(data))
+}
+
+func (t TypeIP) MarshalText() ([]byte, error) {
+	return []byte(t.String()), nil
+}
+
+func (t TypeIP) String() string {
+	if len(t.Value) == 0 {
+		return ""
+	}
+
+	return t.Value.String()
 }

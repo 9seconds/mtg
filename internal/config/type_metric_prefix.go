@@ -6,36 +6,35 @@ import (
 )
 
 type TypeMetricPrefix struct {
-	value string
+	Value string
 }
 
-func (c *TypeMetricPrefix) UnmarshalText(data []byte) error {
-	if len(data) == 0 {
-		return nil
+func (t *TypeMetricPrefix) Set(value string) error {
+	if ok, err := regexp.MatchString("^[a-z0-9]+$", value); !ok || err != nil {
+        return fmt.Errorf("incorrect metric prefix %s: %w", value, err)
 	}
 
-	prefix := string(data)
-	if ok, err := regexp.MatchString("^[a-z0-9]+$", prefix); !ok || err != nil {
-		return fmt.Errorf("incorrect metric prefix: %s", prefix)
-	}
-
-	c.value = prefix
+    t.Value = value
 
 	return nil
 }
 
-func (c TypeMetricPrefix) MarshalText() ([]byte, error) {
-	return []byte(c.String()), nil
-}
-
-func (c TypeMetricPrefix) String() string {
-	return c.value
-}
-
-func (c TypeMetricPrefix) Value(defaultValue string) string {
-	if c.value == "" {
+func (t TypeMetricPrefix) Get(defaultValue string) string {
+	if t.Value == "" {
 		return defaultValue
 	}
 
-	return c.value
+	return t.Value
+}
+
+func (t *TypeMetricPrefix) UnmarshalText(data []byte) error {
+	return t.Set(string(data))
+}
+
+func (t TypeMetricPrefix) MarshalText() ([]byte, error) {
+	return []byte(t.String()), nil
+}
+
+func (t TypeMetricPrefix) String() string {
+	return t.Value
 }

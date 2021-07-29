@@ -10,7 +10,7 @@ import (
 )
 
 type ConfigTestSuite struct {
-	suite.Suite
+    suite.Suite
 }
 
 func (suite *ConfigTestSuite) ReadConfig(filename string) []byte {

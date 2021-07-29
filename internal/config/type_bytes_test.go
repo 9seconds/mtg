@@ -17,19 +17,12 @@ type TypeBytesTestSuite struct {
 	suite.Suite
 }
 
-func (suite *TypeBytesTestSuite) TestUnmarshalNil() {
-	typ := &config.TypeBytes{}
-	suite.NoError(typ.UnmarshalText(nil))
-	suite.Empty(typ.String())
-}
-
 func (suite *TypeBytesTestSuite) TestUnmarshalFail() {
 	testData := []string{
 		"1m",
 		"1",
 		"-1kb",
 		"-1kib",
-		"-1QB",
 	}
 
 	for _, v := range testData {
@@ -65,53 +58,26 @@ func (suite *TypeBytesTestSuite) TestUnmarshalOk() {
 			testStruct := &typeBytesTestStruct{}
 
 			assert.NoError(t, json.Unmarshal(data, testStruct))
-			assert.EqualValues(t, value, testStruct.Value.Value(0))
+			assert.EqualValues(t, value, testStruct.Value.Get(0))
 		})
 	}
 }
 
 func (suite *TypeBytesTestSuite) TestMarshalOk() {
-	testData := []string{
-		"1b",
-		"1kib",
-		"2mib",
-	}
+    value := typeBytesTestStruct{}
+    suite.NoError(value.Value.Set("1kib"))
 
-	for _, v := range testData {
-		name := v
-
-		data, err := json.Marshal(map[string]string{
-			"value": name,
-		})
-		suite.NoError(err)
-
-		suite.T().Run(name, func(t *testing.T) {
-			testStruct := &typeBytesTestStruct{}
-
-			assert.NoError(t, json.Unmarshal(data, testStruct))
-			assert.Equal(t, name, testStruct.Value.String())
-
-			marshalled, err := testStruct.Value.MarshalText()
-			assert.NoError(t, err)
-			assert.Equal(t, name, string(marshalled))
-		})
-	}
+    data, err := json.Marshal(value)
+    suite.NoError(err)
+    suite.JSONEq(`{"value": "1kib"}`, string(data))
 }
 
-func (suite *TypeBytesTestSuite) TestValue() {
-	testStruct := &typeBytesTestStruct{}
+func (suite *TypeBytesTestSuite) TestGet() {
+    value := config.TypeBytes{}
+    suite.EqualValues(1000, value.Get(1000))
 
-	suite.EqualValues(0, testStruct.Value.Value(0))
-	suite.EqualValues(1, testStruct.Value.Value(1))
-
-	data, err := json.Marshal(map[string]string{
-		"value": "1kb",
-	})
-	suite.NoError(err)
-	suite.NoError(json.Unmarshal(data, testStruct))
-
-	suite.EqualValues(1024, testStruct.Value.Value(0))
-	suite.EqualValues(1024, testStruct.Value.Value(1))
+    suite.NoError(value.Set("1mib"))
+    suite.EqualValues(1048576, value.Get(1000))
 }
 
 func TestTypeBytes(t *testing.T) {

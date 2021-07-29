@@ -17,72 +17,48 @@ type TypeHTTPPathTestSuite struct {
 	suite.Suite
 }
 
-func (suite *TypeHTTPPathTestSuite) TestUnmarshal() {
-	testData := []string{
-		"/hello",
-		"hello",
-		"hello/",
-		"/hello/",
+func (suite *TypeHTTPPathTestSuite) TestUnmarshalOk() {
+	testData := map[string]string{
+		"":      "/",
+		"/":     "/",
+		"/path": "/path",
+		"path":  "/path",
 	}
 
-	for _, v := range testData {
+	for k, v := range testData {
+		value := v
+
 		data, err := json.Marshal(map[string]string{
-			"value": v,
+			"value": k,
 		})
 		suite.NoError(err)
 
-		suite.T().Run(v, func(t *testing.T) {
+		suite.T().Run(k, func(t *testing.T) {
 			testStruct := &typeHTTPPathTestStruct{}
-
 			assert.NoError(t, json.Unmarshal(data, testStruct))
-			assert.Equal(t, "/hello", testStruct.Value.Value(""))
+			assert.Equal(t, value, testStruct.Value.Get(""))
 		})
 	}
 }
 
 func (suite *TypeHTTPPathTestSuite) TestMarshalOk() {
-	testData := map[string]string{
-		"":        "/",
-		"/hello":  "/hello",
-		"/hello/": "/hello",
-		"hello/":  "/hello",
-		"hello":   "/hello",
+	value := typeHTTPPathTestStruct{
+		Value: config.TypeHTTPPath{
+			Value: "/path",
+		},
 	}
 
-	for k, v := range testData {
-		toPass := k
-		compareWith := v
-
-		data, err := json.Marshal(map[string]string{
-			"value": toPass,
-		})
-		suite.NoError(err)
-
-		suite.T().Run(toPass, func(t *testing.T) {
-			testStruct := &typeHTTPPathTestStruct{}
-
-			assert.NoError(t, json.Unmarshal(data, testStruct))
-			assert.Equal(t, compareWith, testStruct.Value.String())
-
-			marshalled, err := testStruct.Value.MarshalText()
-			assert.NoError(t, err)
-			assert.Equal(t, compareWith, string(marshalled))
-		})
-	}
+	data, err := json.Marshal(value)
+	suite.NoError(err)
+	suite.JSONEq(`{"value": "/path"}`, string(data))
 }
 
-func (suite *TypeHTTPPathTestSuite) TestValue() {
-	testStruct := &typeHTTPPathTestStruct{}
+func (suite *TypeHTTPPathTestSuite) TestGet() {
+	value := config.TypeHTTPPath{}
+	suite.Equal("/hello", value.Get("/hello"))
 
-	suite.Equal("/hello", testStruct.Value.Value("/hello"))
-
-	data, err := json.Marshal(map[string]string{
-		"value": "/map",
-	})
-	suite.NoError(err)
-	suite.NoError(json.Unmarshal(data, testStruct))
-
-	suite.Equal("/map", testStruct.Value.Value("/hello"))
+	suite.NoError(value.Set("/lalala"))
+	suite.Equal("/lalala", value.Get("/hello"))
 }
 
 func TestTypeHTTPPath(t *testing.T) {

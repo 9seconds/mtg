@@ -1,16 +1,16 @@
-package config2_test
+package config_test
 
 import (
 	"encoding/json"
 	"testing"
 
-	"github.com/9seconds/mtg/v2/internal/config2"
+	"github.com/9seconds/mtg/v2/internal/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
 
 type typeConcurrencyTestStruct struct {
-	Value config2.TypeConcurrency `json:"value"`
+	Value config.TypeConcurrency `json:"value"`
 }
 
 type TypeConcurrencyTestSuite struct {
@@ -49,7 +49,7 @@ func (suite *TypeConcurrencyTestSuite) TestUnmarshalOk() {
 
 func (suite *TypeConcurrencyTestSuite) TestMarshalOk() {
 	testStruct := &typeConcurrencyTestStruct{
-		Value: config2.TypeConcurrency{
+		Value: config.TypeConcurrency{
 			Value: 2,
 		},
 	}
@@ -60,7 +60,7 @@ func (suite *TypeConcurrencyTestSuite) TestMarshalOk() {
 }
 
 func (suite *TypeConcurrencyTestSuite) TestGet() {
-	value := config2.TypeConcurrency{}
+	value := config.TypeConcurrency{}
 	suite.EqualValues(1, value.Get(1))
 
 	value.Value = 3

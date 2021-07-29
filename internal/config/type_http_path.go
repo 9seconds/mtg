@@ -3,33 +3,31 @@ package config
 import "strings"
 
 type TypeHTTPPath struct {
-	value string
+	Value string
 }
 
-func (c *TypeHTTPPath) UnmarshalText(data []byte) error {
-	if len(data) > 0 {
-		c.value = "/" + strings.Trim(string(data), "/")
-	}
+func (t *TypeHTTPPath) Set(value string) error {
+	t.Value = "/" + strings.Trim(value, "/")
 
 	return nil
 }
 
-func (c TypeHTTPPath) MarshalText() ([]byte, error) {
-	return []byte(c.String()), nil
-}
-
-func (c TypeHTTPPath) String() string {
-	if c.value == "" {
-		return "/"
-	}
-
-	return c.value
-}
-
-func (c TypeHTTPPath) Value(defaultValue string) string {
-	if c.value == "" {
+func (t TypeHTTPPath) Get(defaultValue string) string {
+	if t.Value == "" {
 		return defaultValue
 	}
 
-	return c.value
+	return t.Value
+}
+
+func (t *TypeHTTPPath) UnmarshalText(data []byte) error {
+	return t.Set(string(data))
+}
+
+func (t TypeHTTPPath) MarshalText() ([]byte, error) {
+	return []byte(t.String()), nil
+}
+
+func (t TypeHTTPPath) String() string {
+	return t.Value
 }

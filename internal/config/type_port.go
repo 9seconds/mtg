@@ -6,40 +6,40 @@ import (
 )
 
 type TypePort struct {
-	value uint
+	Value uint16
 }
 
-func (c *TypePort) UnmarshalJSON(data []byte) error {
-	if len(data) == 0 {
-		return nil
-	}
-
-	intValue, err := strconv.ParseUint(string(data), 10, 64)
+func (t *TypePort) Set(value string) error {
+	portValue, err := strconv.ParseUint(value, 10, 16)
 	if err != nil {
-		return fmt.Errorf("port number is not a number: %w", err)
+		return fmt.Errorf("incorrect port number (%v): %w", value, err)
 	}
 
-	if intValue == 0 || intValue >= 65536 {
-		return fmt.Errorf("port number should be 0 < portNo < 65536: %d", intValue)
+	if portValue == 0 {
+		return fmt.Errorf("incorrect port number (%s)", value)
 	}
 
-	c.value = uint(intValue)
+    t.Value = uint16(portValue)
 
 	return nil
 }
 
-func (c *TypePort) MarshalJSON() ([]byte, error) {
-	return []byte(c.String()), nil
-}
-
-func (c TypePort) String() string {
-	return strconv.Itoa(int(c.value))
-}
-
-func (c TypePort) Value(defaultValue uint) uint {
-	if c.value == 0 {
+func (t TypePort) Get(defaultValue uint16) uint16 {
+	if t.Value == 0 {
 		return defaultValue
 	}
 
-	return c.value
+	return t.Value
+}
+
+func (t *TypePort) UnmarshalJSON(data []byte) error {
+	return t.Set(string(data))
+}
+
+func (t TypePort) MarshalJSON() ([]byte, error) {
+	return []byte(t.String()), nil
+}
+
+func (t TypePort) String() string {
+	return strconv.Itoa(int(t.Value))
 }

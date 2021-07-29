@@ -1,17 +1,17 @@
-package config2_test
+package config_test
 
 import (
 	"encoding/json"
 	"net/url"
 	"testing"
 
-	"github.com/9seconds/mtg/v2/internal/config2"
+	"github.com/9seconds/mtg/v2/internal/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
 
 type typeProxyURLTestStruct struct {
-	Value config2.TypeProxyURL `json:"value"`
+	Value config.TypeProxyURL `json:"value"`
 }
 
 type ProxyURLTestSuite struct {
@@ -69,20 +69,21 @@ func (suite *ProxyURLTestSuite) TestUnmarshalOk() {
 func (suite *ProxyURLTestSuite) TestMarshalOk() {
 	parsed, _ := url.Parse("socks5://127.0.0.1:1080?open_threshold=1")
 	testStruct := &typeProxyURLTestStruct{
-		Value: config2.TypeProxyURL{
+		Value: config.TypeProxyURL{
 			Value: parsed,
 		},
 	}
 
 	encodedJSON, err := json.Marshal(testStruct)
 	suite.NoError(err)
-	suite.JSONEq(`{"value": "socks5://127.0.0.1:1080?open_threshold=1"}`, string(encodedJSON))
+	suite.JSONEq(`{"value": "socks5://127.0.0.1:1080?open_threshold=1"}`,
+		string(encodedJSON))
 }
 
 func (suite *ProxyURLTestSuite) TestGet() {
 	emptyURL := &url.URL{}
 
-	value := config2.TypeProxyURL{}
+	value := config.TypeProxyURL{}
 	suite.Equal(emptyURL, value.Get(emptyURL))
 
 	value.Value = &url.URL{}

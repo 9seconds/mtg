@@ -7,61 +7,53 @@ import (
 )
 
 type TypeHostPort struct {
-	host TypeIP
-	port TypePort
+	Value string
 }
 
-func (c *TypeHostPort) UnmarshalText(data []byte) error {
-	if len(data) == 0 {
-		return nil
-	}
-
-	text := string(data)
-
-	host, port, err := net.SplitHostPort(text)
+func (t *TypeHostPort) Set(value string) error {
+	host, port, err := net.SplitHostPort(value)
 	if err != nil {
-		return fmt.Errorf("incorrect host:port syntax: %w", err)
+		return fmt.Errorf("incorrect host:port value (%v): %w", value, err)
 	}
 
-	if port == "" {
-		return fmt.Errorf("port in %s host:port pair cannot be empty", text)
+	portValue, err := strconv.ParseUint(port, 10, 16)
+	if err != nil {
+		return fmt.Errorf("incorrect port number (%v): %w", value, err)
 	}
 
-	if err := c.port.UnmarshalJSON([]byte(port)); err != nil {
-		return fmt.Errorf("incorrect port in host:port: %w", err)
+	if portValue == 0 {
+		return fmt.Errorf("incorrect port number (%s)", value)
 	}
 
-	if err := c.host.UnmarshalText([]byte(host)); err != nil {
-		return fmt.Errorf("incorrect host: %w", err)
+	if host == "" {
+		return fmt.Errorf("empty host: %s", value)
 	}
+
+	if net.ParseIP(host) == nil {
+		return fmt.Errorf("host is not an IP address: %s", value)
+	}
+
+	t.Value = net.JoinHostPort(host, port)
 
 	return nil
 }
 
-func (c TypeHostPort) MarshalText() ([]byte, error) {
-	return []byte(c.String()), nil
-}
-
-func (c TypeHostPort) String() string {
-	return c.Value(net.IP{}, 0)
-}
-
-func (c TypeHostPort) HostValue(defaultValue net.IP) net.IP {
-	return c.host.Value(defaultValue)
-}
-
-func (c TypeHostPort) PortValue(defaultValue uint) uint {
-	return c.port.Value(defaultValue)
-}
-
-func (c TypeHostPort) Value(defaultHostValue net.IP, defaultPortValue uint) string {
-	host := c.HostValue(defaultHostValue)
-	port := c.PortValue(defaultPortValue)
-
-	hostStr := ""
-	if len(host) > 0 {
-		hostStr = host.String()
+func (t TypeHostPort) Get(defaultValue string) string {
+	if t.Value == "" {
+		return defaultValue
 	}
 
-	return net.JoinHostPort(hostStr, strconv.Itoa(int(port)))
+	return t.Value
+}
+
+func (t *TypeHostPort) UnmarshalText(data []byte) error {
+	return t.Set(string(data))
+}
+
+func (t TypeHostPort) MarshalText() ([]byte, error) {
+	return []byte(t.String()), nil
+}
+
+func (t TypeHostPort) String() string {
+	return t.Value
 }

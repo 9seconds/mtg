@@ -1,4 +1,4 @@
-package config2_test
+package config_test
 
 import (
 	"encoding/json"
@@ -6,13 +6,13 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/9seconds/mtg/v2/internal/config2"
+	"github.com/9seconds/mtg/v2/internal/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
 
 type typeBoolTestStruct struct {
-	Value config2.TypeBool `json:"value"`
+	Value config.TypeBool `json:"value"`
 }
 
 type TypeBoolTestSuite struct {
@@ -85,7 +85,7 @@ func (suite *TypeBoolTestSuite) TestMarshalOk() {
 
 		suite.T().Run(name, func(t *testing.T) {
 			testStruct := typeBoolTestStruct{
-				Value: config2.TypeBool{
+				Value: config.TypeBool{
 					Value: v,
 				},
 			}
@@ -98,7 +98,7 @@ func (suite *TypeBoolTestSuite) TestMarshalOk() {
 }
 
 func (suite *TypeBoolTestSuite) TestGet() {
-	value := config2.TypeBool{}
+	value := config.TypeBool{}
 	suite.False(value.Get(false))
 	suite.True(value.Get(true))
 

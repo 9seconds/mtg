@@ -24,38 +24,39 @@ const (
 )
 
 type TypePreferIP struct {
-	value string
+	Value string
 }
 
-func (c *TypePreferIP) UnmarshalText(data []byte) error {
-	if len(data) == 0 {
+func (t *TypePreferIP) Set(value string) error {
+	value = strings.ToLower(value)
+
+	switch value {
+	case TypePreferIPPreferIPv4, TypePreferIPPreferIPv6,
+		TypePreferOnlyIPv4, TypePreferOnlyIPv6:
+        t.Value = value
+
 		return nil
-	}
-
-	text := strings.ToLower(string(data))
-
-	switch text {
-	case TypePreferIPPreferIPv4, TypePreferIPPreferIPv6, TypePreferOnlyIPv4, TypePreferOnlyIPv6:
-		c.value = text
 	default:
-		return fmt.Errorf("incorrect prefer-ip value: %s", string(data))
+		return fmt.Errorf("unsupported ip preference: %s", value)
 	}
-
-	return nil
 }
 
-func (c TypePreferIP) MarshalText() ([]byte, error) {
-	return []byte(c.value), nil
-}
-
-func (c *TypePreferIP) String() string {
-	return c.value
-}
-
-func (c *TypePreferIP) Value(defaultValue string) string {
-	if c.value == "" {
+func (t *TypePreferIP) Get(defaultValue string) string {
+	if t.Value == "" {
 		return defaultValue
 	}
 
-	return c.value
+	return t.Value
+}
+
+func (t *TypePreferIP) UnmarshalText(data []byte) error {
+	return t.Set(string(data))
+}
+
+func (t TypePreferIP) MarshalText() ([]byte, error) {
+	return []byte(t.String()), nil
+}
+
+func (t TypePreferIP) String() string {
+	return t.Value
 }

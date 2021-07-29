@@ -20,10 +20,11 @@ type TypeIPTestSuite struct {
 
 func (suite *TypeIPTestSuite) TestUnmarshalFail() {
 	testData := []string{
-		"0.0.10",
-		"10.0.0.10:",
-		"xxx:80",
-		"2001:0db8:85a3:0000:0000:8a2e:4",
+		"",
+		"....",
+		"0...",
+		"300.200.200.800",
+		"[]",
 	}
 
 	for _, v := range testData {
@@ -39,74 +40,62 @@ func (suite *TypeIPTestSuite) TestUnmarshalFail() {
 }
 
 func (suite *TypeIPTestSuite) TestUnmarshalOk() {
-	testData := []string{
-		"0.0.0.0",
-		"10.0.0.10",
-		"2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+	testData := map[string]string{
+		"2001:0db8:85a3:0000:0000:8a2e:0370:7334": "2001:db8:85a3::8a2e:370:7334",
+		"127.0.0.1": "127.0.0.1",
 	}
 
-	for _, v := range testData {
-		value := v
+	for k, v := range testData {
+		expected := v
 
 		data, err := json.Marshal(map[string]string{
-			"value": v,
+			"value": k,
 		})
 		suite.NoError(err)
 
-		suite.T().Run(v, func(t *testing.T) {
+		suite.T().Run(k, func(t *testing.T) {
 			testStruct := &typeIPTestStruct{}
-
 			assert.NoError(t, json.Unmarshal(data, testStruct))
-			assert.Equal(t,
-				net.ParseIP(value).String(),
-				testStruct.Value.Value(nil).String())
+			assert.Equal(t, expected, testStruct.Value.Get(nil).String())
 		})
 	}
 }
 
 func (suite *TypeIPTestSuite) TestMarshalOk() {
 	testData := []string{
-		"0.0.0.0",
-		"10.0.0.10",
-		"2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+		"2001:db8:85a3::8a2e:370:7334",
+		"127.0.0.1",
 	}
 
 	for _, v := range testData {
-		value := net.ParseIP(v).String()
-
-		data, err := json.Marshal(map[string]string{
-			"value": v,
-		})
-		suite.NoError(err)
+		value := v
 
 		suite.T().Run(v, func(t *testing.T) {
-			testStruct := &typeIPTestStruct{}
+			testStruct := &typeIPTestStruct{
+				Value: config.TypeIP{
+					Value: net.ParseIP(value),
+				},
+			}
 
-			assert.NoError(t, json.Unmarshal(data, testStruct))
-			assert.Equal(t, value, testStruct.Value.String())
-
-			marshalled, err := testStruct.Value.MarshalText()
+			encodedJSON, err := json.Marshal(testStruct)
 			assert.NoError(t, err)
-			assert.Equal(t, value, string(marshalled))
+
+			expectedJSON, err := json.Marshal(map[string]string{
+				"value": value,
+			})
+			assert.NoError(t, err)
+
+			assert.JSONEq(t, string(expectedJSON), string(encodedJSON))
 		})
 	}
 }
 
-func (suite *TypeIPTestSuite) TestValue() {
-	testStruct := &typeIPTestStruct{}
-	suite.Empty(testStruct.Value.String())
+func (suite *TypeIPTestSuite) TestGet() {
+	value := config.TypeIP{}
+	suite.Equal("127.0.0.1", value.Get(net.ParseIP("127.0.0.1")).String())
 
-	suite.Nil(testStruct.Value.Value(nil))
-	suite.Equal("127.1.0.1", testStruct.Value.Value(net.ParseIP("127.1.0.1")).String())
-
-	data, err := json.Marshal(map[string]string{
-		"value": "127.0.0.1",
-	})
-	suite.NoError(err)
-	suite.NoError(json.Unmarshal(data, testStruct))
-
-	suite.Equal("127.0.0.1", testStruct.Value.Value(nil).String())
-	suite.Equal("127.0.0.1", testStruct.Value.Value(net.ParseIP("10.0.0.10")).String())
+	suite.NoError(value.Set("127.0.0.2"))
+	suite.Equal("127.0.0.2", value.Get(net.ParseIP("127.0.0.1")).String())
 }
 
 func TestTypeIP(t *testing.T) {
