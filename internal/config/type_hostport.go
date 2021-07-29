@@ -8,6 +8,8 @@ import (
 
 type TypeHostPort struct {
 	Value string
+	Host  string
+	Port  uint
 }
 
 func (t *TypeHostPort) Set(value string) error {
@@ -34,6 +36,8 @@ func (t *TypeHostPort) Set(value string) error {
 	}
 
 	t.Value = net.JoinHostPort(host, port)
+	t.Port = uint(portValue)
+	t.Host = host
 
 	return nil
 }

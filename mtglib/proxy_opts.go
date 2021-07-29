@@ -62,7 +62,7 @@ type ProxyOpts struct {
 	// specifies a hostname only.
 	//
 	// This is an optional setting.
-	DomainFrontingPort uint
+	DomainFrontingPort uint16
 
 	// IdleTimeout is a timeout for relay when we have to break a
 	// stream.

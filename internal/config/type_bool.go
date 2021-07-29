@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	"strconv"
-	"strings"
 )
 
 type TypeBool struct {
@@ -11,14 +10,12 @@ type TypeBool struct {
 }
 
 func (t *TypeBool) Set(data string) error {
-	switch strings.ToLower(data) {
-	case "1", "y", "yes", "enabled", "true":
-		t.Value = true
-	case "0", "n", "no", "disabled", "false":
-		t.Value = false
-	default:
-		return fmt.Errorf("incorrect bool value %s", data)
+	parsed, err := strconv.ParseBool(data)
+	if err != nil {
+		return fmt.Errorf("incorrect bool value: %s", data)
 	}
+
+	t.Value = parsed
 
 	return nil
 }
@@ -27,11 +24,11 @@ func (t TypeBool) Get(defaultValue bool) bool {
 	return t.Value || defaultValue
 }
 
-func (t *TypeBool) UnmarshalText(data []byte) error {
+func (t *TypeBool) UnmarshalJSON(data []byte) error {
 	return t.Set(string(data))
 }
 
-func (t TypeBool) MarshalText() ([]byte, error) {
+func (t TypeBool) MarshalJSON() ([]byte, error) {
 	return []byte(t.String()), nil
 }
 

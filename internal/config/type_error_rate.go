@@ -34,11 +34,11 @@ func (t TypeErrorRate) Get(defaultValue float64) float64 {
 	return t.Value
 }
 
-func (t *TypeErrorRate) UnmarshalText(data []byte) error {
+func (t *TypeErrorRate) UnmarshalJSON(data []byte) error {
 	return t.Set(string(data))
 }
 
-func (t TypeErrorRate) MarshalText() ([]byte, error) {
+func (t TypeErrorRate) MarshalJSON() ([]byte, error) {
 	return []byte(t.String()), nil
 }
 

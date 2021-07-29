@@ -20,53 +20,41 @@ type TypeBoolTestSuite struct {
 }
 
 func (suite *TypeBoolTestSuite) TestUnmarshalFail() {
-	testData := []string{
+	testData := []interface{}{
 		"",
 		"np",
 		"нет",
+		int(10),
+		[]int{},
 	}
 
 	for _, v := range testData {
-		data, err := json.Marshal(map[string]string{
+		data, err := json.Marshal(map[string]interface{}{
 			"value": v,
 		})
 		suite.NoError(err)
 
-		suite.T().Run(v, func(t *testing.T) {
+		suite.T().Run(fmt.Sprintf("%v", v), func(t *testing.T) {
 			assert.Error(t, json.Unmarshal(data, &typeBoolTestStruct{}))
 		})
 	}
 }
 
 func (suite *TypeBoolTestSuite) TestUnmarshalOk() {
-	testData := map[string]bool{
-		"0":        false,
-		"N":        false,
-		"nO":       false,
-		"no":       false,
-		"dISAbLEd": false,
-		"False":    false,
-		"false":    false,
-
-		"1":       true,
-		"y":       true,
-		"Yes":     true,
-		"yes":     true,
-		"enABLED": true,
-		"True":    true,
-		"TRUE":    true,
-		"true":    true,
+	testData := []bool{
+		true,
+		false,
 	}
 
-	for k, v := range testData {
+	for _, v := range testData {
 		value := v
 
-		data, err := json.Marshal(map[string]string{
-			"value": k,
+		data, err := json.Marshal(map[string]bool{
+			"value": v,
 		})
 		suite.NoError(err)
 
-		suite.T().Run(k, func(t *testing.T) {
+		suite.T().Run(strconv.FormatBool(v), func(t *testing.T) {
 			testStruct := &typeBoolTestStruct{}
 			assert.NoError(t, json.Unmarshal(data, testStruct))
 
@@ -81,18 +69,24 @@ func (suite *TypeBoolTestSuite) TestUnmarshalOk() {
 
 func (suite *TypeBoolTestSuite) TestMarshalOk() {
 	for _, v := range []bool{true, false} {
-		name := strconv.FormatBool(v)
+		value := v
 
-		suite.T().Run(name, func(t *testing.T) {
+		suite.T().Run(strconv.FormatBool(v), func(t *testing.T) {
 			testStruct := typeBoolTestStruct{
 				Value: config.TypeBool{
-					Value: v,
+					Value: value,
 				},
 			}
 
-			data, err := json.Marshal(testStruct)
+			encodedJSON, err := json.Marshal(testStruct)
 			assert.NoError(t, err)
-			assert.JSONEq(t, fmt.Sprintf(`{"value": "%s"}`, name), string(data))
+
+			expectedJSON, err := json.Marshal(map[string]bool{
+				"value": value,
+			})
+			assert.NoError(t, err)
+
+			assert.JSONEq(t, string(expectedJSON), string(encodedJSON))
 		})
 	}
 }

@@ -45,27 +45,14 @@ func (suite *TypeErrorRateTestSuite) TestUnmarshalFail() {
 }
 
 func (suite *TypeErrorRateTestSuite) TestUnmarshalOk() {
-	testData := map[string]float64{
-		"1":   1.0,
-		"1.0": 1.0,
-		"0.5": 0.5,
-		".5":  0.5,
-	}
+	data, err := json.Marshal(map[string]float64{
+		"value": 1.0,
+	})
+	suite.NoError(err)
 
-	for k, v := range testData {
-		value := v
-
-		data, err := json.Marshal(map[string]string{
-			"value": k,
-		})
-		suite.NoError(err)
-
-		suite.T().Run(k, func(t *testing.T) {
-			testStruct := &typeErrorRateTestStruct{}
-			assert.NoError(t, json.Unmarshal(data, testStruct))
-			assert.InEpsilon(t, value, testStruct.Value.Value, 1e-10)
-		})
-	}
+	testStruct := &typeErrorRateTestStruct{}
+	suite.NoError(json.Unmarshal(data, testStruct))
+	suite.InEpsilon(1.0, testStruct.Value.Value, 1e-10)
 }
 
 func (suite *TypeErrorRateTestSuite) TestMarshalOk() {
@@ -77,7 +64,7 @@ func (suite *TypeErrorRateTestSuite) TestMarshalOk() {
 
 	encodedJson, err := json.Marshal(testStruct)
 	suite.NoError(err)
-	suite.JSONEq(`{"value": "1.01"}`, string(encodedJson))
+	suite.JSONEq(`{"value": 1.01}`, string(encodedJson))
 }
 
 func (suite *TypeErrorRateTestSuite) TestGet() {
