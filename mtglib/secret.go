@@ -58,7 +58,10 @@ func (s Secret) MarshalText() ([]byte, error) {
 
 // UnmarshalText is to support text.Unmarshaller interface.
 func (s *Secret) UnmarshalText(data []byte) error {
-	text := string(data)
+	return s.Set(string(data))
+}
+
+func (s *Secret) Set(text string) error {
 	if text == "" {
 		return ErrSecretEmpty
 	}

@@ -44,8 +44,8 @@ type Access struct {
 	Hex        bool   `kong:"help='Print secret in hex encoding.',short='x'"`
 }
 
-func (c *Access) Run(cli *CLI, version string) error {
-	conf, err := utils.ReadConfig(c.ConfigPath)
+func (a *Access) Run(cli *CLI, version string) error {
+	conf, err := utils.ReadConfig(a.ConfigPath)
 	if err != nil {
 		return fmt.Errorf("cannot init config: %w", err)
 	}
@@ -65,31 +65,31 @@ func (c *Access) Run(cli *CLI, version string) error {
 	go func() {
 		defer wg.Done()
 
-		ip := c.PublicIPv4
+		ip := a.PublicIPv4
 		if ip == nil {
-			ip = c.getIP(ntw, "tcp4")
+			ip = a.getIP(ntw, "tcp4")
 		}
 
 		if ip != nil {
 			ip = ip.To4()
 		}
 
-		resp.IPv4 = c.makeURLs(conf, ip)
+		resp.IPv4 = a.makeURLs(conf, ip)
 	}()
 
 	go func() {
 		defer wg.Done()
 
-		ip := c.PublicIPv6
+		ip := a.PublicIPv6
 		if ip == nil {
-			ip = c.getIP(ntw, "tcp6")
+			ip = a.getIP(ntw, "tcp6")
 		}
 
 		if ip != nil {
 			ip = ip.To16()
 		}
 
-		resp.IPv6 = c.makeURLs(conf, ip)
+		resp.IPv6 = a.makeURLs(conf, ip)
 	}()
 
 	wg.Wait()
@@ -105,7 +105,7 @@ func (c *Access) Run(cli *CLI, version string) error {
 	return nil
 }
 
-func (c *Access) getIP(ntw mtglib.Network, protocol string) net.IP {
+func (a *Access) getIP(ntw mtglib.Network, protocol string) net.IP {
 	client := ntw.MakeHTTPClient(func(ctx context.Context, network, address string) (net.Conn, error) {
 		return ntw.DialContext(ctx, protocol, address) // nolint: wrapcheck
 	})
@@ -139,12 +139,12 @@ func (c *Access) getIP(ntw mtglib.Network, protocol string) net.IP {
 	return net.ParseIP(strings.TrimSpace(string(data)))
 }
 
-func (c *Access) makeURLs(conf *config.Config, ip net.IP) *accessResponseURLs {
+func (a *Access) makeURLs(conf *config.Config, ip net.IP) *accessResponseURLs {
 	if ip == nil {
 		return nil
 	}
 
-	portNo := c.Port
+	portNo := a.Port
 	if portNo == 0 {
 		portNo = conf.BindTo.Port
 	}
@@ -153,7 +153,7 @@ func (c *Access) makeURLs(conf *config.Config, ip net.IP) *accessResponseURLs {
 	values.Set("server", ip.String())
 	values.Set("port", strconv.Itoa(int(portNo)))
 
-	if c.Hex {
+	if a.Hex {
 		values.Set("secret", conf.Secret.Hex())
 	} else {
 		values.Set("secret", conf.Secret.Base64())
