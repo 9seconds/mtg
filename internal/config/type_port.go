@@ -6,7 +6,7 @@ import (
 )
 
 type TypePort struct {
-	Value uint16
+	Value uint
 }
 
 func (t *TypePort) Set(value string) error {
@@ -19,12 +19,12 @@ func (t *TypePort) Set(value string) error {
 		return fmt.Errorf("incorrect port number (%s)", value)
 	}
 
-    t.Value = uint16(portValue)
+	t.Value = uint(portValue)
 
 	return nil
 }
 
-func (t TypePort) Get(defaultValue uint16) uint16 {
+func (t TypePort) Get(defaultValue uint) uint {
 	if t.Value == 0 {
 		return defaultValue
 	}

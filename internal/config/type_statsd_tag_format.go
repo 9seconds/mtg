@@ -29,7 +29,7 @@ func (t *TypeStatsdTagFormat) Set(value string) error {
 	switch lowercasedValue {
 	case TypeStatsdTagFormatDatadog, TypeStatsdTagFormatInfluxdb,
 		TypeStatsdTagFormatGraphite:
-        t.Value = lowercasedValue
+		t.Value = lowercasedValue
 
 		return nil
 	default:

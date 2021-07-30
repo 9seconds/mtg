@@ -13,12 +13,12 @@ type TypeBlocklistURI struct {
 
 func (t *TypeBlocklistURI) Set(value string) error {
 	if stat, err := os.Stat(value); err == nil || os.IsExist(err) {
-        switch {
-        case stat.IsDir():
-            return fmt.Errorf("value is correct filepath but directory")
-        case stat.Mode().Perm() & 0o400 == 0:
-            return fmt.Errorf("value is correct filepath but not readable")
-        }
+		switch {
+		case stat.IsDir():
+			return fmt.Errorf("value is correct filepath but directory")
+		case stat.Mode().Perm()&0o400 == 0:
+			return fmt.Errorf("value is correct filepath but not readable")
+		}
 
 		value, err = filepath.Abs(value)
 		if err != nil {

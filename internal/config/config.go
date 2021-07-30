@@ -60,7 +60,7 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("invalid secret %s", c.Secret.String())
 	}
 
-    if c.BindTo.Get("") == "" {
+	if c.BindTo.Get("") == "" {
 		return fmt.Errorf("incorrect bind-to parameter %s", c.BindTo.String())
 	}
 

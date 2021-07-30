@@ -11,10 +11,10 @@ type TypeMetricPrefix struct {
 
 func (t *TypeMetricPrefix) Set(value string) error {
 	if ok, err := regexp.MatchString("^[a-z0-9]+$", value); !ok || err != nil {
-        return fmt.Errorf("incorrect metric prefix %s: %w", value, err)
+		return fmt.Errorf("incorrect metric prefix %s: %w", value, err)
 	}
 
-    t.Value = value
+	t.Value = value
 
 	return nil
 }

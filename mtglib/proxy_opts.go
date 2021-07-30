@@ -55,15 +55,6 @@ type ProxyOpts struct {
 	// This is an optional setting.
 	Concurrency uint
 
-	// DomainFrontingPort is a port we use to connect to a fronting
-	// domain.
-	//
-	// This is required because secret does not specify a port. It
-	// specifies a hostname only.
-	//
-	// This is an optional setting.
-	DomainFrontingPort uint16
-
 	// IdleTimeout is a timeout for relay when we have to break a
 	// stream.
 	//
@@ -89,6 +80,15 @@ type ProxyOpts struct {
 	//
 	// This is an optional setting.
 	PreferIP string
+
+	// DomainFrontingPort is a port we use to connect to a fronting
+	// domain.
+	//
+	// This is required because secret does not specify a port. It
+	// specifies a hostname only.
+	//
+	// This is an optional setting.
+	DomainFrontingPort uint
 
 	// UseTestDCs defines if we have to connect to production or to staging
 	// DCs of Telegram.

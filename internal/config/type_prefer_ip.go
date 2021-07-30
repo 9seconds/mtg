@@ -33,7 +33,7 @@ func (t *TypePreferIP) Set(value string) error {
 	switch value {
 	case TypePreferIPPreferIPv4, TypePreferIPPreferIPv6,
 		TypePreferOnlyIPv4, TypePreferOnlyIPv6:
-        t.Value = value
+		t.Value = value
 
 		return nil
 	default:

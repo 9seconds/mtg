@@ -15,7 +15,7 @@ func (t *TypeIP) Set(value string) error {
 		return fmt.Errorf("incorret ip %s", value)
 	}
 
-    t.Value = ip
+	t.Value = ip
 
 	return nil
 }

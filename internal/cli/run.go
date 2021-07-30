@@ -16,5 +16,5 @@ func (r *Run) Run(cli *CLI, version string) error {
 		return fmt.Errorf("cannot init config: %w", err)
 	}
 
-    return runProxy(conf, version)
+	return runProxy(conf, version)
 }

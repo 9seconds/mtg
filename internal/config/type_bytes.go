@@ -14,7 +14,7 @@ type TypeBytes struct {
 }
 
 func (t *TypeBytes) Set(value string) error {
-    normalizedValue := typeBytesStringCleaner.Replace(strings.ToUpper(value))
+	normalizedValue := typeBytesStringCleaner.Replace(strings.ToUpper(value))
 
 	parsedValue, err := units.ParseBase2Bytes(normalizedValue)
 	if err != nil {

@@ -62,9 +62,9 @@ func (suite *TypeErrorRateTestSuite) TestMarshalOk() {
 		},
 	}
 
-	encodedJson, err := json.Marshal(testStruct)
+	encodedJSON, err := json.Marshal(testStruct)
 	suite.NoError(err)
-	suite.JSONEq(`{"value": 1.01}`, string(encodedJson))
+	suite.JSONEq(`{"value": 1.01}`, string(encodedJSON))
 }
 
 func (suite *TypeErrorRateTestSuite) TestGet() {

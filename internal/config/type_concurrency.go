@@ -12,11 +12,11 @@ type TypeConcurrency struct {
 func (t *TypeConcurrency) Set(value string) error {
 	concurrencyValue, err := strconv.ParseUint(value, 10, 64)
 	if err != nil {
-		return fmt.Errorf("Value is not uint (%s): %w", value, err)
+		return fmt.Errorf("value is not uint (%s): %w", value, err)
 	}
 
 	if concurrencyValue == 0 {
-		return fmt.Errorf("Value should be >0 (%s)", value)
+		return fmt.Errorf("value should be >0 (%s)", value)
 	}
 
 	t.Value = uint(concurrencyValue)

@@ -102,9 +102,9 @@ func (suite *TypeBlocklistURITestSuite) TestGet() {
 	value := config.TypeBlocklistURI{}
 	suite.Equal("/path", value.Get("/path"))
 
-    suite.NoError(value.Set("http://lalala.ru"))
-    suite.Equal("http://lalala.ru", value.Get("/path"))
-    suite.Equal("http://lalala.ru", value.Get(""))
+	suite.NoError(value.Set("http://lalala.ru"))
+	suite.Equal("http://lalala.ru", value.Get("/path"))
+	suite.Equal("http://lalala.ru", value.Get(""))
 }
 
 func TestTypeBlocklistURI(t *testing.T) {

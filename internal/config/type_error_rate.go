@@ -14,11 +14,11 @@ type TypeErrorRate struct {
 func (t *TypeErrorRate) Set(value string) error {
 	parsedValue, err := strconv.ParseFloat(value, 64)
 	if err != nil {
-		return fmt.Errorf("Value is not a float (%s): %w", value, err)
+		return fmt.Errorf("value is not a float (%s): %w", value, err)
 	}
 
 	if parsedValue <= 0.0 || parsedValue >= 100.0 {
-		return fmt.Errorf("Value should be 0 < x < 100 (%s)", value)
+		return fmt.Errorf("value should be 0 < x < 100 (%s)", value)
 	}
 
 	t.Value = parsedValue

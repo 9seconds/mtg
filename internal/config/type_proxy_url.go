@@ -15,7 +15,7 @@ type TypeProxyURL struct {
 func (t *TypeProxyURL) Set(value string) error {
 	parsedURL, err := url.Parse(value)
 	if err != nil {
-		return fmt.Errorf("Value is not corect URL (%s): %w", value, err)
+		return fmt.Errorf("value is not corect URL (%s): %w", value, err)
 	}
 
 	if parsedURL.Host == "" {

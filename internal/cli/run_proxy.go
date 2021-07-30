@@ -51,6 +51,7 @@ func makeNetwork(conf *config.Config, version string) (mtglib.Network, error) {
 	}
 
 	proxyURLs := make([]*url.URL, 0, len(conf.Network.Proxies))
+
 	for _, v := range conf.Network.Proxies {
 		if value := v.Get(nil); value != nil {
 			proxyURLs = append(proxyURLs, value)

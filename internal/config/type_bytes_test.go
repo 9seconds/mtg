@@ -64,20 +64,20 @@ func (suite *TypeBytesTestSuite) TestUnmarshalOk() {
 }
 
 func (suite *TypeBytesTestSuite) TestMarshalOk() {
-    value := typeBytesTestStruct{}
-    suite.NoError(value.Value.Set("1kib"))
+	value := typeBytesTestStruct{}
+	suite.NoError(value.Value.Set("1kib"))
 
-    data, err := json.Marshal(value)
-    suite.NoError(err)
-    suite.JSONEq(`{"value": "1kib"}`, string(data))
+	data, err := json.Marshal(value)
+	suite.NoError(err)
+	suite.JSONEq(`{"value": "1kib"}`, string(data))
 }
 
 func (suite *TypeBytesTestSuite) TestGet() {
-    value := config.TypeBytes{}
-    suite.EqualValues(1000, value.Get(1000))
+	value := config.TypeBytes{}
+	suite.EqualValues(1000, value.Get(1000))
 
-    suite.NoError(value.Set("1mib"))
-    suite.EqualValues(1048576, value.Get(1000))
+	suite.NoError(value.Set("1mib"))
+	suite.EqualValues(1048576, value.Get(1000))
 }
 
 func TestTypeBytes(t *testing.T) {

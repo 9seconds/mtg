@@ -86,12 +86,12 @@ func (suite *TypeDurationTestSuite) TestMarshalOk() {
 			data, err := json.Marshal(testStruct)
 			assert.NoError(t, err)
 
-			expectedJson, err := json.Marshal(map[string]string{
+			expectedJSON, err := json.Marshal(map[string]string{
 				"value": expected,
 			})
 			assert.NoError(t, err)
 
-			assert.JSONEq(t, string(expectedJson), string(data))
+			assert.JSONEq(t, string(expectedJSON), string(data))
 		})
 	}
 }
