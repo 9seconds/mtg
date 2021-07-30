@@ -11,7 +11,7 @@ func MakeQRCodeURL(data string) string {
 	rv := url.URL{
 		Scheme:   "https",
 		Host:     "api.qrserver.com",
-		Path:     "v1/create-qr-code",
+		Path:     "/v1/create-qr-code",
 		RawQuery: values.Encode(),
 	}
 
