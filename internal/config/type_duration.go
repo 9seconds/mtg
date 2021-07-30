@@ -6,41 +6,48 @@ import (
 	"time"
 )
 
+var typeDurationStringCleaner = strings.NewReplacer(" ", "", "\t", "")
+
 type TypeDuration struct {
-	value time.Duration
+	Value time.Duration
 }
 
-func (c *TypeDuration) UnmarshalText(data []byte) error {
-	if len(data) == 0 {
-		return nil
-	}
-
-	dur, err := time.ParseDuration(strings.ToLower(string(data)))
+func (t *TypeDuration) Set(value string) error {
+	parsedValue, err := time.ParseDuration(
+		typeDurationStringCleaner.Replace(strings.ToLower(value)))
 	if err != nil {
-		return fmt.Errorf("incorrect duration: %w", err)
+		return fmt.Errorf("incorrect duration (%s): %w", value, err)
 	}
 
-	if dur < 0 {
-		return fmt.Errorf("%s should be positive duration", dur)
+	if parsedValue < 0 {
+		return fmt.Errorf("duration has to be a positive: %s", value)
 	}
 
-	c.value = dur
+	t.Value = parsedValue
 
 	return nil
 }
 
-func (c TypeDuration) MarshalText() ([]byte, error) {
-	return []byte(c.value.String()), nil
-}
-
-func (c TypeDuration) String() string {
-	return c.value.String()
-}
-
-func (c TypeDuration) Value(defaultValue time.Duration) time.Duration {
-	if c.value == 0 {
+func (t TypeDuration) Get(defaultValue time.Duration) time.Duration {
+	if t.Value == 0 {
 		return defaultValue
 	}
 
-	return c.value
+	return t.Value
+}
+
+func (t *TypeDuration) UnmarshalText(data []byte) error {
+	return t.Set(string(data))
+}
+
+func (t TypeDuration) MarshalText() ([]byte, error) {
+	return []byte(t.String()), nil
+}
+
+func (t TypeDuration) String() string {
+	if t.Value == 0 {
+		return ""
+	}
+
+	return t.Value.String()
 }

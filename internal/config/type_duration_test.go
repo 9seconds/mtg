@@ -18,18 +18,12 @@ type TypeDurationTestSuite struct {
 	suite.Suite
 }
 
-func (suite *TypeDurationTestSuite) TestUnmarshalNil() {
-	typ := &config.TypeDuration{}
-	suite.NoError(typ.UnmarshalText(nil))
-	suite.EqualValues(0, typ.Value(0))
-}
-
 func (suite *TypeDurationTestSuite) TestUnmarshalFail() {
 	testData := []string{
-		"1t",
-		"1",
 		"-1s",
-		"-1h",
+		"1 seconds ago",
+		"1s ago",
+		"",
 	}
 
 	for _, v := range testData {
@@ -47,8 +41,11 @@ func (suite *TypeDurationTestSuite) TestUnmarshalFail() {
 func (suite *TypeDurationTestSuite) TestUnmarshalOk() {
 	testData := map[string]time.Duration{
 		"1s":   time.Second,
-		"1m":   time.Minute,
-		"2h1s": 2*time.Hour + time.Second,
+		"0":    0 * time.Second,
+		"0s":   0 * time.Second,
+		"1\tM": time.Minute,
+		"1H":   time.Hour,
+		"1 h":  time.Hour,
 	}
 
 	for k, v := range testData {
@@ -63,53 +60,48 @@ func (suite *TypeDurationTestSuite) TestUnmarshalOk() {
 			testStruct := &typeDurationTestStruct{}
 
 			assert.NoError(t, json.Unmarshal(data, testStruct))
-			assert.Equal(t, value, testStruct.Value.Value(0))
+			assert.Equal(t, value, testStruct.Value.Value)
 		})
 	}
 }
 
 func (suite *TypeDurationTestSuite) TestMarshalOk() {
-	testData := []string{
-		"1s",
-		"1m0s",
-		"2h0m1s",
+	testData := map[string]string{
+		"1s":  "1s",
+		"0":   "",
+		"0s":  "",
+		"0ms": "",
+		"1 H": "1h0m0s",
 	}
 
-	for _, v := range testData {
-		name := v
+	for k, v := range testData {
+		value := k
+		expected := v
 
-		data, err := json.Marshal(map[string]string{
-			"value": name,
-		})
-		suite.NoError(err)
-
-		suite.T().Run(name, func(t *testing.T) {
+		suite.T().Run(value, func(t *testing.T) {
 			testStruct := &typeDurationTestStruct{}
 
-			assert.NoError(t, json.Unmarshal(data, testStruct))
-			assert.Equal(t, name, testStruct.Value.String())
+			assert.NoError(t, testStruct.Value.Set(value))
 
-			marshalled, err := testStruct.Value.MarshalText()
+			data, err := json.Marshal(testStruct)
 			assert.NoError(t, err)
-			assert.Equal(t, name, string(marshalled))
+
+			expectedJSON, err := json.Marshal(map[string]string{
+				"value": expected,
+			})
+			assert.NoError(t, err)
+
+			assert.JSONEq(t, string(expectedJSON), string(data))
 		})
 	}
 }
 
-func (suite *TypeDurationTestSuite) TestValue() {
-	testStruct := &typeDurationTestStruct{}
+func (suite *TypeDurationTestSuite) TestGet() {
+	value := config.TypeDuration{}
+	suite.Equal(time.Second, value.Get(time.Second))
 
-	suite.EqualValues(0, testStruct.Value.Value(0))
-	suite.Equal(time.Second, testStruct.Value.Value(time.Second))
-
-	data, err := json.Marshal(map[string]string{
-		"value": "1s",
-	})
-	suite.NoError(err)
-	suite.NoError(json.Unmarshal(data, testStruct))
-
-	suite.Equal(time.Second, testStruct.Value.Value(0))
-	suite.Equal(time.Second, testStruct.Value.Value(time.Minute))
+	value.Value = 3 * time.Second
+	suite.Equal(3*time.Second, value.Get(time.Hour))
 }
 
 func TestTypeDuration(t *testing.T) {

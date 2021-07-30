@@ -7,48 +7,49 @@ import (
 	"github.com/alecthomas/units"
 )
 
+var typeBytesStringCleaner = strings.NewReplacer(" ", "", "\t", "", "IB", "iB")
+
 type TypeBytes struct {
-	value units.Base2Bytes
+	Value units.Base2Bytes
 }
 
-func (c *TypeBytes) UnmarshalText(data []byte) error {
-	if len(data) == 0 {
-		return nil
-	}
+func (t *TypeBytes) Set(value string) error {
+	normalizedValue := typeBytesStringCleaner.Replace(strings.ToUpper(value))
 
-	normalizedData := strings.ToUpper(string(data))
-	normalizedData = strings.ReplaceAll(normalizedData, "IB", "iB")
-
-	value, err := units.ParseBase2Bytes(normalizedData)
+	parsedValue, err := units.ParseBase2Bytes(normalizedValue)
 	if err != nil {
-		return fmt.Errorf("incorrect bytes value: %w", err)
+		return fmt.Errorf("incorrect bytes value (%v): %w", value, err)
 	}
 
-	if value < 0 {
-		return fmt.Errorf("%d should be positive number", value)
+	if parsedValue < 0 {
+		return fmt.Errorf("bytes should be positive (%s)", value)
 	}
 
-	c.value = value
+	t.Value = parsedValue
 
 	return nil
 }
 
-func (c TypeBytes) MarshalText() ([]byte, error) {
-	return []byte(c.String()), nil
-}
-
-func (c TypeBytes) String() string {
-	if c.value == 0 {
-		return ""
-	}
-
-	return strings.ToLower(c.value.String())
-}
-
-func (c TypeBytes) Value(defaultValue uint) uint {
-	if c.value == 0 {
+func (t TypeBytes) Get(defaultValue uint) uint {
+	if t.Value == 0 {
 		return defaultValue
 	}
 
-	return uint(c.value)
+	return uint(t.Value)
+}
+
+func (t *TypeBytes) UnmarshalText(data []byte) error {
+	return t.Set(string(data))
+}
+
+func (t TypeBytes) MarshalText() ([]byte, error) {
+	return []byte(t.String()), nil
+}
+
+func (t TypeBytes) String() string {
+	if t.Value == 0 {
+		return ""
+	}
+
+	return strings.ToLower(t.Value.String())
 }

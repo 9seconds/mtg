@@ -11,10 +11,10 @@ type GenerateSecret struct {
 	Hex      bool   `kong:"help='Print secret in hex encoding.',short='x'"`
 }
 
-func (c *GenerateSecret) Run(cli *CLI, _ string) error {
+func (g *GenerateSecret) Run(cli *CLI, _ string) error {
 	secret := mtglib.GenerateSecret(cli.GenerateSecret.HostName)
 
-	if cli.GenerateSecret.Hex {
+	if g.Hex {
 		fmt.Println(secret.Hex()) // nolint: forbidigo
 	} else {
 		fmt.Println(secret.Base64()) // nolint: forbidigo

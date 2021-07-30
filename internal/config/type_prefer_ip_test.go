@@ -18,18 +18,12 @@ type TypePreferIPTestSuite struct {
 	suite.Suite
 }
 
-func (suite *TypePreferIPTestSuite) TestUnmarshalNil() {
-	typ := &config.TypePreferIP{}
-	suite.NoError(typ.UnmarshalText(nil))
-	suite.Empty(typ.String())
-}
-
 func (suite *TypePreferIPTestSuite) TestUnmarshalFail() {
 	testData := []string{
-		"p",
-		"ipv4",
-		"onlyipv4",
-		"ipv6prefer",
+		"",
+		"prefer",
+		"preferipv4",
+		config.TypePreferIPPreferIPv4 + "_",
 	}
 
 	for _, v := range testData {
@@ -50,14 +44,10 @@ func (suite *TypePreferIPTestSuite) TestUnmarshalOk() {
 		config.TypePreferIPPreferIPv6,
 		config.TypePreferOnlyIPv4,
 		config.TypePreferOnlyIPv6,
-		strings.ToUpper(config.TypePreferIPPreferIPv4),
-		strings.ToUpper(config.TypePreferIPPreferIPv6),
-		strings.ToUpper(config.TypePreferOnlyIPv4),
-		strings.ToUpper(config.TypePreferOnlyIPv6),
-		strings.ToLower(config.TypePreferIPPreferIPv4),
-		strings.ToLower(config.TypePreferIPPreferIPv6),
-		strings.ToLower(config.TypePreferOnlyIPv4),
-		strings.ToLower(config.TypePreferOnlyIPv6),
+		strings.ToTitle(config.TypePreferOnlyIPv4),
+		strings.ToTitle(config.TypePreferOnlyIPv6),
+		strings.ToTitle(config.TypePreferIPPreferIPv4),
+		strings.ToTitle(config.TypePreferIPPreferIPv6),
 	}
 
 	for _, v := range testData {
@@ -70,11 +60,8 @@ func (suite *TypePreferIPTestSuite) TestUnmarshalOk() {
 
 		suite.T().Run(v, func(t *testing.T) {
 			testStruct := &typePreferIPTestStruct{}
-
 			assert.NoError(t, json.Unmarshal(data, testStruct))
-			assert.EqualValues(t,
-				strings.ToLower(value),
-				testStruct.Value.Value(config.TypePreferIPPreferIPv4))
+			assert.Equal(t, strings.ToLower(value), testStruct.Value.Value)
 		})
 	}
 }
@@ -85,55 +72,39 @@ func (suite *TypePreferIPTestSuite) TestMarshalOk() {
 		config.TypePreferIPPreferIPv6,
 		config.TypePreferOnlyIPv4,
 		config.TypePreferOnlyIPv6,
-		strings.ToUpper(config.TypePreferIPPreferIPv4),
-		strings.ToUpper(config.TypePreferIPPreferIPv6),
-		strings.ToUpper(config.TypePreferOnlyIPv4),
-		strings.ToUpper(config.TypePreferOnlyIPv6),
-		strings.ToLower(config.TypePreferIPPreferIPv4),
-		strings.ToLower(config.TypePreferIPPreferIPv6),
-		strings.ToLower(config.TypePreferOnlyIPv4),
-		strings.ToLower(config.TypePreferOnlyIPv6),
 	}
 
 	for _, v := range testData {
 		value := v
 
-		data, err := json.Marshal(map[string]string{
-			"value": v,
-		})
-		suite.NoError(err)
-
 		suite.T().Run(v, func(t *testing.T) {
-			testStruct := &typePreferIPTestStruct{}
+			testStruct := &typePreferIPTestStruct{
+				Value: config.TypePreferIP{
+					Value: value,
+				},
+			}
 
-			assert.NoError(t, json.Unmarshal(data, testStruct))
-			assert.Equal(t, strings.ToLower(value), testStruct.Value.String())
-
-			marshalled, err := testStruct.Value.MarshalText()
+			encodedJSON, err := json.Marshal(testStruct)
 			assert.NoError(t, err)
-			assert.Equal(t, strings.ToLower(value), string(marshalled))
+
+			expectedJSON, err := json.Marshal(map[string]string{
+				"value": value,
+			})
+			assert.NoError(t, err)
+
+			assert.JSONEq(t, string(expectedJSON), string(encodedJSON))
 		})
 	}
 }
 
-func (suite *TypePreferIPTestSuite) TestValue() {
-	testStruct := &typePreferIPTestStruct{}
+func (suite *TypePreferIPTestSuite) TestGet() {
+	value := config.TypePreferIP{}
+	suite.Equal(config.TypePreferIPPreferIPv4,
+		value.Get(config.TypePreferIPPreferIPv4))
 
-	suite.EqualValues(config.TypePreferIPPreferIPv4,
-		testStruct.Value.Value(config.TypePreferIPPreferIPv4))
-	suite.EqualValues(config.TypePreferIPPreferIPv6,
-		testStruct.Value.Value(config.TypePreferIPPreferIPv6))
-
-	data, err := json.Marshal(map[string]string{
-		"value": config.TypePreferOnlyIPv4,
-	})
-	suite.NoError(err)
-	suite.NoError(json.Unmarshal(data, testStruct))
-
-	suite.EqualValues(config.TypePreferOnlyIPv4,
-		testStruct.Value.Value(config.TypePreferOnlyIPv6))
-	suite.EqualValues(config.TypePreferOnlyIPv4,
-		testStruct.Value.Value(config.TypePreferIPPreferIPv6))
+	suite.NoError(value.Set(config.TypePreferIPPreferIPv6))
+	suite.Equal(config.TypePreferIPPreferIPv6,
+		value.Get(config.TypePreferIPPreferIPv4))
 }
 
 func TestTypePreferIP(t *testing.T) {

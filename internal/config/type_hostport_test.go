@@ -2,7 +2,6 @@ package config_test
 
 import (
 	"encoding/json"
-	"net"
 	"testing"
 
 	"github.com/9seconds/mtg/v2/internal/config"
@@ -20,11 +19,13 @@ type TypeHostPortTestSuite struct {
 
 func (suite *TypeHostPortTestSuite) TestUnmarshalFail() {
 	testData := []string{
-		"10.0.0.10:aaa",
-		"10.0.0.10:",
 		":",
-		"xxx",
-		"xxx:80",
+		":800",
+		"127.0.0.1:8000000",
+		"12...:80",
+		"",
+		"localhost",
+		"google.com:",
 	}
 
 	for _, v := range testData {
@@ -41,9 +42,8 @@ func (suite *TypeHostPortTestSuite) TestUnmarshalFail() {
 
 func (suite *TypeHostPortTestSuite) TestUnmarshalOk() {
 	testData := []string{
-		"10.0.0.10:80",
-		"0.0.0.0:80",
-		":8000",
+		"127.0.0.1:80",
+		"10.0.0.10:6553",
 	}
 
 	for _, v := range testData {
@@ -56,57 +56,30 @@ func (suite *TypeHostPortTestSuite) TestUnmarshalOk() {
 
 		suite.T().Run(v, func(t *testing.T) {
 			testStruct := &typeHostPortTestStruct{}
-
 			assert.NoError(t, json.Unmarshal(data, testStruct))
-			assert.EqualValues(t, value, testStruct.Value.Value(nil, 0))
+			assert.Equal(t, value, testStruct.Value.Value)
 		})
 	}
 }
 
 func (suite *TypeHostPortTestSuite) TestMarshalOk() {
-	testData := []string{
-		"10.0.0.10:80",
-		"0.0.0.0:80",
-		":8000",
+	testStruct := typeHostPortTestStruct{
+		Value: config.TypeHostPort{
+			Value: "127.0.0.1:8000",
+		},
 	}
 
-	for _, v := range testData {
-		value := v
-
-		data, err := json.Marshal(map[string]string{
-			"value": v,
-		})
-		suite.NoError(err)
-
-		suite.T().Run(v, func(t *testing.T) {
-			testStruct := &typeHostPortTestStruct{}
-
-			assert.NoError(t, json.Unmarshal(data, testStruct))
-			assert.Equal(t, value, testStruct.Value.String())
-
-			marshalled, err := testStruct.Value.MarshalText()
-			assert.NoError(t, err)
-			assert.Equal(t, value, string(marshalled))
-		})
-	}
+	data, err := json.Marshal(testStruct)
+	suite.NoError(err)
+	suite.JSONEq(`{"value": "127.0.0.1:8000"}`, string(data))
 }
 
-func (suite *TypeHostPortTestSuite) TestValue() {
-	testStruct := &typeHostPortTestStruct{}
+func (suite *TypeHostPortTestSuite) TestGet() {
+	value := config.TypeHostPort{}
+	suite.Equal("127.0.0.1:9000", value.Get("127.0.0.1:9000"))
 
-	suite.EqualValues("127.0.0.1:80",
-		testStruct.Value.Value(net.ParseIP("127.0.0.1"), 80))
-	suite.EqualValues("127.1.0.1:80",
-		testStruct.Value.Value(net.ParseIP("127.1.0.1"), 80))
-
-	data, err := json.Marshal(map[string]string{
-		"value": "127.0.0.1:80",
-	})
-	suite.NoError(err)
-	suite.NoError(json.Unmarshal(data, testStruct))
-
-	suite.EqualValues("127.0.0.1:80", testStruct.Value.Value(nil, 0))
-	suite.EqualValues("127.0.0.1:80", testStruct.Value.Value(net.ParseIP("10.0.0.10"), 3000))
+	value.Value = "127.0.0.1:80"
+	suite.Equal("127.0.0.1:80", value.Get("127.0.0.1:9000"))
 }
 
 func TestTypeHostPort(t *testing.T) {

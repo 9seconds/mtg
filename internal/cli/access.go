@@ -12,6 +12,10 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/9seconds/mtg/v2/internal/config"
+	"github.com/9seconds/mtg/v2/internal/utils"
+	"github.com/9seconds/mtg/v2/mtglib"
 )
 
 type accessResponse struct {
@@ -33,26 +37,27 @@ type accessResponseURLs struct {
 }
 
 type Access struct {
-	base
-
+	ConfigPath string `kong:"arg,required,type='existingfile',help='Path to the configuration file.',name='config-path'"`                 // nolint: lll
 	PublicIPv4 net.IP `kong:"help='Public IPv4 address for proxy. By default it is resolved via remote website',name='ipv4',short='i'"`   // nolint: lll
 	PublicIPv6 net.IP `kong:"help='Public IPv6 address for proxy. By default it is resolved via remote website',name='ipv6',short='I'"`   // nolint: lll
 	Port       uint   `kong:"help='Port number. Default port is taken from configuration file, bind-to parameter',type:'uint',short='p'"` // nolint: lll
 	Hex        bool   `kong:"help='Print secret in hex encoding.',short='x'"`
 }
 
-func (c *Access) Run(cli *CLI, version string) error {
-	if err := c.ReadConfig(version); err != nil {
+func (a *Access) Run(cli *CLI, version string) error {
+	conf, err := utils.ReadConfig(a.ConfigPath)
+	if err != nil {
 		return fmt.Errorf("cannot init config: %w", err)
 	}
 
-	return c.Execute(cli)
-}
-
-func (c *Access) Execute(cli *CLI) error {
 	resp := &accessResponse{}
-	resp.Secret.Base64 = c.Config.Secret.Base64()
-	resp.Secret.Hex = c.Config.Secret.Hex()
+	resp.Secret.Base64 = conf.Secret.Base64()
+	resp.Secret.Hex = conf.Secret.Hex()
+
+	ntw, err := makeNetwork(conf, version)
+	if err != nil {
+		return fmt.Errorf("cannot init network: %w", err)
+	}
 
 	wg := &sync.WaitGroup{}
 	wg.Add(2) // nolint: gomnd
@@ -60,31 +65,31 @@ func (c *Access) Execute(cli *CLI) error {
 	go func() {
 		defer wg.Done()
 
-		ip := cli.Access.PublicIPv4
+		ip := a.PublicIPv4
 		if ip == nil {
-			ip = c.getIP("tcp4")
+			ip = a.getIP(ntw, "tcp4")
 		}
 
 		if ip != nil {
 			ip = ip.To4()
 		}
 
-		resp.IPv4 = c.makeURLs(ip, cli)
+		resp.IPv4 = a.makeURLs(conf, ip)
 	}()
 
 	go func() {
 		defer wg.Done()
 
-		ip := cli.Access.PublicIPv6
+		ip := a.PublicIPv6
 		if ip == nil {
-			ip = c.getIP("tcp6")
+			ip = a.getIP(ntw, "tcp6")
 		}
 
 		if ip != nil {
 			ip = ip.To16()
 		}
 
-		resp.IPv6 = c.makeURLs(ip, cli)
+		resp.IPv6 = a.makeURLs(conf, ip)
 	}()
 
 	wg.Wait()
@@ -100,9 +105,9 @@ func (c *Access) Execute(cli *CLI) error {
 	return nil
 }
 
-func (c *Access) getIP(protocol string) net.IP {
-	client := c.Network.MakeHTTPClient(func(ctx context.Context, network, address string) (net.Conn, error) {
-		return c.Network.DialContext(ctx, protocol, address) // nolint: wrapcheck
+func (a *Access) getIP(ntw mtglib.Network, protocol string) net.IP {
+	client := ntw.MakeHTTPClient(func(ctx context.Context, network, address string) (net.Conn, error) {
+		return ntw.DialContext(ctx, protocol, address) // nolint: wrapcheck
 	})
 
 	req, err := http.NewRequest(http.MethodGet, "https://ifconfig.co", nil) // nolint: noctx
@@ -134,24 +139,24 @@ func (c *Access) getIP(protocol string) net.IP {
 	return net.ParseIP(strings.TrimSpace(string(data)))
 }
 
-func (c *Access) makeURLs(ip net.IP, cli *CLI) *accessResponseURLs {
+func (a *Access) makeURLs(conf *config.Config, ip net.IP) *accessResponseURLs {
 	if ip == nil {
 		return nil
 	}
 
-	portNo := cli.Access.Port
+	portNo := a.Port
 	if portNo == 0 {
-		portNo = c.Config.BindTo.PortValue(0)
+		portNo = conf.BindTo.Port
 	}
 
 	values := url.Values{}
 	values.Set("server", ip.String())
 	values.Set("port", strconv.Itoa(int(portNo)))
 
-	if cli.Access.Hex {
-		values.Set("secret", c.Config.Secret.Hex())
+	if a.Hex {
+		values.Set("secret", conf.Secret.Hex())
 	} else {
-		values.Set("secret", c.Config.Secret.Base64())
+		values.Set("secret", conf.Secret.Base64())
 	}
 
 	urlQuery := values.Encode()
@@ -171,22 +176,8 @@ func (c *Access) makeURLs(ip net.IP, cli *CLI) *accessResponseURLs {
 			RawQuery: urlQuery,
 		}).String(),
 	}
-	rv.TgQrCode = c.makeQRCode(rv.TgURL)
-	rv.TmeQrCode = c.makeQRCode(rv.TmeURL)
+	rv.TgQrCode = utils.MakeQRCodeURL(rv.TgURL)
+	rv.TmeQrCode = utils.MakeQRCodeURL(rv.TmeURL)
 
 	return rv
-}
-
-func (c *Access) makeQRCode(data string) string {
-	values := url.Values{}
-	values.Set("qzone", "4")
-	values.Set("format", "svg")
-	values.Set("data", data)
-
-	return (&url.URL{
-		Scheme:   "https",
-		Host:     "api.qrserver.com",
-		Path:     "v1/create-qr-code",
-		RawQuery: values.Encode(),
-	}).String()
 }
