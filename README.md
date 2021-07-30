@@ -237,6 +237,50 @@ For example, you've bought a VPS from [Digital
 Ocean](https://www.digitalocean.com/). Then it might be a good idea to
 generate a secret for _digitalocean.com_ then.
 
+
+### Simple run mode
+
+mtg supports 2 modes: simple and normal. Simple mode allows starting
+proxy with a small subset of configuration options you usually want to
+modify. This is quite good for oneliners that you can copy-paste and do
+not bother about external files whatsoever.
+
+Let's take a look:
+
+```console
+Usage: mtg simple-run <bind-to> <secret>
+
+Run proxy without config file.
+
+Arguments:
+  <bind-to>    A host:port to bind proxy to.
+  <secret>     Proxy secret.
+
+Flags:
+  -h, --help                           Show context-sensitive help.
+  -v, --version                        Print version.
+
+  -d, --debug                          Run in debug mode.
+  -c, --concurrency=8192               Max number of concurrent connection to proxy.
+  -b, --tcp-buffer="4KB"               Size of TCP buffer to use.
+  -i, --prefer-ip="prefer-ipv6"        IP preference. By default we prefer IPv6 with fallback to IPv4.
+  -p, --domain-fronting-port=443       A port to access for domain fronting.
+  -n, --doh-ip=9.9.9.9                 IP address of DNS-over-HTTP to use.
+  -t, --timeout=10s                    Network timeout to use
+  -a, --antireplay-cache-size="1MB"    A size of anti-replay cache to use.
+```
+
+So, if you want to startup a proxy with CLI only, you can do something like
+
+```console
+$ mtg simple-run -n 1.1.1.1 -t 30s -a 512kib 127.0.0.1:3128 7hBO-dCS4EBzenlKbdLFxyNnb29nbGUuY29t
+```
+
+The rest of the configuration will be taken from default values. But
+a simple run is fine if you do not have any special requirements or
+granular tuning. If you want it, please checkout the configuration
+files.
+
 ### Prepare a configuration file
 
 Please checkout an example configuration file. All options except of
