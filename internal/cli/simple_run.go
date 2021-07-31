@@ -34,7 +34,7 @@ func (s *SimpleRun) Run(cli *CLI, version string) error { // nolint: cyclop
 		return fmt.Errorf("incorrect secret: %w", err)
 	}
 
-	if err := conf.Concurrency.Set(strconv.FormatUint(s.Concurrency, 10)); err != nil {
+	if err := conf.Concurrency.Set(strconv.FormatUint(s.Concurrency, 10)); err != nil { // nolint: gomnd
 		return fmt.Errorf("incorrect concurrency: %w", err)
 	}
 
@@ -46,7 +46,7 @@ func (s *SimpleRun) Run(cli *CLI, version string) error { // nolint: cyclop
 		return fmt.Errorf("incorrect prefer-ip: %w", err)
 	}
 
-	if err := conf.DomainFrontingPort.Set(strconv.FormatUint(s.DomainFrontingPort, 10)); err != nil {
+	if err := conf.DomainFrontingPort.Set(strconv.FormatUint(s.DomainFrontingPort, 10)); err != nil { // nolint: gomnd
 		return fmt.Errorf("incorrect domain-fronting-port: %w", err)
 	}
 
@@ -72,9 +72,6 @@ func (s *SimpleRun) Run(cli *CLI, version string) error { // nolint: cyclop
 
 	conf.Debug.Value = s.Debug
 	conf.Defense.AntiReplay.Enabled.Value = true
-	conf.Defense.Blocklist.Enabled.Value = false
-	conf.Stats.StatsD.Enabled.Value = false
-	conf.Stats.Prometheus.Enabled.Value = false
 
 	if err := conf.Validate(); err != nil {
 		return fmt.Errorf("invalid result configuration: %w", err)

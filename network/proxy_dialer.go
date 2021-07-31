@@ -16,7 +16,7 @@ func newProxyDialer(baseDialer Dialer, proxyURL *url.URL) Dialer {
 	)
 
 	if param := params.Get("open_threshold"); param != "" {
-		if intNum, err := strconv.ParseUint(param, 10, 32); err == nil {
+		if intNum, err := strconv.ParseUint(param, 10, 32); err == nil { // nolint: gomnd
 			openThreshold = uint32(intNum)
 		}
 	}

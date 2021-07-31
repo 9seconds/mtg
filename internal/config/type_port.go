@@ -10,7 +10,7 @@ type TypePort struct {
 }
 
 func (t *TypePort) Set(value string) error {
-	portValue, err := strconv.ParseUint(value, 10, 16)
+	portValue, err := strconv.ParseUint(value, 10, 16) // nolint: gomnd
 	if err != nil {
 		return fmt.Errorf("incorrect port number (%v): %w", value, err)
 	}
