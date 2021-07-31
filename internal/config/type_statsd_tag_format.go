@@ -6,44 +6,53 @@ import (
 )
 
 const (
+	// TypeStatsdTagFormatInfluxdb defines a tag format compatible with
+	// InfluxDB.
 	TypeStatsdTagFormatInfluxdb = "influxdb"
-	TypeStatsdTagFormatDatadog  = "datadog"
+
+	// TypeStatsdTagFormatDatadog defines a tag format compatible with
+	// DataDog.
+	TypeStatsdTagFormatDatadog = "datadog"
+
+	// TypeStatsdTagFormatGraphite defines a tag format compatible with
+	// Graphite.
 	TypeStatsdTagFormatGraphite = "graphite"
 )
 
 type TypeStatsdTagFormat struct {
-	value string
+	Value string
 }
 
-func (c *TypeStatsdTagFormat) UnmarshalText(data []byte) error {
-	if len(data) == 0 {
+func (t *TypeStatsdTagFormat) Set(value string) error {
+	lowercasedValue := strings.ToLower(value)
+
+	switch lowercasedValue {
+	case TypeStatsdTagFormatDatadog, TypeStatsdTagFormatInfluxdb,
+		TypeStatsdTagFormatGraphite:
+		t.Value = lowercasedValue
+
 		return nil
-	}
-
-	text := strings.ToLower(string(data))
-
-	switch text {
-	case TypeStatsdTagFormatInfluxdb, TypeStatsdTagFormatDatadog, TypeStatsdTagFormatGraphite:
-		c.value = text
 	default:
-		return fmt.Errorf("incorrect tag format value: %s", string(data))
+		return fmt.Errorf("unknown tag format %s", value)
 	}
-
-	return nil
 }
 
-func (c TypeStatsdTagFormat) MarshalText() ([]byte, error) {
-	return []byte(c.value), nil
-}
-
-func (c *TypeStatsdTagFormat) String() string {
-	return c.value
-}
-
-func (c *TypeStatsdTagFormat) Value(defaultValue string) string {
-	if c.value == "" {
+func (t TypeStatsdTagFormat) Get(defaultValue string) string {
+	if t.Value == "" {
 		return defaultValue
 	}
 
-	return c.value
+	return t.Value
+}
+
+func (t *TypeStatsdTagFormat) UnmarshalText(data []byte) error {
+	return t.Set(string(data))
+}
+
+func (t *TypeStatsdTagFormat) MarshalText() ([]byte, error) {
+	return []byte(t.String()), nil
+}
+
+func (t *TypeStatsdTagFormat) String() string {
+	return t.Value
 }

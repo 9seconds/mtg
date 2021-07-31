@@ -119,7 +119,7 @@ func (f *Firehol) Run(updateEach time.Duration) {
 }
 
 func (f *Firehol) containsIPv4(addr net.IP) bool {
-	ip := patricia.NewIPv4AddressFromBytes(addr, 32)
+	ip := patricia.NewIPv4AddressFromBytes(addr, 32) // nolint: gomnd
 
 	if ok, _, err := f.treeV4.FindDeepestTag(ip); ok && err == nil {
 		return true
@@ -129,7 +129,7 @@ func (f *Firehol) containsIPv4(addr net.IP) bool {
 }
 
 func (f *Firehol) containsIPv6(addr net.IP) bool {
-	ip := patricia.NewIPv6Address(addr, 128)
+	ip := patricia.NewIPv6Address(addr, 128) // nolint: gomnd
 
 	if ok, _, err := f.treeV6.FindDeepestTag(ip); ok && err == nil {
 		return true

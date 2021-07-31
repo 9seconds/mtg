@@ -53,8 +53,14 @@ const (
 	//
 	// When circuit breaker is closed, it clears an error states each
 	// ProxyDialerResetFailuresTimeout.
-	ProxyDialerOpenThreshold        = 5
-	ProxyDialerHalfOpenTimeout      = time.Minute
+	ProxyDialerOpenThreshold = 5
+
+	// ProxyDialerHalfOpenTimeout defines a halfopen timeout for circuit
+	// breaker.
+	ProxyDialerHalfOpenTimeout = time.Minute
+
+	// ProxyDialerResetFailuresTimeout defines a timeout for resetting a
+	// failure.
 	ProxyDialerResetFailuresTimeout = 10 * time.Second
 
 	// DefaultDOHHostname defines a default IP address for DOH host.

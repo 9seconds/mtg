@@ -8,36 +8,40 @@ import (
 const typeErrorRateIgnoreLess = 1e-8
 
 type TypeErrorRate struct {
-	value float64
+	Value float64
 }
 
-func (c *TypeErrorRate) UnmarshalJSON(data []byte) error {
-	value, err := strconv.ParseFloat(string(data), 64)
+func (t *TypeErrorRate) Set(value string) error {
+	parsedValue, err := strconv.ParseFloat(value, 64) // nolint: gomnd
 	if err != nil {
-		return fmt.Errorf("incorrect float value: %w", err)
+		return fmt.Errorf("value is not a float (%s): %w", value, err)
 	}
 
-	if value <= 0 || value >= 100 {
-		return fmt.Errorf("%f should be 0 < x < 100", value)
+	if parsedValue <= 0.0 || parsedValue >= 100.0 {
+		return fmt.Errorf("value should be 0 < x < 100 (%s)", value)
 	}
 
-	c.value = value
+	t.Value = parsedValue
 
 	return nil
 }
 
-func (c *TypeErrorRate) MarshalText() ([]byte, error) {
-	return []byte(c.String()), nil
-}
-
-func (c TypeErrorRate) String() string {
-	return strconv.FormatFloat(c.value, 'f', -1, 64)
-}
-
-func (c TypeErrorRate) Value(defaultValue float64) float64 {
-	if c.value < typeErrorRateIgnoreLess {
+func (t TypeErrorRate) Get(defaultValue float64) float64 {
+	if t.Value < typeErrorRateIgnoreLess {
 		return defaultValue
 	}
 
-	return c.value
+	return t.Value
+}
+
+func (t *TypeErrorRate) UnmarshalJSON(data []byte) error {
+	return t.Set(string(data))
+}
+
+func (t TypeErrorRate) MarshalJSON() ([]byte, error) {
+	return []byte(t.String()), nil
+}
+
+func (t TypeErrorRate) String() string {
+	return strconv.FormatFloat(t.Value, 'f', -1, 64) // nolint: gomnd
 }

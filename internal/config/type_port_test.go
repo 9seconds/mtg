@@ -2,7 +2,6 @@ package config_test
 
 import (
 	"encoding/json"
-	"strconv"
 	"testing"
 
 	"github.com/9seconds/mtg/v2/internal/config"
@@ -18,97 +17,52 @@ type TypePortTestSuite struct {
 	suite.Suite
 }
 
-func (suite *TypePortTestSuite) TestUnmarshalNil() {
-	typ := &config.TypePort{}
-	suite.NoError(typ.UnmarshalJSON(nil))
-	suite.Equal("0", typ.String())
-}
-
 func (suite *TypePortTestSuite) TestUnmarshalFail() {
-	testData := []int{
-		-1,
-		1_000_000,
+	testData := []string{
+		"",
+		"port",
+		"0",
+		"-1",
+		"1.5",
+		"70000",
 	}
 
 	for _, v := range testData {
-		data, err := json.Marshal(map[string]int{
+		data, err := json.Marshal(map[string]string{
 			"value": v,
 		})
 		suite.NoError(err)
 
-		suite.T().Run(strconv.Itoa(v), func(t *testing.T) {
+		suite.T().Run(v, func(t *testing.T) {
 			assert.Error(t, json.Unmarshal(data, &typePortTestStruct{}))
 		})
 	}
 }
 
 func (suite *TypePortTestSuite) TestUnmarshalOk() {
-	testData := []int{
-		1,
-		1_000,
-		65535,
-	}
-
-	for _, v := range testData {
-		value := v
-
-		data, err := json.Marshal(map[string]int{
-			"value": v,
-		})
-		suite.NoError(err)
-
-		suite.T().Run(strconv.Itoa(v), func(t *testing.T) {
-			testStruct := &typePortTestStruct{}
-
-			assert.NoError(t, json.Unmarshal(data, testStruct))
-			assert.EqualValues(t, value, testStruct.Value.Value(0))
-		})
-	}
+	testStruct := &typePortTestStruct{}
+	suite.NoError(json.Unmarshal([]byte(`{"value": 5}`), testStruct))
+	suite.EqualValues(5, testStruct.Value.Value)
 }
 
 func (suite *TypePortTestSuite) TestMarshalOk() {
-	testData := map[string]int{
-		"1":     1,
-		"1000":  1000,
-		"65535": 65535,
+	testStruct := &typePortTestStruct{
+		Value: config.TypePort{
+			Value: 10,
+		},
 	}
 
-	for k, v := range testData {
-		name := k
-		value := v
-
-		data, err := json.Marshal(map[string]int{
-			"value": value,
-		})
-		suite.NoError(err)
-
-		suite.T().Run(name, func(t *testing.T) {
-			testStruct := &typePortTestStruct{}
-
-			assert.NoError(t, json.Unmarshal(data, testStruct))
-			assert.Equal(t, name, testStruct.Value.String())
-
-			marshalled, err := testStruct.Value.MarshalJSON()
-			assert.NoError(t, err)
-			assert.Equal(t, name, string(marshalled))
-		})
-	}
+	data, err := json.Marshal(testStruct)
+	suite.NoError(err)
+	suite.JSONEq(`{"value":10}`, string(data))
 }
 
-func (suite *TypePortTestSuite) TestValue() {
-	testStruct := &typePortTestStruct{}
+func (suite *TypePortTestSuite) TestGet() {
+	value := config.TypePort{}
+	suite.EqualValues(10, value.Get(10))
 
-	suite.EqualValues(0, testStruct.Value.Value(0))
-	suite.EqualValues(1, testStruct.Value.Value(1))
-
-	data, err := json.Marshal(map[string]int{
-		"value": 5,
-	})
-	suite.NoError(err)
-	suite.NoError(json.Unmarshal(data, testStruct))
-
-	suite.EqualValues(5, testStruct.Value.Value(0))
-	suite.EqualValues(5, testStruct.Value.Value(1))
+	value.Value = 100
+	suite.EqualValues(100, value.Get(10))
 }
 
 func TestTypePort(t *testing.T) {

@@ -42,7 +42,7 @@ func (suite *NetworkTestSuite) TestLocalHTTPRequest() {
 
 	jsonStruct := struct {
 		Headers struct {
-			UserAgent []string `json:"User-Agent"`
+			UserAgent []string `json:"User-Agent"` // nolint: tagliatelle
 		} `json:"headers"`
 	}{}
 
@@ -67,7 +67,7 @@ func (suite *NetworkTestSuite) TestRealHTTPRequest() {
 
 	jsonStruct := struct {
 		Headers struct {
-			UserAgent string `json:"User-Agent"`
+			UserAgent string `json:"User-Agent"` // nolint: tagliatelle
 		} `json:"headers"`
 	}{}
 
