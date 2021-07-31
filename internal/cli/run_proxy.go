@@ -115,7 +115,7 @@ func makeIPBlocklist(conf *config.Config, logger mtglib.Logger, ntw mtglib.Netwo
 }
 
 func makeEventStream(conf *config.Config, logger mtglib.Logger) (mtglib.EventStream, error) {
-	factories := make([]events.ObserverFactory, 0, 2)
+	factories := make([]events.ObserverFactory, 0, 2) // nolint: gomnd
 
 	if conf.Stats.StatsD.Enabled.Get(false) {
 		statsdFactory, err := stats.NewStatsd(

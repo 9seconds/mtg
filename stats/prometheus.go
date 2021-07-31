@@ -119,11 +119,10 @@ func (p prometheusProcessor) EventReplayAttack(_ mtglib.EventReplayAttack) {
 }
 
 func (p prometheusProcessor) Shutdown() {
-	for _, v := range p.streams {
+	for k, v := range p.streams {
 		releaseStreamInfo(v)
+		delete(p.streams, k)
 	}
-
-	p.streams = make(map[string]*streamInfo)
 }
 
 // PrometheusFactory is a factory of events.Observers which collect
