@@ -143,14 +143,6 @@ func (p ProxyOpts) getDomainFrontingPort() int {
 	return int(p.DomainFrontingPort)
 }
 
-func (p ProxyOpts) getIdleTimeout() time.Duration {
-	if p.IdleTimeout == 0 {
-		return DefaultIdleTimeout
-	}
-
-	return p.IdleTimeout
-}
-
 func (p ProxyOpts) getTolerateTimeSkewness() time.Duration {
 	if p.TolerateTimeSkewness == 0 {
 		return DefaultTolerateTimeSkewness

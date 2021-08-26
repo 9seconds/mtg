@@ -1,45 +1,32 @@
 package relay
 
-import (
-	"context"
-	"sync"
-	"time"
-)
+import "sync"
 
-var relayPool = sync.Pool{
+type eastWest struct {
+	east []byte
+	west []byte
+}
+
+var eastWestPool = sync.Pool{
 	New: func() interface{} {
-		return &Relay{
-			tickChannel:  make(chan struct{}),
-			errorChannel: make(chan error, 1),
-		}
+		return &eastWest{}
 	},
 }
 
-func AcquireRelay(ctx context.Context, logger Logger, bufferSize int, idleTimeout time.Duration) *Relay {
-	ctx, cancel := context.WithCancel(ctx)
+func acquireEastWest(bufferSize int) *eastWest {
+	wanted := eastWestPool.Get().(*eastWest) // nolint: forcetypeassert
 
-	r, ok := relayPool.Get().(*Relay)
-	if !ok {
-		panic("Relay pool has no relay!")
+	if len(wanted.east) != bufferSize {
+		wanted.east = make([]byte, bufferSize)
 	}
 
-	r.ctx = ctx
-	r.ctxCancel = cancel
-	r.logger = logger
-	r.tickTimeout = idleTimeout
-
-	if len(r.eastBuffer) != bufferSize {
-		r.eastBuffer = make([]byte, bufferSize)
+	if len(wanted.west) != bufferSize {
+		wanted.west = make([]byte, bufferSize)
 	}
 
-	if len(r.westBuffer) != bufferSize {
-		r.westBuffer = make([]byte, bufferSize)
-	}
-
-	return r
+	return wanted
 }
 
-func ReleaseRelay(r *Relay) {
-	r.Reset()
-	relayPool.Put(r)
+func releaseEastWest(ew *eastWest) {
+	eastWestPool.Put(ew)
 }

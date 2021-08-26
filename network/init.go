@@ -70,6 +70,10 @@ const (
 
 	// DNSTimeout defines a timeout for DNS queries.
 	DNSTimeout = 5 * time.Second
+
+	// tcpLingerTimeout defines a number of seconds to wait for sending
+	// unacknowledged data.
+	tcpLingerTimeout = 1
 )
 
 var (
