@@ -2,7 +2,7 @@ ROOT_DIR     := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 IMAGE_NAME   := mtg
 APP_NAME     := $(IMAGE_NAME)
 
-GOLANGCI_LINT_VERSION := v1.41.1
+GOLANGCI_LINT_VERSION := v1.42.0
 
 VERSION_GO         := $(shell go version)
 VERSION_DATE       := $(shell date -Ru)
