@@ -23,7 +23,6 @@ type Proxy struct {
 	ctxCancel       context.CancelFunc
 	streamWaitGroup sync.WaitGroup
 
-	idleTimeout          time.Duration
 	tolerateTimeSkewness time.Duration
 	bufferSize           int
 	domainFrontingPort   int
@@ -81,13 +80,13 @@ func (p *Proxy) ServeConn(conn net.Conn) {
 		return
 	}
 
-	rel := relay.AcquireRelay(ctx,
-		p.logger.Named("relay"), p.bufferSize, p.idleTimeout)
-	defer relay.ReleaseRelay(rel)
-
-	if err := rel.Process(ctx.clientConn, ctx.telegramConn); err != nil {
-		p.logger.DebugError("relay has been finished", err)
-	}
+	relay.Relay(
+		ctx,
+		ctx.logger.Named("relay"),
+		p.bufferSize,
+		ctx.telegramConn,
+		ctx.clientConn,
+	)
 }
 
 // Serve starts a proxy on a given listener.
@@ -255,13 +254,13 @@ func (p *Proxy) doDomainFronting(ctx *streamContext, conn *connRewind) {
 		stream:   p.eventStream,
 	}
 
-	rel := relay.AcquireRelay(ctx,
-		p.logger.Named("domain-fronting"), p.bufferSize, p.idleTimeout)
-	defer relay.ReleaseRelay(rel)
-
-	if err := rel.Process(conn, frontConn); err != nil {
-		p.logger.DebugError("domain fronting relay has been finished", err)
-	}
+	relay.Relay(
+		ctx,
+		ctx.logger.Named("domain-fronting"),
+		p.bufferSize,
+		frontConn,
+		conn,
+	)
 }
 
 // NewProxy makes a new proxy instance.
@@ -287,7 +286,6 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 		logger:               opts.getLogger("proxy"),
 		domainFrontingPort:   opts.getDomainFrontingPort(),
 		tolerateTimeSkewness: opts.getTolerateTimeSkewness(),
-		idleTimeout:          opts.getIdleTimeout(),
 		bufferSize:           opts.getBufferSize(),
 		telegram:             tg,
 	}

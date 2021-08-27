@@ -183,7 +183,6 @@ func runProxy(conf *config.Config, version string) error {
 		Secret:             conf.Secret,
 		BufferSize:         conf.TCPBuffer.Get(mtglib.DefaultBufferSize),
 		DomainFrontingPort: conf.DomainFrontingPort.Get(mtglib.DefaultDomainFrontingPort),
-		IdleTimeout:        conf.Network.Timeout.Idle.Get(mtglib.DefaultIdleTimeout),
 		PreferIP:           conf.PreferIP.Get(mtglib.DefaultPreferIP),
 	}
 
@@ -192,7 +191,7 @@ func runProxy(conf *config.Config, version string) error {
 		return fmt.Errorf("cannot create a proxy: %w", err)
 	}
 
-	listener, err := net.Listen("tcp", conf.BindTo.Get(""))
+	listener, err := utils.NewListener(conf.BindTo.Get(""), int(opts.BufferSize))
 	if err != nil {
 		return fmt.Errorf("cannot start proxy: %w", err)
 	}
