@@ -1,6 +1,6 @@
 module github.com/9seconds/mtg
 
-go 1.13
+go 1.17
 
 require (
 	github.com/VictoriaMetrics/fastcache v1.5.7
@@ -22,4 +22,15 @@ require (
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 	honnef.co/go/tools v0.0.1-2020.1.3 // indirect
+)
+
+require (
+	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751 // indirect
+	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/cespare/xxhash/v2 v2.1.1 // indirect
+	github.com/golang/protobuf v1.4.3 // indirect
+	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
+	github.com/prometheus/client_model v0.2.0 // indirect
+	go.uber.org/atomic v1.7.0 // indirect
+	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 )
