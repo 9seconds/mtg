@@ -1,7 +1,6 @@
 package relay
 
 import (
-	"math"
 	"math/rand"
 	"time"
 )
@@ -15,12 +14,9 @@ func getTimeout() time.Duration {
 }
 
 func getTime(minDuration, maxDuration time.Duration) time.Duration {
-	minDurationInSeconds := minDuration.Seconds()
-	maxDurationInSeconds := maxDuration.Seconds()
-	middle := minDurationInSeconds + (maxDurationInSeconds-minDurationInSeconds)/2 // nolint: gomnd
-
-	number := minDurationInSeconds + rand.ExpFloat64()*middle
-	number = math.Round(math.Min(maxDurationInSeconds, number))
+	minDurationInSeconds := int(minDuration.Seconds())
+	maxDurationInSeconds := int(maxDuration.Seconds())
+	number := minDurationInSeconds + rand.Intn(maxDurationInSeconds-minDurationInSeconds)
 
 	return time.Duration(number) * time.Second
 }
