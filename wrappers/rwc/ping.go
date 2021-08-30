@@ -36,7 +36,7 @@ func (w *wrapperPing) Write(p []byte) (int, error) {
 }
 
 func (w *wrapperPing) Close() error {
-	return w.parent.Close()
+	return w.parent.Close() // nolint: wrapcheck
 }
 
 func NewPing(ctx context.Context, parent io.ReadWriteCloser, channelPing chan<- struct{}) io.ReadWriteCloser {

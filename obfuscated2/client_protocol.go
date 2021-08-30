@@ -45,14 +45,14 @@ func (c *ClientProtocol) Handshake(socket conntypes.StreamReadWriteCloser) (conn
 	}
 
 	decHasher := sha256.New()
-	decHasher.Write(fm.Key())        // nolint: errcheck
-	decHasher.Write(config.C.Secret) // nolint: errcheck
+	decHasher.Write(fm.Key())
+	decHasher.Write(config.C.Secret)
 	decryptor := utils.MakeStreamCipher(decHasher.Sum(nil), fm.IV())
 
 	invertedFrame := fm.Invert()
 	encHasher := sha256.New()
-	encHasher.Write(invertedFrame.Key()) // nolint: errcheck
-	encHasher.Write(config.C.Secret)     // nolint: errcheck
+	encHasher.Write(invertedFrame.Key())
+	encHasher.Write(config.C.Secret)
 	encryptor := utils.MakeStreamCipher(encHasher.Sum(nil), invertedFrame.IV())
 
 	decryptedFrame := Frame{}
@@ -106,7 +106,7 @@ type handshakeReader struct {
 }
 
 func (h handshakeReader) Read(p []byte) (int, error) {
-	return h.parent.ReadTimeout(p, clientProtocolHandshakeTimeout)
+	return h.parent.ReadTimeout(p, clientProtocolHandshakeTimeout) // nolint: wrapcheck
 }
 
 func MakeClientProtocol() protocol.ClientProtocol {

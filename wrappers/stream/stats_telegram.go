@@ -17,19 +17,19 @@ type wrapperTelegramStats struct {
 }
 
 func (w *wrapperTelegramStats) Write(p []byte) (int, error) {
-	return w.parent.Write(p)
+	return w.parent.Write(p) // nolint: wrapcheck
 }
 
 func (w *wrapperTelegramStats) WriteTimeout(p []byte, timeout time.Duration) (int, error) {
-	return w.parent.WriteTimeout(p, timeout)
+	return w.parent.WriteTimeout(p, timeout) // nolint: wrapcheck
 }
 
 func (w *wrapperTelegramStats) Read(p []byte) (int, error) {
-	return w.parent.Read(p)
+	return w.parent.Read(p) // nolint: wrapcheck
 }
 
 func (w *wrapperTelegramStats) ReadTimeout(p []byte, timeout time.Duration) (int, error) {
-	return w.parent.ReadTimeout(p, timeout)
+	return w.parent.ReadTimeout(p, timeout) // nolint: wrapcheck
 }
 
 func (w *wrapperTelegramStats) Conn() net.Conn {

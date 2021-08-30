@@ -70,7 +70,7 @@ func (w *wrapperConn) Read(p []byte) (int, error) {
 func (w *wrapperConn) Close() error {
 	w.logger.Debugw("Close connection")
 
-	return w.parent.Close()
+	return w.parent.Close() // nolint: wrapcheck
 }
 
 func (w *wrapperConn) Conn() net.Conn {

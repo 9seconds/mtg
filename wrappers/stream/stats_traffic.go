@@ -58,7 +58,7 @@ func (w *wrapperTrafficStats) RemoteAddr() *net.TCPAddr {
 }
 
 func (w *wrapperTrafficStats) Close() error {
-	return w.parent.Close()
+	return w.parent.Close() // nolint: wrapcheck
 }
 
 func NewTrafficStats(parent conntypes.StreamReadWriteCloser) conntypes.StreamReadWriteCloser {

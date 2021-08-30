@@ -33,7 +33,7 @@ func (b *bufferedReader) ReadTimeout(p []byte, _ time.Duration) (int, error) {
 
 func (b *bufferedReader) flush(p []byte) (int, error) {
 	if b.buf.Len() > len(p) {
-		return b.buf.Read(p)
+		return b.buf.Read(p) // nolint: wrapcheck
 	}
 
 	sizeToReturn := b.buf.Len()
