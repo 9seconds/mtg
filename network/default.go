@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net"
 	"time"
-
-	"github.com/libp2p/go-reuseport"
 )
 
 type defaultDialer struct {
@@ -31,36 +29,14 @@ func (d *defaultDialer) DialContext(ctx context.Context, network, address string
 		return nil, fmt.Errorf("cannot dial to %s: %w", address, err)
 	}
 
-	tcpConn, ok := conn.(*net.TCPConn)
-	if !ok {
-		panic("conn type is not tcp")
-	}
-
-	if err := tcpConn.SetNoDelay(true); err != nil {
+	// we do not need to call to end user. End users call us.
+	if err := SetServerSocketOptions(conn, d.bufferSize); err != nil {
 		conn.Close()
 
-		return nil, fmt.Errorf("cannot set TCP_NO_DELAY: %w", err)
+		return nil, fmt.Errorf("cannot set socket options: %w", err)
 	}
 
-	if err := tcpConn.SetReadBuffer(d.bufferSize); err != nil {
-		tcpConn.Close()
-
-		return nil, fmt.Errorf("cannot set read buffer size: %w", err)
-	}
-
-	if err := tcpConn.SetWriteBuffer(d.bufferSize); err != nil {
-		tcpConn.Close()
-
-		return nil, fmt.Errorf("cannot set write buffer size: %w", err)
-	}
-
-	if err := tcpConn.SetKeepAlive(true); err != nil {
-		tcpConn.Close()
-
-		return nil, fmt.Errorf("cannot enable keep-alive: %w", err)
-	}
-
-	return tcpConn, nil
+	return conn, nil
 }
 
 // NewDefaultDialer build a new dialer which dials bypassing proxies
@@ -87,7 +63,6 @@ func NewDefaultDialer(timeout time.Duration, bufferSize int) (Dialer, error) {
 	return &defaultDialer{
 		Dialer: net.Dialer{
 			Timeout: timeout,
-			Control: reuseport.Control,
 		},
 		bufferSize: bufferSize,
 	}, nil
