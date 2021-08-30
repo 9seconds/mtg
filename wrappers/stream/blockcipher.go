@@ -26,7 +26,7 @@ func (w *wrapperBlockCipher) Write(p []byte) (int, error) {
 		return 0, err
 	}
 
-	return w.parent.Write(encrypted)
+	return w.parent.Write(encrypted) // nolint: wrapcheck
 }
 
 func (w *wrapperBlockCipher) WriteTimeout(p []byte, timeout time.Duration) (int, error) {
@@ -35,7 +35,7 @@ func (w *wrapperBlockCipher) WriteTimeout(p []byte, timeout time.Duration) (int,
 		return 0, err
 	}
 
-	return w.parent.WriteTimeout(encrypted, timeout)
+	return w.parent.WriteTimeout(encrypted, timeout) // nolint: wrapcheck
 }
 
 func (w *wrapperBlockCipher) encrypt(p []byte) ([]byte, error) {
@@ -50,7 +50,7 @@ func (w *wrapperBlockCipher) encrypt(p []byte) ([]byte, error) {
 }
 
 func (w *wrapperBlockCipher) Close() error {
-	return w.parent.Close()
+	return w.parent.Close() // nolint: wrapcheck
 }
 
 func (w *wrapperBlockCipher) Conn() net.Conn {

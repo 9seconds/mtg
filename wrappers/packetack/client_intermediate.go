@@ -63,7 +63,7 @@ func (w *wrapperClientIntermediate) Write(packet conntypes.Packet, acks *conntyp
 }
 
 func (w *wrapperClientIntermediate) Close() error {
-	return w.parent.Close()
+	return w.parent.Close() // nolint: wrapcheck
 }
 
 func (w *wrapperClientIntermediate) Conn() net.Conn {

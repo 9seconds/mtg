@@ -46,7 +46,7 @@ func (w *wrapperProxy) Write(packet conntypes.Packet, acks *conntypes.Connection
 	buf.Grow(len(packet))
 	buf.Write(packet)
 
-	return w.proxy.Write(buf.Bytes())
+	return w.proxy.Write(buf.Bytes()) // nolint: wrapcheck
 }
 
 func (w *wrapperProxy) Read(acks *conntypes.ConnectionAcks) (conntypes.Packet, error) {

@@ -4,7 +4,6 @@ import (
 	"io"
 	"sync"
 
-	"github.com/9seconds/mtg/conntypes"
 	"github.com/9seconds/mtg/obfuscated2"
 	"github.com/9seconds/mtg/protocol"
 	"go.uber.org/zap"
@@ -18,16 +17,14 @@ func directConnection(request *protocol.TelegramRequest) error {
 		return err // nolint: wrapcheck
 	}
 
-	telegramConn := telegramConnRaw.(conntypes.StreamReadWriteCloser)
-
-	defer telegramConn.Close()
+	defer telegramConnRaw.Close()
 
 	wg := &sync.WaitGroup{}
 	wg.Add(2)
 
-	go directPipe(telegramConn, request.ClientConn, wg, request.Logger)
+	go directPipe(telegramConnRaw, request.ClientConn, wg, request.Logger)
 
-	go directPipe(request.ClientConn, telegramConn, wg, request.Logger)
+	go directPipe(request.ClientConn, telegramConnRaw, wg, request.Logger)
 
 	wg.Wait()
 

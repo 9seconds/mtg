@@ -8,16 +8,16 @@ import (
 )
 
 type URLs struct {
-	TG        string `json:"tg_url"`
-	TMe       string `json:"tme_url"`
-	TGQRCode  string `json:"tg_qrcode"`
-	TMeQRCode string `json:"tme_qrcode"`
+	TG        string `json:"tg_url"`     // nolint: tagliatelle
+	TMe       string `json:"tme_url"`    // nolint: tagliatelle
+	TGQRCode  string `json:"tg_qrcode"`  // nolint: tagliatelle
+	TMeQRCode string `json:"tme_qrcode"` // nolint: tagliatelle
 }
 
 type IPURLs struct {
 	IPv4      *URLs  `json:"ipv4,omitempty"`
 	IPv6      *URLs  `json:"ipv6,omitempty"`
-	BotSecret string `json:"secret_for_mtproxybot"`
+	BotSecret string `json:"secret_for_mtproxybot"` // nolint: tagliatelle
 }
 
 func GetURLs() (urls IPURLs) {

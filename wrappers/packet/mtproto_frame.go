@@ -136,7 +136,7 @@ func (w *wrapperMtprotoFrame) Write(p conntypes.Packet) error {
 }
 
 func (w *wrapperMtprotoFrame) Close() error {
-	return w.parent.Close()
+	return w.parent.Close() // nolint: wrapcheck
 }
 
 func (w *wrapperMtprotoFrame) Conn() net.Conn {

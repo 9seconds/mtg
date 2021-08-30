@@ -49,8 +49,8 @@ func (s ServerHello) WelcomePacket() []byte {
 	packet := buf.Bytes()
 
 	mac := hmac.New(sha256.New, config.C.Secret)
-	mac.Write(s.clientHello.Random[:]) // nolint: errcheck
-	mac.Write(packet)                  // nolint: errcheck
+	mac.Write(s.clientHello.Random[:])
+	mac.Write(packet)
 	copy(packet[11:], mac.Sum(nil))
 
 	return packet

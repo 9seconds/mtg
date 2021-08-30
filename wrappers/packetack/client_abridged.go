@@ -104,7 +104,7 @@ func (w *wrapperClientAbridged) Write(packet conntypes.Packet, acks *conntypes.C
 }
 
 func (w *wrapperClientAbridged) Close() error {
-	return w.parent.Close()
+	return w.parent.Close() // nolint: wrapcheck
 }
 
 func (w *wrapperClientAbridged) Conn() net.Conn {

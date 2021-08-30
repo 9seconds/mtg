@@ -24,25 +24,25 @@ type wrapperRewind struct {
 }
 
 func (w *wrapperRewind) Write(p []byte) (int, error) {
-	return w.parent.Write(p)
+	return w.parent.Write(p) // nolint: wrapcheck
 }
 
 func (w *wrapperRewind) WriteTimeout(p []byte, timeout time.Duration) (int, error) {
-	return w.parent.WriteTimeout(p, timeout)
+	return w.parent.WriteTimeout(p, timeout) // nolint: wrapcheck
 }
 
 func (w *wrapperRewind) Read(p []byte) (int, error) {
 	w.mutex.Lock()
 	defer w.mutex.Unlock()
 
-	return w.activeReader.Read(p)
+	return w.activeReader.Read(p) // nolint: wrapcheck
 }
 
 func (w *wrapperRewind) ReadTimeout(p []byte, _ time.Duration) (int, error) {
 	w.mutex.Lock()
 	defer w.mutex.Unlock()
 
-	return w.activeReader.Read(p)
+	return w.activeReader.Read(p) // nolint: wrapcheck
 }
 
 func (w *wrapperRewind) Conn() net.Conn {
@@ -64,7 +64,7 @@ func (w *wrapperRewind) RemoteAddr() *net.TCPAddr {
 func (w *wrapperRewind) Close() error {
 	w.buf.Reset()
 
-	return w.parent.Close()
+	return w.parent.Close() // nolint: wrapcheck
 }
 
 func (w *wrapperRewind) Rewind() {

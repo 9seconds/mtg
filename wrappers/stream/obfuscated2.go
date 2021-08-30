@@ -48,7 +48,7 @@ func (w *wrapperObfuscated2) WriteTimeout(p []byte, timeout time.Duration) (int,
 
 	w.encryptor.XORKeyStream(buf, buf)
 
-	return w.parent.WriteTimeout(buf, timeout)
+	return w.parent.WriteTimeout(buf, timeout) // nolint: wrapcheck
 }
 
 func (w *wrapperObfuscated2) Write(p []byte) (int, error) {
@@ -60,7 +60,7 @@ func (w *wrapperObfuscated2) Write(p []byte) (int, error) {
 
 	w.encryptor.XORKeyStream(buf, buf)
 
-	return w.parent.Write(buf)
+	return w.parent.Write(buf) // nolint: wrapcheck
 }
 
 func (w *wrapperObfuscated2) Conn() net.Conn {
@@ -80,7 +80,7 @@ func (w *wrapperObfuscated2) RemoteAddr() *net.TCPAddr {
 }
 
 func (w *wrapperObfuscated2) Close() error {
-	return w.parent.Close()
+	return w.parent.Close() // nolint: wrapcheck
 }
 
 func NewObfuscated2(socket conntypes.StreamReadWriteCloser,

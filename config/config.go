@@ -79,29 +79,29 @@ const (
 
 type Config struct {
 	Bind             *net.TCPAddr      `json:"bind"`
-	PublicIPv4       *net.TCPAddr      `json:"public_ipv4"`
-	PublicIPv6       *net.TCPAddr      `json:"public_ipv6"`
-	StatsBind        *net.TCPAddr      `json:"stats_bind"`
-	StatsdAddr       *net.TCPAddr      `json:"stats_addr"`
-	StatsdTagsFormat *statsd.TagFormat `json:"statsd_tags_format"`
+	PublicIPv4       *net.TCPAddr      `json:"public_ipv4"`        // nolint: tagliatelle
+	PublicIPv6       *net.TCPAddr      `json:"public_ipv6"`        // nolint: tagliatelle
+	StatsBind        *net.TCPAddr      `json:"stats_bind"`         // nolint: tagliatelle
+	StatsdAddr       *net.TCPAddr      `json:"stats_addr"`         // nolint: tagliatelle
+	StatsdTagsFormat *statsd.TagFormat `json:"statsd_tags_format"` // nolint: tagliatelle
 
-	StatsNamespace string            `json:"stats_namespace"`
-	CloakHost      string            `json:"cloak_host"`
-	StatsdTags     map[string]string `json:"statsd_tags"`
+	StatsNamespace string            `json:"stats_namespace"` // nolint: tagliatelle
+	CloakHost      string            `json:"cloak_host"`      // nolint: tagliatelle
+	StatsdTags     map[string]string `json:"statsd_tags"`     // nolint: tagliatelle
 
-	WriteBuffer int `json:"write_buffer"`
-	ReadBuffer  int `json:"read_buffer"`
-	CloakPort   int `json:"cloak_port"`
+	WriteBuffer int `json:"write_buffer"` // nolint: tagliatelle
+	ReadBuffer  int `json:"read_buffer"`  // nolint: tagliatelle
+	CloakPort   int `json:"cloak_port"`   // nolint: tagliatelle
 
-	AntiReplayMaxSize int `json:"anti_replay_max_size"`
+	AntiReplayMaxSize int `json:"anti_replay_max_size"` // nolint: tagliatelle
 
-	MultiplexPerConnection int `json:"multiplex_per_connection"`
+	MultiplexPerConnection int `json:"multiplex_per_connection"` // nolint: tagliatelle
 
 	Debug      bool       `json:"debug"`
 	Verbose    bool       `json:"verbose"`
-	SecretMode SecretMode `json:"secret_mode"`
-	PreferIP   PreferIP   `json:"prefer_ip"`
-	NTPServers []string   `json:"ntp_servers"`
+	SecretMode SecretMode `json:"secret_mode"` // nolint: tagliatelle
+	PreferIP   PreferIP   `json:"prefer_ip"`   // nolint: tagliatelle
+	NTPServers []string   `json:"ntp_servers"` // nolint: tagliatelle
 
 	Secret []byte `json:"secret"`
 	AdTag  []byte `json:"adtag"`
@@ -164,11 +164,11 @@ func Init(options ...Opt) error { // nolint: gocyclo, funlen, cyclop
 	for _, opt := range options {
 		switch opt.Option {
 		case OptionTypeDebug:
-			C.Debug = opt.Value.(bool)
+			C.Debug = opt.Value.(bool) // nolint: forcetypeassert
 		case OptionTypeVerbose:
-			C.Verbose = opt.Value.(bool)
+			C.Verbose = opt.Value.(bool) // nolint: forcetypeassert
 		case OptionTypePreferIP:
-			value := opt.Value.(string)
+			value := opt.Value.(string) // nolint: forcetypeassert
 			switch value {
 			case "ipv4":
 				C.PreferIP = PreferIPv4
@@ -178,25 +178,25 @@ func Init(options ...Opt) error { // nolint: gocyclo, funlen, cyclop
 				return fmt.Errorf("incorrect direct IP mode %s", value)
 			}
 		case OptionTypeBind:
-			C.Bind = opt.Value.(*net.TCPAddr)
+			C.Bind = opt.Value.(*net.TCPAddr) // nolint: forcetypeassert
 		case OptionTypePublicIPv4:
-			C.PublicIPv4 = opt.Value.(*net.TCPAddr)
+			C.PublicIPv4 = opt.Value.(*net.TCPAddr) // nolint: forcetypeassert
 			if C.PublicIPv4 == nil {
 				C.PublicIPv4 = &net.TCPAddr{}
 			}
 		case OptionTypePublicIPv6:
-			C.PublicIPv6 = opt.Value.(*net.TCPAddr)
+			C.PublicIPv6 = opt.Value.(*net.TCPAddr) // nolint: forcetypeassert
 			if C.PublicIPv6 == nil {
 				C.PublicIPv6 = &net.TCPAddr{}
 			}
 		case OptionTypeStatsBind:
-			C.StatsBind = opt.Value.(*net.TCPAddr)
+			C.StatsBind = opt.Value.(*net.TCPAddr) // nolint: forcetypeassert
 		case OptionTypeStatsNamespace:
-			C.StatsNamespace = opt.Value.(string)
+			C.StatsNamespace = opt.Value.(string) // nolint: forcetypeassert
 		case OptionTypeStatsdAddress:
-			C.StatsdAddr = opt.Value.(*net.TCPAddr)
+			C.StatsdAddr = opt.Value.(*net.TCPAddr) // nolint: forcetypeassert
 		case OptionTypeStatsdTagsFormat:
-			value := opt.Value.(string)
+			value := opt.Value.(string) // nolint: forcetypeassert
 			switch value {
 			case "datadog":
 				C.StatsdTagsFormat = statsd.TagFormatDatadog
@@ -206,7 +206,7 @@ func Init(options ...Opt) error { // nolint: gocyclo, funlen, cyclop
 				return fmt.Errorf("incorrect statsd tag %s", value)
 			}
 		case OptionTypeStatsdTags:
-			C.StatsdTags = opt.Value.(map[string]string)
+			C.StatsdTags = opt.Value.(map[string]string) // nolint: forcetypeassert
 		case OptionTypeWriteBufferSize:
 			C.WriteBuffer = int(opt.Value.(units.Base2Bytes))
 		case OptionTypeReadBufferSize:
@@ -218,14 +218,14 @@ func Init(options ...Opt) error { // nolint: gocyclo, funlen, cyclop
 		case OptionTypeMultiplexPerConnection:
 			C.MultiplexPerConnection = int(opt.Value.(uint))
 		case OptionTypeNTPServers:
-			C.NTPServers = opt.Value.([]string)
+			C.NTPServers = opt.Value.([]string) // nolint: forcetypeassert
 			if len(C.NTPServers) == 0 {
 				return errors.New("ntp server list is empty")
 			}
 		case OptionTypeSecret:
-			C.Secret = opt.Value.([]byte)
+			C.Secret = opt.Value.([]byte) // nolint: forcetypeassert
 		case OptionTypeAdtag:
-			C.AdTag = opt.Value.([]byte)
+			C.AdTag = opt.Value.([]byte) // nolint: forcetypeassert
 		default:
 			return fmt.Errorf("unknown tag %v", opt.Option)
 		}
