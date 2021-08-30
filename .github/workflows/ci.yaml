@@ -30,7 +30,8 @@ jobs:
     strategy:
       matrix:
         go_version:
-          - ^1.16
+          - ~1.16
+          - ^1.17
     steps:
       - name: Checkout
         uses: actions/checkout@v2
