@@ -76,7 +76,7 @@ jobs:
   docker:
     name: Docker
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v2
