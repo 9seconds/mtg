@@ -7,6 +7,14 @@ type addressPool struct {
 	v6 [][]tgAddr
 }
 
+func (a addressPool) isValidDC(dc int) bool {
+	return dc > 0 && dc <= len(a.v4) && dc <= len(a.v6)
+}
+
+func (a addressPool) getRandomDC() int {
+	return 1 + rand.Intn(len(a.v4))
+}
+
 func (a addressPool) getV4(dc int) []tgAddr {
 	return a.get(a.v4, dc-1)
 }
