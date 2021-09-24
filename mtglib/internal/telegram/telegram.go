@@ -42,6 +42,14 @@ func (t Telegram) Dial(ctx context.Context, dc int) (net.Conn, error) {
 	return nil, fmt.Errorf("cannot dial to %d dc: %w", dc, err)
 }
 
+func (t Telegram) IsKnownDC(dc int) bool {
+	return t.pool.isValidDC(dc)
+}
+
+func (t Telegram) GetFallbackDC() int {
+	return t.pool.getRandomDC()
+}
+
 func New(dialer Dialer, ipPreference string, useTestDCs bool) (*Telegram, error) {
 	var pref preferIP
 

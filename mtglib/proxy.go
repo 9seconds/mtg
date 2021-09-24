@@ -207,7 +207,16 @@ func (p *Proxy) doObfuscated2Handshake(ctx *streamContext) error {
 }
 
 func (p *Proxy) doTelegramCall(ctx *streamContext) error {
-	conn, err := p.telegram.Dial(ctx, ctx.dc)
+	dc := ctx.dc
+
+	if !p.telegram.IsKnownDC(dc) {
+		dc = p.telegram.GetFallbackDC()
+		ctx.logger = ctx.logger.BindInt("fallback_dc", dc)
+
+		ctx.logger.Warning("unknown DC, fallbacks")
+	}
+
+	conn, err := p.telegram.Dial(ctx, dc)
 	if err != nil {
 		return fmt.Errorf("cannot dial to Telegram: %w", err)
 	}
