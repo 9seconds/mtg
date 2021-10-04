@@ -50,7 +50,7 @@ func setCommonSocketOptions(conn *net.TCPConn, bufferSize int) error {
 
 	rawConn, err := conn.SyscallConn()
 	if err != nil {
-		return fmt.Errorf("cannot get underlying raw connection")
+		return fmt.Errorf("cannot get underlying raw connection: %w", err)
 	}
 
 	rawConn.Control(func(fd uintptr) { // nolint: errcheck
