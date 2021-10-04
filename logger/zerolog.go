@@ -15,6 +15,7 @@ const (
 	zeroLogContextVarTypeUnknown zeroLogContextVarType = iota
 	zeroLogContextVarTypeStr
 	zeroLogContextVarTypeInt
+	zeroLogContextVarTypeJSON
 )
 
 type zeroLogContext struct {
@@ -66,6 +67,17 @@ func (z *zeroLogContext) BindStr(name, value string) mtglib.Logger {
 	}
 }
 
+func (z *zeroLogContext) BindJSON(name, value string) mtglib.Logger {
+	return &zeroLogContext{
+		name:       z.name,
+		log:        z.log,
+		ctxVarType: zeroLogContextVarTypeJSON,
+		ctxVarName: name,
+		ctxVarStr:  value,
+		parent:     z,
+	}
+}
+
 func (z *zeroLogContext) Printf(format string, args ...interface{}) {
 	z.Debug(fmt.Sprintf(format, args...))
 }
@@ -110,6 +122,8 @@ func (z *zeroLogContext) attachCtx(evt *zerolog.Event) {
 		evt.Str(z.ctxVarName, z.ctxVarStr)
 	case zeroLogContextVarTypeInt:
 		evt.Int(z.ctxVarName, z.ctxVarInt)
+	case zeroLogContextVarTypeJSON:
+		evt.RawJSON(z.ctxVarName, []byte(z.ctxVarStr))
 	case zeroLogContextVarTypeUnknown:
 	}
 }
