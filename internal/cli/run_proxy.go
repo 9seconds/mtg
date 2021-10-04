@@ -184,6 +184,8 @@ func runProxy(conf *config.Config, version string) error {
 		BufferSize:         conf.TCPBuffer.Get(mtglib.DefaultBufferSize),
 		DomainFrontingPort: conf.DomainFrontingPort.Get(mtglib.DefaultDomainFrontingPort),
 		PreferIP:           conf.PreferIP.Get(mtglib.DefaultPreferIP),
+
+		AllowFallbackOnUnknownDC: conf.AllowFallbackOnUnknownDC.Get(false),
 	}
 
 	proxy, err := mtglib.NewProxy(opts)

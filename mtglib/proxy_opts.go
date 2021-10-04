@@ -90,6 +90,16 @@ type ProxyOpts struct {
 	// This is an optional setting.
 	DomainFrontingPort uint
 
+	// AllowFallbackOnUnknownDC defines how proxy behaves if unknown DC was
+	// requested. If this setting is set to false, then such connection
+	// will be rejected. Otherwise, proxy will chose any DC.
+	//
+	// Telegram is designed in a way that any DC can serve any request,
+	// the problem is a latency.
+	//
+	// This is an optional setting.
+	AllowFallbackOnUnknownDC bool
+
 	// UseTestDCs defines if we have to connect to production or to staging
 	// DCs of Telegram.
 	//

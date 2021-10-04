@@ -9,15 +9,16 @@ import (
 )
 
 type Config struct {
-	Debug                TypeBool        `json:"debug"`
-	Secret               mtglib.Secret   `json:"secret"`
-	BindTo               TypeHostPort    `json:"bindTo"`
-	TCPBuffer            TypeBytes       `json:"tcpBuffer"`
-	PreferIP             TypePreferIP    `json:"preferIp"`
-	DomainFrontingPort   TypePort        `json:"domainFrontingPort"`
-	TolerateTimeSkewness TypeDuration    `json:"tolerateTimeSkewness"`
-	Concurrency          TypeConcurrency `json:"concurrency"`
-	Defense              struct {
+	Debug                    TypeBool        `json:"debug"`
+	AllowFallbackOnUnknownDC TypeBool        `json:"allowFallbackOnUnknownDc"`
+	Secret                   mtglib.Secret   `json:"secret"`
+	BindTo                   TypeHostPort    `json:"bindTo"`
+	TCPBuffer                TypeBytes       `json:"tcpBuffer"`
+	PreferIP                 TypePreferIP    `json:"preferIp"`
+	DomainFrontingPort       TypePort        `json:"domainFrontingPort"`
+	TolerateTimeSkewness     TypeDuration    `json:"tolerateTimeSkewness"`
+	Concurrency              TypeConcurrency `json:"concurrency"`
+	Defense                  struct {
 		AntiReplay struct {
 			Enabled   TypeBool      `json:"enabled"`
 			MaxSize   TypeBytes     `json:"maxSize"`
