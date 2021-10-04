@@ -56,6 +56,19 @@ domain-fronting-port = 443
 # time range of this parameter.
 tolerate-time-skewness = "5s"
 
+# Telegram has a concept of DC. You can think about DC as a number of a cluster
+# with a certain purpose. Some clusters serve media, some - messages, some rule
+# channels and so on. But sometimes unknown DC number is requested by client.
+# It could be a bug or some global reconfiguration of the Telegram.
+#
+# By default, proxy rejects such requests. But it is also possible to fallback
+# this request to any DC. Telegram works in a way that any DC is able to serve
+# any request but sacrificing a latency.
+#
+# If this setting is disabled (default), mtg will reject a connection.
+# Otherwise, chose a new DC.
+allow-fallback-on-unknown-dc = false
+
 # network defines different network-related settings
 [network]
 # please be aware that mtg needs to do some external requests. For

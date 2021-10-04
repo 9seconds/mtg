@@ -9,15 +9,16 @@ import (
 )
 
 type tomlConfig struct {
-	Debug                bool   `toml:"debug" json:"debug,omitempty"`
-	Secret               string `toml:"secret" json:"secret"`
-	BindTo               string `toml:"bind-to" json:"bindTo"`
-	TCPBuffer            string `toml:"tcp-buffer" json:"tcpBuffer,omitempty"`
-	PreferIP             string `toml:"prefer-ip" json:"preferIp,omitempty"`
-	DomainFrontingPort   uint   `toml:"domain-fronting-port" json:"domainFrontingPort,omitempty"`
-	TolerateTimeSkewness string `toml:"tolerate-time-skewness" json:"tolerateTimeSkewness,omitempty"`
-	Concurrency          uint   `toml:"concurrency" json:"concurrency,omitempty"`
-	Defense              struct {
+	Debug                    bool   `toml:"debug" json:"debug,omitempty"`
+	AllowFallbackOnUnknownDC bool   `toml:"allow-fallback-on-unknown-dc" json:"allowFallbackOnUnknownDc,omitempty"`
+	Secret                   string `toml:"secret" json:"secret"`
+	BindTo                   string `toml:"bind-to" json:"bindTo"`
+	TCPBuffer                string `toml:"tcp-buffer" json:"tcpBuffer,omitempty"`
+	PreferIP                 string `toml:"prefer-ip" json:"preferIp,omitempty"`
+	DomainFrontingPort       uint   `toml:"domain-fronting-port" json:"domainFrontingPort,omitempty"`
+	TolerateTimeSkewness     string `toml:"tolerate-time-skewness" json:"tolerateTimeSkewness,omitempty"`
+	Concurrency              uint   `toml:"concurrency" json:"concurrency,omitempty"`
+	Defense                  struct {
 		AntiReplay struct {
 			Enabled   bool    `toml:"enabled" json:"enabled,omitempty"`
 			MaxSize   string  `toml:"max-size" json:"maxSize,omitempty"`

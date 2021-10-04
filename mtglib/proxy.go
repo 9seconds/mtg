@@ -23,11 +23,12 @@ type Proxy struct {
 	ctxCancel       context.CancelFunc
 	streamWaitGroup sync.WaitGroup
 
-	tolerateTimeSkewness time.Duration
-	bufferSize           int
-	domainFrontingPort   int
-	workerPool           *ants.PoolWithFunc
-	telegram             *telegram.Telegram
+	allowFallbackOnUnknownDC bool
+	tolerateTimeSkewness     time.Duration
+	bufferSize               int
+	domainFrontingPort       int
+	workerPool               *ants.PoolWithFunc
+	telegram                 *telegram.Telegram
 
 	secret          Secret
 	network         Network
@@ -209,7 +210,7 @@ func (p *Proxy) doObfuscated2Handshake(ctx *streamContext) error {
 func (p *Proxy) doTelegramCall(ctx *streamContext) error {
 	dc := ctx.dc
 
-	if !p.telegram.IsKnownDC(dc) {
+	if p.allowFallbackOnUnknownDC && !p.telegram.IsKnownDC(dc) {
 		dc = p.telegram.GetFallbackDC()
 		ctx.logger = ctx.logger.BindInt("fallback_dc", dc)
 
@@ -285,18 +286,19 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	proxy := &Proxy{
-		ctx:                  ctx,
-		ctxCancel:            cancel,
-		secret:               opts.Secret,
-		network:              opts.Network,
-		antiReplayCache:      opts.AntiReplayCache,
-		ipBlocklist:          opts.IPBlocklist,
-		eventStream:          opts.EventStream,
-		logger:               opts.getLogger("proxy"),
-		domainFrontingPort:   opts.getDomainFrontingPort(),
-		tolerateTimeSkewness: opts.getTolerateTimeSkewness(),
-		bufferSize:           opts.getBufferSize(),
-		telegram:             tg,
+		ctx:                      ctx,
+		ctxCancel:                cancel,
+		secret:                   opts.Secret,
+		network:                  opts.Network,
+		antiReplayCache:          opts.AntiReplayCache,
+		ipBlocklist:              opts.IPBlocklist,
+		eventStream:              opts.EventStream,
+		logger:                   opts.getLogger("proxy"),
+		domainFrontingPort:       opts.getDomainFrontingPort(),
+		tolerateTimeSkewness:     opts.getTolerateTimeSkewness(),
+		bufferSize:               opts.getBufferSize(),
+		allowFallbackOnUnknownDC: opts.AllowFallbackOnUnknownDC,
+		telegram:                 tg,
 	}
 
 	pool, err := ants.NewPoolWithFunc(opts.getConcurrency(),
