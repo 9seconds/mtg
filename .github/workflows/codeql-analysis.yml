@@ -11,6 +11,14 @@
 #
 name: "CodeQL"
 
+# https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#permissions
+# https://github.com/github/codeql-action/issues/572
+permissions:
+  actions: read
+  contents: read
+  pull-requests: read
+  security-events: write
+
 on:
   push:
     branches: 
