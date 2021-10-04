@@ -2,6 +2,18 @@
 
 name: CI
 
+permissions:
+  actions: read
+  checks: read
+  contents: read
+  deployments: read
+  issues: read
+  discussions: read
+  pull-requests: read
+  repository-projects: read
+  security-events: read
+  statuses: read
+
 on:
   push:
     tags:
