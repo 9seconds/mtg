@@ -83,15 +83,15 @@ install-tools-lint: .bin
 
 .PHONY: install-tools-godoc
 install-tools-godoc: .bin
-	@$(GOTOOL) go get -u golang.org/x/tools/cmd/godoc
+	@$(GOTOOL) go install golang.org/x/tools/cmd/godoc@latest
 
 .PHONY: install-tools-gofumpt
 install-tools-gofumpt: .bin
-	@$(GOTOOL) go get -u mvdan.cc/gofumpt
+	@$(GOTOOL) go install mvdan.cc/gofumpt@latest
 
 .PHONY: goreleaser
 install-tools-goreleaser: .bin
-	@$(GOTOOL) go get -u github.com/goreleaser/goreleaser
+	@$(GOTOOL) go install github.com/goreleaser/goreleaser@latest
 
 .PHONY: update-deps
 update-deps:
