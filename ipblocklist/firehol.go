@@ -121,7 +121,7 @@ func (f *Firehol) Run(updateEach time.Duration) {
 func (f *Firehol) containsIPv4(addr net.IP) bool {
 	ip := patricia.NewIPv4AddressFromBytes(addr, 32) // nolint: gomnd
 
-	if ok, _, err := f.treeV4.FindDeepestTag(ip); ok && err == nil {
+	if ok, _ := f.treeV4.FindDeepestTag(ip); ok {
 		return true
 	}
 
@@ -131,7 +131,7 @@ func (f *Firehol) containsIPv4(addr net.IP) bool {
 func (f *Firehol) containsIPv6(addr net.IP) bool {
 	ip := patricia.NewIPv6Address(addr, 128) // nolint: gomnd
 
-	if ok, _, err := f.treeV6.FindDeepestTag(ip); ok && err == nil {
+	if ok, _ := f.treeV6.FindDeepestTag(ip); ok {
 		return true
 	}
 
@@ -267,9 +267,7 @@ func (f *Firehol) updateTrees(mutex sync.Locker,
 			return fmt.Errorf("cannot parse a line: %w", err)
 		}
 
-		if err := f.updateAddToTrees(ip, cidr, mutex, v4tree, v6tree); err != nil {
-			return fmt.Errorf("cannot add a node to the tree: %w", err)
-		}
+		f.updateAddToTrees(ip, cidr, mutex, v4tree, v6tree)
 	}
 
 	if scanner.Err() != nil {
@@ -302,25 +300,15 @@ func (f *Firehol) updateParseLine(text string) (net.IP, uint, error) {
 
 func (f *Firehol) updateAddToTrees(ip net.IP, cidr uint,
 	mutex sync.Locker,
-	v4tree *bool_tree.TreeV4, v6tree *bool_tree.TreeV6) error {
+	v4tree *bool_tree.TreeV4, v6tree *bool_tree.TreeV6) {
 	mutex.Lock()
 	defer mutex.Unlock()
 
 	if ip.To4() != nil {
-		addr := patricia.NewIPv4AddressFromBytes(ip, cidr)
-
-		if _, _, err := v4tree.Set(addr, true); err != nil {
-			return err // nolint: wrapcheck
-		}
+		v4tree.Set(patricia.NewIPv4AddressFromBytes(ip, cidr), true)
 	} else {
-		addr := patricia.NewIPv6Address(ip, cidr)
-
-		if _, _, err := v6tree.Set(addr, true); err != nil {
-			return err // nolint: wrapcheck
-		}
+		v6tree.Set(patricia.NewIPv6Address(ip, cidr), true)
 	}
-
-	return nil
 }
 
 // NewFirehol creates a new instance of FireHOL IP blocklist.
