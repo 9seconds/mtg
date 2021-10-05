@@ -44,6 +44,7 @@ func (suite *TelegramTestSuite) TestUnknownDC() {
 		suite.T().Run(strconv.Itoa(value), func(t *testing.T) {
 			_, err := suite.t.Dial(context.Background(), value)
 			assert.Error(t, err)
+			assert.False(t, suite.t.IsKnownDC(value))
 		})
 	}
 }
@@ -71,6 +72,7 @@ func (suite *TelegramTestSuite) TestDialToCorrectIPs() {
 
 			_, err := suite.t.Dial(context.Background(), idx)
 			assert.True(t, errors.Is(err, io.EOF))
+			assert.True(t, suite.t.IsKnownDC(idx))
 		})
 	}
 }
@@ -133,6 +135,22 @@ func (suite *TelegramTestSuite) TestDialPreferIPPriority() {
 func (suite *TelegramTestSuite) TestUnknownPreferIP() {
 	_, err := New(suite.dialerMock, "xxx", false)
 	suite.Error(err)
+}
+
+func (suite *TelegramTestSuite) TestFallbackDC() {
+	dcs := make([]int, 10)
+
+	for i := 0; i < len(dcs); i++ {
+		dcs[i] = suite.t.GetFallbackDC()
+	}
+
+	for _, v := range dcs {
+		value := v
+
+		suite.T().Run(strconv.Itoa(value), func(t *testing.T) {
+			assert.True(t, suite.t.IsKnownDC(value))
+		})
+	}
 }
 
 func TestTelegram(t *testing.T) {

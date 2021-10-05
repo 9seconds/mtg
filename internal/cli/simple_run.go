@@ -71,6 +71,7 @@ func (s *SimpleRun) Run(cli *CLI, version string) error { // nolint: cyclop
 	}
 
 	conf.Debug.Value = s.Debug
+	conf.AllowFallbackOnUnknownDC.Value = true
 	conf.Defense.AntiReplay.Enabled.Value = true
 
 	if err := conf.Validate(); err != nil {

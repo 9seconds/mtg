@@ -156,7 +156,7 @@ func makeEventStream(conf *config.Config, logger mtglib.Logger) (mtglib.EventStr
 func runProxy(conf *config.Config, version string) error {
 	logger := makeLogger(conf)
 
-	logger.BindStr("configuration", conf.String()).Debug("configuration")
+	logger.BindJSON("configuration", conf.String()).Debug("configuration")
 
 	ntw, err := makeNetwork(conf, version)
 	if err != nil {
@@ -184,6 +184,8 @@ func runProxy(conf *config.Config, version string) error {
 		BufferSize:         conf.TCPBuffer.Get(mtglib.DefaultBufferSize),
 		DomainFrontingPort: conf.DomainFrontingPort.Get(mtglib.DefaultDomainFrontingPort),
 		PreferIP:           conf.PreferIP.Get(mtglib.DefaultPreferIP),
+
+		AllowFallbackOnUnknownDC: conf.AllowFallbackOnUnknownDC.Get(false),
 	}
 
 	proxy, err := mtglib.NewProxy(opts)

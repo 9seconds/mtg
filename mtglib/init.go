@@ -245,6 +245,9 @@ type Logger interface {
 	// BindStr binds new string parameter to a new logger instance.
 	BindStr(name, value string) Logger
 
+	// BindJSON binds a new JSON-encoded string to a new logger instance.
+	BindJSON(name, value string) Logger
+
 	// Printf is to support log.Logger behavior.
 	Printf(format string, args ...interface{})
 

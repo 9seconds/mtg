@@ -3,8 +3,6 @@ package network
 import (
 	"fmt"
 	"net"
-
-	"golang.org/x/sys/unix"
 )
 
 // SetClientSocketOptions tunes a TCP socket that represents a connection to
@@ -50,22 +48,12 @@ func setCommonSocketOptions(conn *net.TCPConn, bufferSize int) error {
 
 	rawConn, err := conn.SyscallConn()
 	if err != nil {
-		return fmt.Errorf("cannot get underlying raw connection")
+		return fmt.Errorf("cannot get underlying raw connection: %w", err)
 	}
 
-	rawConn.Control(func(fd uintptr) { // nolint: errcheck
-		err = unix.SetsockoptInt(int(fd), unix.SOL_SOCKET, unix.SO_REUSEADDR, 1)
-		if err != nil {
-			err = fmt.Errorf("cannot set SO_REUSEADDR: %w", err)
-
-			return
-		}
-
-		err = unix.SetsockoptInt(int(fd), unix.SOL_SOCKET, unix.SO_REUSEPORT, 1)
-		if err != nil {
-			err = fmt.Errorf("cannot set SO_REUSEPORT: %w", err)
-		}
-	})
+	if err := setSocketReuseAddrPort(rawConn, bufferSize); err != nil {
+		return fmt.Errorf("cannot setup SO_REUSEADDR/PORT: %w", err)
+	}
 
 	return nil
 }
