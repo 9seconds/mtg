@@ -37,7 +37,7 @@ func makeLogger(conf *config.Config) mtglib.Logger {
 func makeNetwork(conf *config.Config, version string) (mtglib.Network, error) {
 	tcpTimeout := conf.Network.Timeout.TCP.Get(network.DefaultTimeout)
 	httpTimeout := conf.Network.Timeout.HTTP.Get(network.DefaultHTTPTimeout)
-	dohIP := conf.Network.DOHIP.Get(net.ParseIP(network.DefaultDOHHostname)).String()
+	dohIP := conf.Network.DOHIP.Get(network.DefaultDOHHostname)
 	bufferSize := conf.TCPBuffer.Get(network.DefaultBufferSize)
 	userAgent := "mtg/" + version
 

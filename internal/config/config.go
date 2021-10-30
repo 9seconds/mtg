@@ -37,7 +37,7 @@ type Config struct {
 			HTTP TypeDuration `json:"http"`
 			Idle TypeDuration `json:"idle"`
 		} `json:"timeout"`
-		DOHIP   TypeIP         `json:"dohIp"`
+		DOHIP   TypeURLHost    `json:"dohIp"`
 		Proxies []TypeProxyURL `json:"proxies"`
 	} `json:"network"`
 	Stats struct {

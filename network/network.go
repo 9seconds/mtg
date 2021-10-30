@@ -129,10 +129,6 @@ func NewNetwork(dialer Dialer,
 		httpTimeout = DefaultHTTPTimeout
 	}
 
-	if net.ParseIP(dohHostname) == nil {
-		return nil, fmt.Errorf("hostname %s should be IP address", dohHostname)
-	}
-
 	return &network{
 		dialer:      dialer,
 		httpTimeout: httpTimeout,
