@@ -186,6 +186,7 @@ func runProxy(conf *config.Config, version string) error {
 		PreferIP:           conf.PreferIP.Get(mtglib.DefaultPreferIP),
 
 		AllowFallbackOnUnknownDC: conf.AllowFallbackOnUnknownDC.Get(false),
+		TolerateTimeSkewness:     conf.TolerateTimeSkewness.Value,
 	}
 
 	proxy, err := mtglib.NewProxy(opts)
