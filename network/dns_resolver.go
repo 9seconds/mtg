@@ -1,6 +1,8 @@
 package network
 
 import (
+	"fmt"
+	"net"
 	"net/http"
 	"sync"
 	"time"
@@ -83,8 +85,13 @@ func (d *dnsResolver) LookupAAAA(hostname string) []string {
 	return ips
 }
 
-func newDNSResolver(hostname string, httpClient *http.Client) *dnsResolver {
-	return &dnsResolver{
+func newDNSResolver(hostname string, httpClient *http.Client) (ret *dnsResolver) {
+	if net.ParseIP(hostname).To4() == nil {
+		// the hostname is an IPv6 address
+		hostname = fmt.Sprintf("[%s]", hostname)
+	}
+
+	ret = &dnsResolver{
 		resolver: doh.Resolver{
 			Host:       hostname,
 			Class:      doh.IN,
@@ -92,4 +99,6 @@ func newDNSResolver(hostname string, httpClient *http.Client) *dnsResolver {
 		},
 		cache: map[string]dnsResolverCacheEntry{},
 	}
+
+	return
 }
