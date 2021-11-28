@@ -17,9 +17,7 @@ var eastWestPool = sync.Pool{
 }
 
 func acquireEastWest() *eastWest {
-	wanted := eastWestPool.Get().(*eastWest) // nolint: forcetypeassert
-
-	return wanted
+	return eastWestPool.Get().(*eastWest)
 }
 
 func releaseEastWest(ew *eastWest) {
