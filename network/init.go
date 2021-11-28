@@ -33,9 +33,15 @@ const (
 	// request.
 	DefaultHTTPTimeout = 10 * time.Second
 
+	// Deprecated:
+	//
 	// DefaultBufferSize defines a TCP buffer size. Both read and write, so
 	// for real size, please multiply this number by 2.
 	DefaultBufferSize = 16 * 1024 // 16 kib
+
+	// DefaultTCPKeepAlivePeriod defines a time period between 2
+	// consequitive probes.
+	DefaultTCPKeepAlivePeriod = 10 * time.Second
 
 	// ProxyDialerOpenThreshold is used for load balancing SOCKS5 dialer
 	// only.

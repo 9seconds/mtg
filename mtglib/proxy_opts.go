@@ -45,6 +45,8 @@ type ProxyOpts struct {
 	// buffers: to and from.
 	//
 	// This is an optional setting.
+	//
+	// Deprecated: this setting is no longer makes any effect.
 	BufferSize uint
 
 	// Concurrency is a size of the worker pool for connection management.

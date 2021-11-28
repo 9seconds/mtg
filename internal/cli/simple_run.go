@@ -38,10 +38,6 @@ func (s *SimpleRun) Run(cli *CLI, version string) error { // nolint: cyclop
 		return fmt.Errorf("incorrect concurrency: %w", err)
 	}
 
-	if err := conf.TCPBuffer.Set(s.TCPBuffer); err != nil {
-		return fmt.Errorf("incorrect tcp-buffer: %w", err)
-	}
-
 	if err := conf.PreferIP.Set(s.PreferIP); err != nil {
 		return fmt.Errorf("incorrect prefer-ip: %w", err)
 	}

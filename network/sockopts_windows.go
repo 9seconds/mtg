@@ -5,6 +5,6 @@ package network
 
 import "syscall"
 
-func setSocketReuseAddrPort(conn syscall.RawConn, bufferSize int) error {
+func setSocketReuseAddrPort(conn syscall.RawConn) error {
 	return nil
 }
