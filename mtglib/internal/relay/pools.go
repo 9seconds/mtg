@@ -9,20 +9,15 @@ type eastWest struct {
 
 var eastWestPool = sync.Pool{
 	New: func() interface{} {
-		return &eastWest{}
+		return &eastWest{
+			east: make([]byte, bufferSize),
+			west: make([]byte, bufferSize),
+		}
 	},
 }
 
-func acquireEastWest(bufferSize int) *eastWest {
+func acquireEastWest() *eastWest {
 	wanted := eastWestPool.Get().(*eastWest) // nolint: forcetypeassert
-
-	if len(wanted.east) != bufferSize {
-		wanted.east = make([]byte, bufferSize)
-	}
-
-	if len(wanted.west) != bufferSize {
-		wanted.west = make([]byte, bufferSize)
-	}
 
 	return wanted
 }

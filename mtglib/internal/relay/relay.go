@@ -3,16 +3,14 @@ package relay
 import (
 	"context"
 	"io"
-	"net"
 	"sync"
 )
 
-func Relay(ctx context.Context, log Logger, bufferSize int,
-	telegramConn net.Conn, clientConn io.ReadWriteCloser) {
+func Relay(ctx context.Context, log Logger, telegramConn, clientConn io.ReadWriteCloser) {
 	defer telegramConn.Close()
 	defer clientConn.Close()
 
-	ctx, cancel := context.WithTimeout(ctx, getConnectionTimeToLive())
+	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	go func() {
@@ -21,12 +19,8 @@ func Relay(ctx context.Context, log Logger, bufferSize int,
 		clientConn.Close()
 	}()
 
-	buffers := acquireEastWest(bufferSize)
+	buffers := acquireEastWest()
 	defer releaseEastWest(buffers)
-
-	telegramConn = conn{
-		Conn: telegramConn,
-	}
 
 	wg := &sync.WaitGroup{}
 	wg.Add(2) // nolint: gomnd

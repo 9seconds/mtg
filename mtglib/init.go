@@ -61,6 +61,8 @@ const (
 	DefaultConcurrency = 4096
 
 	// DefaultBufferSize is a default size of a copy buffer.
+	//
+	// Deprecated: this setting no longer makes any effect.
 	DefaultBufferSize = 16 * 1024 // 16 kib
 
 	// DefaultDomainFrontingPort is a default port (HTTPS) to connect to in

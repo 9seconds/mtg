@@ -1,12 +1,7 @@
 package relay
 
-import "time"
-
 const (
-	ConnectionTimeToLiveMin = 2 * time.Minute
-	ConnectionTimeToLiveMax = 10 * time.Minute
-	TimeoutMin              = 20 * time.Second
-	TimeoutMax              = time.Minute
+	bufferSize = 32 * 1024
 )
 
 type Logger interface {

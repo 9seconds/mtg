@@ -37,7 +37,6 @@ func (suite *RelayTestSuite) TearDownTest() {
 }
 
 func (suite *RelayTestSuite) TestExit() {
-	suite.telegramConnMock.On("SetReadDeadline", mock.Anything).Return(nil)
 	suite.telegramConnMock.On("Close").Return(nil)
 	suite.telegramConnMock.On("Read", mock.Anything).Return(10, io.EOF).Once()
 	suite.telegramConnMock.On("Write", mock.Anything).Return(10, io.EOF).Maybe()
@@ -46,8 +45,7 @@ func (suite *RelayTestSuite) TestExit() {
 	suite.clientConnMock.On("Write", mock.Anything).Return(10, io.EOF).Maybe()
 	suite.clientConnMock.On("Close").Return(nil)
 
-	relay.Relay(suite.ctx, suite.loggerMock, 1024,
-		suite.telegramConnMock, suite.clientConnMock)
+	relay.Relay(suite.ctx, suite.loggerMock, suite.telegramConnMock, suite.clientConnMock)
 }
 
 func TestRelay(t *testing.T) {

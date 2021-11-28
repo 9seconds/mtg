@@ -25,7 +25,6 @@ type Proxy struct {
 
 	allowFallbackOnUnknownDC bool
 	tolerateTimeSkewness     time.Duration
-	bufferSize               int
 	domainFrontingPort       int
 	workerPool               *ants.PoolWithFunc
 	telegram                 *telegram.Telegram
@@ -84,7 +83,6 @@ func (p *Proxy) ServeConn(conn net.Conn) {
 	relay.Relay(
 		ctx,
 		ctx.logger.Named("relay"),
-		p.bufferSize,
 		ctx.telegramConn,
 		ctx.clientConn,
 	)
@@ -267,7 +265,6 @@ func (p *Proxy) doDomainFronting(ctx *streamContext, conn *connRewind) {
 	relay.Relay(
 		ctx,
 		ctx.logger.Named("domain-fronting"),
-		p.bufferSize,
 		frontConn,
 		conn,
 	)
@@ -296,7 +293,6 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 		logger:                   opts.getLogger("proxy"),
 		domainFrontingPort:       opts.getDomainFrontingPort(),
 		tolerateTimeSkewness:     opts.getTolerateTimeSkewness(),
-		bufferSize:               opts.getBufferSize(),
 		allowFallbackOnUnknownDC: opts.AllowFallbackOnUnknownDC,
 		telegram:                 tg,
 	}

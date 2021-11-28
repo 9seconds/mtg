@@ -131,14 +131,6 @@ func (p ProxyOpts) valid() error {
 	return nil
 }
 
-func (p ProxyOpts) getBufferSize() int {
-	if p.BufferSize < 1 {
-		return DefaultBufferSize
-	}
-
-	return int(p.BufferSize)
-}
-
 func (p ProxyOpts) getConcurrency() int {
 	if p.Concurrency == 0 {
 		return DefaultConcurrency
