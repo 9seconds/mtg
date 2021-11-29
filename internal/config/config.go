@@ -8,6 +8,18 @@ import (
 	"github.com/9seconds/mtg/v2/mtglib"
 )
 
+type Optional struct {
+	Enabled TypeBool `json:"enabled"`
+}
+
+type ListConfig struct {
+	Optional
+
+	DownloadConcurrency TypeConcurrency    `json:"downloadConcurrency"`
+	URLs                []TypeBlocklistURI `json:"urls"`
+	UpdateEach          TypeDuration       `json:"updateEach"`
+}
+
 type Config struct {
 	Debug                    TypeBool        `json:"debug"`
 	AllowFallbackOnUnknownDC TypeBool        `json:"allowFallbackOnUnknownDc"`
@@ -20,16 +32,13 @@ type Config struct {
 	Concurrency              TypeConcurrency `json:"concurrency"`
 	Defense                  struct {
 		AntiReplay struct {
-			Enabled   TypeBool      `json:"enabled"`
+			Optional
+
 			MaxSize   TypeBytes     `json:"maxSize"`
 			ErrorRate TypeErrorRate `json:"errorRate"`
 		} `json:"antiReplay"`
-		Blocklist struct {
-			Enabled             TypeBool           `json:"enabled"`
-			DownloadConcurrency TypeConcurrency    `json:"downloadConcurrency"`
-			URLs                []TypeBlocklistURI `json:"urls"`
-			UpdateEach          TypeDuration       `json:"updateEach"`
-		} `json:"blocklist"`
+		Blocklist ListConfig `json:"blocklist"`
+		Allowlist ListConfig `json:"allowlist"`
 	} `json:"defense"`
 	Network struct {
 		Timeout struct {
@@ -42,13 +51,15 @@ type Config struct {
 	} `json:"network"`
 	Stats struct {
 		StatsD struct {
-			Enabled      TypeBool            `json:"enabled"`
+			Optional
+
 			Address      TypeHostPort        `json:"address"`
 			MetricPrefix TypeMetricPrefix    `json:"metricPrefix"`
 			TagFormat    TypeStatsdTagFormat `json:"tagFormat"`
 		} `json:"statsd"`
 		Prometheus struct {
-			Enabled      TypeBool         `json:"enabled"`
+			Optional
+
 			BindTo       TypeHostPort     `json:"bindTo"`
 			HTTPPath     TypeHTTPPath     `json:"httpPath"`
 			MetricPrefix TypeMetricPrefix `json:"metricPrefix"`
