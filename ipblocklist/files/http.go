@@ -29,10 +29,18 @@ func (h httpFile) Open(ctx context.Context) (io.ReadCloser, error) {
 		return nil, fmt.Errorf("cannot get url %s: %w", h.url, err)
 	}
 
+	if response.StatusCode >= http.StatusBadRequest {
+		return nil, fmt.Errorf("unexpected status code %d", response.StatusCode)
+	}
+
 	return response.Body, nil
 }
 
 func NewHTTP(client *http.Client, endpoint string) (File, error) {
+	if client == nil {
+		return nil, ErrBadHTTPClient
+	}
+
 	parsed, err := url.Parse(endpoint)
 	if err != nil {
 		return nil, fmt.Errorf("incorrect url %s: %w", endpoint, err)

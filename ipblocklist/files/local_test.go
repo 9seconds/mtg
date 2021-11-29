@@ -16,7 +16,7 @@ type LocalTestSuite struct {
 	suite.Suite
 }
 
-func (suite *LocalTestSuite) GetLocalFile(name string) string {
+func (suite *LocalTestSuite) getLocalFile(name string) string {
 	return filepath.Join("testdata", name)
 }
 
@@ -30,14 +30,14 @@ func (suite *LocalTestSuite) TestIncorrect() {
 		value := v
 
 		suite.T().Run(v, func(t *testing.T) {
-			_, err := files.NewLocal(suite.GetLocalFile(value))
+			_, err := files.NewLocal(suite.getLocalFile(value))
 			assert.Error(t, err)
 		})
 	}
 }
 
 func (suite *LocalTestSuite) TestOk() {
-	file, err := files.NewLocal(suite.GetLocalFile("readable"))
+	file, err := files.NewLocal(suite.getLocalFile("readable"))
 	suite.NoError(err)
 
 	reader, err := file.Open(context.Background())
