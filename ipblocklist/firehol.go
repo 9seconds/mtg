@@ -45,7 +45,7 @@ type Firehol struct {
 	ctxCancel context.CancelFunc
 	logger    mtglib.Logger
 
-	rwMutex sync.RWMutex
+	updateMutex sync.RWMutex
 
 	remoteURLs []string
 	localFiles []string
@@ -68,8 +68,8 @@ func (f *Firehol) Contains(ip net.IP) bool {
 		return true
 	}
 
-	f.rwMutex.RLock()
-	defer f.rwMutex.RUnlock()
+	f.updateMutex.RLock()
+	defer f.updateMutex.RUnlock()
 
 	if ip4 := ip.To4(); ip4 != nil {
 		return f.containsIPv4(ip4)
@@ -194,8 +194,8 @@ func (f *Firehol) update() error { // nolint: funlen, cyclop
 	default:
 	}
 
-	f.rwMutex.Lock()
-	defer f.rwMutex.Unlock()
+	f.updateMutex.Lock()
+	defer f.updateMutex.Unlock()
 
 	f.treeV4 = v4tree
 	f.treeV6 = v6tree
