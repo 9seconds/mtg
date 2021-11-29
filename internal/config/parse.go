@@ -30,6 +30,12 @@ type tomlConfig struct {
 			URLs                []string `toml:"urls" json:"urls,omitempty"`
 			UpdateEach          string   `toml:"update-each" json:"updateEach,omitempty"`
 		} `toml:"blocklist" json:"blocklist,omitempty"`
+		Allowlist struct {
+			Enabled             bool     `toml:"enabled" json:"enabled,omitempty"`
+			DownloadConcurrency uint     `toml:"download-concurrency" json:"downloadConcurrency,omitempty"`
+			URLs                []string `toml:"urls" json:"urls,omitempty"`
+			UpdateEach          string   `toml:"update-each" json:"updateEach,omitempty"`
+		} `toml:"allowlist" json:"allowlist,omitempty"`
 	} `toml:"defense" json:"defense,omitempty"`
 	Network struct {
 		Timeout struct {

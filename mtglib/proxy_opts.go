@@ -28,6 +28,11 @@ type ProxyOpts struct {
 	// This is a mandatory setting.
 	IPBlocklist IPBlocklist
 
+	// IPWhitelist defines a whitelist of IPs to allow to use proxy.
+	//
+	// This is an optional setting, ignored by default (no restrictions).
+	IPWhitelist IPBlocklist
+
 	// EventStream defines an instance of event stream.
 	//
 	// This ia a mandatory setting.
