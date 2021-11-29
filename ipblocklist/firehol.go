@@ -4,16 +4,13 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"io"
 	"net"
-	"net/http"
-	"net/url"
-	"os"
 	"regexp"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/9seconds/mtg/v2/ipblocklist/files"
 	"github.com/9seconds/mtg/v2/mtglib"
 	"github.com/kentik/patricia"
 	"github.com/kentik/patricia/bool_tree"
@@ -41,20 +38,16 @@ var fireholRegexpComment = regexp.MustCompile(`\s*#.*?$`)
 //     127.0.0.1   # you can specify an IP
 //     10.0.0.0/8  # or cidr
 type Firehol struct {
-	ctx       context.Context
-	ctxCancel context.CancelFunc
-	logger    mtglib.Logger
-
+	ctx         context.Context
+	ctxCancel   context.CancelFunc
+	logger      mtglib.Logger
 	updateMutex sync.RWMutex
 
-	remoteURLs []string
-	localFiles []string
+	blocklists []files.File
 
-	httpClient *http.Client
 	workerPool *ants.Pool
-
-	treeV4 *bool_tree.TreeV4
-	treeV6 *bool_tree.TreeV6
+	treeV4     *bool_tree.TreeV4
+	treeV6     *bool_tree.TreeV6
 }
 
 // Shutdown stop a background update process.
@@ -98,22 +91,14 @@ func (f *Firehol) Run(updateEach time.Duration) {
 		}
 	}()
 
-	if err := f.update(); err != nil {
-		f.logger.WarningError("cannot update blocklist", err)
-	} else {
-		f.logger.Info("blocklist was updated")
-	}
+	f.update()
 
 	for {
 		select {
 		case <-f.ctx.Done():
 			return
 		case <-ticker.C:
-			if err := f.update(); err != nil {
-				f.logger.WarningError("cannot update blocklist", err)
-			} else {
-				f.logger.Info("blocklist was updated")
-			}
+			f.update()
 		}
 	}
 }
@@ -138,61 +123,39 @@ func (f *Firehol) containsIPv6(addr net.IP) bool {
 	return false
 }
 
-func (f *Firehol) update() error { // nolint: funlen, cyclop
+func (f *Firehol) update() {
 	ctx, cancel := context.WithCancel(f.ctx)
 	defer cancel()
 
 	wg := &sync.WaitGroup{}
-	wg.Add(len(f.remoteURLs) + len(f.localFiles))
+	wg.Add(len(f.blocklists))
 
 	treeMutex := &sync.Mutex{}
 	v4tree := bool_tree.NewTreeV4()
 	v6tree := bool_tree.NewTreeV6()
 
-	errorChan := make(chan error, 1)
-	defer close(errorChan)
-
-	for _, v := range f.localFiles {
-		go func(filename string) {
+	for _, v := range f.blocklists {
+		go func(file files.File) {
 			defer wg.Done()
 
-			if err := f.updateLocalFile(ctx, filename, treeMutex, v4tree, v6tree); err != nil {
-				cancel()
-				f.logger.BindStr("filename", filename).WarningError("cannot update", err)
+			logger := f.logger.BindStr("filename", file.String())
 
-				select {
-				case errorChan <- err:
-				default:
-				}
+			fileContent, err := file.Open(ctx)
+			if err != nil {
+				logger.WarningError("update has failed", err)
+
+				return
+			}
+
+			defer fileContent.Close()
+
+			if err := f.updateFromFile(treeMutex, v4tree, v6tree, bufio.NewScanner(fileContent)); err != nil {
+				logger.WarningError("update has failed", err)
 			}
 		}(v)
 	}
 
-	for _, v := range f.remoteURLs {
-		value := v
-
-		f.workerPool.Submit(func() { // nolint: errcheck
-			defer wg.Done()
-
-			if err := f.updateRemoteURL(ctx, value, treeMutex, v4tree, v6tree); err != nil {
-				cancel()
-				f.logger.BindStr("url", value).WarningError("cannot update", err)
-
-				select {
-				case errorChan <- err:
-				default:
-				}
-			}
-		})
-	}
-
 	wg.Wait()
-
-	select {
-	case err := <-errorChan:
-		return fmt.Errorf("cannot update trees: %w", err)
-	default:
-	}
 
 	f.updateMutex.Lock()
 	defer f.updateMutex.Unlock()
@@ -200,59 +163,13 @@ func (f *Firehol) update() error { // nolint: funlen, cyclop
 	f.treeV4 = v4tree
 	f.treeV6 = v6tree
 
-	return nil
+	f.logger.Info("blocklist was updated")
 }
 
-func (f *Firehol) updateLocalFile(ctx context.Context, filename string,
-	mutex sync.Locker,
-	v4tree *bool_tree.TreeV4, v6tree *bool_tree.TreeV6) error {
-	filefp, err := os.Open(filename)
-	if err != nil {
-		return fmt.Errorf("cannot open file: %w", err)
-	}
-
-	go func(ctx context.Context, closer io.Closer) {
-		<-ctx.Done()
-		closer.Close()
-	}(ctx, filefp)
-
-	defer filefp.Close()
-
-	return f.updateTrees(mutex, filefp, v4tree, v6tree)
-}
-
-func (f *Firehol) updateRemoteURL(ctx context.Context, url string,
-	mutex sync.Locker,
-	v4tree *bool_tree.TreeV4, v6tree *bool_tree.TreeV6) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return fmt.Errorf("cannot build a request: %w", err)
-	}
-
-	resp, err := f.httpClient.Do(req) // nolint: bodyclose
-	if err != nil {
-		return fmt.Errorf("cannot request a remote URL %s: %w", url, err)
-	}
-
-	go func(ctx context.Context, closer io.Closer) {
-		<-ctx.Done()
-		closer.Close()
-	}(ctx, resp.Body)
-
-	defer func(rc io.ReadCloser) {
-		io.Copy(io.Discard, rc) // nolint: errcheck
-		rc.Close()
-	}(resp.Body)
-
-	return f.updateTrees(mutex, resp.Body, v4tree, v6tree)
-}
-
-func (f *Firehol) updateTrees(mutex sync.Locker,
-	reader io.Reader,
+func (f *Firehol) updateFromFile(mutex sync.Locker,
 	v4tree *bool_tree.TreeV4,
-	v6tree *bool_tree.TreeV6) error {
-	scanner := bufio.NewScanner(reader)
-
+	v6tree *bool_tree.TreeV6,
+	scanner *bufio.Scanner) error {
 	for scanner.Scan() {
 		text := scanner.Text()
 		text = fireholRegexpComment.ReplaceAllLiteralString(text, "")
@@ -271,7 +188,7 @@ func (f *Firehol) updateTrees(mutex sync.Locker,
 	}
 
 	if scanner.Err() != nil {
-		return fmt.Errorf("cannot parse a response: %w", scanner.Err())
+		return fmt.Errorf("cannot parse a file: %w", scanner.Err())
 	}
 
 	return nil
@@ -317,27 +234,36 @@ func (f *Firehol) updateAddToTrees(ip net.IP, cidr uint,
 // when it is necessary.
 func NewFirehol(logger mtglib.Logger, network mtglib.Network,
 	downloadConcurrency uint,
-	remoteURLs []string,
+	urls []string,
 	localFiles []string) (*Firehol, error) {
-	for _, v := range remoteURLs {
-		parsed, err := url.Parse(v)
-		if err != nil {
-			return nil, fmt.Errorf("incorrect url %s: %w", v, err)
-		}
-
-		switch parsed.Scheme {
-		case "http", "https":
-		default:
-			return nil, fmt.Errorf("unsupported url %s", v)
-		}
-	}
+	blocklists := []files.File{}
 
 	for _, v := range localFiles {
-		if stat, err := os.Stat(v); os.IsNotExist(err) || stat.IsDir() || stat.Mode().Perm()&0o400 == 0 {
-			return nil, fmt.Errorf("%s is not a readable file", v)
+		file, err := files.NewLocal(v)
+		if err != nil {
+			return nil, fmt.Errorf("cannot create a local file %s: %w", v, err)
 		}
+
+		blocklists = append(blocklists, file)
 	}
 
+	httpClient := network.MakeHTTPClient(nil)
+
+	for _, v := range urls {
+		file, err := files.NewHTTP(httpClient, v)
+		if err != nil {
+			return nil, fmt.Errorf("cannot create a HTTP file %s: %w", v, err)
+		}
+
+		blocklists = append(blocklists, file)
+	}
+
+	return NewFireholFromFiles(logger, downloadConcurrency, blocklists)
+}
+
+func NewFireholFromFiles(logger mtglib.Logger,
+	downloadConcurrency uint,
+	blocklists []files.File) (*Firehol, error) {
 	if downloadConcurrency == 0 {
 		downloadConcurrency = DefaultFireholDownloadConcurrency
 	}
@@ -349,11 +275,9 @@ func NewFirehol(logger mtglib.Logger, network mtglib.Network,
 		ctx:        ctx,
 		ctxCancel:  cancel,
 		logger:     logger.Named("firehol"),
-		httpClient: network.MakeHTTPClient(nil),
 		treeV4:     bool_tree.NewTreeV4(),
 		treeV6:     bool_tree.NewTreeV6(),
 		workerPool: workerPool,
-		remoteURLs: remoteURLs,
-		localFiles: localFiles,
+		blocklists: blocklists,
 	}, nil
 }

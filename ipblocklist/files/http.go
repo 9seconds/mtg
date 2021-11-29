@@ -22,7 +22,7 @@ func (h httpFile) Open(ctx context.Context) (io.ReadCloser, error) {
 	response, err := h.http.Do(request)
 	if err != nil {
 		if response != nil {
-			io.Copy(io.Discard, response.Body)
+			io.Copy(io.Discard, response.Body) // nolint: errcheck
 			response.Body.Close()
 		}
 
@@ -34,6 +34,10 @@ func (h httpFile) Open(ctx context.Context) (io.ReadCloser, error) {
 	}
 
 	return response.Body, nil
+}
+
+func (h httpFile) String() string {
+	return h.url
 }
 
 func NewHTTP(client *http.Client, endpoint string) (File, error) {

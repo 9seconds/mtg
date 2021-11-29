@@ -4,18 +4,19 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/fs"
 	"os"
-	"path/filepath"
 )
 
 type localFile struct {
-	root fs.FS
-	name string
+	path string
 }
 
 func (l localFile) Open(ctx context.Context) (io.ReadCloser, error) {
-	return l.root.Open(l.name)
+	return os.Open(l.path) // nolint: wrapcheck
+}
+
+func (l localFile) String() string {
+	return l.path
 }
 
 func NewLocal(path string) (File, error) {
@@ -24,7 +25,6 @@ func NewLocal(path string) (File, error) {
 	}
 
 	return localFile{
-		root: os.DirFS(filepath.Dir(path)),
-		name: filepath.Base(path),
+		path: path,
 	}, nil
 }
