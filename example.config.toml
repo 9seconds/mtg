@@ -30,7 +30,9 @@ concurrency = 8192
 # A size of user-space buffer for TCP to use. Since we do 2 connections,
 # then we have tcp-buffer * (4 + 2) per each connection: read/write for
 # each connection + 2 copy buffers to pump the data between sockets.
-tcp-buffer = "4kb"
+#
+# Deprecated: this setting is no longer makes any effect.
+# tcp-buffer = "4kb"
 
 # Sometimes you want to enforce mtg to use some types of
 # IP connectivity to Telegram. We have 4 modes:
