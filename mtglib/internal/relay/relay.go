@@ -2,14 +2,11 @@ package relay
 
 import (
 	"context"
-	"io"
+	"net"
 	"sync"
 )
 
-func Relay(ctx context.Context, log Logger, telegramConn, clientConn io.ReadWriteCloser) {
-	defer telegramConn.Close()
-	defer clientConn.Close()
-
+func Relay(ctx context.Context, log Logger, telegramConn, clientConn net.Conn) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -19,26 +16,25 @@ func Relay(ctx context.Context, log Logger, telegramConn, clientConn io.ReadWrit
 		clientConn.Close()
 	}()
 
-	buffers := acquireEastWest()
-	defer releaseEastWest(buffers)
-
 	wg := &sync.WaitGroup{}
 	wg.Add(2) // nolint: gomnd
 
-	go pump(log, telegramConn, clientConn, wg, buffers.east, "east -> west")
+	go pump(log, telegramConn, clientConn, wg, "client -> telegram")
 
-	pump(log, clientConn, telegramConn, wg, buffers.west, "west -> east")
+	pump(log, clientConn, telegramConn, wg, "telegram -> client")
 
 	wg.Wait()
 }
 
-func pump(log Logger, src io.ReadCloser, dst io.WriteCloser, wg *sync.WaitGroup,
-	buf []byte, direction string) {
+func pump(log Logger, src, dst net.Conn, wg *sync.WaitGroup, direction string) {
 	defer wg.Done()
 	defer src.Close()
 	defer dst.Close()
 
-	if n, err := io.CopyBuffer(dst, src, buf); err != nil {
+	syncer := acquireSyncPair(src, dst)
+	defer releaseSyncPair(syncer)
+
+	if n, err := syncer.Sync(); err != nil {
 		log.Printf("cannot pump %s (written %d bytes): %w", direction, n, err)
 	}
 }

@@ -1,25 +1,31 @@
 package relay
 
-import "sync"
+import (
+	"bufio"
+	"io"
+	"net"
+	"sync"
+)
 
-type eastWest struct {
-	east []byte
-	west []byte
-}
-
-var eastWestPool = sync.Pool{
+var syncPairPool = sync.Pool{
 	New: func() interface{} {
-		return &eastWest{
-			east: make([]byte, bufferSize),
-			west: make([]byte, bufferSize),
+		return &syncPair{
+			writer:  bufio.NewWriterSize(nil, writerBufferSize),
+			copyBuf: make([]byte, copyBufferSize),
 		}
 	},
 }
 
-func acquireEastWest() *eastWest {
-	return eastWestPool.Get().(*eastWest)
+func acquireSyncPair(reader net.Conn, writer io.Writer) *syncPair {
+	sp := syncPairPool.Get().(*syncPair) // nolint: forcetypeassert
+	sp.writer.Reset(writer)
+	sp.reader = reader
+
+	return sp
 }
 
-func releaseEastWest(ew *eastWest) {
-	eastWestPool.Put(ew)
+func releaseSyncPair(sp *syncPair) {
+	sp.writer.Reset(nil)
+	sp.reader = nil
+	syncPairPool.Put(sp)
 }
