@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -14,6 +15,7 @@ type syncPair struct {
 	writer  *bufio.Writer
 	copyBuf []byte
 
+	mutex  sync.Mutex
 	reader net.Conn
 }
 
@@ -25,7 +27,7 @@ func (s *syncPair) Read(p []byte) (int, error) {
 	n, err := s.readBlocking(p, false)
 
 	if errors.Is(err, os.ErrDeadlineExceeded) {
-		if err := s.writer.Flush(); err != nil {
+		if err := s.Flush(); err != nil {
 			return 0, fmt.Errorf("cannot flush writer hand-side: %w", err)
 		}
 
@@ -36,7 +38,17 @@ func (s *syncPair) Read(p []byte) (int, error) {
 }
 
 func (s *syncPair) Write(p []byte) (int, error) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	return s.writer.Write(p) // nolint: wrapcheck
+}
+
+func (s *syncPair) Flush() error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	return s.writer.Flush()
 }
 
 func (s *syncPair) readBlocking(p []byte, blocking bool) (int, error) {

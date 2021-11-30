@@ -7,6 +7,9 @@ import (
 )
 
 func Relay(ctx context.Context, log Logger, telegramConn, clientConn net.Conn) {
+	defer telegramConn.Close()
+	defer clientConn.Close()
+
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -28,13 +31,12 @@ func Relay(ctx context.Context, log Logger, telegramConn, clientConn net.Conn) {
 
 func pump(log Logger, src, dst net.Conn, wg *sync.WaitGroup, direction string) {
 	defer wg.Done()
-	defer src.Close()
-	defer dst.Close()
 
 	syncer := acquireSyncPair(src, dst)
 	defer releaseSyncPair(syncer)
+	defer syncer.Flush()
 
 	if n, err := syncer.Sync(); err != nil {
-		log.Printf("cannot pump %s (written %d bytes): %w", direction, n, err)
+		log.Printf("cannot pump %s (written %d bytes): %v", direction, n, err)
 	}
 }
