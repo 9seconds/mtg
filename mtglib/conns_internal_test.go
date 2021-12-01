@@ -14,7 +14,7 @@ import (
 )
 
 type ConnRewindBaseConn struct {
-	testlib.NetConnMock
+	testlib.EssentialsConnMock
 
 	readBuffer bytes.Buffer
 }
@@ -29,13 +29,13 @@ type ConnTrafficTestSuite struct {
 	suite.Suite
 
 	eventStreamMock *EventStreamMock
-	connMock        *testlib.NetConnMock
+	connMock        *testlib.EssentialsConnMock
 	conn            io.ReadWriter
 }
 
 func (suite *ConnTrafficTestSuite) SetupTest() {
 	suite.eventStreamMock = &EventStreamMock{}
-	suite.connMock = &testlib.NetConnMock{}
+	suite.connMock = &testlib.EssentialsConnMock{}
 	suite.conn = connTraffic{
 		Conn:     suite.connMock,
 		streamID: "CONNID",

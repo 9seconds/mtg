@@ -38,9 +38,13 @@ require (
 	github.com/gotd/ige v0.1.5 // indirect
 	github.com/gotd/xor v0.1.1 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
+	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
+	github.com/txthinking/runnergroup v0.0.0-20210608031112-152c7c4432bf // indirect
+	github.com/txthinking/socks5 v0.0.0-20211121111206-e03c1217a50b // indirect
+	github.com/txthinking/x v0.0.0-20210326105829-476fab902fbe // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.16.0 // indirect

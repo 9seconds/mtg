@@ -2,11 +2,12 @@ package obfuscated2
 
 import (
 	"crypto/cipher"
-	"net"
+
+	"github.com/9seconds/mtg/v2/essentials"
 )
 
 type Conn struct {
-	net.Conn
+	essentials.Conn
 
 	Encryptor cipher.Stream
 	Decryptor cipher.Stream

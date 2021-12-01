@@ -48,7 +48,7 @@ func (s *syncPair) Flush() error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	return s.writer.Flush()
+	return s.writer.Flush() // nolint: wrapcheck
 }
 
 func (s *syncPair) readBlocking(p []byte, blocking bool) (int, error) {

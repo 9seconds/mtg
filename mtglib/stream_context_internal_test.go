@@ -12,7 +12,7 @@ import (
 type StreamContextTestSuite struct {
 	suite.Suite
 
-	connMock  *testlib.NetConnMock
+	connMock  *testlib.EssentialsConnMock
 	logger    NoopLogger
 	ctx       *streamContext
 	ctxCancel context.CancelFunc
@@ -27,7 +27,7 @@ func (suite *StreamContextTestSuite) SetupTest() {
 	ctx = context.WithValue(ctx, "key", "value") // nolint: golint, revive, staticcheck
 
 	suite.ctxCancel = cancel
-	suite.connMock = &testlib.NetConnMock{}
+	suite.connMock = &testlib.EssentialsConnMock{}
 
 	addr := &net.TCPAddr{
 		IP:   net.ParseIP("10.0.0.10"),
@@ -73,7 +73,7 @@ func (suite *StreamContextTestSuite) TestClientIP() {
 func (suite *StreamContextTestSuite) TestClose() {
 	suite.connMock.On("Close").Once().Return(nil)
 
-	tgConnMock := &testlib.NetConnMock{}
+	tgConnMock := &testlib.EssentialsConnMock{}
 	tgConnMock.On("Close").Once().Return(nil)
 
 	suite.ctx.telegramConn = tgConnMock

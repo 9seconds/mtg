@@ -23,6 +23,8 @@ import (
 	"net"
 	"net/http"
 	"time"
+
+	"github.com/9seconds/mtg/v2/essentials"
 )
 
 var (
@@ -116,16 +118,16 @@ const (
 // 3. Doing HTTP requests (for example, for FireHOL ipblocklist).
 type Network interface {
 	// Dial establishes context-free TCP connections.
-	Dial(network, address string) (net.Conn, error)
+	Dial(network, address string) (essentials.Conn, error)
 
 	// DialContext dials using a context. This is a preferrable
 	// way of establishing TCP connections.
-	DialContext(ctx context.Context, network, address string) (net.Conn, error)
+	DialContext(ctx context.Context, network, address string) (essentials.Conn, error)
 
 	// MakeHTTPClient build an HTTP client with given dial function. If
 	// nothing is provided, then DialContext of this interface is going
 	// to be used.
-	MakeHTTPClient(func(ctx context.Context, network, address string) (net.Conn, error)) *http.Client
+	MakeHTTPClient(func(ctx context.Context, network, address string) (essentials.Conn, error)) *http.Client
 }
 
 // AntiReplayCache is an interface that is used to detect replay attacks

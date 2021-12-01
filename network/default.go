@@ -5,17 +5,19 @@ import (
 	"fmt"
 	"net"
 	"time"
+
+	"github.com/9seconds/mtg/v2/essentials"
 )
 
 type defaultDialer struct {
 	net.Dialer
 }
 
-func (d *defaultDialer) Dial(network, address string) (net.Conn, error) {
+func (d *defaultDialer) Dial(network, address string) (essentials.Conn, error) {
 	return d.DialContext(context.Background(), network, address)
 }
 
-func (d *defaultDialer) DialContext(ctx context.Context, network, address string) (net.Conn, error) {
+func (d *defaultDialer) DialContext(ctx context.Context, network, address string) (essentials.Conn, error) {
 	switch network {
 	case "tcp", "tcp4", "tcp6": // nolint: goconst
 	default:
@@ -34,7 +36,7 @@ func (d *defaultDialer) DialContext(ctx context.Context, network, address string
 		return nil, fmt.Errorf("cannot set socket options: %w", err)
 	}
 
-	return conn, nil
+	return conn.(essentials.Conn), nil
 }
 
 // NewDefaultDialer build a new dialer which dials bypassing proxies

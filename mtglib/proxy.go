@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/9seconds/mtg/v2/essentials"
 	"github.com/9seconds/mtg/v2/mtglib/internal/faketls"
 	"github.com/9seconds/mtg/v2/mtglib/internal/faketls/record"
 	"github.com/9seconds/mtg/v2/mtglib/internal/obfuscated2"
@@ -44,7 +45,7 @@ func (p *Proxy) DomainFrontingAddress() string {
 
 // ServeConn serves a connection. We do not check IP blocklist and
 // concurrency limit here.
-func (p *Proxy) ServeConn(conn net.Conn) {
+func (p *Proxy) ServeConn(conn essentials.Conn) {
 	p.streamWaitGroup.Add(1)
 	defer p.streamWaitGroup.Done()
 
@@ -299,7 +300,7 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 
 	pool, err := ants.NewPoolWithFunc(opts.getConcurrency(),
 		func(arg interface{}) {
-			proxy.ServeConn(arg.(net.Conn))
+			proxy.ServeConn(arg.(essentials.Conn))
 		},
 		ants.WithLogger(opts.getLogger("ants")),
 		ants.WithNonblocking(true))

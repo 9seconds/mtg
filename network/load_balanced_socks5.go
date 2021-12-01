@@ -4,19 +4,20 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
-	"net"
 	"net/url"
+
+	"github.com/9seconds/mtg/v2/essentials"
 )
 
 type loadBalancedSocks5Dialer struct {
 	dialers []Dialer
 }
 
-func (l loadBalancedSocks5Dialer) Dial(network, address string) (net.Conn, error) {
+func (l loadBalancedSocks5Dialer) Dial(network, address string) (essentials.Conn, error) {
 	return l.DialContext(context.Background(), network, address)
 }
 
-func (l loadBalancedSocks5Dialer) DialContext(ctx context.Context, network, address string) (net.Conn, error) {
+func (l loadBalancedSocks5Dialer) DialContext(ctx context.Context, network, address string) (essentials.Conn, error) {
 	length := len(l.dialers)
 	start := rand.Intn(length)
 	moved := false

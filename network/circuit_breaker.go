@@ -2,9 +2,10 @@ package network
 
 import (
 	"context"
-	"net"
 	"sync/atomic"
 	"time"
+
+	"github.com/9seconds/mtg/v2/essentials"
 )
 
 const (
@@ -30,12 +31,12 @@ type circuitBreakerDialer struct {
 	resetFailuresTimeout time.Duration
 }
 
-func (c *circuitBreakerDialer) Dial(network, address string) (net.Conn, error) {
+func (c *circuitBreakerDialer) Dial(network, address string) (essentials.Conn, error) {
 	return c.DialContext(context.Background(), network, address)
 }
 
 func (c *circuitBreakerDialer) DialContext(ctx context.Context,
-	network, address string) (net.Conn, error) {
+	network, address string) (essentials.Conn, error) {
 	switch atomic.LoadUint32(&c.state) {
 	case circuitBreakerStateClosed:
 		return c.doClosed(ctx, network, address)
@@ -47,7 +48,7 @@ func (c *circuitBreakerDialer) DialContext(ctx context.Context,
 }
 
 func (c *circuitBreakerDialer) doClosed(ctx context.Context,
-	network, address string) (net.Conn, error) {
+	network, address string) (essentials.Conn, error) {
 	conn, err := c.Dialer.DialContext(ctx, network, address)
 
 	select {
@@ -78,7 +79,8 @@ func (c *circuitBreakerDialer) doClosed(ctx context.Context,
 	return conn, err // nolint: wrapcheck
 }
 
-func (c *circuitBreakerDialer) doHalfOpened(ctx context.Context, network, address string) (net.Conn, error) {
+func (c *circuitBreakerDialer) doHalfOpened(ctx context.Context,
+	network, address string) (essentials.Conn, error) {
 	if !atomic.CompareAndSwapUint32(&c.halfOpenAttempts, 0, 1) {
 		return nil, ErrCircuitBreakerOpened
 	}

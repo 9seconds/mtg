@@ -2,11 +2,14 @@ package relay
 
 import (
 	"context"
-	"net"
+	"errors"
+	"io"
 	"sync"
+
+	"github.com/9seconds/mtg/v2/essentials"
 )
 
-func Relay(ctx context.Context, log Logger, telegramConn, clientConn net.Conn) {
+func Relay(ctx context.Context, log Logger, telegramConn, clientConn essentials.Conn) {
 	defer telegramConn.Close()
 	defer clientConn.Close()
 
@@ -29,14 +32,25 @@ func Relay(ctx context.Context, log Logger, telegramConn, clientConn net.Conn) {
 	wg.Wait()
 }
 
-func pump(log Logger, src, dst net.Conn, wg *sync.WaitGroup, direction string) {
-	defer wg.Done()
-
+func pump(log Logger, src, dst essentials.Conn, wg *sync.WaitGroup, direction string) {
 	syncer := acquireSyncPair(src, dst)
-	defer releaseSyncPair(syncer)
-	defer syncer.Flush()
 
-	if n, err := syncer.Sync(); err != nil {
-		log.Printf("cannot pump %s (written %d bytes): %v", direction, n, err)
+	defer func() {
+		syncer.Flush()
+		releaseSyncPair(syncer)
+		src.CloseRead()
+		dst.CloseWrite()
+		wg.Done()
+	}()
+
+	n, err := syncer.Sync()
+
+	switch {
+	case err == nil:
+		log.Printf("%s has been finished", direction)
+	case errors.Is(err, io.EOF):
+		log.Printf("%s has been finished because of EOF. Written %d bytes", direction, n)
+	default:
+		log.Printf("%s has been finished (written %d bytes): %v", direction, n, err)
 	}
 }

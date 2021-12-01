@@ -2,7 +2,8 @@ package telegram
 
 import (
 	"context"
-	"net"
+
+	"github.com/9seconds/mtg/v2/essentials"
 )
 
 type preferIP uint8
@@ -82,5 +83,5 @@ var (
 )
 
 type Dialer interface {
-	DialContext(ctx context.Context, network, address string) (net.Conn, error)
+	DialContext(ctx context.Context, network, address string) (essentials.Conn, error)
 }

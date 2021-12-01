@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/9seconds/mtg/v2/essentials"
 	"github.com/9seconds/mtg/v2/mtglib"
 )
 
@@ -30,11 +31,11 @@ type network struct {
 	dns         *dnsResolver
 }
 
-func (n *network) Dial(protocol, address string) (net.Conn, error) {
+func (n *network) Dial(protocol, address string) (essentials.Conn, error) {
 	return n.DialContext(context.Background(), protocol, address)
 }
 
-func (n *network) DialContext(ctx context.Context, protocol, address string) (net.Conn, error) {
+func (n *network) DialContext(ctx context.Context, protocol, address string) (essentials.Conn, error) {
 	host, port, _ := net.SplitHostPort(address)
 
 	ips, err := n.dnsResolve(protocol, host)
@@ -46,7 +47,8 @@ func (n *network) DialContext(ctx context.Context, protocol, address string) (ne
 		ips[i], ips[j] = ips[j], ips[i]
 	})
 
-	var conn net.Conn
+	var conn essentials.Conn
+
 	for _, v := range ips {
 		conn, err = n.dialer.DialContext(ctx, protocol, net.JoinHostPort(v, port))
 
@@ -59,7 +61,7 @@ func (n *network) DialContext(ctx context.Context, protocol, address string) (ne
 }
 
 func (n *network) MakeHTTPClient(dialFunc func(ctx context.Context,
-	network, address string) (net.Conn, error)) *http.Client {
+	network, address string) (essentials.Conn, error)) *http.Client {
 	if dialFunc == nil {
 		dialFunc = n.DialContext
 	}
@@ -144,13 +146,15 @@ func NewNetwork(dialer Dialer,
 
 func makeHTTPClient(userAgent string,
 	timeout time.Duration,
-	dialFunc func(ctx context.Context, network, address string) (net.Conn, error)) *http.Client {
+	dialFunc func(ctx context.Context, network, address string) (essentials.Conn, error)) *http.Client {
 	return &http.Client{
 		Timeout: timeout,
 		Transport: networkHTTPTransport{
 			userAgent: userAgent,
 			next: &http.Transport{
-				DialContext: dialFunc,
+				DialContext: func(ctx context.Context, network, address string) (net.Conn, error) {
+					return dialFunc(ctx, network, address)
+				},
 			},
 		},
 	}

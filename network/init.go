@@ -20,8 +20,9 @@ package network
 import (
 	"context"
 	"errors"
-	"net"
 	"time"
+
+	"github.com/9seconds/mtg/v2/essentials"
 )
 
 const (
@@ -95,6 +96,6 @@ var (
 // Dialer defines an interface which is required to bootstrap a network
 // instance from.
 type Dialer interface {
-	Dial(network, address string) (net.Conn, error)
-	DialContext(ctx context.Context, network, address string) (net.Conn, error)
+	Dial(network, address string) (essentials.Conn, error)
+	DialContext(ctx context.Context, network, address string) (essentials.Conn, error)
 }

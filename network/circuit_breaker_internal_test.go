@@ -21,7 +21,7 @@ type CircuitBreakerTestSuite struct {
 	mutex          sync.Mutex
 	ctx            context.Context
 	ctxCancel      context.CancelFunc
-	connMock       *testlib.NetConnMock
+	connMock       *testlib.EssentialsConnMock
 	baseDialerMock *DialerMock
 }
 
@@ -29,7 +29,7 @@ func (suite *CircuitBreakerTestSuite) SetupTest() {
 	suite.mutex = sync.Mutex{}
 	suite.ctx, suite.ctxCancel = context.WithCancel(context.Background())
 	suite.baseDialerMock = &DialerMock{}
-	suite.connMock = &testlib.NetConnMock{}
+	suite.connMock = &testlib.EssentialsConnMock{}
 	suite.d = newCircuitBreakerDialer(suite.baseDialerMock,
 		3, 100*time.Millisecond, 50*time.Millisecond)
 }
