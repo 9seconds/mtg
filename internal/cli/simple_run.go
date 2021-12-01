@@ -15,7 +15,7 @@ type SimpleRun struct {
 
 	Debug               bool          `kong:"name='debug',short='d',help='Run in debug mode.'"`                                                                        // nolint: lll
 	Concurrency         uint64        `kong:"name='concurrency',short='c',default='8192',help='Max number of concurrent connection to proxy.'"`                        // nolint: lll
-	TCPBuffer           string        `kong:"name='tcp-buffer',short='b',default='4KB',help='Size of TCP buffer to use.'"`                                             // nolint: lll
+	TCPBuffer           string        `kong:"name='tcp-buffer',short='b',default='4KB',help='Deprecated and ignored'"`                                                 // nolint: lll
 	PreferIP            string        `kong:"name='prefer-ip',short='i',default='prefer-ipv6',help='IP preference. By default we prefer IPv6 with fallback to IPv4.'"` // nolint: lll
 	DomainFrontingPort  uint64        `kong:"name='domain-fronting-port',short='p',default='443',help='A port to access for domain fronting.'"`                        // nolint: lll
 	DOHIP               net.IP        `kong:"name='doh-ip',short='n',default='9.9.9.9',help='IP address of DNS-over-HTTP to use.'"`                                    // nolint: lll
@@ -36,10 +36,6 @@ func (s *SimpleRun) Run(cli *CLI, version string) error { // nolint: cyclop
 
 	if err := conf.Concurrency.Set(strconv.FormatUint(s.Concurrency, 10)); err != nil { // nolint: gomnd
 		return fmt.Errorf("incorrect concurrency: %w", err)
-	}
-
-	if err := conf.TCPBuffer.Set(s.TCPBuffer); err != nil {
-		return fmt.Errorf("incorrect tcp-buffer: %w", err)
 	}
 
 	if err := conf.PreferIP.Set(s.PreferIP); err != nil {

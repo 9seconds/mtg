@@ -13,6 +13,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/9seconds/mtg/v2/essentials"
 	"github.com/9seconds/mtg/v2/internal/config"
 	"github.com/9seconds/mtg/v2/internal/utils"
 	"github.com/9seconds/mtg/v2/mtglib"
@@ -106,7 +107,7 @@ func (a *Access) Run(cli *CLI, version string) error {
 }
 
 func (a *Access) getIP(ntw mtglib.Network, protocol string) net.IP {
-	client := ntw.MakeHTTPClient(func(ctx context.Context, network, address string) (net.Conn, error) {
+	client := ntw.MakeHTTPClient(func(ctx context.Context, network, address string) (essentials.Conn, error) {
 		return ntw.DialContext(ctx, protocol, address) // nolint: wrapcheck
 	})
 

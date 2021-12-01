@@ -38,10 +38,9 @@ func makeNetwork(conf *config.Config, version string) (mtglib.Network, error) {
 	tcpTimeout := conf.Network.Timeout.TCP.Get(network.DefaultTimeout)
 	httpTimeout := conf.Network.Timeout.HTTP.Get(network.DefaultHTTPTimeout)
 	dohIP := conf.Network.DOHIP.Get(net.ParseIP(network.DefaultDOHHostname)).String()
-	bufferSize := conf.TCPBuffer.Get(network.DefaultBufferSize)
 	userAgent := "mtg/" + version
 
-	baseDialer, err := network.NewDefaultDialer(tcpTimeout, int(bufferSize))
+	baseDialer, err := network.NewDefaultDialer(tcpTimeout, 0)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build a default dialer: %w", err)
 	}
@@ -193,7 +192,6 @@ func runProxy(conf *config.Config, version string) error { // nolint: funlen
 		EventStream:     eventStream,
 
 		Secret:             conf.Secret,
-		BufferSize:         conf.TCPBuffer.Get(mtglib.DefaultBufferSize),
 		DomainFrontingPort: conf.DomainFrontingPort.Get(mtglib.DefaultDomainFrontingPort),
 		PreferIP:           conf.PreferIP.Get(mtglib.DefaultPreferIP),
 
@@ -206,7 +204,7 @@ func runProxy(conf *config.Config, version string) error { // nolint: funlen
 		return fmt.Errorf("cannot create a proxy: %w", err)
 	}
 
-	listener, err := utils.NewListener(conf.BindTo.Get(""), int(opts.BufferSize))
+	listener, err := utils.NewListener(conf.BindTo.Get(""), 0)
 	if err != nil {
 		return fmt.Errorf("cannot start proxy: %w", err)
 	}

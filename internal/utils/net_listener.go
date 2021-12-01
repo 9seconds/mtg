@@ -9,8 +9,6 @@ import (
 
 type Listener struct {
 	net.Listener
-
-	bufferSize int
 }
 
 func (l Listener) Accept() (net.Conn, error) {
@@ -19,7 +17,7 @@ func (l Listener) Accept() (net.Conn, error) {
 		return nil, err // nolint: wrapcheck
 	}
 
-	if err := network.SetClientSocketOptions(conn, l.bufferSize); err != nil {
+	if err := network.SetClientSocketOptions(conn, 0); err != nil {
 		conn.Close()
 
 		return nil, fmt.Errorf("cannot set TCP options: %w", err)
@@ -35,7 +33,6 @@ func NewListener(bindTo string, bufferSize int) (net.Listener, error) {
 	}
 
 	return Listener{
-		Listener:   base,
-		bufferSize: bufferSize,
+		Listener: base,
 	}, nil
 }

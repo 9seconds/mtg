@@ -3,8 +3,9 @@ package telegram
 import (
 	"context"
 	"fmt"
-	"net"
 	"strings"
+
+	"github.com/9seconds/mtg/v2/essentials"
 )
 
 type Telegram struct {
@@ -13,7 +14,7 @@ type Telegram struct {
 	pool     addressPool
 }
 
-func (t Telegram) Dial(ctx context.Context, dc int) (net.Conn, error) {
+func (t Telegram) Dial(ctx context.Context, dc int) (essentials.Conn, error) {
 	var addresses []tgAddr
 
 	switch t.preferIP {
@@ -28,7 +29,7 @@ func (t Telegram) Dial(ctx context.Context, dc int) (net.Conn, error) {
 	}
 
 	var (
-		conn net.Conn
+		conn essentials.Conn
 		err  error
 	)
 

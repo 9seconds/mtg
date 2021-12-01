@@ -2,17 +2,18 @@ package relay
 
 import (
 	"context"
+	"errors"
 	"io"
-	"net"
 	"sync"
+
+	"github.com/9seconds/mtg/v2/essentials"
 )
 
-func Relay(ctx context.Context, log Logger, bufferSize int,
-	telegramConn net.Conn, clientConn io.ReadWriteCloser) {
+func Relay(ctx context.Context, log Logger, telegramConn, clientConn essentials.Conn) {
 	defer telegramConn.Close()
 	defer clientConn.Close()
 
-	ctx, cancel := context.WithTimeout(ctx, getConnectionTimeToLive())
+	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	go func() {
@@ -21,30 +22,35 @@ func Relay(ctx context.Context, log Logger, bufferSize int,
 		clientConn.Close()
 	}()
 
-	buffers := acquireEastWest(bufferSize)
-	defer releaseEastWest(buffers)
-
-	telegramConn = conn{
-		Conn: telegramConn,
-	}
-
 	wg := &sync.WaitGroup{}
 	wg.Add(2) // nolint: gomnd
 
-	go pump(log, telegramConn, clientConn, wg, buffers.east, "east -> west")
+	go pump(log, telegramConn, clientConn, wg, "client -> telegram")
 
-	pump(log, clientConn, telegramConn, wg, buffers.west, "west -> east")
+	pump(log, clientConn, telegramConn, wg, "telegram -> client")
 
 	wg.Wait()
 }
 
-func pump(log Logger, src io.ReadCloser, dst io.WriteCloser, wg *sync.WaitGroup,
-	buf []byte, direction string) {
-	defer wg.Done()
-	defer src.Close()
-	defer dst.Close()
+func pump(log Logger, src, dst essentials.Conn, wg *sync.WaitGroup, direction string) {
+	syncer := acquireSyncPair(src, dst)
 
-	if n, err := io.CopyBuffer(dst, src, buf); err != nil {
-		log.Printf("cannot pump %s (written %d bytes): %w", direction, n, err)
+	defer func() {
+		syncer.Flush()
+		releaseSyncPair(syncer)
+		src.CloseRead()  // nolint: errcheck
+		dst.CloseWrite() // nolint: errcheck
+		wg.Done()
+	}()
+
+	n, err := syncer.Sync()
+
+	switch {
+	case err == nil:
+		log.Printf("%s has been finished", direction)
+	case errors.Is(err, io.EOF):
+		log.Printf("%s has been finished because of EOF. Written %d bytes", direction, n)
+	default:
+		log.Printf("%s has been finished (written %d bytes): %v", direction, n, err)
 	}
 }

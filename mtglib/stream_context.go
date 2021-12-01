@@ -6,13 +6,15 @@ import (
 	"encoding/base64"
 	"net"
 	"time"
+
+	"github.com/9seconds/mtg/v2/essentials"
 )
 
 type streamContext struct {
 	ctx          context.Context
 	ctxCancel    context.CancelFunc
-	clientConn   net.Conn
-	telegramConn net.Conn
+	clientConn   essentials.Conn
+	telegramConn essentials.Conn
 	streamID     string
 	dc           int
 	logger       Logger
@@ -50,7 +52,7 @@ func (s *streamContext) ClientIP() net.IP {
 	return s.clientConn.RemoteAddr().(*net.TCPAddr).IP
 }
 
-func newStreamContext(ctx context.Context, logger Logger, clientConn net.Conn) *streamContext {
+func newStreamContext(ctx context.Context, logger Logger, clientConn essentials.Conn) *streamContext {
 	connIDBytes := make([]byte, ConnectionIDBytesLength)
 
 	if _, err := rand.Read(connIDBytes); err != nil {

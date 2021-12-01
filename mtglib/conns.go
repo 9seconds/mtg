@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"context"
 	"io"
-	"net"
 	"sync"
+
+	"github.com/9seconds/mtg/v2/essentials"
 )
 
 type connTraffic struct {
-	net.Conn
+	essentials.Conn
 
 	streamID string
 	stream   EventStream
@@ -37,7 +38,7 @@ func (c connTraffic) Write(b []byte) (int, error) {
 }
 
 type connRewind struct {
-	net.Conn
+	essentials.Conn
 
 	active io.Reader
 	buf    bytes.Buffer
@@ -58,7 +59,7 @@ func (c *connRewind) Rewind() {
 	c.active = io.MultiReader(&c.buf, c.Conn)
 }
 
-func newConnRewind(conn net.Conn) *connRewind {
+func newConnRewind(conn essentials.Conn) *connRewind {
 	rv := &connRewind{
 		Conn: conn,
 	}

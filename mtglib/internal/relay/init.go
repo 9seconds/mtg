@@ -3,10 +3,9 @@ package relay
 import "time"
 
 const (
-	ConnectionTimeToLiveMin = 2 * time.Minute
-	ConnectionTimeToLiveMax = 10 * time.Minute
-	TimeoutMin              = 20 * time.Second
-	TimeoutMax              = time.Minute
+	copyBufferSize   = 64 * 1024
+	writerBufferSize = 128 * 1024
+	readTimeout      = 10 * time.Millisecond
 )
 
 type Logger interface {

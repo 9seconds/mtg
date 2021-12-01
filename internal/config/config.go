@@ -25,7 +25,6 @@ type Config struct {
 	AllowFallbackOnUnknownDC TypeBool        `json:"allowFallbackOnUnknownDc"`
 	Secret                   mtglib.Secret   `json:"secret"`
 	BindTo                   TypeHostPort    `json:"bindTo"`
-	TCPBuffer                TypeBytes       `json:"tcpBuffer"`
 	PreferIP                 TypePreferIP    `json:"preferIp"`
 	DomainFrontingPort       TypePort        `json:"domainFrontingPort"`
 	TolerateTimeSkewness     TypeDuration    `json:"tolerateTimeSkewness"`

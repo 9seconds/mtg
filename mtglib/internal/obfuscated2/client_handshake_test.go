@@ -42,7 +42,7 @@ func (suite *ClientHandshakeTestSuite) TestOk() {
 			writeData := make([]byte, len(snapshot.Encrypted.Text.data))
 			readData := make([]byte, len(snapshot.Decrypted.Text.data))
 
-			connMock := &testlib.NetConnMock{}
+			connMock := &testlib.EssentialsConnMock{}
 			connMock.On("Read", mock.Anything).
 				Once().
 				Return(len(snapshot.Decrypted.Text.data), nil).
