@@ -38,8 +38,8 @@ func pump(log Logger, src, dst essentials.Conn, wg *sync.WaitGroup, direction st
 	defer func() {
 		syncer.Flush()
 		releaseSyncPair(syncer)
-		src.CloseRead()
-		dst.CloseWrite()
+		src.CloseRead()  // nolint: errcheck
+		dst.CloseWrite() // nolint: errcheck
 		wg.Done()
 	}()
 

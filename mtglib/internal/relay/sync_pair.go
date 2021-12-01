@@ -42,7 +42,7 @@ func (s *syncPair) Write(p []byte) (int, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	n, err := s.writer.Write(p) // nolint: wrapcheck
+	n, err := s.writer.Write(p)
 
 	// optimization for a case when we have a small package and want to avoid a
 	// delay in readTimeout. In that case, we assume that peer has finished to
@@ -52,7 +52,7 @@ func (s *syncPair) Write(p []byte) (int, error) {
 		err = s.writer.Flush()
 	}
 
-	return n, err
+	return n, err // nolint: wrapcheck
 }
 
 func (s *syncPair) Flush() error {
