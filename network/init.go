@@ -20,8 +20,9 @@ package network
 import (
 	"context"
 	"errors"
-	"net"
 	"time"
+
+	"github.com/9seconds/mtg/v2/essentials"
 )
 
 const (
@@ -33,9 +34,15 @@ const (
 	// request.
 	DefaultHTTPTimeout = 10 * time.Second
 
+	// Deprecated:
+	//
 	// DefaultBufferSize defines a TCP buffer size. Both read and write, so
 	// for real size, please multiply this number by 2.
 	DefaultBufferSize = 16 * 1024 // 16 kib
+
+	// DefaultTCPKeepAlivePeriod defines a time period between 2
+	// consequitive probes.
+	DefaultTCPKeepAlivePeriod = 10 * time.Second
 
 	// ProxyDialerOpenThreshold is used for load balancing SOCKS5 dialer
 	// only.
@@ -89,6 +96,6 @@ var (
 // Dialer defines an interface which is required to bootstrap a network
 // instance from.
 type Dialer interface {
-	Dial(network, address string) (net.Conn, error)
-	DialContext(ctx context.Context, network, address string) (net.Conn, error)
+	Dial(network, address string) (essentials.Conn, error)
+	DialContext(ctx context.Context, network, address string) (essentials.Conn, error)
 }

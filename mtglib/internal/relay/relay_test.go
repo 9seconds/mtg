@@ -17,8 +17,8 @@ type RelayTestSuite struct {
 	loggerMock       relay.Logger
 	ctx              context.Context
 	ctxCancel        context.CancelFunc
-	telegramConnMock *testlib.NetConnMock
-	clientConnMock   *testlib.NetConnMock
+	telegramConnMock *testlib.EssentialsConnMock
+	clientConnMock   *testlib.EssentialsConnMock
 }
 
 func (suite *RelayTestSuite) SetupTest() {
@@ -26,8 +26,8 @@ func (suite *RelayTestSuite) SetupTest() {
 	suite.ctx = ctx
 	suite.ctxCancel = cancel
 	suite.loggerMock = &loggerMock{}
-	suite.telegramConnMock = &testlib.NetConnMock{}
-	suite.clientConnMock = &testlib.NetConnMock{}
+	suite.telegramConnMock = &testlib.EssentialsConnMock{}
+	suite.clientConnMock = &testlib.EssentialsConnMock{}
 }
 
 func (suite *RelayTestSuite) TearDownTest() {
@@ -37,17 +37,21 @@ func (suite *RelayTestSuite) TearDownTest() {
 }
 
 func (suite *RelayTestSuite) TestExit() {
-	suite.telegramConnMock.On("SetReadDeadline", mock.Anything).Return(nil)
 	suite.telegramConnMock.On("Close").Return(nil)
+	suite.telegramConnMock.On("CloseRead").Return(nil).Once()
+	suite.telegramConnMock.On("CloseWrite").Return(nil).Once()
 	suite.telegramConnMock.On("Read", mock.Anything).Return(10, io.EOF).Once()
 	suite.telegramConnMock.On("Write", mock.Anything).Return(10, io.EOF).Maybe()
+	suite.telegramConnMock.On("SetReadDeadline", mock.Anything).Return(nil).Maybe()
 
 	suite.clientConnMock.On("Read", mock.Anything).Return(0, io.EOF).Once()
 	suite.clientConnMock.On("Write", mock.Anything).Return(10, io.EOF).Maybe()
 	suite.clientConnMock.On("Close").Return(nil)
+	suite.clientConnMock.On("CloseRead").Return(nil).Once()
+	suite.clientConnMock.On("CloseWrite").Return(nil).Once()
+	suite.clientConnMock.On("SetReadDeadline", mock.Anything).Return(nil).Maybe()
 
-	relay.Relay(suite.ctx, suite.loggerMock, 1024,
-		suite.telegramConnMock, suite.clientConnMock)
+	relay.Relay(suite.ctx, suite.loggerMock, suite.telegramConnMock, suite.clientConnMock)
 }
 
 func TestRelay(t *testing.T) {

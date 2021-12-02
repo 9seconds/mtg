@@ -196,7 +196,7 @@ go get github.com/9seconds/mtg/v2
 #### Build from sources
 
 ```console
-git clone https://github.com:9seconds/mtg.git
+git clone https://github.com/9seconds/mtg.git
 cd mtg
 make static
 ```

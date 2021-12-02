@@ -38,10 +38,9 @@ func makeNetwork(conf *config.Config, version string) (mtglib.Network, error) {
 	tcpTimeout := conf.Network.Timeout.TCP.Get(network.DefaultTimeout)
 	httpTimeout := conf.Network.Timeout.HTTP.Get(network.DefaultHTTPTimeout)
 	dohIP := conf.Network.DOHIP.Get(net.ParseIP(network.DefaultDOHHostname)).String()
-	bufferSize := conf.TCPBuffer.Get(network.DefaultBufferSize)
 	userAgent := "mtg/" + version
 
-	baseDialer, err := network.NewDefaultDialer(tcpTimeout, int(bufferSize))
+	baseDialer, err := network.NewDefaultDialer(tcpTimeout, 0)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build a default dialer: %w", err)
 	}
@@ -86,15 +85,15 @@ func makeAntiReplayCache(conf *config.Config) mtglib.AntiReplayCache {
 	)
 }
 
-func makeIPBlocklist(conf *config.Config, logger mtglib.Logger, ntw mtglib.Network) (mtglib.IPBlocklist, error) {
-	if !conf.Defense.Blocklist.Enabled.Get(false) {
+func makeIPBlocklist(conf config.ListConfig, logger mtglib.Logger, ntw mtglib.Network) (mtglib.IPBlocklist, error) {
+	if !conf.Enabled.Get(false) {
 		return ipblocklist.NewNoop(), nil
 	}
 
 	remoteURLs := []string{}
 	localFiles := []string{}
 
-	for _, v := range conf.Defense.Blocklist.URLs {
+	for _, v := range conf.URLs {
 		if v.IsRemote() {
 			remoteURLs = append(remoteURLs, v.String())
 		} else {
@@ -104,7 +103,7 @@ func makeIPBlocklist(conf *config.Config, logger mtglib.Logger, ntw mtglib.Netwo
 
 	firehol, err := ipblocklist.NewFirehol(logger.Named("ipblockist"),
 		ntw,
-		conf.Defense.Blocklist.DownloadConcurrency.Get(1),
+		conf.DownloadConcurrency.Get(1),
 		remoteURLs,
 		localFiles)
 	if err != nil {
@@ -153,7 +152,7 @@ func makeEventStream(conf *config.Config, logger mtglib.Logger) (mtglib.EventStr
 	return events.NewNoopStream(), nil
 }
 
-func runProxy(conf *config.Config, version string) error {
+func runProxy(conf *config.Config, version string) error { // nolint: funlen
 	logger := makeLogger(conf)
 
 	logger.BindJSON("configuration", conf.String()).Debug("configuration")
@@ -163,9 +162,20 @@ func runProxy(conf *config.Config, version string) error {
 		return fmt.Errorf("cannot build network: %w", err)
 	}
 
-	blocklist, err := makeIPBlocklist(conf, logger, ntw)
+	blocklist, err := makeIPBlocklist(conf.Defense.Blocklist, logger, ntw)
 	if err != nil {
 		return fmt.Errorf("cannot build ip blocklist: %w", err)
+	}
+
+	var whitelist mtglib.IPBlocklist
+
+	if conf.Defense.Allowlist.Enabled.Get(false) {
+		whlist, err := makeIPBlocklist(conf.Defense.Allowlist, logger, ntw)
+		if err != nil {
+			return fmt.Errorf("cannot build ip blocklist: %w", err)
+		}
+
+		whitelist = whlist
 	}
 
 	eventStream, err := makeEventStream(conf, logger)
@@ -178,14 +188,15 @@ func runProxy(conf *config.Config, version string) error {
 		Network:         ntw,
 		AntiReplayCache: makeAntiReplayCache(conf),
 		IPBlocklist:     blocklist,
+		IPWhitelist:     whitelist,
 		EventStream:     eventStream,
 
 		Secret:             conf.Secret,
-		BufferSize:         conf.TCPBuffer.Get(mtglib.DefaultBufferSize),
 		DomainFrontingPort: conf.DomainFrontingPort.Get(mtglib.DefaultDomainFrontingPort),
 		PreferIP:           conf.PreferIP.Get(mtglib.DefaultPreferIP),
 
 		AllowFallbackOnUnknownDC: conf.AllowFallbackOnUnknownDC.Get(false),
+		TolerateTimeSkewness:     conf.TolerateTimeSkewness.Value,
 	}
 
 	proxy, err := mtglib.NewProxy(opts)
@@ -193,7 +204,7 @@ func runProxy(conf *config.Config, version string) error {
 		return fmt.Errorf("cannot create a proxy: %w", err)
 	}
 
-	listener, err := utils.NewListener(conf.BindTo.Get(""), int(opts.BufferSize))
+	listener, err := utils.NewListener(conf.BindTo.Get(""), 0)
 	if err != nil {
 		return fmt.Errorf("cannot start proxy: %w", err)
 	}

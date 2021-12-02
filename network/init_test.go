@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/9seconds/mtg/v2/essentials"
 	"github.com/9seconds/mtg/v2/network"
 	socks5 "github.com/armon/go-socks5"
 	"github.com/mccutchen/go-httpbin/httpbin"
@@ -18,16 +19,16 @@ type DialerMock struct {
 	mock.Mock
 }
 
-func (d *DialerMock) Dial(network, address string) (net.Conn, error) {
+func (d *DialerMock) Dial(network, address string) (essentials.Conn, error) {
 	args := d.Called(network, address)
 
-	return args.Get(0).(net.Conn), args.Error(1) // nolint: wrapcheck
+	return args.Get(0).(essentials.Conn), args.Error(1) // nolint: wrapcheck
 }
 
-func (d *DialerMock) DialContext(ctx context.Context, network, address string) (net.Conn, error) {
+func (d *DialerMock) DialContext(ctx context.Context, network, address string) (essentials.Conn, error) {
 	args := d.Called(ctx, network, address)
 
-	return args.Get(0).(net.Conn), args.Error(1) // nolint: wrapcheck
+	return args.Get(0).(essentials.Conn), args.Error(1) // nolint: wrapcheck
 }
 
 type HTTPServerTestSuite struct {
@@ -53,7 +54,9 @@ func (suite *HTTPServerTestSuite) MakeURL(path string) string {
 func (suite *HTTPServerTestSuite) MakeHTTPClient(dialer network.Dialer) *http.Client {
 	return &http.Client{
 		Transport: &http.Transport{
-			DialContext: dialer.DialContext,
+			DialContext: func(ctx context.Context, network, address string) (net.Conn, error) {
+				return dialer.DialContext(ctx, network, address) // nolint: wrapcheck
+			},
 		},
 	}
 }

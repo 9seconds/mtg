@@ -13,7 +13,6 @@ type tomlConfig struct {
 	AllowFallbackOnUnknownDC bool   `toml:"allow-fallback-on-unknown-dc" json:"allowFallbackOnUnknownDc,omitempty"`
 	Secret                   string `toml:"secret" json:"secret"`
 	BindTo                   string `toml:"bind-to" json:"bindTo"`
-	TCPBuffer                string `toml:"tcp-buffer" json:"tcpBuffer,omitempty"`
 	PreferIP                 string `toml:"prefer-ip" json:"preferIp,omitempty"`
 	DomainFrontingPort       uint   `toml:"domain-fronting-port" json:"domainFrontingPort,omitempty"`
 	TolerateTimeSkewness     string `toml:"tolerate-time-skewness" json:"tolerateTimeSkewness,omitempty"`
@@ -30,6 +29,12 @@ type tomlConfig struct {
 			URLs                []string `toml:"urls" json:"urls,omitempty"`
 			UpdateEach          string   `toml:"update-each" json:"updateEach,omitempty"`
 		} `toml:"blocklist" json:"blocklist,omitempty"`
+		Allowlist struct {
+			Enabled             bool     `toml:"enabled" json:"enabled,omitempty"`
+			DownloadConcurrency uint     `toml:"download-concurrency" json:"downloadConcurrency,omitempty"`
+			URLs                []string `toml:"urls" json:"urls,omitempty"`
+			UpdateEach          string   `toml:"update-each" json:"updateEach,omitempty"`
+		} `toml:"allowlist" json:"allowlist,omitempty"`
 	} `toml:"defense" json:"defense,omitempty"`
 	Network struct {
 		Timeout struct {

@@ -55,7 +55,7 @@ func (suite *Socks5TestSuite) TestRequestOk() {
 	suite.Equal(http.StatusOK, resp.StatusCode)
 }
 
-func TestSocks5TestSuite(t *testing.T) {
+func TestSocks5(t *testing.T) {
 	t.Parallel()
 	suite.Run(t, &Socks5TestSuite{})
 }

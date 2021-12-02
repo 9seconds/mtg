@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/9seconds/mtg/v2/essentials"
 	"github.com/9seconds/mtg/v2/mtglib/internal/faketls"
 	"github.com/9seconds/mtg/v2/mtglib/internal/faketls/record"
 	"github.com/9seconds/mtg/v2/mtglib/internal/obfuscated2"
@@ -25,7 +26,6 @@ type Proxy struct {
 
 	allowFallbackOnUnknownDC bool
 	tolerateTimeSkewness     time.Duration
-	bufferSize               int
 	domainFrontingPort       int
 	workerPool               *ants.PoolWithFunc
 	telegram                 *telegram.Telegram
@@ -33,7 +33,8 @@ type Proxy struct {
 	secret          Secret
 	network         Network
 	antiReplayCache AntiReplayCache
-	ipBlocklist     IPBlocklist
+	blocklist       IPBlocklist
+	whitelist       IPBlocklist
 	eventStream     EventStream
 	logger          Logger
 }
@@ -45,7 +46,7 @@ func (p *Proxy) DomainFrontingAddress() string {
 
 // ServeConn serves a connection. We do not check IP blocklist and
 // concurrency limit here.
-func (p *Proxy) ServeConn(conn net.Conn) {
+func (p *Proxy) ServeConn(conn essentials.Conn) {
 	p.streamWaitGroup.Add(1)
 	defer p.streamWaitGroup.Done()
 
@@ -84,14 +85,13 @@ func (p *Proxy) ServeConn(conn net.Conn) {
 	relay.Relay(
 		ctx,
 		ctx.logger.Named("relay"),
-		p.bufferSize,
 		ctx.telegramConn,
 		ctx.clientConn,
 	)
 }
 
 // Serve starts a proxy on a given listener.
-func (p *Proxy) Serve(listener net.Listener) error {
+func (p *Proxy) Serve(listener net.Listener) error { // nolint: cyclop
 	p.streamWaitGroup.Add(1)
 	defer p.streamWaitGroup.Done()
 
@@ -109,7 +109,15 @@ func (p *Proxy) Serve(listener net.Listener) error {
 		ipAddr := conn.RemoteAddr().(*net.TCPAddr).IP
 		logger := p.logger.BindStr("ip", ipAddr.String())
 
-		if p.ipBlocklist.Contains(ipAddr) {
+		if p.whitelist != nil && !p.whitelist.Contains(ipAddr) {
+			conn.Close()
+			logger.Info("ip was rejected by whitelist")
+			p.eventStream.Send(p.ctx, NewEventIPBlocklisted(ipAddr))
+
+			continue
+		}
+
+		if p.blocklist.Contains(ipAddr) {
 			conn.Close()
 			logger.Info("ip was blacklisted")
 			p.eventStream.Send(p.ctx, NewEventIPBlocklisted(ipAddr))
@@ -267,7 +275,6 @@ func (p *Proxy) doDomainFronting(ctx *streamContext, conn *connRewind) {
 	relay.Relay(
 		ctx,
 		ctx.logger.Named("domain-fronting"),
-		p.bufferSize,
 		frontConn,
 		conn,
 	)
@@ -291,19 +298,19 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 		secret:                   opts.Secret,
 		network:                  opts.Network,
 		antiReplayCache:          opts.AntiReplayCache,
-		ipBlocklist:              opts.IPBlocklist,
+		blocklist:                opts.IPBlocklist,
+		whitelist:                opts.IPWhitelist,
 		eventStream:              opts.EventStream,
 		logger:                   opts.getLogger("proxy"),
 		domainFrontingPort:       opts.getDomainFrontingPort(),
 		tolerateTimeSkewness:     opts.getTolerateTimeSkewness(),
-		bufferSize:               opts.getBufferSize(),
 		allowFallbackOnUnknownDC: opts.AllowFallbackOnUnknownDC,
 		telegram:                 tg,
 	}
 
 	pool, err := ants.NewPoolWithFunc(opts.getConcurrency(),
 		func(arg interface{}) {
-			proxy.ServeConn(arg.(net.Conn))
+			proxy.ServeConn(arg.(essentials.Conn))
 		},
 		ants.WithLogger(opts.getLogger("ants")),
 		ants.WithNonblocking(true))

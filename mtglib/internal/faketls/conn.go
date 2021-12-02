@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"fmt"
 	"math/rand"
-	"net"
 
+	"github.com/9seconds/mtg/v2/essentials"
 	"github.com/9seconds/mtg/v2/mtglib/internal/faketls/record"
 )
 
 type Conn struct {
-	net.Conn
+	essentials.Conn
 
 	readBuffer bytes.Buffer
 }

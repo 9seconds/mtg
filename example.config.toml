@@ -30,7 +30,9 @@ concurrency = 8192
 # A size of user-space buffer for TCP to use. Since we do 2 connections,
 # then we have tcp-buffer * (4 + 2) per each connection: read/write for
 # each connection + 2 copy buffers to pump the data between sockets.
-tcp-buffer = "4kb"
+#
+# Deprecated: this setting is no longer makes any effect.
+# tcp-buffer = "4kb"
 
 # Sometimes you want to enforce mtg to use some types of
 # IP connectivity to Telegram. We have 4 modes:
@@ -172,6 +174,27 @@ urls = [
     # "/local.file"
 ]
 # How often do we need to update a blocklist set.
+update-each = "24h"
+
+# Allowlist is an opposite to a blocklist. Only those IPs that are coming from
+# subnets defined in these lists are allowed. All others will be rejected.
+#
+# If this feature is disabled, then there won't be any check performed by this
+# validator. It is possible to combine both blocklist and whitelist.
+[defense.allowlist]
+# You can enable/disable this feature.
+enabled = false
+# This is a limiter for concurrency. In order to protect website
+# from overloading, we download files in this number of threads.
+download-concurrency = 2
+# A list of URLs in FireHOL format (https://iplists.firehol.org/)
+# You can provider links here (starts with https:// or http://) or
+# path to a local file, but in this case it should be absolute.
+urls = [
+    # "https://iplists.firehol.org/files/firehol_level1.netset",
+    # "/local.file"
+
+]
 update-each = "24h"
 
 # statsd statistics integration.

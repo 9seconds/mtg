@@ -15,7 +15,7 @@ import (
 )
 
 type ConnMock struct {
-	testlib.NetConnMock
+	testlib.EssentialsConnMock
 
 	readBuffer  bytes.Buffer
 	writeBuffer bytes.Buffer

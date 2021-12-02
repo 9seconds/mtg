@@ -30,11 +30,6 @@ func (suite *DefaultDialerTestSuite) TestNegativeTimeout() {
 	suite.Error(err)
 }
 
-func (suite *DefaultDialerTestSuite) TestNegativeBufferSize() {
-	_, err := network.NewDefaultDialer(0, -1)
-	suite.Error(err)
-}
-
 func (suite *DefaultDialerTestSuite) TestUnsupportedProtocol() {
 	_, err := suite.d.DialContext(context.Background(),
 		"udp",

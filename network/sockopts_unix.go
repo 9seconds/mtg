@@ -10,7 +10,7 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-func setSocketReuseAddrPort(conn syscall.RawConn, bufferSize int) error {
+func setSocketReuseAddrPort(conn syscall.RawConn) error {
 	var err error
 
 	conn.Control(func(fd uintptr) { // nolint: errcheck
