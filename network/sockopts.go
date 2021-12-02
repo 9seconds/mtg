@@ -20,10 +20,6 @@ func SetServerSocketOptions(conn net.Conn, bufferSize int) error {
 }
 
 func setCommonSocketOptions(conn *net.TCPConn) error {
-	if err := conn.SetKeepAlive(true); err != nil {
-		return fmt.Errorf("cannot disable TCP keepalive probes: %w", err)
-	}
-
 	if err := conn.SetKeepAlivePeriod(DefaultTCPKeepAlivePeriod); err != nil {
 		return fmt.Errorf("cannot set time period of TCP keepalive probes: %w", err)
 	}
