@@ -42,14 +42,12 @@ func (suite *RelayTestSuite) TestExit() {
 	suite.telegramConnMock.On("CloseWrite").Return(nil).Once()
 	suite.telegramConnMock.On("Read", mock.Anything).Return(10, io.EOF).Once()
 	suite.telegramConnMock.On("Write", mock.Anything).Return(10, io.EOF).Maybe()
-	suite.telegramConnMock.On("SetReadDeadline", mock.Anything).Return(nil).Maybe()
 
 	suite.clientConnMock.On("Read", mock.Anything).Return(0, io.EOF).Once()
 	suite.clientConnMock.On("Write", mock.Anything).Return(10, io.EOF).Maybe()
 	suite.clientConnMock.On("Close").Return(nil)
 	suite.clientConnMock.On("CloseRead").Return(nil).Once()
 	suite.clientConnMock.On("CloseWrite").Return(nil).Once()
-	suite.clientConnMock.On("SetReadDeadline", mock.Anything).Return(nil).Maybe()
 
 	relay.Relay(suite.ctx, suite.loggerMock, suite.telegramConnMock, suite.clientConnMock)
 }

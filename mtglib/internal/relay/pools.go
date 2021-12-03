@@ -1,31 +1,19 @@
 package relay
 
-import (
-	"bufio"
-	"io"
-	"net"
-	"sync"
-)
+import "sync"
 
-var syncPairPool = sync.Pool{
+var copyBufferPool = sync.Pool{
 	New: func() interface{} {
-		return &syncPair{
-			writer:  bufio.NewWriterSize(nil, writerBufferSize),
-			copyBuf: make([]byte, copyBufferSize),
-		}
+		rv := make([]byte, copyBufferSize)
+
+		return &rv
 	},
 }
 
-func acquireSyncPair(reader net.Conn, writer io.Writer) *syncPair {
-	sp := syncPairPool.Get().(*syncPair) // nolint: forcetypeassert
-	sp.writer.Reset(writer)
-	sp.reader = reader
-
-	return sp
+func acquireCopyBuffer() *[]byte {
+	return copyBufferPool.Get().(*[]byte)
 }
 
-func releaseSyncPair(sp *syncPair) {
-	sp.writer.Reset(nil)
-	sp.reader = nil
-	syncPairPool.Put(sp)
+func releaseCopyBuffer(buf *[]byte) {
+	copyBufferPool.Put(buf)
 }

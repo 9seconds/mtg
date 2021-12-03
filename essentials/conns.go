@@ -8,14 +8,12 @@ import (
 // CloseableReader is a reader interface that can close its reading end.
 type CloseableReader interface {
 	io.Reader
-
 	CloseRead() error
 }
 
 // CloseableWriter is a writer that can close its writing end.
 type CloseableWriter interface {
 	io.Writer
-
 	CloseWrite() error
 }
 
