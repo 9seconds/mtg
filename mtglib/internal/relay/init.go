@@ -1,11 +1,7 @@
 package relay
 
-import "time"
-
 const (
-	copyBufferSize   = 64 * 1024
-	writerBufferSize = 128 * 1024
-	readTimeout      = 10 * time.Millisecond
+	copyBufferSize = 64 * 1024
 )
 
 type Logger interface {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"io"
-	"sync"
 
 	"github.com/9seconds/mtg/v2/essentials"
 )
@@ -22,28 +21,27 @@ func Relay(ctx context.Context, log Logger, telegramConn, clientConn essentials.
 		clientConn.Close()
 	}()
 
-	wg := &sync.WaitGroup{}
-	wg.Add(2) // nolint: gomnd
+	closeChan := make(chan struct{})
 
-	go pump(log, telegramConn, clientConn, wg, "client -> telegram")
+	go func() {
+		defer close(closeChan)
 
-	pump(log, clientConn, telegramConn, wg, "telegram -> client")
-
-	wg.Wait()
-}
-
-func pump(log Logger, src, dst essentials.Conn, wg *sync.WaitGroup, direction string) {
-	syncer := acquireSyncPair(src, dst)
-
-	defer func() {
-		syncer.Flush()
-		releaseSyncPair(syncer)
-		src.CloseRead()  // nolint: errcheck
-		dst.CloseWrite() // nolint: errcheck
-		wg.Done()
+		pump(log, telegramConn, clientConn, "client -> telegram")
 	}()
 
-	n, err := syncer.Sync()
+	pump(log, clientConn, telegramConn, "telegram -> client")
+
+	<-closeChan
+}
+
+func pump(log Logger, src, dst essentials.Conn, direction string) {
+	defer src.CloseRead()  // nolint: errcheck
+	defer dst.CloseWrite() // nolint: errcheck
+
+	copyBuffer := acquireCopyBuffer()
+	defer releaseCopyBuffer(copyBuffer)
+
+	n, err := io.CopyBuffer(src, dst, *copyBuffer)
 
 	switch {
 	case err == nil:

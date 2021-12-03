@@ -39,7 +39,7 @@ vendor: go.mod go.sum
 
 .PHONY: fmt
 fmt:
-	@$(GOTOOL) gofumpt -w -s -extra "$(ROOT_DIR)"
+	@$(GOTOOL) gofumpt -w -extra "$(ROOT_DIR)"
 
 .PHONY: test
 test:
@@ -95,4 +95,4 @@ install-tools-goreleaser: .bin
 
 .PHONY: update-deps
 update-deps:
-	@go get -u && go mod tidy
+	@go get -u && go mod tidy -go=1.17

@@ -14,7 +14,7 @@ require (
 	github.com/jarcoal/httpmock v1.0.8
 	github.com/kentik/patricia v0.0.0-20210909164817-21603333b70e
 	github.com/mccutchen/go-httpbin v1.1.1
-	github.com/panjf2000/ants/v2 v2.4.6
+	github.com/panjf2000/ants/v2 v2.4.7
 	github.com/pelletier/go-toml v1.9.4
 	github.com/prometheus/client_golang v1.11.0
 	github.com/prometheus/common v0.32.1 // indirect
@@ -24,7 +24,7 @@ require (
 	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/stretchr/testify v1.7.0
 	github.com/tylertreat/BoomFilters v0.0.0-20210315201527-1a82519a3e43
-	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871
+	golang.org/x/crypto v0.0.0-20211202192323-5770296d904e
 	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
 	golang.org/x/sys v0.0.0-20211124211545-fe61309f8881
 	google.golang.org/protobuf v1.27.1 // indirect
