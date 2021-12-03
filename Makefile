@@ -39,7 +39,7 @@ vendor: go.mod go.sum
 
 .PHONY: fmt
 fmt:
-	@$(GOTOOL) gofumpt -w -s -extra "$(ROOT_DIR)"
+	@$(GOTOOL) gofumpt -w -extra "$(ROOT_DIR)"
 
 .PHONY: test
 test:
