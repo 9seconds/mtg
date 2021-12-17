@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"strings"
 )
 
 type TypeHostPort struct {
@@ -13,6 +14,12 @@ type TypeHostPort struct {
 }
 
 func (t *TypeHostPort) Set(value string) error {
+	if strings.HasSuffix(value, ".i2p") {
+		t.Port = uint(0)
+		t.Host = value
+		t.Value = value
+		return nil
+	}
 	host, port, err := net.SplitHostPort(value)
 	if err != nil {
 		return fmt.Errorf("incorrect host:port value (%v): %w", value, err)
