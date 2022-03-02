@@ -1,6 +1,6 @@
 # mtg
 
-Highly-opionated (ex-bullshit-free) MTPROTO proxy for
+Highly-opinionated (ex-bullshit-free) MTPROTO proxy for
 [Telegram](https://telegram.org/).
 
 [![CI](https://github.com/9seconds/mtg/actions/workflows/ci.yaml/badge.svg?branch=master)](https://github.com/9seconds/mtg/actions/workflows/ci.yaml)
