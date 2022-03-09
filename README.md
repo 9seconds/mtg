@@ -224,6 +224,16 @@ $ mtg generate-secret --hex google.com
 ee473ce5d4958eb5f968c87680a23854a0676f6f676c652e636f6d
 ```
 
+equivalent commands with docker:
+
+```console
+$ docker run --rm nineseconds/mtg:2 generate-secret google.com
+7ibaERuTSGPH1RdztfYnN4tnb29nbGUuY29t
+
+$ docker run --rm nineseconds/mtg:2 generate-secret --hex google.com
+ee473ce5d4958eb5f968c87680a23854a0676f6f676c652e636f6d
+```
+
 This secret is a keystone for a proxy and your password for a client.
 You need to keep it secured.
 
@@ -324,7 +334,7 @@ $ sudo systemctl start mtg
 or you can run a docker image
 
 ```console
-docker run -d -v /etc/mtg.toml:/config.toml -p 443:3128 --restart=unless-stopped nineseconds/mtg:2
+docker run -d -v /etc/mtg.toml:/config.toml -p 443:3128 --name mtg-proxy --restart=unless-stopped nineseconds/mtg:2
 ```
 
 where _443_ is a host port (a port you want to connect to from a
@@ -351,6 +361,12 @@ $ mtg access /etc/mtg.toml
     "base64": "..."
   }
 }
+```
+
+or if you are using docker:
+
+```console
+$ docker exec mtg-proxy /mtg access /config.toml
 ```
 
 ## Metrics
