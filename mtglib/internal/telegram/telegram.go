@@ -30,7 +30,7 @@ func (t Telegram) Dial(ctx context.Context, dc int) (essentials.Conn, error) {
 
 	var conn essentials.Conn
 
-	err := ErrNoAddresses
+	err := errNoAddresses
 
 	for _, v := range addresses {
 		conn, err = t.dialer.DialContext(ctx, v.network, v.address)
