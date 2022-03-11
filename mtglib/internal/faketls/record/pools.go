@@ -11,7 +11,7 @@ var recordPool = sync.Pool{
 }
 
 func AcquireRecord() *Record {
-	return recordPool.Get().(*Record)
+	return recordPool.Get().(*Record) // nolint: forcetypeassert
 }
 
 func ReleaseRecord(r *Record) {

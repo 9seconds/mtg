@@ -36,11 +36,11 @@ func (n *EssentialsConnMock) CloseWrite() error {
 }
 
 func (n *EssentialsConnMock) LocalAddr() net.Addr {
-	return n.Called().Get(0).(net.Addr)
+	return n.Called().Get(0).(net.Addr) // nolint: forcetypeassert
 }
 
 func (n *EssentialsConnMock) RemoteAddr() net.Addr {
-	return n.Called().Get(0).(net.Addr)
+	return n.Called().Get(0).(net.Addr) // nolint: forcetypeassert
 }
 
 func (n *EssentialsConnMock) SetDeadline(t time.Time) error {
