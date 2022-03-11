@@ -36,7 +36,7 @@ func (d *defaultDialer) DialContext(ctx context.Context, network, address string
 		return nil, fmt.Errorf("cannot set socket options: %w", err)
 	}
 
-	return conn.(essentials.Conn), nil
+	return conn.(essentials.Conn), nil // nolint: forcetypeassert
 }
 
 // NewDefaultDialer build a new dialer which dials bypassing proxies

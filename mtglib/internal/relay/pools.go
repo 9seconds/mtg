@@ -11,7 +11,7 @@ var copyBufferPool = sync.Pool{
 }
 
 func acquireCopyBuffer() *[]byte {
-	return copyBufferPool.Get().(*[]byte)
+	return copyBufferPool.Get().(*[]byte) // nolint: forcetypeassert
 }
 
 func releaseCopyBuffer(buf *[]byte) {

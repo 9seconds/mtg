@@ -49,7 +49,7 @@ func (s *streamContext) Close() {
 }
 
 func (s *streamContext) ClientIP() net.IP {
-	return s.clientConn.RemoteAddr().(*net.TCPAddr).IP
+	return s.clientConn.RemoteAddr().(*net.TCPAddr).IP // nolint: forcetypeassert
 }
 
 func newStreamContext(ctx context.Context, logger Logger, clientConn essentials.Conn) *streamContext {
