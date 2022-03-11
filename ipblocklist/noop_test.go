@@ -17,6 +17,13 @@ func (suite *NoopTestSuite) TestOp() {
 	suite.False(ipblocklist.NewNoop().Contains(net.ParseIP("10.0.0.10")))
 }
 
+func (suite *NoopTestSuite) TestRun() {
+	blocklist := ipblocklist.NewNoop()
+
+	blocklist.Run(0)
+	blocklist.Shutdown()
+}
+
 func TestNoop(t *testing.T) {
 	t.Parallel()
 	suite.Run(t, &NoopTestSuite{})

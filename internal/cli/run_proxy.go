@@ -110,6 +110,8 @@ func makeIPBlocklist(conf config.ListConfig, logger mtglib.Logger, ntw mtglib.Ne
 		return nil, fmt.Errorf("incorrect parameters for firehol: %w", err)
 	}
 
+	go firehol.Run(conf.UpdateEach.Get(ipblocklist.DefaultFireholUpdateEach))
+
 	return firehol, nil
 }
 
@@ -162,7 +164,7 @@ func runProxy(conf *config.Config, version string) error { // nolint: funlen
 		return fmt.Errorf("cannot build network: %w", err)
 	}
 
-	blocklist, err := makeIPBlocklist(conf.Defense.Blocklist, logger, ntw)
+	blocklist, err := makeIPBlocklist(conf.Defense.Blocklist, logger.Named("blocklist"), ntw)
 	if err != nil {
 		return fmt.Errorf("cannot build ip blocklist: %w", err)
 	}
@@ -170,9 +172,9 @@ func runProxy(conf *config.Config, version string) error { // nolint: funlen
 	var whitelist mtglib.IPBlocklist
 
 	if conf.Defense.Allowlist.Enabled.Get(false) {
-		whlist, err := makeIPBlocklist(conf.Defense.Allowlist, logger, ntw)
+		whlist, err := makeIPBlocklist(conf.Defense.Allowlist, logger.Named("allowlist"), ntw)
 		if err != nil {
-			return fmt.Errorf("cannot build ip blocklist: %w", err)
+			return fmt.Errorf("cannot build ip allowlist: %w", err)
 		}
 
 		whitelist = whlist
