@@ -95,4 +95,4 @@ install-tools-goreleaser: .bin
 
 .PHONY: update-deps
 update-deps:
-	@go get -u -t && go mod tidy -go=1.17
+	@go get -u && go mod tidy -go=1.17
