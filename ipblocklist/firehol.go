@@ -23,6 +23,10 @@ var (
 	fireholIPv6DefaultCIDR = net.CIDRMask(128, 128) // nolint: gomnd
 )
 
+// FireholUpdateCallback defines a signature of the callback that has to be
+// execute when ip list is updated.
+type FireholUpdateCallback func(context.Context, int)
+
 // Firehol is IPBlocklist which uses lists from FireHOL:
 // https://iplists.firehol.org/
 //
@@ -42,7 +46,8 @@ type Firehol struct {
 	logger      mtglib.Logger
 	updateMutex sync.RWMutex
 
-	ranger cidranger.Ranger
+	updateCallback FireholUpdateCallback
+	ranger         cidranger.Ranger
 
 	blocklists []files.File
 
@@ -110,7 +115,7 @@ func (f *Firehol) update() {
 	wg := &sync.WaitGroup{}
 	wg.Add(len(f.blocklists))
 
-	treeMutex := &sync.Mutex{}
+	mutex := &sync.Mutex{}
 	ranger := cidranger.NewPCTrieRanger()
 
 	for _, v := range f.blocklists {
@@ -128,7 +133,7 @@ func (f *Firehol) update() {
 
 			defer fileContent.Close()
 
-			if err := f.updateFromFile(treeMutex, ranger, bufio.NewScanner(fileContent)); err != nil {
+			if err := f.updateFromFile(mutex, ranger, bufio.NewScanner(fileContent)); err != nil {
 				logger.WarningError("update has failed", err)
 			}
 		}(v)
@@ -140,6 +145,10 @@ func (f *Firehol) update() {
 	defer f.updateMutex.Unlock()
 
 	f.ranger = ranger
+
+	if f.updateCallback != nil {
+		f.updateCallback(ctx, ranger.Len())
+	}
 
 	f.logger.Info("ip list was updated")
 }
@@ -206,7 +215,8 @@ func (f *Firehol) updateParseLine(text string) (*net.IPNet, error) {
 func NewFirehol(logger mtglib.Logger, network mtglib.Network,
 	downloadConcurrency uint,
 	urls []string,
-	localFiles []string) (*Firehol, error) {
+	localFiles []string,
+	updateCallback FireholUpdateCallback) (*Firehol, error) {
 	blocklists := []files.File{}
 
 	for _, v := range localFiles {
@@ -229,12 +239,13 @@ func NewFirehol(logger mtglib.Logger, network mtglib.Network,
 		blocklists = append(blocklists, file)
 	}
 
-	return NewFireholFromFiles(logger, downloadConcurrency, blocklists)
+	return NewFireholFromFiles(logger, downloadConcurrency, blocklists, updateCallback)
 }
 
 func NewFireholFromFiles(logger mtglib.Logger,
 	downloadConcurrency uint,
-	blocklists []files.File) (*Firehol, error) {
+	blocklists []files.File,
+	updateCallback FireholUpdateCallback) (*Firehol, error) {
 	if downloadConcurrency == 0 {
 		downloadConcurrency = DefaultFireholDownloadConcurrency
 	}
@@ -243,11 +254,12 @@ func NewFireholFromFiles(logger mtglib.Logger,
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &Firehol{
-		ctx:        ctx,
-		ctxCancel:  cancel,
-		logger:     logger.Named("firehol"),
-		ranger:     cidranger.NewPCTrieRanger(),
-		workerPool: workerPool,
-		blocklists: blocklists,
+		ctx:            ctx,
+		ctxCancel:      cancel,
+		logger:         logger.Named("firehol"),
+		ranger:         cidranger.NewPCTrieRanger(),
+		workerPool:     workerPool,
+		blocklists:     blocklists,
+		updateCallback: updateCallback,
 	}, nil
 }

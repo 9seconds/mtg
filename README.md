@@ -383,6 +383,7 @@ Here goes a list of metrics with their types but without a prefix.
 | client_connections          | gauge   | `ip_family`                      | Count of processing client connections.                                                    |
 | telegram_connections        | gauge   | `telegram_ip`, `dc`              | Count of connections to Telegram servers.                                                  |
 | domain_fronting_connections | gauge   | `ip_family`                      | Count of connections to fronting domain.                                                   |
+| iplist_size                 | gauge   | `ip_list`                        | A size of either allowlist or blocklist in use.                                            |
 | telegram_traffic            | counter | `telegram_ip`, `dc`, `direction` | Count of bytes, transmitted to/from Telegram.                                              |
 | domain_fronting_traffic     | counter | `direction`                      | Count of bytes, transmitted to/from fronting domain.                                       |
 | domain_fronting             | counter | –                                | Count of domain fronting events.                                                           |
@@ -398,3 +399,4 @@ Tag meaning:
 | dc          |                            | A number of the Telegram DC for a connection. |
 | telegram_ip |                            | IP address of the Telegram server.            |
 | direction   | `to_client`, `from_client` | A direction of the traffic flow.              |
+| ip_list     | `allowlist`, `blocklist`   | A type of the IP list.                        |
