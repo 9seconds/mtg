@@ -106,7 +106,7 @@ func (p *Proxy) Serve(listener net.Listener) error { // nolint: cyclop
 			}
 		}
 
-		ipAddr := conn.RemoteAddr().(*net.TCPAddr).IP
+		ipAddr := conn.RemoteAddr().(*net.TCPAddr).IP // nolint: forcetypeassert
 		logger := p.logger.BindStr("ip", ipAddr.String())
 
 		if p.whitelist != nil && !p.whitelist.Contains(ipAddr) {
@@ -144,6 +144,12 @@ func (p *Proxy) Shutdown() {
 	p.ctxCancel()
 	p.streamWaitGroup.Wait()
 	p.workerPool.Release()
+
+	if p.whitelist != nil {
+		p.whitelist.Shutdown()
+	}
+
+	p.blocklist.Shutdown()
 }
 
 func (p *Proxy) doFakeTLSHandshake(ctx *streamContext) bool {
@@ -249,7 +255,10 @@ func (p *Proxy) doTelegramCall(ctx *streamContext) error {
 	}
 
 	p.eventStream.Send(ctx,
-		NewEventConnectedToDC(ctx.streamID, conn.RemoteAddr().(*net.TCPAddr).IP, ctx.dc))
+		NewEventConnectedToDC(ctx.streamID,
+			conn.RemoteAddr().(*net.TCPAddr).IP, // nolint: forcetypeassert
+			ctx.dc),
+	)
 
 	return nil
 }
@@ -310,7 +319,7 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 
 	pool, err := ants.NewPoolWithFunc(opts.getConcurrency(),
 		func(arg interface{}) {
-			proxy.ServeConn(arg.(essentials.Conn))
+			proxy.ServeConn(arg.(essentials.Conn)) // nolint: forcetypeassert
 		},
 		ants.WithLogger(opts.getLogger("ants")),
 		ants.WithNonblocking(true))

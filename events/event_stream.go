@@ -102,6 +102,8 @@ func eventStreamProcessor(ctx context.Context, eventChan <-chan mtglib.Event, ob
 				observer.EventConcurrencyLimited(typedEvt)
 			case mtglib.EventReplayAttack:
 				observer.EventReplayAttack(typedEvt)
+			case mtglib.EventIPListSize:
+				observer.EventIPListSize(typedEvt)
 			}
 		}
 	}

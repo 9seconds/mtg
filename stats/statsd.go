@@ -121,6 +121,15 @@ func (s statsdProcessor) EventReplayAttack(_ mtglib.EventReplayAttack) {
 	s.client.Incr(MetricReplayAttacks, 1)
 }
 
+func (s statsdProcessor) EventIPListSize(evt mtglib.EventIPListSize) {
+	tag := TagIPListBlock
+	if !evt.IsBlockList {
+		tag = TagIPListAllow
+	}
+
+	s.client.Gauge(MetricIPListSize, int64(evt.Size), statsd.StringTag(TagIPList, tag))
+}
+
 func (s statsdProcessor) Shutdown() {
 	events := make([]mtglib.EventFinish, 0, len(s.streams))
 

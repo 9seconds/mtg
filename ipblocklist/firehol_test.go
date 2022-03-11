@@ -67,7 +67,8 @@ func (suite *FireholTestSuite) TearDownSuite() {
 func (suite *FireholTestSuite) TestLocalFail() {
 	blocklist, err := ipblocklist.NewFirehol(logger.NewNoopLogger(),
 		suite.networkMock, 2,
-		nil, []string{filepath.Join("testdata", "broken_ipset.ipset")})
+		nil, []string{filepath.Join("testdata", "broken_ipset.ipset")},
+		nil)
 
 	suite.NoError(err)
 
@@ -85,7 +86,8 @@ func (suite *FireholTestSuite) TestLocalFail() {
 func (suite *FireholTestSuite) TestLocalOk() {
 	blocklist, err := ipblocklist.NewFirehol(logger.NewNoopLogger(),
 		suite.networkMock, 2,
-		nil, []string{filepath.Join("testdata", "good_ipset.ipset")})
+		nil, []string{filepath.Join("testdata", "good_ipset.ipset")},
+		nil)
 
 	suite.NoError(err)
 
@@ -103,7 +105,7 @@ func (suite *FireholTestSuite) TestLocalOk() {
 func (suite *FireholTestSuite) TestRemoteFail() {
 	blocklist, err := ipblocklist.NewFirehol(logger.NewNoopLogger(),
 		suite.networkMock, 2,
-		[]string{"https://google.com"}, nil)
+		[]string{"https://google.com"}, nil, nil)
 
 	suite.NoError(err)
 
@@ -127,7 +129,7 @@ func (suite *FireholTestSuite) TestMixed() {
 			suite.httpServer.URL,
 		}, []string{
 			filepath.Join("testdata", "good_ipset.ipset"),
-		})
+		}, nil)
 
 	suite.NoError(err)
 

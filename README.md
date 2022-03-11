@@ -1,6 +1,6 @@
 # mtg
 
-Highly-opionated (ex-bullshit-free) MTPROTO proxy for
+Highly-opinionated (ex-bullshit-free) MTPROTO proxy for
 [Telegram](https://telegram.org/).
 
 [![CI](https://github.com/9seconds/mtg/actions/workflows/ci.yaml/badge.svg?branch=master)](https://github.com/9seconds/mtg/actions/workflows/ci.yaml)
@@ -224,6 +224,16 @@ $ mtg generate-secret --hex google.com
 ee473ce5d4958eb5f968c87680a23854a0676f6f676c652e636f6d
 ```
 
+equivalent commands with docker:
+
+```console
+$ docker run --rm nineseconds/mtg:2 generate-secret google.com
+7ibaERuTSGPH1RdztfYnN4tnb29nbGUuY29t
+
+$ docker run --rm nineseconds/mtg:2 generate-secret --hex google.com
+ee473ce5d4958eb5f968c87680a23854a0676f6f676c652e636f6d
+```
+
 This secret is a keystone for a proxy and your password for a client.
 You need to keep it secured.
 
@@ -324,7 +334,7 @@ $ sudo systemctl start mtg
 or you can run a docker image
 
 ```console
-docker run -d -v /etc/mtg.toml:/config.toml -p 443:3128 --restart=unless-stopped nineseconds/mtg:2
+docker run -d -v /etc/mtg.toml:/config.toml -p 443:3128 --name mtg-proxy --restart=unless-stopped nineseconds/mtg:2
 ```
 
 where _443_ is a host port (a port you want to connect to from a
@@ -353,6 +363,12 @@ $ mtg access /etc/mtg.toml
 }
 ```
 
+or if you are using docker:
+
+```console
+$ docker exec mtg-proxy /mtg access /config.toml
+```
+
 ## Metrics
 
 Out of the box, mtg works with
@@ -367,6 +383,7 @@ Here goes a list of metrics with their types but without a prefix.
 | client_connections          | gauge   | `ip_family`                      | Count of processing client connections.                                                    |
 | telegram_connections        | gauge   | `telegram_ip`, `dc`              | Count of connections to Telegram servers.                                                  |
 | domain_fronting_connections | gauge   | `ip_family`                      | Count of connections to fronting domain.                                                   |
+| iplist_size                 | gauge   | `ip_list`                        | A size of either allowlist or blocklist in use.                                            |
 | telegram_traffic            | counter | `telegram_ip`, `dc`, `direction` | Count of bytes, transmitted to/from Telegram.                                              |
 | domain_fronting_traffic     | counter | `direction`                      | Count of bytes, transmitted to/from fronting domain.                                       |
 | domain_fronting             | counter | –                                | Count of domain fronting events.                                                           |
@@ -382,3 +399,4 @@ Tag meaning:
 | dc          |                            | A number of the Telegram DC for a connection. |
 | telegram_ip |                            | IP address of the Telegram server.            |
 | direction   | `to_client`, `from_client` | A direction of the traffic flow.              |
+| ip_list     | `allowlist`, `blocklist`   | A type of the IP list.                        |

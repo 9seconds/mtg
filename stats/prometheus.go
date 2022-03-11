@@ -118,6 +118,15 @@ func (p prometheusProcessor) EventReplayAttack(_ mtglib.EventReplayAttack) {
 	p.factory.metricReplayAttacks.Inc()
 }
 
+func (p prometheusProcessor) EventIPListSize(evt mtglib.EventIPListSize) {
+	tag := TagIPListBlock
+	if !evt.IsBlockList {
+		tag = TagIPListAllow
+	}
+
+	p.factory.metricIPListSize.WithLabelValues(tag).Set(float64(evt.Size))
+}
+
 func (p prometheusProcessor) Shutdown() {
 	for k, v := range p.streams {
 		releaseStreamInfo(v)
@@ -137,6 +146,7 @@ type PrometheusFactory struct {
 	metricClientConnections         *prometheus.GaugeVec
 	metricTelegramConnections       *prometheus.GaugeVec
 	metricDomainFrontingConnections *prometheus.GaugeVec
+	metricIPListSize                *prometheus.GaugeVec
 
 	metricTelegramTraffic       *prometheus.CounterVec
 	metricDomainFrontingTraffic *prometheus.CounterVec
@@ -197,6 +207,11 @@ func NewPrometheus(metricPrefix, httpPath string) *PrometheusFactory { // nolint
 			Name:      MetricDomainFrontingConnections,
 			Help:      "A number of connections which talk to front domain.",
 		}, []string{TagIPFamily}),
+		metricIPListSize: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Namespace: metricPrefix,
+			Name:      MetricIPListSize,
+			Help:      "A size of the ip list (blocklist or allowlist)",
+		}, []string{TagIPList}),
 
 		metricTelegramTraffic: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: metricPrefix,
@@ -234,6 +249,7 @@ func NewPrometheus(metricPrefix, httpPath string) *PrometheusFactory { // nolint
 	registry.MustRegister(factory.metricClientConnections)
 	registry.MustRegister(factory.metricTelegramConnections)
 	registry.MustRegister(factory.metricDomainFrontingConnections)
+	registry.MustRegister(factory.metricIPListSize)
 
 	registry.MustRegister(factory.metricTelegramTraffic)
 	registry.MustRegister(factory.metricDomainFrontingTraffic)

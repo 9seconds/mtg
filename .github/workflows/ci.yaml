@@ -42,7 +42,6 @@ jobs:
     strategy:
       matrix:
         go_version:
-          - ~1.16
           - ^1.17
     steps:
       - name: Checkout
@@ -83,7 +82,7 @@ jobs:
       - name: Run linter
         uses: golangci/golangci-lint-action@v2
         with:
-          version: v1.43.0
+          version: v1.44.2
 
   docker:
     name: Docker

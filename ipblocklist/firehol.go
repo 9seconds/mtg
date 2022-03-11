@@ -12,17 +12,20 @@ import (
 
 	"github.com/9seconds/mtg/v2/ipblocklist/files"
 	"github.com/9seconds/mtg/v2/mtglib"
-	"github.com/kentik/patricia"
-	"github.com/kentik/patricia/bool_tree"
 	"github.com/panjf2000/ants/v2"
+	"github.com/yl2chen/cidranger"
 )
 
-const (
-	fireholIPv4DefaultCIDR = 32
-	fireholIPv6DefaultCIDR = 128
+var (
+	fireholRegexpComment = regexp.MustCompile(`\s*#.*?$`)
+
+	fireholIPv4DefaultCIDR = net.CIDRMask(32, 32)   // nolint: gomnd
+	fireholIPv6DefaultCIDR = net.CIDRMask(128, 128) // nolint: gomnd
 )
 
-var fireholRegexpComment = regexp.MustCompile(`\s*#.*?$`)
+// FireholUpdateCallback defines a signature of the callback that has to be
+// execute when ip list is updated.
+type FireholUpdateCallback func(context.Context, int)
 
 // Firehol is IPBlocklist which uses lists from FireHOL:
 // https://iplists.firehol.org/
@@ -43,11 +46,12 @@ type Firehol struct {
 	logger      mtglib.Logger
 	updateMutex sync.RWMutex
 
+	updateCallback FireholUpdateCallback
+	ranger         cidranger.Ranger
+
 	blocklists []files.File
 
 	workerPool *ants.Pool
-	treeV4     *bool_tree.TreeV4
-	treeV6     *bool_tree.TreeV6
 }
 
 // Shutdown stop a background update process.
@@ -64,11 +68,12 @@ func (f *Firehol) Contains(ip net.IP) bool {
 	f.updateMutex.RLock()
 	defer f.updateMutex.RUnlock()
 
-	if ip4 := ip.To4(); ip4 != nil {
-		return f.containsIPv4(ip4)
+	ok, err := f.ranger.Contains(ip)
+	if err != nil {
+		f.logger.BindStr("ip", ip.String()).DebugError("Cannot check if ip is present", err)
 	}
 
-	return f.containsIPv6(ip.To16())
+	return ok && err == nil
 }
 
 // Run starts a background update process.
@@ -103,26 +108,6 @@ func (f *Firehol) Run(updateEach time.Duration) {
 	}
 }
 
-func (f *Firehol) containsIPv4(addr net.IP) bool {
-	ip := patricia.NewIPv4AddressFromBytes(addr, 32) // nolint: gomnd
-
-	if ok, _ := f.treeV4.FindDeepestTag(ip); ok {
-		return true
-	}
-
-	return false
-}
-
-func (f *Firehol) containsIPv6(addr net.IP) bool {
-	ip := patricia.NewIPv6Address(addr, 128) // nolint: gomnd
-
-	if ok, _ := f.treeV6.FindDeepestTag(ip); ok {
-		return true
-	}
-
-	return false
-}
-
 func (f *Firehol) update() {
 	ctx, cancel := context.WithCancel(f.ctx)
 	defer cancel()
@@ -130,9 +115,8 @@ func (f *Firehol) update() {
 	wg := &sync.WaitGroup{}
 	wg.Add(len(f.blocklists))
 
-	treeMutex := &sync.Mutex{}
-	v4tree := bool_tree.NewTreeV4()
-	v6tree := bool_tree.NewTreeV6()
+	mutex := &sync.Mutex{}
+	ranger := cidranger.NewPCTrieRanger()
 
 	for _, v := range f.blocklists {
 		go func(file files.File) {
@@ -149,7 +133,7 @@ func (f *Firehol) update() {
 
 			defer fileContent.Close()
 
-			if err := f.updateFromFile(treeMutex, v4tree, v6tree, bufio.NewScanner(fileContent)); err != nil {
+			if err := f.updateFromFile(mutex, ranger, bufio.NewScanner(fileContent)); err != nil {
 				logger.WarningError("update has failed", err)
 			}
 		}(v)
@@ -160,15 +144,17 @@ func (f *Firehol) update() {
 	f.updateMutex.Lock()
 	defer f.updateMutex.Unlock()
 
-	f.treeV4 = v4tree
-	f.treeV6 = v6tree
+	f.ranger = ranger
 
-	f.logger.Info("blocklist was updated")
+	if f.updateCallback != nil {
+		f.updateCallback(ctx, ranger.Len())
+	}
+
+	f.logger.Info("ip list was updated")
 }
 
 func (f *Firehol) updateFromFile(mutex sync.Locker,
-	v4tree *bool_tree.TreeV4,
-	v6tree *bool_tree.TreeV6,
+	ranger cidranger.Ranger,
 	scanner *bufio.Scanner) error {
 	for scanner.Scan() {
 		text := scanner.Text()
@@ -179,12 +165,18 @@ func (f *Firehol) updateFromFile(mutex sync.Locker,
 			continue
 		}
 
-		ip, cidr, err := f.updateParseLine(text)
+		ipnet, err := f.updateParseLine(text)
 		if err != nil {
 			return fmt.Errorf("cannot parse a line: %w", err)
 		}
 
-		f.updateAddToTrees(ip, cidr, mutex, v4tree, v6tree)
+		mutex.Lock()
+		err = ranger.Insert(cidranger.NewBasicRangerEntry(*ipnet))
+		mutex.Unlock()
+
+		if err != nil {
+			return fmt.Errorf("cannot insert %v into ranger: %w", ipnet, err)
+		}
 	}
 
 	if scanner.Err() != nil {
@@ -194,38 +186,26 @@ func (f *Firehol) updateFromFile(mutex sync.Locker,
 	return nil
 }
 
-func (f *Firehol) updateParseLine(text string) (net.IP, uint, error) {
-	_, ipnet, err := net.ParseCIDR(text)
-	if err != nil {
-		ipaddr := net.ParseIP(text)
-		if ipaddr == nil {
-			return nil, 0, fmt.Errorf("incorrect ip address %s", text)
-		}
-
-		ip4 := ipaddr.To4()
-		if ip4 != nil {
-			return ip4, fireholIPv4DefaultCIDR, nil
-		}
-
-		return ipaddr.To16(), fireholIPv6DefaultCIDR, nil
+func (f *Firehol) updateParseLine(text string) (*net.IPNet, error) {
+	if _, ipnet, err := net.ParseCIDR(text); err == nil {
+		return ipnet, nil
 	}
 
-	ones, _ := ipnet.Mask.Size()
-
-	return ipnet.IP, uint(ones), nil
-}
-
-func (f *Firehol) updateAddToTrees(ip net.IP, cidr uint,
-	mutex sync.Locker,
-	v4tree *bool_tree.TreeV4, v6tree *bool_tree.TreeV6) {
-	mutex.Lock()
-	defer mutex.Unlock()
-
-	if ip.To4() != nil {
-		v4tree.Set(patricia.NewIPv4AddressFromBytes(ip, cidr), true)
-	} else {
-		v6tree.Set(patricia.NewIPv6Address(ip, cidr), true)
+	ipaddr := net.ParseIP(text)
+	if ipaddr == nil {
+		return nil, fmt.Errorf("incorrect ip address %s", text)
 	}
+
+	mask := fireholIPv4DefaultCIDR
+
+	if ipaddr.To4() == nil {
+		mask = fireholIPv6DefaultCIDR
+	}
+
+	return &net.IPNet{
+		IP:   ipaddr,
+		Mask: mask,
+	}, nil
 }
 
 // NewFirehol creates a new instance of FireHOL IP blocklist.
@@ -235,7 +215,8 @@ func (f *Firehol) updateAddToTrees(ip net.IP, cidr uint,
 func NewFirehol(logger mtglib.Logger, network mtglib.Network,
 	downloadConcurrency uint,
 	urls []string,
-	localFiles []string) (*Firehol, error) {
+	localFiles []string,
+	updateCallback FireholUpdateCallback) (*Firehol, error) {
 	blocklists := []files.File{}
 
 	for _, v := range localFiles {
@@ -258,12 +239,13 @@ func NewFirehol(logger mtglib.Logger, network mtglib.Network,
 		blocklists = append(blocklists, file)
 	}
 
-	return NewFireholFromFiles(logger, downloadConcurrency, blocklists)
+	return NewFireholFromFiles(logger, downloadConcurrency, blocklists, updateCallback)
 }
 
 func NewFireholFromFiles(logger mtglib.Logger,
 	downloadConcurrency uint,
-	blocklists []files.File) (*Firehol, error) {
+	blocklists []files.File,
+	updateCallback FireholUpdateCallback) (*Firehol, error) {
 	if downloadConcurrency == 0 {
 		downloadConcurrency = DefaultFireholDownloadConcurrency
 	}
@@ -272,12 +254,12 @@ func NewFireholFromFiles(logger mtglib.Logger,
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &Firehol{
-		ctx:        ctx,
-		ctxCancel:  cancel,
-		logger:     logger.Named("firehol"),
-		treeV4:     bool_tree.NewTreeV4(),
-		treeV6:     bool_tree.NewTreeV6(),
-		workerPool: workerPool,
-		blocklists: blocklists,
+		ctx:            ctx,
+		ctxCancel:      cancel,
+		logger:         logger.Named("firehol"),
+		ranger:         cidranger.NewPCTrieRanger(),
+		workerPool:     workerPool,
+		blocklists:     blocklists,
+		updateCallback: updateCallback,
 	}, nil
 }

@@ -28,10 +28,9 @@ func (t Telegram) Dial(ctx context.Context, dc int) (essentials.Conn, error) {
 		addresses = append(t.pool.getV6(dc), t.pool.getV4(dc)...)
 	}
 
-	var (
-		conn essentials.Conn
-		err  error
-	)
+	var conn essentials.Conn
+
+	err := errNoAddresses
 
 	for _, v := range addresses {
 		conn, err = t.dialer.DialContext(ctx, v.network, v.address)

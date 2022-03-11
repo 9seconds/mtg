@@ -169,6 +169,18 @@ func (suite *PrometheusTestSuite) TestEventReplayAttack() {
 	suite.Contains(data, `mtg_replay_attacks 1`)
 }
 
+func (suite *PrometheusTestSuite) TestEventIPListSize() {
+	suite.prometheus.EventIPListSize(mtglib.NewEventIPListSize(10, false))
+	suite.prometheus.EventIPListSize(mtglib.NewEventIPListSize(3, true))
+
+	time.Sleep(100 * time.Millisecond)
+
+	data, err := suite.Get()
+	suite.NoError(err)
+	suite.Contains(data, `mtg_iplist_size{ip_list="allowlist"} 10`)
+	suite.Contains(data, `mtg_iplist_size{ip_list="blocklist"} 3`)
+}
+
 func TestPrometheus(t *testing.T) {
 	t.Parallel()
 	suite.Run(t, &PrometheusTestSuite{})

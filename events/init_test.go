@@ -41,6 +41,10 @@ func (o *ObserverMock) EventReplayAttack(evt mtglib.EventReplayAttack) {
 	o.Called(evt)
 }
 
+func (o *ObserverMock) EventIPListSize(evt mtglib.EventIPListSize) {
+	o.Called(evt)
+}
+
 func (o *ObserverMock) Shutdown() {
 	o.Called()
 }
