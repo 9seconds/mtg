@@ -163,7 +163,7 @@ func (f *Firehol) update() {
 	f.treeV4 = v4tree
 	f.treeV6 = v6tree
 
-	f.logger.Info("blocklist was updated")
+	f.logger.Info("ip list was updated")
 }
 
 func (f *Firehol) updateFromFile(mutex sync.Locker,

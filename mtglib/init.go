@@ -176,6 +176,12 @@ type IPBlocklist interface {
 	// Contains checks if given IP address belongs to this blocklist If.
 	// it is, a connection is terminated                               .
 	Contains(net.IP) bool
+
+	// Run starts a background update procedure for a blocklist
+	Run(time.Duration)
+
+	// Shutdown stops a blocklist. It is assumed that none will access it after.
+	Shutdown()
 }
 
 // Event is a data structure which is populated during mtg request

@@ -144,6 +144,12 @@ func (p *Proxy) Shutdown() {
 	p.ctxCancel()
 	p.streamWaitGroup.Wait()
 	p.workerPool.Release()
+
+	if p.whitelist != nil {
+		p.whitelist.Shutdown()
+	}
+
+	p.blocklist.Shutdown()
 }
 
 func (p *Proxy) doFakeTLSHandshake(ctx *streamContext) bool {
