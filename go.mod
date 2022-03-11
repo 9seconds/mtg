@@ -12,7 +12,6 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/gotd/td v0.34.0
 	github.com/jarcoal/httpmock v1.0.8
-	github.com/kentik/patricia v0.0.0-20210909164817-21603333b70e
 	github.com/mccutchen/go-httpbin v1.1.1
 	github.com/panjf2000/ants/v2 v2.4.7
 	github.com/pelletier/go-toml v1.9.4
@@ -30,7 +29,10 @@ require (
 	google.golang.org/protobuf v1.27.1 // indirect
 )
 
-require github.com/txthinking/socks5 v0.0.0-20211121111206-e03c1217a50b
+require (
+	github.com/txthinking/socks5 v0.0.0-20211121111206-e03c1217a50b
+	github.com/yl2chen/cidranger v1.0.2
+)
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
