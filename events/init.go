@@ -53,6 +53,9 @@ type Observer interface {
 	// EventReplayAttack reacts on incoming mtglib.EventReplayAttack event.
 	EventReplayAttack(mtglib.EventReplayAttack)
 
+	// EventIPListSize reacts on incoming mtglib.EventIPListSize
+	EventIPListSize(mtglib.EventIPListSize)
+
 	// Shutdown stop observer. Default event stream guarantees:
 	//   1. If shutdown is executed, it is executed only once
 	//   2. Observer won't receieve any new message after this

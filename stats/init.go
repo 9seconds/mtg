@@ -89,6 +89,13 @@ const (
 	//     Type: counter
 	MetricReplayAttacks = "replay_attacks"
 
+	// MetricIPListSize defines a metric for the size of the the ip list.
+	//
+	//     Type: gauge
+	//     Tags:
+	//       ip_list | 'allowlist' or 'blocklist'
+	MetricIPListSize = "iplist_size"
+
 	// TagIPFamily defines a name of the 'ip_family' tag and all values.
 	TagIPFamily = "ip_family"
 
@@ -114,4 +121,13 @@ const (
 	// TagDirectionFromClient defines that traffic is sent from a client to
 	// Telegram.
 	TagDirectionFromClient = "from_client"
+
+	// TagIPList defines a name of the 'ip_list' and all values.
+	TagIPList = "ip_list"
+
+	// TagIPListAllow defines a value of 'ip_list' of allowlist.
+	TagIPListAllow = "allowlist"
+
+	// TagIPListBlock defines a value of 'ip_list' of blocklist.
+	TagIPListBlock = "blocklist"
 )

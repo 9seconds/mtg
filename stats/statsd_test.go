@@ -196,6 +196,22 @@ func (suite *StatsdTestSuite) TestEventReplayAttack() {
 	suite.Equal("mtg.replay_attacks:1|c", suite.statsdServer.String())
 }
 
+func (suite *StatsdTestSuite) TestEventIPListSizeAllowlist() {
+	suite.statsd.EventIPListSize(mtglib.NewEventIPListSize(10, false))
+
+	time.Sleep(statsdSleepTime)
+	suite.Contains(suite.statsdServer.String(), "mtg.iplist_size:10|g")
+	suite.Contains(suite.statsdServer.String(), "allowlist")
+}
+
+func (suite *StatsdTestSuite) TestEventIPListSizeBlocklist() {
+	suite.statsd.EventIPListSize(mtglib.NewEventIPListSize(10, true))
+
+	time.Sleep(statsdSleepTime)
+	suite.Contains(suite.statsdServer.String(), "mtg.iplist_size:10|g")
+	suite.Contains(suite.statsdServer.String(), "blocklist")
+}
+
 func TestStatsd(t *testing.T) {
 	t.Parallel()
 	suite.Run(t, &StatsdTestSuite{})

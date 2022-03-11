@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/url"
@@ -85,7 +86,10 @@ func makeAntiReplayCache(conf *config.Config) mtglib.AntiReplayCache {
 	)
 }
 
-func makeIPBlocklist(conf config.ListConfig, logger mtglib.Logger, ntw mtglib.Network) (mtglib.IPBlocklist, error) {
+func makeIPBlocklist(conf config.ListConfig,
+	logger mtglib.Logger,
+	ntw mtglib.Network,
+	updateCallback ipblocklist.FireholUpdateCallback) (mtglib.IPBlocklist, error) {
 	if !conf.Enabled.Get(false) {
 		return ipblocklist.NewNoop(), nil
 	}
@@ -105,7 +109,8 @@ func makeIPBlocklist(conf config.ListConfig, logger mtglib.Logger, ntw mtglib.Ne
 		ntw,
 		conf.DownloadConcurrency.Get(1),
 		remoteURLs,
-		localFiles)
+		localFiles,
+		updateCallback)
 	if err != nil {
 		return nil, fmt.Errorf("incorrect parameters for firehol: %w", err)
 	}
@@ -159,12 +164,23 @@ func runProxy(conf *config.Config, version string) error { // nolint: funlen
 
 	logger.BindJSON("configuration", conf.String()).Debug("configuration")
 
+	eventStream, err := makeEventStream(conf, logger)
+	if err != nil {
+		return fmt.Errorf("cannot build event stream: %w", err)
+	}
+
 	ntw, err := makeNetwork(conf, version)
 	if err != nil {
 		return fmt.Errorf("cannot build network: %w", err)
 	}
 
-	blocklist, err := makeIPBlocklist(conf.Defense.Blocklist, logger.Named("blocklist"), ntw)
+	blocklist, err := makeIPBlocklist(
+		conf.Defense.Blocklist,
+		logger.Named("blocklist"),
+		ntw,
+		func(ctx context.Context, size int) {
+			eventStream.Send(ctx, mtglib.NewEventIPListSize(size, true))
+		})
 	if err != nil {
 		return fmt.Errorf("cannot build ip blocklist: %w", err)
 	}
@@ -172,17 +188,18 @@ func runProxy(conf *config.Config, version string) error { // nolint: funlen
 	var whitelist mtglib.IPBlocklist
 
 	if conf.Defense.Allowlist.Enabled.Get(false) {
-		whlist, err := makeIPBlocklist(conf.Defense.Allowlist, logger.Named("allowlist"), ntw)
+		whlist, err := makeIPBlocklist(
+			conf.Defense.Allowlist,
+			logger.Named("allowlist"),
+			ntw,
+			func(ctx context.Context, size int) {
+				eventStream.Send(ctx, mtglib.NewEventIPListSize(size, false))
+			})
 		if err != nil {
 			return fmt.Errorf("cannot build ip allowlist: %w", err)
 		}
 
 		whitelist = whlist
-	}
-
-	eventStream, err := makeEventStream(conf, logger)
-	if err != nil {
-		return fmt.Errorf("cannot build event stream: %w", err)
 	}
 
 	opts := mtglib.ProxyOpts{

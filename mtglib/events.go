@@ -92,6 +92,15 @@ type EventReplayAttack struct {
 	eventBase
 }
 
+// EventIPListSize is emitted when mtg updates a contents of the ip lists:
+// allowlist or blocklist.
+type EventIPListSize struct {
+	eventBase
+
+	Size        int
+	IsBlockList bool
+}
+
 // NewEventStart creates a new EventStart event.
 func NewEventStart(streamID string, remoteIP net.IP) EventStart {
 	return EventStart{
@@ -174,5 +183,16 @@ func NewEventReplayAttack(streamID string) EventReplayAttack {
 			timestamp: time.Now(),
 			streamID:  streamID,
 		},
+	}
+}
+
+// NewEventIPListSize creates a new EventIPListSize event.
+func NewEventIPListSize(size int, isBlockList bool) EventIPListSize {
+	return EventIPListSize{
+		eventBase: eventBase{
+			timestamp: time.Now(),
+		},
+		Size:        size,
+		IsBlockList: isBlockList,
 	}
 }

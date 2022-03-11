@@ -170,7 +170,7 @@ download-concurrency = 2
 # You can provider links here (starts with https:// or http://) or
 # path to a local file, but in this case it should be absolute.
 urls = [
-    # "https://iplists.firehol.org/files/firehol_level1.netset",
+    "https://iplists.firehol.org/files/firehol_level1.netset",
     # "/local.file"
 ]
 # How often do we need to update a blocklist set.
