@@ -317,12 +317,15 @@ Now you can create a systemd unit:
 ```console
 $ cat /etc/systemd/system/mtg.service
 [Unit]
-Description=mtg
+Description=mtg - MTProto proxy server
+Documentation=https://github.com/9seconds/mtg
+After=network.target
 
 [Service]
 ExecStart=/usr/local/bin/mtg run /etc/mtg.toml
 Restart=always
 RestartSec=3
+DynamicUser=true
 
 [Install]
 WantedBy=multi-user.target
