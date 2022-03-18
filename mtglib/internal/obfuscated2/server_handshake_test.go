@@ -1,14 +1,8 @@
 package obfuscated2_test
 
 import (
-	"bytes"
-	"crypto/aes"
-	"crypto/cipher"
-	"encoding/base64"
 	"testing"
 
-	"github.com/9seconds/mtg/v2/internal/testlib"
-	"github.com/9seconds/mtg/v2/mtglib/internal/obfuscated2"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
@@ -16,64 +10,31 @@ import (
 type ServerHandshakeTestSuite struct {
 	suite.Suite
 
-	connMock  *testlib.EssentialsConnMock
-	proxyConn obfuscated2.Conn
-	encryptor cipher.Stream
-	decryptor cipher.Stream
+	data ServerHandshakeTestData
 }
 
 func (suite *ServerHandshakeTestSuite) SetupTest() {
-	buf := &bytes.Buffer{}
-	suite.connMock = &testlib.EssentialsConnMock{}
-
-	encryptor, decryptor, err := obfuscated2.ServerHandshake(buf)
-	suite.NoError(err)
-
-	suite.proxyConn = obfuscated2.Conn{
-		Conn:      suite.connMock,
-		Encryptor: encryptor,
-		Decryptor: decryptor,
-	}
-
-	serverEncrypted := buf.Bytes()
-
-	decBlock, _ := aes.NewCipher(serverEncrypted[8 : 8+32])
-	suite.decryptor = cipher.NewCTR(decBlock, serverEncrypted[8+32:8+32+16])
-
-	serverDecrypted := make([]byte, len(serverEncrypted))
-	suite.decryptor.XORKeyStream(serverDecrypted, serverEncrypted)
-
-	suite.Equal("3d3d3Q",
-		base64.RawStdEncoding.EncodeToString(serverDecrypted[8+32+16:8+32+16+4]))
-
-	serverEncryptedReverted := make([]byte, len(serverEncrypted))
-
-	for i := 0; i < 32+16; i++ {
-		serverEncryptedReverted[8+i] = serverEncrypted[8+32+16-1-i]
-	}
-
-	encBlock, _ := aes.NewCipher(serverEncryptedReverted[8 : 8+32])
-	suite.encryptor = cipher.NewCTR(encBlock, serverEncryptedReverted[8+32:8+32+16])
+	suite.data = NewServerHandshakeTestData(suite.T())
 }
 
 func (suite *ServerHandshakeTestSuite) TearDownTest() {
-	suite.connMock.AssertExpectations(suite.T())
+	suite.data.connMock.AssertExpectations(suite.T())
 }
 
 func (suite *ServerHandshakeTestSuite) TestSendToTelegram() {
 	messageToTelegram := []byte{10, 11, 12, 13, 14, 'a'}
 
-	suite.connMock.
+	suite.data.connMock.
 		On("Write", mock.Anything).
 		Return(len(messageToTelegram), nil).
 		Once().
 		Run(func(args mock.Arguments) {
 			message := make([]byte, len(messageToTelegram))
-			suite.decryptor.XORKeyStream(message, args.Get(0).([]byte)) // nolint: forcetypeassert
+			suite.data.decryptor.XORKeyStream(message, args.Get(0).([]byte)) // nolint: forcetypeassert
 			suite.Equal(messageToTelegram, message)
 		})
 
-	n, err := suite.proxyConn.Write(messageToTelegram)
+	n, err := suite.data.proxyConn.Write(messageToTelegram)
 	suite.EqualValues(len(messageToTelegram), n)
 	suite.NoError(err)
 }
@@ -82,17 +43,17 @@ func (suite *ServerHandshakeTestSuite) TestRecieveFromTelegram() {
 	messageFromTelegram := []byte{10, 11, 12, 13, 14, 'a'}
 	buffer := make([]byte, len(messageFromTelegram))
 
-	suite.connMock.
+	suite.data.connMock.
 		On("Read", mock.Anything).
 		Return(len(messageFromTelegram), nil).
 		Once().
 		Run(func(args mock.Arguments) {
 			message := make([]byte, len(messageFromTelegram))
-			suite.encryptor.XORKeyStream(message, messageFromTelegram)
+			suite.data.encryptor.XORKeyStream(message, messageFromTelegram)
 			copy(args.Get(0).([]byte), message) // nolint: forcetypeassert
 		})
 
-	n, err := suite.proxyConn.Read(buffer)
+	n, err := suite.data.proxyConn.Read(buffer)
 	suite.EqualValues(len(messageFromTelegram), n)
 	suite.NoError(err)
 	suite.Equal(messageFromTelegram, buffer)
