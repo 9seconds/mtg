@@ -155,7 +155,8 @@ func (f *Firehol) update() {
 
 func (f *Firehol) updateFromFile(mutex sync.Locker,
 	ranger cidranger.Ranger,
-	scanner *bufio.Scanner) error {
+	scanner *bufio.Scanner,
+) error {
 	for scanner.Scan() {
 		text := scanner.Text()
 		text = fireholRegexpComment.ReplaceAllLiteralString(text, "")
@@ -216,7 +217,8 @@ func NewFirehol(logger mtglib.Logger, network mtglib.Network,
 	downloadConcurrency uint,
 	urls []string,
 	localFiles []string,
-	updateCallback FireholUpdateCallback) (*Firehol, error) {
+	updateCallback FireholUpdateCallback,
+) (*Firehol, error) {
 	blocklists := []files.File{}
 
 	for _, v := range localFiles {
@@ -245,7 +247,8 @@ func NewFirehol(logger mtglib.Logger, network mtglib.Network,
 func NewFireholFromFiles(logger mtglib.Logger,
 	downloadConcurrency uint,
 	blocklists []files.File,
-	updateCallback FireholUpdateCallback) (*Firehol, error) {
+	updateCallback FireholUpdateCallback,
+) (*Firehol, error) {
 	if downloadConcurrency == 0 {
 		downloadConcurrency = DefaultFireholDownloadConcurrency
 	}

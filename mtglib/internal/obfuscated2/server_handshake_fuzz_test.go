@@ -8,7 +8,7 @@ import (
 )
 
 func FuzzServerSend(f *testing.F) {
-	f.Add([]byte{1,2,3,4,5})
+	f.Add([]byte{1, 2, 3, 4, 5})
 
 	f.Fuzz(func(t *testing.T, data []byte) {
 		handshakeData := NewServerHandshakeTestData(t)
@@ -32,7 +32,7 @@ func FuzzServerSend(f *testing.F) {
 }
 
 func FuzzServerReceive(f *testing.F) {
-	f.Add([]byte{1,2,3,4,5})
+	f.Add([]byte{1, 2, 3, 4, 5})
 
 	f.Fuzz(func(t *testing.T, data []byte) {
 		handshakeData := NewServerHandshakeTestData(t)

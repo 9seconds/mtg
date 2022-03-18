@@ -7,10 +7,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var FuzzClientHandshakeSecret = []byte{1,2,3}
+var FuzzClientHandshakeSecret = []byte{1, 2, 3}
 
 func FuzzClientHandshake(f *testing.F) {
-	f.Add([]byte{1,2,3})
+	f.Add([]byte{1, 2, 3})
 
 	f.Fuzz(func(t *testing.T, frame []byte) {
 		data := bytes.NewReader(frame)

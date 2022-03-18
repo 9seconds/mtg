@@ -23,7 +23,7 @@ func FuzzServerGenerateHandshakeFrame(f *testing.F) {
 		assert.NotEqualValues(
 			t,
 			0,
-			frame.data[4] | frame.data[5] | frame.data[6] | frame.data[7])
+			frame.data[4]|frame.data[5]|frame.data[6]|frame.data[7])
 
 		assert.Equal(t, handshakeConnectionType, frame.connectionType())
 	})

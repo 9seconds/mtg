@@ -127,7 +127,7 @@ func NewServerHandshakeTestData(t *testing.T) ServerHandshakeTestData {
 	return ServerHandshakeTestData{
 		connMock: connMock,
 		proxyConn: obfuscated2.Conn{
-			Conn: connMock,
+			Conn:      connMock,
 			Encryptor: handshakeEnc,
 			Decryptor: handshakeDec,
 		},

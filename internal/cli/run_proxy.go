@@ -89,7 +89,8 @@ func makeAntiReplayCache(conf *config.Config) mtglib.AntiReplayCache {
 func makeIPBlocklist(conf config.ListConfig,
 	logger mtglib.Logger,
 	ntw mtglib.Network,
-	updateCallback ipblocklist.FireholUpdateCallback) (mtglib.IPBlocklist, error) {
+	updateCallback ipblocklist.FireholUpdateCallback,
+) (mtglib.IPBlocklist, error) {
 	if !conf.Enabled.Get(false) {
 		return ipblocklist.NewNoop(), nil
 	}
