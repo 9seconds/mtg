@@ -97,7 +97,7 @@ install-tools-goreleaser: .bin
 
 .PHONY: update-deps
 update-deps:
-	@go get -u && go mod tidy -go=1.17
+	@go get -u && go mod tidy -go=1.18
 
 .PHONY: fuzz
 fuzz: fuzz-ClientHello fuzz-ServerGenerateHandshakeFrame fuzz-ClientHandshake fuzz-ServerReceive fuzz-ServerSend
