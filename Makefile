@@ -9,6 +9,8 @@ VERSION_DATE       := $(shell date -Ru)
 VERSION_TAG        := $(shell git describe --tags --always)
 COMMON_BUILD_FLAGS := -trimpath -mod=readonly -ldflags="-extldflags '-static' -s -w -X 'main.version=$(VERSION_TAG) ($(VERSION_GO)) [$(VERSION_DATE)]'"
 
+FUZZ_FLAGS := -fuzztime=120s
+
 GOBIN  := $(ROOT_DIR)/.bin
 GOTOOL := env "GOBIN=$(GOBIN)" "PATH=$(ROOT_DIR)/.bin:$(PATH)"
 
@@ -96,3 +98,26 @@ install-tools-goreleaser: .bin
 .PHONY: update-deps
 update-deps:
 	@go get -u && go mod tidy -go=1.17
+
+.PHONY: fuzz
+fuzz: fuzz-ClientHello fuzz-ServerGenerateHandshakeFrame fuzz-ClientHandshake fuzz-ServerReceive fuzz-ServerSend
+
+.PHONY: fuzz-ClientHello
+fuzz-ClientHello:
+	@go test -fuzz=FuzzClientHello $(FUZZ_FLAGS) "$(ROOT_DIR)/mtglib/internal/faketls"
+
+.PHONY: fuzz-ServerGenerateHandshakeFrame
+fuzz-ServerGenerateHandshakeFrame:
+	@go test -fuzz=FuzzServerGenerateHandshakeFrame $(FUZZ_FLAGS) "$(ROOT_DIR)/mtglib/internal/obfuscated2"
+
+.PHONY: fuzz-ClientHandshake
+fuzz-ClientHandshake:
+	@go test -fuzz=FuzzClientHandshake $(FUZZ_FLAGS) "$(ROOT_DIR)/mtglib/internal/obfuscated2"
+
+.PHONY: fuzz-ServerReceive
+fuzz-ServerReceive:
+	@go test -fuzz=FuzzServerReceive $(FUZZ_FLAGS) "$(ROOT_DIR)/mtglib/internal/obfuscated2"
+
+.PHONY: fuzz-ServerSend
+fuzz-ServerSend:
+	@go test -fuzz=FuzzServerSend $(FUZZ_FLAGS) "$(ROOT_DIR)/mtglib/internal/obfuscated2"
