@@ -9,7 +9,10 @@
 package main
 
 import (
+	"fmt"
 	"math/rand"
+	"runtime/debug"
+	"strconv"
 	"time"
 
 	"github.com/9seconds/mtg/v2/internal/cli"
@@ -24,6 +27,32 @@ func main() {
 
 	if err := utils.SetLimits(); err != nil {
 		panic(err)
+	}
+
+	if buildInfo, ok := debug.ReadBuildInfo(); ok {
+		vcsCommit := "<no-commit>"
+		vcsDate := time.Now()
+		vcsDirty := ""
+
+		for _, setting := range buildInfo.Settings {
+			switch setting.Key {
+			case "vcs.time":
+				vcsDate, _ = time.Parse(time.RFC3339, setting.Value)
+			case "vcs.revision":
+				vcsCommit = setting.Value
+			case "vcs.modified":
+				if isDirty, _ := strconv.ParseBool(setting.Value); isDirty {
+					vcsDirty = " [dirty]"
+				}
+			}
+		}
+
+		version = fmt.Sprintf("%s (%s: %s on %s%s)",
+			version,
+			buildInfo.GoVersion,
+			vcsDate.Format(time.RFC3339),
+			vcsCommit,
+			vcsDirty)
 	}
 
 	cli := &cli.CLI{}

@@ -4,10 +4,8 @@ APP_NAME     := $(IMAGE_NAME)
 
 GOLANGCI_LINT_VERSION := v1.44.2
 
-VERSION_GO         := $(shell go version)
-VERSION_DATE       := $(shell date -Ru)
-VERSION_TAG        := $(shell git describe --tags --always)
-COMMON_BUILD_FLAGS := -trimpath -mod=readonly -ldflags="-extldflags '-static' -s -w -X 'main.version=$(VERSION_TAG) ($(VERSION_GO)) [$(VERSION_DATE)]'"
+VERSION            := $(shell git describe --exact-match HEAD 2>/dev/null || git describe --tags --always)
+COMMON_BUILD_FLAGS := -trimpath -mod=readonly -ldflags="-extldflags '-static' -s -w -X 'main.version=$(VERSION)'"
 
 FUZZ_FLAGS := -fuzztime=120s
 
