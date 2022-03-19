@@ -84,7 +84,8 @@ func (w *wrapperCtx) RemoteAddr() *net.TCPAddr {
 
 func NewCtx(ctx context.Context,
 	cancel context.CancelFunc,
-	parent conntypes.StreamReadWriteCloser) conntypes.StreamReadWriteCloser {
+	parent conntypes.StreamReadWriteCloser,
+) conntypes.StreamReadWriteCloser {
 	return &wrapperCtx{
 		parent: parent,
 		ctx:    ctx,

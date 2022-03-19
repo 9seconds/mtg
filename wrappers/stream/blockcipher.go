@@ -70,7 +70,8 @@ func (w *wrapperBlockCipher) RemoteAddr() *net.TCPAddr {
 }
 
 func newBlockCipher(parent conntypes.StreamReadWriteCloser,
-	encryptor, decryptor cipher.BlockMode) conntypes.StreamReadWriteCloser {
+	encryptor, decryptor cipher.BlockMode,
+) conntypes.StreamReadWriteCloser {
 	cipher := &wrapperBlockCipher{
 		parent:    parent,
 		encryptor: encryptor,

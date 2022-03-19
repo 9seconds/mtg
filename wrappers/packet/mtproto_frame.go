@@ -50,7 +50,7 @@ func (w *wrapperMtprotoFrame) Read() (conntypes.Packet, error) { // nolint: funl
 		buf.Reset()
 		sum.Reset()
 
-		if _, err := io.CopyN(writer, w.parent, 4); err != nil {
+		if _, err := io.CopyN(writer, w.parent, 4); err != nil { // nolint: gomnd
 			return nil, fmt.Errorf("cannot read frame padding: %w", err)
 		}
 
@@ -72,7 +72,7 @@ func (w *wrapperMtprotoFrame) Read() (conntypes.Packet, error) { // nolint: funl
 
 	buf.Reset()
 
-	if _, err := io.CopyN(writer, w.parent, int64(messageLength)-4-4); err != nil {
+	if _, err := io.CopyN(writer, w.parent, int64(messageLength)-4-4); err != nil { // nolint: gomnd
 		return nil, fmt.Errorf("cannot read the message frame: %w", err)
 	}
 
@@ -88,7 +88,7 @@ func (w *wrapperMtprotoFrame) Read() (conntypes.Packet, error) { // nolint: funl
 	buf.Reset()
 	// write to buf, not to writer. This is because we are going to fetch
 	// crc32 checksum.
-	if _, err := io.CopyN(buf, w.parent, 4); err != nil {
+	if _, err := io.CopyN(buf, w.parent, 4); err != nil { // nolint: gomnd
 		return nil, fmt.Errorf("cannot read checksum: %w", err)
 	}
 
@@ -109,7 +109,7 @@ func (w *wrapperMtprotoFrame) Read() (conntypes.Packet, error) { // nolint: funl
 }
 
 func (w *wrapperMtprotoFrame) Write(p conntypes.Packet) error {
-	messageLength := 4 + 4 + len(p) + 4
+	messageLength := 4 + 4 + len(p) + 4 // nolint: gomnd
 	paddingLength := (aes.BlockSize - messageLength%aes.BlockSize) % aes.BlockSize
 
 	buf := &bytes.Buffer{}
@@ -119,8 +119,8 @@ func (w *wrapperMtprotoFrame) Write(p conntypes.Packet) error {
 	buf.Write(p)
 
 	checksum := crc32.ChecksumIEEE(buf.Bytes())
-	binary.Write(buf, binary.LittleEndian, checksum) // nolint: errcheck
-	buf.Write(bytes.Repeat(mtprotoFramePadding, paddingLength/4))
+	binary.Write(buf, binary.LittleEndian, checksum)              // nolint: errcheck
+	buf.Write(bytes.Repeat(mtprotoFramePadding, paddingLength/4)) // nolint: gomnd
 
 	w.logger.Debugw("Write MTProto frame",
 		"length", len(p),

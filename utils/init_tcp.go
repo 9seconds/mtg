@@ -5,7 +5,7 @@ import (
 	"net"
 )
 
-func InitTCP(conn net.Conn, readBufferSize int, writeBufferSize int) error {
+func InitTCP(conn net.Conn, readBufferSize, writeBufferSize int) error {
 	tcpConn := conn.(*net.TCPConn) // nolint: forcetypeassert
 
 	if err := tcpConn.SetNoDelay(true); err != nil {

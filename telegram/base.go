@@ -28,7 +28,8 @@ func (b *baseTelegram) Secret() []byte {
 }
 
 func (b *baseTelegram) dial(dc conntypes.DC,
-	protocol conntypes.ConnectionProtocol) (conntypes.StreamReadWriteCloser, error) {
+	protocol conntypes.ConnectionProtocol,
+) (conntypes.StreamReadWriteCloser, error) {
 	for _, addr := range b.getAddresses(dc, protocol) {
 		conn, err := b.dialer.Dial("tcp", addr)
 		if err != nil {
@@ -50,7 +51,7 @@ func (b *baseTelegram) dial(dc conntypes.DC,
 }
 
 func (b *baseTelegram) getAddresses(dc conntypes.DC, protocol conntypes.ConnectionProtocol) []string {
-	addresses := make([]string, 0, 2)
+	addresses := make([]string, 0, 2) // nolint: gomnd
 	protos := []conntypes.ConnectionProtocol{
 		conntypes.ConnectionProtocolIPv6,
 		conntypes.ConnectionProtocolIPv4,
@@ -74,7 +75,8 @@ func (b *baseTelegram) getAddresses(dc conntypes.DC, protocol conntypes.Connecti
 }
 
 func (b *baseTelegram) chooseAddress(addresses map[conntypes.DC][]string,
-	dc, defaultDC conntypes.DC) string {
+	dc, defaultDC conntypes.DC,
+) string {
 	addrs, ok := addresses[dc]
 	if !ok {
 		addrs = addresses[defaultDC]

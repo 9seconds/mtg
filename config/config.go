@@ -146,7 +146,7 @@ func (c *Config) adjustProxyValue(value int) int {
 
 	fvalue := float64(value)
 
-	newValue := fvalue * 2 * math.Log(float64(c.MultiplexPerConnection))
+	newValue := fvalue * 2 * math.Log(float64(c.MultiplexPerConnection)) // nolint: gomnd
 	newValue = math.Ceil(newValue)
 	newValue = math.Max(fvalue, newValue)
 
@@ -208,15 +208,15 @@ func Init(options ...Opt) error { // nolint: gocyclo, funlen, cyclop
 		case OptionTypeStatsdTags:
 			C.StatsdTags = opt.Value.(map[string]string) // nolint: forcetypeassert
 		case OptionTypeWriteBufferSize:
-			C.WriteBuffer = int(opt.Value.(units.Base2Bytes))
+			C.WriteBuffer = int(opt.Value.(units.Base2Bytes)) // nolint: forcetypeassert
 		case OptionTypeReadBufferSize:
-			C.ReadBuffer = int(opt.Value.(units.Base2Bytes))
+			C.ReadBuffer = int(opt.Value.(units.Base2Bytes)) // nolint: forcetypeassert
 		case OptionTypeCloakPort:
-			C.CloakPort = int(opt.Value.(uint16))
+			C.CloakPort = int(opt.Value.(uint16)) // nolint: forcetypeassert
 		case OptionTypeAntiReplayMaxSize:
-			C.AntiReplayMaxSize = int(opt.Value.(units.Base2Bytes))
+			C.AntiReplayMaxSize = int(opt.Value.(units.Base2Bytes)) // nolint: forcetypeassert
 		case OptionTypeMultiplexPerConnection:
-			C.MultiplexPerConnection = int(opt.Value.(uint))
+			C.MultiplexPerConnection = int(opt.Value.(uint)) // nolint: forcetypeassert
 		case OptionTypeNTPServers:
 			C.NTPServers = opt.Value.([]string) // nolint: forcetypeassert
 			if len(C.NTPServers) == 0 {

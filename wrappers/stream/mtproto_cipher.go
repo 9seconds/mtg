@@ -26,7 +26,8 @@ var mtprotoEmptyIP = [4]byte{0x00, 0x00, 0x00, 0x00}
 func NewMiddleProxyCipher(parent conntypes.StreamReadWriteCloser,
 	req *rpc.NonceRequest,
 	resp *rpc.NonceResponse,
-	secret []byte) conntypes.StreamReadWriteCloser {
+	secret []byte,
+) conntypes.StreamReadWriteCloser {
 	localAddr := parent.LocalAddr()
 	remoteAddr := parent.RemoteAddr()
 
@@ -53,7 +54,8 @@ func mtprotoDeriveKeys(purpose mtprotoCipherPurpose,
 	req *rpc.NonceRequest,
 	resp *rpc.NonceResponse,
 	client, remote *net.TCPAddr,
-	secret []byte) ([]byte, []byte) {
+	secret []byte,
+) ([]byte, []byte) {
 	message := bytes.Buffer{}
 
 	message.Write(resp.Nonce)

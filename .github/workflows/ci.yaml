@@ -30,10 +30,7 @@ jobs:
     strategy:
       matrix:
         go_version:
-          - ~1.14
-          - ~1.15
-          - ~1.16
-          - ^1.17
+          - ^1.18
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -73,12 +70,12 @@ jobs:
       - name: Run linter
         uses: golangci/golangci-lint-action@v2
         with:
-          version: v1.42.0
+          version: v1.45.0
 
   docker:
     name: Docker
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v2

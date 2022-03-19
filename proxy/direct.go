@@ -20,7 +20,7 @@ func directConnection(request *protocol.TelegramRequest) error {
 	defer telegramConnRaw.Close()
 
 	wg := &sync.WaitGroup{}
-	wg.Add(2)
+	wg.Add(2) // nolint: gomnd
 
 	go directPipe(telegramConnRaw, request.ClientConn, wg, request.Logger)
 

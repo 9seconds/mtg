@@ -63,7 +63,8 @@ func (m *middleTelegram) backgroundUpdate() {
 }
 
 func (m *middleTelegram) Dial(dc conntypes.DC,
-	protocol conntypes.ConnectionProtocol) (conntypes.StreamReadWriteCloser, error) {
+	protocol conntypes.ConnectionProtocol,
+) (conntypes.StreamReadWriteCloser, error) {
 	if dc == 0 {
 		dc = conntypes.DCDefaultIdx
 	}

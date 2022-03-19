@@ -29,7 +29,8 @@ type directTelegram struct {
 }
 
 func (d *directTelegram) Dial(dc conntypes.DC,
-	protocol conntypes.ConnectionProtocol) (conntypes.StreamReadWriteCloser, error) {
+	protocol conntypes.ConnectionProtocol,
+) (conntypes.StreamReadWriteCloser, error) {
 	switch {
 	case dc < 0:
 		dc = -dc

@@ -6,7 +6,7 @@ func ReverseBytes(data []byte) []byte {
 	rv := make([]byte, dataLen)
 	rv[dataLen/2] = data[dataLen/2]
 
-	for i := dataLen/2 - 1; i >= 0; i-- {
+	for i := dataLen/2 - 1; i >= 0; i-- { // nolint: gomnd
 		opp := dataLen - i - 1
 		rv[i], rv[opp] = data[opp], data[i]
 	}

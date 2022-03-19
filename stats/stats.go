@@ -32,7 +32,7 @@ func Init(ctx context.Context) error {
 
 	go func() {
 		<-ctx.Done()
-		srv.Shutdown(context.Background()) // nolint: errcheck
+		srv.Shutdown(context.Background()) // nolint: errcheck, contextcheck
 	}()
 
 	Stats = multiStats(stats)

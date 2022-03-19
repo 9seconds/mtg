@@ -91,10 +91,11 @@ func (w *wrapperConn) RemoteAddr() *net.TCPAddr {
 
 func newConn(parent net.Conn,
 	connID conntypes.ConnID,
-	purpose connPurpose) conntypes.StreamReadWriteCloser {
-	localAddr := *parent.LocalAddr().(*net.TCPAddr)
+	purpose connPurpose,
+) conntypes.StreamReadWriteCloser {
+	localAddr := *parent.LocalAddr().(*net.TCPAddr) // nolint: forcetypeassert
 
-	if parent.RemoteAddr().(*net.TCPAddr).IP.To4() != nil {
+	if parent.RemoteAddr().(*net.TCPAddr).IP.To4() != nil { // nolint: forcetypeassert
 		if config.C.PublicIPv4.IP != nil {
 			localAddr.IP = config.C.PublicIPv4.IP
 		}
@@ -117,7 +118,7 @@ func newConn(parent net.Conn,
 		parent:     parent,
 		connID:     connID,
 		logger:     logger,
-		remoteAddr: parent.RemoteAddr().(*net.TCPAddr),
+		remoteAddr: parent.RemoteAddr().(*net.TCPAddr), // nolint: forcetypeassert
 		localAddr:  &localAddr,
 	}
 }

@@ -32,7 +32,7 @@ func middleConnection(request *protocol.TelegramRequest) {
 	}
 
 	wg := &sync.WaitGroup{}
-	wg.Add(2)
+	wg.Add(2) // nolint: gomnd
 
 	go middlePipe(telegramConn, clientConn, wg, request.Logger)
 
@@ -44,7 +44,8 @@ func middleConnection(request *protocol.TelegramRequest) {
 func middlePipe(dst conntypes.PacketAckWriteCloser,
 	src conntypes.PacketAckReadCloser,
 	wg *sync.WaitGroup,
-	logger *zap.SugaredLogger) {
+	logger *zap.SugaredLogger,
+) {
 	defer func() {
 		dst.Close()
 		src.Close()

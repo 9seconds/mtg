@@ -4,7 +4,7 @@ APP_NAME     := $(IMAGE_NAME)
 
 CC_BINARIES  := $(shell bash -c "echo -n $(APP_NAME)-{linux,freebsd,openbsd}-{386,amd64} $(APP_NAME)-linux-{arm,arm64}")
 
-GOLANGCI_LINT_VERSION := v1.42.0
+GOLANGCI_LINT_VERSION := v1.45.0
 
 VERSION_GO         := $(shell go version)
 VERSION_DATE       := $(shell date -Ru)
@@ -73,8 +73,12 @@ docker:
 doc:
 	@$(GOTOOL) godoc -http 0.0.0.0:10000
 
+.PHONY: fmt
+fmt:
+	@$(GOTOOL) gofumpt -w -extra "$(ROOT_DIR)"
+
 .PHONY: install-tools
-install-tools: install-tools-lint install-tools-godoc
+install-tools: install-tools-lint install-tools-godoc install-tools-gofumpt
 
 .PHONY: install-tools-lint
 install-tools-lint:
@@ -86,6 +90,10 @@ install-tools-lint:
 install-tools-godoc:
 	@mkdir -p "$(GOBIN)" || true && \
 		$(GOTOOL) go get -u golang.org/x/tools/cmd/godoc
+
+.PHONY: install-tools-gofumpt
+install-tools-gofumpt: .bin
+	@$(GOTOOL) go install mvdan.cc/gofumpt@latest
 
 .PHONY: update-deps
 upgrade-deps:

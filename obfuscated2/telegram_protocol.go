@@ -47,17 +47,17 @@ func generateFrame(cp protocol.ClientProtocol) (fm Frame) {
 			continue
 		}
 
-		if data[0] == 0xef {
+		if data[0] == 0xef { // nolint: gomnd
 			continue
 		}
 
-		val := (uint32(data[3]) << 24) | (uint32(data[2]) << 16) | (uint32(data[1]) << 8) | uint32(data[0])
-		if val == 0x44414548 || val == 0x54534f50 || val == 0x20544547 || val == 0x4954504f || val == 0xeeeeeeee {
+		val := (uint32(data[3]) << 24) | (uint32(data[2]) << 16) | (uint32(data[1]) << 8) | uint32(data[0])        // nolint: gomnd, lll
+		if val == 0x44414548 || val == 0x54534f50 || val == 0x20544547 || val == 0x4954504f || val == 0xeeeeeeee { // nolint: lll
 			continue
 		}
 
-		val = (uint32(data[7]) << 24) | (uint32(data[6]) << 16) | (uint32(data[5]) << 8) | uint32(data[4])
-		if val == 0x00000000 {
+		val = (uint32(data[7]) << 24) | (uint32(data[6]) << 16) | (uint32(data[5]) << 8) | uint32(data[4]) // nolint: gomnd
+		if val == 0x00000000 {                                                                             // nolint: gomnd
 			continue
 		}
 

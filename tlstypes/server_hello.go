@@ -36,7 +36,7 @@ func (s ServerHello) WelcomePacket() []byte {
 	}
 	recChangeCipher.WriteBytes(buf)
 
-	hostCert := make([]byte, 1024+mrand.Intn(3092)) // nolint: gosec
+	hostCert := make([]byte, 1024+mrand.Intn(3092)) // nolint: gosec, gomnd
 	rand.Read(hostCert)                             // nolint: errcheck
 
 	recData := Record{
@@ -67,7 +67,7 @@ func NewServerHello(clientHello *ClientHello) *ServerHello {
 	copy(rv.SessionID, clientHello.SessionID)
 
 	tail := bytes.NewBuffer(CipherSuiteType_TLS_AES_128_GCM_SHA256_Bytes)
-	tail.WriteByte(0x00) // no compression
+	tail.WriteByte(0x00) // nolint: gomnd // no compression
 	makeTLSExtensions(tail)
 	rv.Tail = RawBytes(tail.Bytes())
 
