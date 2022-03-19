@@ -26,7 +26,7 @@ func cloak(one, another io.ReadWriteCloser) {
 	another = rwc.NewPing(ctx, another, channelPing)
 	wg := &sync.WaitGroup{}
 
-	wg.Add(2)
+	wg.Add(2) // nolint: gomnd
 
 	go cloakPipe(one, another, wg)
 

@@ -18,7 +18,7 @@ func (h *hub) Register(req *protocol.TelegramRequest) (*ProxyConn, error) {
 }
 
 func (h *hub) getMux(req *protocol.TelegramRequest) *mux {
-	key := 32767 + int32(req.ClientProtocol.DC()) + 100000*int32(req.ClientProtocol.ConnectionProtocol())
+	key := 32767 + int32(req.ClientProtocol.DC()) + 100000*int32(req.ClientProtocol.ConnectionProtocol()) // nolint: gomnd
 
 	h.mutex.RLock()
 	m, ok := h.muxes[key]

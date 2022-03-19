@@ -24,7 +24,7 @@ type ProxyResponse struct {
 func ParseProxyResponse(packet conntypes.Packet) (*ProxyResponse, error) {
 	var response ProxyResponse
 
-	if len(packet) < 4 {
+	if len(packet) < 4 { // nolint: gomnd
 		return nil, fmt.Errorf("incorrect packet length: %d", len(packet))
 	}
 

@@ -83,7 +83,7 @@ func (s *statsStatsd) ClientDisconnected(connectionType conntypes.ConnectionType
 }
 
 func (s *statsStatsd) changeConnections(connectionType conntypes.ConnectionType, addr *net.TCPAddr, increment int64) {
-	tags := make([]*statsStatsdTag, 0, 2)
+	tags := make([]*statsStatsdTag, 0, 2) // nolint: gomnd
 
 	switch connectionType {
 	case conntypes.ConnectionTypeAbridged:
@@ -194,8 +194,8 @@ func newStatsStatsd() Interface {
 	return &statsStatsd{
 		seen: make(map[string]struct{}),
 		client: statsd.NewClient(config.C.StatsdAddr.String(),
-			statsd.SendLoopCount(2),
-			statsd.ReconnectInterval(10*time.Second),
+			statsd.SendLoopCount(2),                  // nolint: gomnd
+			statsd.ReconnectInterval(10*time.Second), // nolint: gomnd
 			statsd.Logger(logger),
 			statsd.MetricPrefix(prefix),
 			statsd.TagStyle(config.C.StatsdTagsFormat),

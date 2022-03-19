@@ -20,7 +20,7 @@ func (w *wrapperClientIntermediateSecure) Read(acks *conntypes.ConnectionAcks) (
 		return nil, err
 	}
 
-	length := len(data) - (len(data) % 4)
+	length := len(data) - (len(data) % 4) // nolint: gomnd
 
 	return data[:length], nil
 }
@@ -35,7 +35,7 @@ func (w *wrapperClientIntermediateSecure) Write(packet conntypes.Packet, acks *c
 	}
 
 	buf := &bytes.Buffer{}
-	paddingLength := rand.Intn(4) // nolint: gosec
+	paddingLength := rand.Intn(4) // nolint: gosec, gomnd
 
 	buf.Grow(4 + len(packet) + paddingLength)
 

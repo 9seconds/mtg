@@ -21,14 +21,14 @@ const (
 var ProxyRequestFlagsEncryptedPrefix [8]byte
 
 func (r ProxyRequestFlags) Bytes() []byte {
-	converted := make([]byte, 4)
+	converted := make([]byte, 4) // nolint: gomnd
 	binary.LittleEndian.PutUint32(converted, uint32(r))
 
 	return converted
 }
 
 func (r ProxyRequestFlags) String() string {
-	flags := make([]string, 0, 7)
+	flags := make([]string, 0, 7) // nolint: gomnd
 
 	if r&ProxyRequestFlagsHasAdTag != 0 {
 		flags = append(flags, "HAS_AD_TAG")

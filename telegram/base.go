@@ -51,7 +51,7 @@ func (b *baseTelegram) dial(dc conntypes.DC,
 }
 
 func (b *baseTelegram) getAddresses(dc conntypes.DC, protocol conntypes.ConnectionProtocol) []string {
-	addresses := make([]string, 0, 2)
+	addresses := make([]string, 0, 2) // nolint: gomnd
 	protos := []conntypes.ConnectionProtocol{
 		conntypes.ConnectionProtocolIPv6,
 		conntypes.ConnectionProtocolIPv4,

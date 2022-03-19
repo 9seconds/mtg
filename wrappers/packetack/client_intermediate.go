@@ -20,9 +20,9 @@ type wrapperClientIntermediate struct {
 func (w *wrapperClientIntermediate) Read(acks *conntypes.ConnectionAcks) (conntypes.Packet, error) {
 	buf := bytes.Buffer{}
 
-	buf.Grow(4)
+	buf.Grow(4) // nolint: gomnd
 
-	if _, err := io.CopyN(&buf, w.parent, 4); err != nil {
+	if _, err := io.CopyN(&buf, w.parent, 4); err != nil { // nolint: gomnd
 		return nil, fmt.Errorf("cannot read message length: %w", err)
 	}
 
