@@ -78,7 +78,7 @@ install-tools: install-tools-lint install-tools-godoc install-tools-gofumpt inst
 
 .PHONY: install-tools-lint
 install-tools-lint: .bin
-	@curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh \
+	@curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh \
 		| bash -s -- -b "$(GOBIN)" "$(GOLANGCI_LINT_VERSION)"
 
 .PHONY: install-tools-godoc
