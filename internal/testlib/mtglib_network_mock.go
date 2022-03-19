@@ -25,6 +25,7 @@ func (m *MtglibNetworkMock) DialContext(ctx context.Context, network, address st
 }
 
 func (m *MtglibNetworkMock) MakeHTTPClient(dialFunc func(ctx context.Context,
-	network, address string) (essentials.Conn, error)) *http.Client {
+	network, address string) (essentials.Conn, error),
+) *http.Client {
 	return m.Called(dialFunc).Get(0).(*http.Client) // nolint: forcetypeassert
 }

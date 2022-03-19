@@ -171,7 +171,8 @@ func (s StatsdFactory) Make() events.Observer {
 //
 // Valid tagFormats are 'datadog', 'influxdb' and 'graphite'.
 func NewStatsd(address string, log logger.StdLikeLogger,
-	metricPrefix, tagFormat string) (StatsdFactory, error) {
+	metricPrefix, tagFormat string,
+) (StatsdFactory, error) {
 	options := []statsd.Option{
 		statsd.MetricPrefix(metricPrefix),
 		statsd.Logger(log),
