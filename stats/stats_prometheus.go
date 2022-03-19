@@ -39,7 +39,8 @@ func (s *statsPrometheus) ClientDisconnected(connectionType conntypes.Connection
 
 func (s *statsPrometheus) changeConnections(connectionType conntypes.ConnectionType,
 	addr *net.TCPAddr,
-	increment float64) {
+	increment float64,
+) {
 	labels := [...]string{
 		"intermediate",
 		"ipv4",

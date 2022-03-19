@@ -84,7 +84,8 @@ func (w *wrapperObfuscated2) Close() error {
 }
 
 func NewObfuscated2(socket conntypes.StreamReadWriteCloser,
-	encryptor, decryptor cipher.Stream) conntypes.StreamReadWriteCloser {
+	encryptor, decryptor cipher.Stream,
+) conntypes.StreamReadWriteCloser {
 	return &wrapperObfuscated2{
 		parent:    socket,
 		encryptor: encryptor,

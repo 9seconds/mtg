@@ -44,7 +44,8 @@ func middleConnection(request *protocol.TelegramRequest) {
 func middlePipe(dst conntypes.PacketAckWriteCloser,
 	src conntypes.PacketAckReadCloser,
 	wg *sync.WaitGroup,
-	logger *zap.SugaredLogger) {
+	logger *zap.SugaredLogger,
+) {
 	defer func() {
 		dst.Close()
 		src.Close()

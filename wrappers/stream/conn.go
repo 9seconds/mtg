@@ -91,7 +91,8 @@ func (w *wrapperConn) RemoteAddr() *net.TCPAddr {
 
 func newConn(parent net.Conn,
 	connID conntypes.ConnID,
-	purpose connPurpose) conntypes.StreamReadWriteCloser {
+	purpose connPurpose,
+) conntypes.StreamReadWriteCloser {
 	localAddr := *parent.LocalAddr().(*net.TCPAddr)
 
 	if parent.RemoteAddr().(*net.TCPAddr).IP.To4() != nil {
