@@ -392,7 +392,7 @@ Here goes a list of metrics with their types but without a prefix.
 | domain_fronting_traffic     | counter | `direction`                      | Count of bytes, transmitted to/from fronting domain.                                       |
 | domain_fronting             | counter | –                                | Count of domain fronting events.                                                           |
 | concurrency_limited         | counter | –                                | Count of events, when client connection was rejected due to concurrency limit.             |
-| ip_blocklisted              | counter | –                                | Count of events when client connection was rejected because IP was found in the blacklist. |
+| ip_blocklisted              | counter | `ip_list`                        | Count of events when client connection was rejected because IP was found in the blocklist. |
 | replay_attacks              | counter | –                                | Count of detected replay attacks.                                                          |
 
 Tag meaning:
