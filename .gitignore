@@ -7,5 +7,5 @@
 *.out
 mtg
 vendor/
-ccbuilds/
 .bin/
+dist/
