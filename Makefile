@@ -96,5 +96,5 @@ install-tools-gofumpt: .bin
 	@$(GOTOOL) go install mvdan.cc/gofumpt@latest
 
 .PHONY: update-deps
-upgrade-deps:
-	$go get -u && go mod tidy
+update-deps:
+	@go get -u && go mod tidy -go=1.18
