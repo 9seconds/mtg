@@ -48,6 +48,10 @@ var (
 	// create a proxy but ip blocklist instance is not defined.
 	ErrIPBlocklistIsNotDefined = errors.New("ip blocklist is not defined")
 
+	// ErrIPAllowlistIsNotDefined is returned if you are trying to
+	// create a proxy but ip allowlist instance is not defined.
+	ErrIPAllowlistIsNotDefined = errors.New("ip allowlist is not defined")
+
 	// ErrEventStreamIsNotDefined is returned if you are trying to create a
 	// proxy but event stream instance is not defined.
 	ErrEventStreamIsNotDefined = errors.New("event stream is not defined")

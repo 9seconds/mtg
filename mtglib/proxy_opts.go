@@ -28,10 +28,10 @@ type ProxyOpts struct {
 	// This is a mandatory setting.
 	IPBlocklist IPBlocklist
 
-	// IPWhitelist defines a whitelist of IPs to allow to use proxy.
+	// IPAllowlist defines a whitelist of IPs to allow to use proxy.
 	//
 	// This is an optional setting, ignored by default (no restrictions).
-	IPWhitelist IPBlocklist
+	IPAllowlist IPBlocklist
 
 	// EventStream defines an instance of event stream.
 	//
@@ -125,6 +125,8 @@ func (p ProxyOpts) valid() error {
 		return ErrAntiReplayCacheIsNotDefined
 	case p.IPBlocklist == nil:
 		return ErrIPBlocklistIsNotDefined
+	case p.IPAllowlist == nil:
+		return ErrIPAllowlistIsNotDefined
 	case p.EventStream == nil:
 		return ErrEventStreamIsNotDefined
 	case p.Logger == nil:
