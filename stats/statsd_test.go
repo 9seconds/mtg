@@ -186,7 +186,15 @@ func (suite *StatsdTestSuite) TestEventIPBlocklisted() {
 		mtglib.NewEventIPBlocklisted(net.ParseIP("10.0.0.10")))
 
 	time.Sleep(statsdSleepTime)
-	suite.Equal("mtg.ip_blocklisted:1|c", suite.statsdServer.String())
+	suite.Equal("mtg.ip_blocklisted:1|c|#ip_list:blocklist", suite.statsdServer.String())
+}
+
+func (suite *StatsdTestSuite) TestEventIPAllowlisted() {
+	suite.statsd.EventIPBlocklisted(
+		mtglib.NewEventIPAllowlisted(net.ParseIP("10.0.0.10")))
+
+	time.Sleep(statsdSleepTime)
+	suite.Equal("mtg.ip_blocklisted:1|c|#ip_list:allowlist", suite.statsdServer.String())
 }
 
 func (suite *StatsdTestSuite) TestEventReplayAttack() {

@@ -110,8 +110,13 @@ func (p prometheusProcessor) EventConcurrencyLimited(_ mtglib.EventConcurrencyLi
 	p.factory.metricConcurrencyLimited.Inc()
 }
 
-func (p prometheusProcessor) EventIPBlocklisted(_ mtglib.EventIPBlocklisted) {
-	p.factory.metricIPBlocklisted.Inc()
+func (p prometheusProcessor) EventIPBlocklisted(evt mtglib.EventIPBlocklisted) {
+	tag := TagIPListBlock
+	if !evt.IsBlockList {
+		tag = TagIPListAllow
+	}
+
+	p.factory.metricIPBlocklisted.WithLabelValues(tag).Inc()
 }
 
 func (p prometheusProcessor) EventReplayAttack(_ mtglib.EventReplayAttack) {
@@ -150,10 +155,10 @@ type PrometheusFactory struct {
 
 	metricTelegramTraffic       *prometheus.CounterVec
 	metricDomainFrontingTraffic *prometheus.CounterVec
+	metricIPBlocklisted         *prometheus.CounterVec
 
 	metricDomainFronting     prometheus.Counter
 	metricConcurrencyLimited prometheus.Counter
-	metricIPBlocklisted      prometheus.Counter
 	metricReplayAttacks      prometheus.Counter
 }
 
@@ -223,6 +228,11 @@ func NewPrometheus(metricPrefix, httpPath string) *PrometheusFactory { // nolint
 			Name:      MetricDomainFrontingTraffic,
 			Help:      "Traffic which is generated talking with front domain.",
 		}, []string{TagDirection}),
+		metricIPBlocklisted: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: metricPrefix,
+			Name:      MetricIPBlocklisted,
+			Help:      "A number of rejected sessions due to ip blocklisting.",
+		}, []string{TagIPList}),
 
 		metricDomainFronting: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: metricPrefix,
@@ -233,11 +243,6 @@ func NewPrometheus(metricPrefix, httpPath string) *PrometheusFactory { // nolint
 			Namespace: metricPrefix,
 			Name:      MetricConcurrencyLimited,
 			Help:      "A number of sessions that were rejected by concurrency limiter.",
-		}),
-		metricIPBlocklisted: prometheus.NewCounter(prometheus.CounterOpts{
-			Namespace: metricPrefix,
-			Name:      MetricIPBlocklisted,
-			Help:      "A number of rejected sessions due to ip blocklisting.",
 		}),
 		metricReplayAttacks: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: metricPrefix,
@@ -253,10 +258,10 @@ func NewPrometheus(metricPrefix, httpPath string) *PrometheusFactory { // nolint
 
 	registry.MustRegister(factory.metricTelegramTraffic)
 	registry.MustRegister(factory.metricDomainFrontingTraffic)
+	registry.MustRegister(factory.metricIPBlocklisted)
 
 	registry.MustRegister(factory.metricDomainFronting)
 	registry.MustRegister(factory.metricConcurrencyLimited)
-	registry.MustRegister(factory.metricIPBlocklisted)
 	registry.MustRegister(factory.metricReplayAttacks)
 
 	return factory
