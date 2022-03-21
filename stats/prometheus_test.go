@@ -156,7 +156,18 @@ func (suite *PrometheusTestSuite) TestEventIPBlocklisted() {
 
 	data, err := suite.Get()
 	suite.NoError(err)
-	suite.Contains(data, `mtg_ip_blocklisted 1`)
+	suite.Contains(data, `mtg_ip_blocklisted{ip_list="blocklist"} 1`)
+}
+
+func (suite *PrometheusTestSuite) TestEventIPAllowlisted() {
+	suite.prometheus.EventIPBlocklisted(
+		mtglib.NewEventIPAllowlisted(net.ParseIP("2001:db8::68")))
+
+	time.Sleep(100 * time.Millisecond)
+
+	data, err := suite.Get()
+	suite.NoError(err)
+	suite.Contains(data, `mtg_ip_blocklisted{ip_list="allowlist"} 1`)
 }
 
 func (suite *PrometheusTestSuite) TestEventReplayAttack() {

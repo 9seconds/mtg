@@ -60,6 +60,15 @@ func (suite *EventsTestSuite) TestEventIPBlocklisted() {
 
 	suite.Empty(evt.StreamID())
 	suite.WithinDuration(time.Now(), evt.Timestamp(), 10*time.Millisecond)
+	suite.True(evt.IsBlockList)
+}
+
+func (suite *EventsTestSuite) TestEventIPAllowlisted() {
+	evt := mtglib.NewEventIPAllowlisted(net.ParseIP("10.0.0.10"))
+
+	suite.Empty(evt.StreamID())
+	suite.WithinDuration(time.Now(), evt.Timestamp(), 10*time.Millisecond)
+	suite.False(evt.IsBlockList)
 }
 
 func (suite *EventsTestSuite) TestEventReplayAttack() {

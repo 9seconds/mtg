@@ -113,8 +113,13 @@ func (s statsdProcessor) EventConcurrencyLimited(_ mtglib.EventConcurrencyLimite
 	s.client.Incr(MetricConcurrencyLimited, 1)
 }
 
-func (s statsdProcessor) EventIPBlocklisted(_ mtglib.EventIPBlocklisted) {
-	s.client.Incr(MetricIPBlocklisted, 1)
+func (s statsdProcessor) EventIPBlocklisted(evt mtglib.EventIPBlocklisted) {
+	tag := TagIPListBlock
+	if !evt.IsBlockList {
+		tag = TagIPListAllow
+	}
+
+	s.client.Incr(MetricIPBlocklisted, 1, statsd.StringTag(TagIPList, tag))
 }
 
 func (s statsdProcessor) EventReplayAttack(_ mtglib.EventReplayAttack) {

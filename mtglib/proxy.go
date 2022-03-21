@@ -112,7 +112,7 @@ func (p *Proxy) Serve(listener net.Listener) error {
 		if !p.allowlist.Contains(ipAddr) {
 			conn.Close()
 			logger.Info("ip was rejected by allowlist")
-			p.eventStream.Send(p.ctx, NewEventIPBlocklisted(ipAddr))
+			p.eventStream.Send(p.ctx, NewEventIPAllowlisted(ipAddr))
 
 			continue
 		}

@@ -83,7 +83,8 @@ type EventConcurrencyLimited struct {
 type EventIPBlocklisted struct {
 	eventBase
 
-	RemoteIP net.IP
+	RemoteIP    net.IP
+	IsBlockList bool
 }
 
 // EventReplayAttack is emitted when mtg detects a replay attack on a
@@ -172,7 +173,20 @@ func NewEventIPBlocklisted(remoteIP net.IP) EventIPBlocklisted {
 		eventBase: eventBase{
 			timestamp: time.Now(),
 		},
-		RemoteIP: remoteIP,
+		RemoteIP:    remoteIP,
+		IsBlockList: true,
+	}
+}
+
+// NewEventIPAllowlisted creates a NewEventIPBlocklisted event with a mark that
+// it is supposed to be for allow list.
+func NewEventIPAllowlisted(remoteIP net.IP) EventIPBlocklisted {
+	return EventIPBlocklisted{
+		eventBase: eventBase{
+			timestamp: time.Now(),
+		},
+		RemoteIP:    remoteIP,
+		IsBlockList: false,
 	}
 }
 
