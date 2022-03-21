@@ -2,14 +2,12 @@ ROOT_DIR     := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 IMAGE_NAME   := mtg
 APP_NAME     := $(IMAGE_NAME)
 
-CC_BINARIES  := $(shell bash -c "echo -n $(APP_NAME)-{linux,freebsd,openbsd}-{386,amd64} $(APP_NAME)-linux-{arm,arm64}")
-
 GOLANGCI_LINT_VERSION := v1.45.0
 
 VERSION_GO         := $(shell go version)
 VERSION_DATE       := $(shell date -Ru)
 VERSION_TAG        := $(shell git describe --tags --always)
-COMMON_BUILD_FLAGS := -mod=readonly -ldflags="-s -w -X 'main.version=$(VERSION_TAG) ($(VERSION_GO)) [$(VERSION_DATE)]'"
+COMMON_BUILD_FLAGS := -trimpath -mod=readonly -ldflags="-s -w -X 'main.version=$(VERSION_TAG) ($(VERSION_GO)) [$(VERSION_DATE)]'"
 
 GOBIN  := $(ROOT_DIR)/.bin
 GOTOOL := env "GOBIN=$(GOBIN)" "PATH=$(ROOT_DIR)/.bin:$(PATH)"
@@ -29,18 +27,6 @@ $(APP_NAME): build
 static:
 	@env CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo $(COMMON_BUILD_FLAGS) -o "$(APP_NAME)"
 
-$(APP_NAME)-%: GOOS=$(shell echo -n "$@" | sed 's?$(APP_NAME)-??' | cut -f1 -d-)
-$(APP_NAME)-%: GOARCH=$(shell echo -n "$@" | sed 's?$(APP_NAME)-??' | cut -f2 -d-)
-$(APP_NAME)-%: ccbuilds
-	@env "GOOS=$(GOOS)" "GOARCH=$(GOARCH)" \
-		go build \
-		$(COMMON_BUILD_FLAGS) \
-		-o "./ccbuilds/$(APP_NAME)-$(GOOS)-$(GOARCH)"
-
-.PHONY: ccbuilds
-ccbuilds:
-	@rm -rf ./ccbuilds && mkdir -p ./ccbuilds
-
 vendor: go.mod go.sum
 	@$(MOD_ON) go mod vendor
 
@@ -51,9 +37,6 @@ test:
 .PHONY: citest
 citest:
 	@go test -coverprofile=coverage.txt -covermode=atomic -race -v ./...
-
-.PHONY: crosscompile
-crosscompile: $(CC_BINARIES)
 
 .PHONY: clean
 clean:
@@ -77,8 +60,14 @@ doc:
 fmt:
 	@$(GOTOOL) gofumpt -w -extra "$(ROOT_DIR)"
 
+.PHONY: release
+release:
+	@$(GOTOOL) goreleaser release --snapshot --rm-dist && \
+		find "$(ROOT_DIR)/dist" -type d | grep -vP "dist$$" | xargs -r rm -rf && \
+		rm -f "$(ROOT_DIR)/dist/config.yaml"
+
 .PHONY: install-tools
-install-tools: install-tools-lint install-tools-godoc install-tools-gofumpt
+install-tools: install-tools-lint install-tools-godoc install-tools-gofumpt install-tools-goreleaser
 
 .PHONY: install-tools-lint
 install-tools-lint:
@@ -94,6 +83,10 @@ install-tools-godoc:
 .PHONY: install-tools-gofumpt
 install-tools-gofumpt: .bin
 	@$(GOTOOL) go install mvdan.cc/gofumpt@latest
+
+.PHONY: goreleaser
+install-tools-goreleaser: .bin
+	@$(GOTOOL) go install github.com/goreleaser/goreleaser@latest
 
 .PHONY: update-deps
 update-deps:
