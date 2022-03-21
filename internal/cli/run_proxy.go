@@ -12,11 +12,13 @@ import (
 	"github.com/9seconds/mtg/v2/internal/config"
 	"github.com/9seconds/mtg/v2/internal/utils"
 	"github.com/9seconds/mtg/v2/ipblocklist"
+	"github.com/9seconds/mtg/v2/ipblocklist/files"
 	"github.com/9seconds/mtg/v2/logger"
 	"github.com/9seconds/mtg/v2/mtglib"
 	"github.com/9seconds/mtg/v2/network"
 	"github.com/9seconds/mtg/v2/stats"
 	"github.com/rs/zerolog"
+	"github.com/yl2chen/cidranger"
 )
 
 func makeLogger(conf *config.Config) mtglib.Logger {
@@ -89,7 +91,8 @@ func makeAntiReplayCache(conf *config.Config) mtglib.AntiReplayCache {
 func makeIPBlocklist(conf config.ListConfig,
 	logger mtglib.Logger,
 	ntw mtglib.Network,
-	updateCallback ipblocklist.FireholUpdateCallback) (mtglib.IPBlocklist, error) {
+	updateCallback ipblocklist.FireholUpdateCallback,
+) (mtglib.IPBlocklist, error) {
 	if !conf.Enabled.Get(false) {
 		return ipblocklist.NewNoop(), nil
 	}
@@ -105,7 +108,7 @@ func makeIPBlocklist(conf config.ListConfig,
 		}
 	}
 
-	firehol, err := ipblocklist.NewFirehol(logger.Named("ipblockist"),
+	blocklist, err := ipblocklist.NewFirehol(logger.Named("ipblockist"),
 		ntw,
 		conf.DownloadConcurrency.Get(1),
 		remoteURLs,
@@ -115,9 +118,44 @@ func makeIPBlocklist(conf config.ListConfig,
 		return nil, fmt.Errorf("incorrect parameters for firehol: %w", err)
 	}
 
-	go firehol.Run(conf.UpdateEach.Get(ipblocklist.DefaultFireholUpdateEach))
+	go blocklist.Run(conf.UpdateEach.Get(ipblocklist.DefaultFireholUpdateEach))
 
-	return firehol, nil
+	return blocklist, nil
+}
+
+func makeIPAllowlist(conf config.ListConfig,
+	logger mtglib.Logger,
+	ntw mtglib.Network,
+	updateCallback ipblocklist.FireholUpdateCallback,
+) (allowlist mtglib.IPBlocklist, err error) {
+	if !conf.Enabled.Get(false) {
+		allowlist, err = ipblocklist.NewFireholFromFiles(
+			logger.Named("ipblocklist"),
+			1,
+			[]files.File{
+				files.NewMem([]*net.IPNet{
+					cidranger.AllIPv4,
+					cidranger.AllIPv6,
+				}),
+			},
+			updateCallback,
+		)
+
+		go allowlist.Run(conf.UpdateEach.Get(ipblocklist.DefaultFireholUpdateEach))
+	} else {
+		allowlist, err = makeIPBlocklist(
+			conf,
+			logger,
+			ntw,
+			updateCallback,
+		)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("cannot build allowlist: %w", err)
+	}
+
+	return allowlist, nil
 }
 
 func makeEventStream(conf *config.Config, logger mtglib.Logger) (mtglib.EventStream, error) {
@@ -185,21 +223,16 @@ func runProxy(conf *config.Config, version string) error { // nolint: funlen
 		return fmt.Errorf("cannot build ip blocklist: %w", err)
 	}
 
-	var whitelist mtglib.IPBlocklist
-
-	if conf.Defense.Allowlist.Enabled.Get(false) {
-		whlist, err := makeIPBlocklist(
-			conf.Defense.Allowlist,
-			logger.Named("allowlist"),
-			ntw,
-			func(ctx context.Context, size int) {
-				eventStream.Send(ctx, mtglib.NewEventIPListSize(size, false))
-			})
-		if err != nil {
-			return fmt.Errorf("cannot build ip allowlist: %w", err)
-		}
-
-		whitelist = whlist
+	allowlist, err := makeIPAllowlist(
+		conf.Defense.Allowlist,
+		logger.Named("allowlist"),
+		ntw,
+		func(ctx context.Context, size int) {
+			eventStream.Send(ctx, mtglib.NewEventIPListSize(size, false))
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot build ip allowlist: %w", err)
 	}
 
 	opts := mtglib.ProxyOpts{
@@ -207,7 +240,7 @@ func runProxy(conf *config.Config, version string) error { // nolint: funlen
 		Network:         ntw,
 		AntiReplayCache: makeAntiReplayCache(conf),
 		IPBlocklist:     blocklist,
-		IPWhitelist:     whitelist,
+		IPAllowlist:     allowlist,
 		EventStream:     eventStream,
 
 		Secret:             conf.Secret,

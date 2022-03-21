@@ -317,12 +317,16 @@ Now you can create a systemd unit:
 ```console
 $ cat /etc/systemd/system/mtg.service
 [Unit]
-Description=mtg
+Description=mtg - MTProto proxy server
+Documentation=https://github.com/9seconds/mtg
+After=network.target
 
 [Service]
 ExecStart=/usr/local/bin/mtg run /etc/mtg.toml
 Restart=always
 RestartSec=3
+DynamicUser=true
+AmbientCapabilities=CAP_NET_BIND_SERVICE
 
 [Install]
 WantedBy=multi-user.target
@@ -388,7 +392,7 @@ Here goes a list of metrics with their types but without a prefix.
 | domain_fronting_traffic     | counter | `direction`                      | Count of bytes, transmitted to/from fronting domain.                                       |
 | domain_fronting             | counter | –                                | Count of domain fronting events.                                                           |
 | concurrency_limited         | counter | –                                | Count of events, when client connection was rejected due to concurrency limit.             |
-| ip_blocklisted              | counter | –                                | Count of events when client connection was rejected because IP was found in the blacklist. |
+| ip_blocklisted              | counter | `ip_list`                        | Count of events when client connection was rejected because IP was found in the blocklist. |
 | replay_attacks              | counter | –                                | Count of detected replay attacks.                                                          |
 
 Tag meaning:

@@ -36,7 +36,8 @@ func (c *circuitBreakerDialer) Dial(network, address string) (essentials.Conn, e
 }
 
 func (c *circuitBreakerDialer) DialContext(ctx context.Context,
-	network, address string) (essentials.Conn, error) {
+	network, address string,
+) (essentials.Conn, error) {
 	switch atomic.LoadUint32(&c.state) {
 	case circuitBreakerStateClosed:
 		return c.doClosed(ctx, network, address)
@@ -48,7 +49,8 @@ func (c *circuitBreakerDialer) DialContext(ctx context.Context,
 }
 
 func (c *circuitBreakerDialer) doClosed(ctx context.Context,
-	network, address string) (essentials.Conn, error) {
+	network, address string,
+) (essentials.Conn, error) {
 	conn, err := c.Dialer.DialContext(ctx, network, address)
 
 	select {
@@ -80,7 +82,8 @@ func (c *circuitBreakerDialer) doClosed(ctx context.Context,
 }
 
 func (c *circuitBreakerDialer) doHalfOpened(ctx context.Context,
-	network, address string) (essentials.Conn, error) {
+	network, address string,
+) (essentials.Conn, error) {
 	if !atomic.CompareAndSwapUint32(&c.halfOpenAttempts, 0, 1) {
 		return nil, ErrCircuitBreakerOpened
 	}
@@ -174,14 +177,16 @@ func (c *circuitBreakerDialer) stopTimer(timerRef **time.Timer) {
 }
 
 func (c *circuitBreakerDialer) ensureTimer(timerRef **time.Timer,
-	timeout time.Duration, callback func()) {
+	timeout time.Duration, callback func(),
+) {
 	if *timerRef == nil {
 		*timerRef = time.AfterFunc(timeout, callback)
 	}
 }
 
 func newCircuitBreakerDialer(baseDialer Dialer,
-	openThreshold uint32, halfOpenTimeout, resetFailuresTimeout time.Duration) Dialer {
+	openThreshold uint32, halfOpenTimeout, resetFailuresTimeout time.Duration,
+) Dialer {
 	cb := &circuitBreakerDialer{
 		Dialer:               baseDialer,
 		stateMutexChan:       make(chan bool, 1),

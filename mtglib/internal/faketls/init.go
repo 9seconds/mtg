@@ -19,7 +19,7 @@ const (
 
 	// ClientHelloMinLen is a minimal possible length of
 	// ClientHello record.
-	ClientHelloMinLen = 4
+	ClientHelloMinLen = 6
 
 	// WelcomePacketRandomOffset is an offset of random in ServerHello
 	// packet (including record envelope).

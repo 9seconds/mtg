@@ -38,11 +38,11 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     strategy:
       matrix:
         go_version:
-          - ^1.17
+          - ^1.18
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -69,6 +69,38 @@ jobs:
         with:
           file: ./coverage.txt
 
+  fuzz:
+    name: Fuzzing
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.18
+
+      - name: Cache fuzz results
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/go-build/fuzz
+          key: ${{ runner.os }}-go-${{ hashFiles('**/*_fuzz_test.go', '**/*_fuzz_internal_test.go') }}
+          restore-keys: ${{ runner.os }}-go-
+
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: ${{ runner.os }}-go-
+
+      - name: Run fuzzing
+        run: make -j4 fuzz
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
@@ -79,10 +111,15 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Run linter
-        uses: golangci/golangci-lint-action@v2
+      - name: Setup Go
+        uses: actions/setup-go@v2
         with:
-          version: v1.44.2
+          go-version: ^1.18
+
+      - name: Run linter
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.45.0
 
   docker:
     name: Docker
