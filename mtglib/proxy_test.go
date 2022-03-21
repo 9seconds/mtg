@@ -63,7 +63,7 @@ func (suite *ProxyTestSuite) SetupSuite() {
 		nil,
 	)
 
-	allowlist.Run(time.Second)
+	go allowlist.Run(time.Second)
 
 	suite.opts = &mtglib.ProxyOpts{
 		Secret:          mtglib.GenerateSecret("httpbin.org"),
