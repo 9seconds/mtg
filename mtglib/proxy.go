@@ -34,7 +34,7 @@ type Proxy struct {
 	network         Network
 	antiReplayCache AntiReplayCache
 	blocklist       IPBlocklist
-	whitelist       IPBlocklist
+	allowlist       IPBlocklist
 	eventStream     EventStream
 	logger          Logger
 }
@@ -91,7 +91,7 @@ func (p *Proxy) ServeConn(conn essentials.Conn) {
 }
 
 // Serve starts a proxy on a given listener.
-func (p *Proxy) Serve(listener net.Listener) error { // nolint: cyclop
+func (p *Proxy) Serve(listener net.Listener) error {
 	p.streamWaitGroup.Add(1)
 	defer p.streamWaitGroup.Done()
 
@@ -109,9 +109,9 @@ func (p *Proxy) Serve(listener net.Listener) error { // nolint: cyclop
 		ipAddr := conn.RemoteAddr().(*net.TCPAddr).IP // nolint: forcetypeassert
 		logger := p.logger.BindStr("ip", ipAddr.String())
 
-		if p.whitelist != nil && !p.whitelist.Contains(ipAddr) {
+		if !p.allowlist.Contains(ipAddr) {
 			conn.Close()
-			logger.Info("ip was rejected by whitelist")
+			logger.Info("ip was rejected by allowlist")
 			p.eventStream.Send(p.ctx, NewEventIPBlocklisted(ipAddr))
 
 			continue
@@ -145,10 +145,7 @@ func (p *Proxy) Shutdown() {
 	p.streamWaitGroup.Wait()
 	p.workerPool.Release()
 
-	if p.whitelist != nil {
-		p.whitelist.Shutdown()
-	}
-
+	p.allowlist.Shutdown()
 	p.blocklist.Shutdown()
 }
 
@@ -308,7 +305,7 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 		network:                  opts.Network,
 		antiReplayCache:          opts.AntiReplayCache,
 		blocklist:                opts.IPBlocklist,
-		whitelist:                opts.IPWhitelist,
+		allowlist:                opts.IPAllowlist,
 		eventStream:              opts.EventStream,
 		logger:                   opts.getLogger("proxy"),
 		domainFrontingPort:       opts.getDomainFrontingPort(),

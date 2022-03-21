@@ -15,6 +15,7 @@ import (
 	"github.com/9seconds/mtg/v2/antireplay"
 	"github.com/9seconds/mtg/v2/events"
 	"github.com/9seconds/mtg/v2/ipblocklist"
+	"github.com/9seconds/mtg/v2/ipblocklist/files"
 	"github.com/9seconds/mtg/v2/logger"
 	"github.com/9seconds/mtg/v2/mtglib"
 	"github.com/9seconds/mtg/v2/network"
@@ -22,6 +23,7 @@ import (
 	"github.com/gotd/td/telegram/dcs"
 	"github.com/gotd/td/tg"
 	"github.com/stretchr/testify/suite"
+	"github.com/yl2chen/cidranger"
 )
 
 type ProxyTestSuite struct {
@@ -49,11 +51,26 @@ func (suite *ProxyTestSuite) SetupSuite() {
 	ntw, err := network.NewNetwork(dialer, "mtgtest", "1.1.1.1", 0)
 	suite.NoError(err)
 
+	allowlist, _ := ipblocklist.NewFireholFromFiles(
+		logger.NewNoopLogger(),
+		1,
+		[]files.File{
+			files.NewMem([]*net.IPNet{
+				cidranger.AllIPv4,
+				cidranger.AllIPv6,
+			}),
+		},
+		nil,
+	)
+
+	allowlist.Run(time.Second)
+
 	suite.opts = &mtglib.ProxyOpts{
 		Secret:          mtglib.GenerateSecret("httpbin.org"),
 		Network:         ntw,
 		AntiReplayCache: antireplay.NewNoop(),
 		IPBlocklist:     ipblocklist.NewNoop(),
+		IPAllowlist:     allowlist,
 		EventStream:     events.NewNoopStream(),
 		Logger:          logger.NewNoopLogger(),
 		UseTestDCs:      true,
@@ -109,6 +126,14 @@ func (suite *ProxyTestSuite) TestCannotInitNoAntiReplayCache() {
 func (suite *ProxyTestSuite) TestCannotInitNoIPBlocklist() {
 	opts := *suite.opts
 	opts.IPBlocklist = nil
+
+	_, err := mtglib.NewProxy(opts)
+	suite.Error(err)
+}
+
+func (suite *ProxyTestSuite) TestCannotInitNoIPAllowlist() {
+	opts := *suite.opts
+	opts.IPAllowlist = nil
 
 	_, err := mtglib.NewProxy(opts)
 	suite.Error(err)

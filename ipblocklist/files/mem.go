@@ -19,7 +19,7 @@ func (m memFile) String() string {
 	return "mem"
 }
 
-func NewMem(networks []*net.IPNet) (File) {
+func NewMem(networks []*net.IPNet) File {
 	builder := strings.Builder{}
 
 	if len(networks) > 0 {
@@ -32,6 +32,6 @@ func NewMem(networks []*net.IPNet) (File) {
 	}
 
 	return memFile{
-		data:  builder.String(),
+		data: builder.String(),
 	}
 }
