@@ -20,6 +20,7 @@ builds:
       - amd64
       - arm
       - arm64
+      - s390x
     goarm:
       - 6
       - 7
@@ -32,12 +33,16 @@ builds:
     ignore:
       - goos: darwin
         goarch: 386
+        goarch: s390x
       - goos: freebsd
         goarch: arm64
+        goarch: s390x
       - goos: netbsd
         goarch: arm64
+        goarch: s390x
       - goos: openbsd
         goarch: arm64
+        goarch: s390x
 
 archives:
   - name_template: '{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
