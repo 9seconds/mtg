@@ -190,7 +190,7 @@ surprises. Always choose some version tag.
 Also, if you have `go` installed, you can always download this tool with `go get`:
 
 ```console
-go get github.com/9seconds/mtg/v2
+go install github.com/9seconds/mtg/v2@latest
 ```
 
 #### Build from sources
@@ -338,7 +338,7 @@ $ sudo systemctl start mtg
 or you can run a docker image
 
 ```console
-docker run -d -v /etc/mtg.toml:/config.toml -p 443:3128 --name mtg-proxy --restart=unless-stopped nineseconds/mtg:2
+docker run -d -v /etc/mtg.toml:$PWD/config.toml -p 443:3128 --name mtg-proxy --restart=unless-stopped nineseconds/mtg:2
 ```
 
 where _443_ is a host port (a port you want to connect to from a
