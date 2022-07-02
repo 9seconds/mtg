@@ -338,7 +338,7 @@ $ sudo systemctl start mtg
 or you can run a docker image
 
 ```console
-docker run -d -v /etc/mtg.toml:$PWD/config.toml -p 443:3128 --name mtg-proxy --restart=unless-stopped nineseconds/mtg:2
+docker run -d -v $PWD/config.toml:config.toml -p 443:3128 --name mtg-proxy --restart=unless-stopped nineseconds/mtg:2
 ```
 
 where _443_ is a host port (a port you want to connect to from a
