@@ -139,12 +139,11 @@ func (p prometheusProcessor) Shutdown() {
 	}
 }
 
-// PrometheusFactory is a factory of events.Observers which collect
+// PrometheusFactory is a factory of [events.Observer] which collect
 // information in a format suitable for Prometheus.
 //
-// This factory can also serve on a given listener. In that case it
-// starts HTTP server with a single endpoint - a Prometheus-compatible
-// scrape output.
+// This factory can also serve on a given listener. In that case it starts HTTP
+// server with a single endpoint - a Prometheus-compatible scrape output.
 type PrometheusFactory struct {
 	httpServer *http.Server
 

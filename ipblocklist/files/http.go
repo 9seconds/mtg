@@ -40,6 +40,8 @@ func (h httpFile) String() string {
 	return h.url
 }
 
+// NewHTTP returns a file abstraction for HTTP/HTTPS endpoint. You also need to
+// provide a valid instance of [http.Client] to access it.
 func NewHTTP(client *http.Client, endpoint string) (File, error) {
 	if client == nil {
 		return nil, ErrBadHTTPClient

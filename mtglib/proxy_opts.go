@@ -4,16 +4,16 @@ import "time"
 
 // ProxyOpts is a structure with settings to mtg proxy.
 //
-// This is not required per se, but this is to shorten function
-// signature and give an ability to conveniently provide default values.
+// This is not required per se, but this is to shorten function signature and
+// give an ability to conveniently provide default values.
 type ProxyOpts struct {
 	// Secret defines a secret which should be used by a proxy.
 	//
 	// This is a mandatory setting.
 	Secret Secret
 
-	// Network defines a network instance which should be used for all
-	// network communications made by proxies.
+	// Network defines a network instance which should be used for all network
+	// communications made by proxies.
 	//
 	// This is a mandatory setting.
 	Network Network
@@ -45,9 +45,8 @@ type ProxyOpts struct {
 
 	// BufferSize is a size of the copy buffer in bytes.
 	//
-	// Please remember that we multiply this number in 2, because when
-	// we relay between proxies, we have to create 2 intermediate
-	// buffers: to and from.
+	// Please remember that we multiply this number in 2, because when we relay
+	// between proxies, we have to create 2 intermediate buffers: to and from.
 	//
 	// This is an optional setting.
 	//
@@ -62,22 +61,20 @@ type ProxyOpts struct {
 	// This is an optional setting.
 	Concurrency uint
 
-	// IdleTimeout is a timeout for relay when we have to break a
-	// stream.
+	// IdleTimeout is a timeout for relay when we have to break a stream.
 	//
-	// This is a timeout for any activity. So, if we have any message
-	// which will pass to either direction, a timer is reset. If we have
-	// no any reads or writes for this timeout, a connection will be
-	// aborted.
+	// This is a timeout for any activity. So, if we have any message which will
+	// pass to either direction, a timer is reset. If we have no any reads or
+	// writes for this timeout, a connection will be aborted.
 	//
 	// This is an optional setting.
 	IdleTimeout time.Duration
 
-	// TolerateTimeSkewness is a time boundary that defines a time
-	// range where faketls timestamp is acceptable.
+	// TolerateTimeSkewness is a time boundary that defines a time range where
+	// faketls timestamp is acceptable.
 	//
-	// This means that if if you got a timestamp X, now is Y, then
-	// if |X-Y| < TolerateTimeSkewness, then you accept a packet.
+	// This means that if if you got a timestamp X, now is Y, then if |X-Y| <
+	// TolerateTimeSkewness, then you accept a packet.
 	//
 	// This is an optional setting.
 	TolerateTimeSkewness time.Duration
@@ -88,30 +85,29 @@ type ProxyOpts struct {
 	// This is an optional setting.
 	PreferIP string
 
-	// DomainFrontingPort is a port we use to connect to a fronting
-	// domain.
+	// DomainFrontingPort is a port we use to connect to a fronting domain.
 	//
-	// This is required because secret does not specify a port. It
-	// specifies a hostname only.
+	// This is required because secret does not specify a port. It specifies a
+	// hostname only.
 	//
 	// This is an optional setting.
 	DomainFrontingPort uint
 
 	// AllowFallbackOnUnknownDC defines how proxy behaves if unknown DC was
-	// requested. If this setting is set to false, then such connection
-	// will be rejected. Otherwise, proxy will chose any DC.
+	// requested. If this setting is set to false, then such connection will be
+	// rejected. Otherwise, proxy will chose any DC.
 	//
-	// Telegram is designed in a way that any DC can serve any request,
-	// the problem is a latency.
+	// Telegram is designed in a way that any DC can serve any request, the
+	// problem is a latency.
 	//
 	// This is an optional setting.
 	AllowFallbackOnUnknownDC bool
 
-	// UseTestDCs defines if we have to connect to production or to staging
-	// DCs of Telegram.
+	// UseTestDCs defines if we have to connect to production or to staging DCs of
+	// Telegram.
 	//
-	// This is required if you use mtglib as an integration library for
-	// your Telegram-related projects.
+	// This is required if you use mtglib as an integration library for your
+	// Telegram-related projects.
 	//
 	// This is an optional setting.
 	UseTestDCs bool

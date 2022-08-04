@@ -44,8 +44,8 @@ func (p *Proxy) DomainFrontingAddress() string {
 	return net.JoinHostPort(p.secret.Host, strconv.Itoa(p.domainFrontingPort))
 }
 
-// ServeConn serves a connection. We do not check IP blocklist and
-// concurrency limit here.
+// ServeConn serves a connection. We do not check IP blocklist and concurrency
+// limit here.
 func (p *Proxy) ServeConn(conn essentials.Conn) {
 	p.streamWaitGroup.Add(1)
 	defer p.streamWaitGroup.Done()
@@ -138,8 +138,8 @@ func (p *Proxy) Serve(listener net.Listener) error {
 	}
 }
 
-// Shutdown 'gracefully' shutdowns all connections. Please remember that
-// it does not close an underlying listener.
+// Shutdown 'gracefully' shutdowns all connections. Please remember that it
+// does not close an underlying listener.
 func (p *Proxy) Shutdown() {
 	p.ctxCancel()
 	p.streamWaitGroup.Wait()

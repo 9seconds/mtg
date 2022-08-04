@@ -19,6 +19,7 @@ func (l localFile) String() string {
 	return l.path
 }
 
+// NewLocal returns an openable File for a path on a local file system.
 func NewLocal(path string) (File, error) {
 	if stat, err := os.Stat(path); os.IsNotExist(err) || stat.IsDir() || stat.Mode().Perm()&0o400 == 0 {
 		return nil, fmt.Errorf("%s is not a readable file", path)

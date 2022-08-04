@@ -9,7 +9,7 @@ import (
 	"github.com/OneOfOne/xxhash"
 )
 
-// EventStream is a default implementation of the mtglib.EventStream
+// EventStream is a default implementation of the [mtglib.EventStream]
 // interface.
 //
 // EventStream manages a set of goroutines, observers. Main

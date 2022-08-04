@@ -118,8 +118,8 @@ func (n *network) dnsResolve(protocol, address string) ([]string, error) {
 	return ips, nil
 }
 
-// NewNetwork assembles an mtglib.Network compatible structure
-// based on a dialer and given params.
+// NewNetwork assembles an mtglib.Network compatible structure based on a
+// dialer and given params.
 //
 // It brings simple DNS cache and DNS-Over-HTTPS when necessary.
 func NewNetwork(dialer Dialer,
