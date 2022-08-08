@@ -45,9 +45,22 @@ func getVersion() string {
 	}
 
 	hasher := sha256.New()
-	if _, err := io.WriteString(hasher, buildInfo.Path); err != nil {
-		panic(err)
+
+	checksumModule := func(mod *debug.Module) {
+		hasher.Write([]byte{buildInfoModuleStart})
+
+		io.WriteString(hasher, mod.Path) //nolint: errcheck
+		hasher.Write([]byte{buildInfoModuleDelimeter})
+
+		io.WriteString(hasher, mod.Version) //nolint: errcheck
+		hasher.Write([]byte{buildInfoModuleDelimeter})
+
+		io.WriteString(hasher, mod.Sum) //nolint: errcheck
+
+		hasher.Write([]byte{buildInfoModuleFinish})
 	}
+
+	io.WriteString(hasher, buildInfo.Path) //nolint: errcheck
 
 	binary.Write(hasher, binary.LittleEndian, uint64(1+len(buildInfo.Deps))) //nolint: errcheck
 
@@ -55,10 +68,10 @@ func getVersion() string {
 		return buildInfo.Deps[i].Path > buildInfo.Deps[j].Path
 	})
 
-	buildInfoCheckSumModule(hasher, &buildInfo.Main)
+	checksumModule(&buildInfo.Main)
 
 	for _, module := range buildInfo.Deps {
-		buildInfoCheckSumModule(hasher, module)
+		checksumModule(module)
 	}
 
 	return fmt.Sprintf("%s (%s: %s on %s%s, modules checksum %s)",
@@ -68,26 +81,4 @@ func getVersion() string {
 		commit,
 		dirtySuffix,
 		base64.StdEncoding.EncodeToString(hasher.Sum(nil)))
-}
-
-func buildInfoCheckSumModule(w io.Writer, module *debug.Module) {
-	w.Write([]byte{buildInfoModuleStart}) //nolint: errcheck
-
-	if _, err := io.WriteString(w, module.Path); err != nil {
-		panic(err)
-	}
-
-	w.Write([]byte{buildInfoModuleDelimeter}) //nolint: errcheck
-
-	if _, err := io.WriteString(w, module.Version); err != nil {
-		panic(err)
-	}
-
-	w.Write([]byte{buildInfoModuleDelimeter}) //nolint: errcheck
-
-	if _, err := io.WriteString(w, module.Sum); err != nil {
-		panic(err)
-	}
-
-	w.Write([]byte{buildInfoModuleFinish}) //nolint: errcheck
 }
