@@ -22,13 +22,13 @@ type DialerMock struct {
 func (d *DialerMock) Dial(network, address string) (essentials.Conn, error) {
 	args := d.Called(network, address)
 
-	return args.Get(0).(essentials.Conn), args.Error(1) // nolint: wrapcheck, forcetypeassert
+	return args.Get(0).(essentials.Conn), args.Error(1) //nolint: wrapcheck, forcetypeassert
 }
 
 func (d *DialerMock) DialContext(ctx context.Context, network, address string) (essentials.Conn, error) {
 	args := d.Called(ctx, network, address)
 
-	return args.Get(0).(essentials.Conn), args.Error(1) // nolint: wrapcheck, forcetypeassert
+	return args.Get(0).(essentials.Conn), args.Error(1) //nolint: wrapcheck, forcetypeassert
 }
 
 type HTTPServerTestSuite struct {
@@ -55,7 +55,7 @@ func (suite *HTTPServerTestSuite) MakeHTTPClient(dialer network.Dialer) *http.Cl
 	return &http.Client{
 		Transport: &http.Transport{
 			DialContext: func(ctx context.Context, network, address string) (net.Conn, error) {
-				return dialer.DialContext(ctx, network, address) // nolint: wrapcheck
+				return dialer.DialContext(ctx, network, address) //nolint: wrapcheck
 			},
 		},
 	}
@@ -74,7 +74,7 @@ func (suite *Socks5ServerTestSuite) SetupSuite() {
 		},
 	})
 
-	go suite.socks5Server.Serve(suite.socks5Listener) // nolint: errcheck
+	go suite.socks5Server.Serve(suite.socks5Listener) //nolint: errcheck
 }
 
 func (suite *Socks5ServerTestSuite) TearDownSuite() {

@@ -74,7 +74,7 @@ func (s *Secret) Set(text string) error {
 		return fmt.Errorf("incorrect secret format: %w", err)
 	}
 
-	if len(decoded) < 2 { // nolint: gomnd // we need at least 1 byte here
+	if len(decoded) < 2 { //nolint: gomnd // we need at least 1 byte here
 		return fmt.Errorf("secret is truncated, length=%d", len(decoded))
 	}
 

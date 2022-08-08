@@ -16,7 +16,7 @@ type Conn struct {
 func (c Conn) Read(p []byte) (int, error) {
 	n, err := c.Conn.Read(p)
 	if err != nil {
-		return n, err // nolint: wrapcheck
+		return n, err //nolint: wrapcheck
 	}
 
 	c.Decryptor.XORKeyStream(p, p[:n])
@@ -33,5 +33,5 @@ func (c Conn) Write(p []byte) (int, error) {
 	payload := buf.Bytes()
 	c.Encryptor.XORKeyStream(payload, payload)
 
-	return c.Conn.Write(payload) // nolint: wrapcheck
+	return c.Conn.Write(payload) //nolint: wrapcheck
 }

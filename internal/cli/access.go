@@ -31,17 +31,17 @@ type accessResponse struct {
 type accessResponseURLs struct {
 	IP        net.IP `json:"ip"`
 	Port      uint   `json:"port"`
-	TgURL     string `json:"tg_url"`     // nolint: tagliatelle
-	TgQrCode  string `json:"tg_qrcode"`  // nolint: tagliatelle
-	TmeURL    string `json:"tme_url"`    // nolint: tagliatelle
-	TmeQrCode string `json:"tme_qrcode"` // nolint: tagliatelle
+	TgURL     string `json:"tg_url"`     //nolint: tagliatelle
+	TgQrCode  string `json:"tg_qrcode"`  //nolint: tagliatelle
+	TmeURL    string `json:"tme_url"`    //nolint: tagliatelle
+	TmeQrCode string `json:"tme_qrcode"` //nolint: tagliatelle
 }
 
 type Access struct {
-	ConfigPath string `kong:"arg,required,type='existingfile',help='Path to the configuration file.',name='config-path'"`                 // nolint: lll
-	PublicIPv4 net.IP `kong:"help='Public IPv4 address for proxy. By default it is resolved via remote website',name='ipv4',short='i'"`   // nolint: lll
-	PublicIPv6 net.IP `kong:"help='Public IPv6 address for proxy. By default it is resolved via remote website',name='ipv6',short='I'"`   // nolint: lll
-	Port       uint   `kong:"help='Port number. Default port is taken from configuration file, bind-to parameter',type:'uint',short='p'"` // nolint: lll
+	ConfigPath string `kong:"arg,required,type='existingfile',help='Path to the configuration file.',name='config-path'"`                 //nolint: lll
+	PublicIPv4 net.IP `kong:"help='Public IPv4 address for proxy. By default it is resolved via remote website',name='ipv4',short='i'"`   //nolint: lll
+	PublicIPv6 net.IP `kong:"help='Public IPv6 address for proxy. By default it is resolved via remote website',name='ipv6',short='I'"`   //nolint: lll
+	Port       uint   `kong:"help='Port number. Default port is taken from configuration file, bind-to parameter',type:'uint',short='p'"` //nolint: lll
 	Hex        bool   `kong:"help='Print secret in hex encoding.',short='x'"`
 }
 
@@ -61,7 +61,7 @@ func (a *Access) Run(cli *CLI, version string) error {
 	}
 
 	wg := &sync.WaitGroup{}
-	wg.Add(2) // nolint: gomnd
+	wg.Add(2) //nolint: gomnd
 
 	go func() {
 		defer wg.Done()
@@ -108,10 +108,10 @@ func (a *Access) Run(cli *CLI, version string) error {
 
 func (a *Access) getIP(ntw mtglib.Network, protocol string) net.IP {
 	client := ntw.MakeHTTPClient(func(ctx context.Context, network, address string) (essentials.Conn, error) {
-		return ntw.DialContext(ctx, protocol, address) // nolint: wrapcheck
+		return ntw.DialContext(ctx, protocol, address) //nolint: wrapcheck
 	})
 
-	req, err := http.NewRequest(http.MethodGet, "https://ifconfig.co", nil) // nolint: noctx
+	req, err := http.NewRequest(http.MethodGet, "https://ifconfig.co", nil) //nolint: noctx
 	if err != nil {
 		panic(err)
 	}
@@ -128,7 +128,7 @@ func (a *Access) getIP(ntw mtglib.Network, protocol string) net.IP {
 	}
 
 	defer func() {
-		io.Copy(io.Discard, resp.Body) // nolint: errcheck
+		io.Copy(io.Discard, resp.Body) //nolint: errcheck
 		resp.Body.Close()
 	}()
 

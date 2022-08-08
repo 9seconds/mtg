@@ -77,7 +77,7 @@ func NewEventStream(observerFactories []ObserverFactory) EventStream {
 	return rv
 }
 
-func eventStreamProcessor(ctx context.Context, eventChan <-chan mtglib.Event, observer Observer) { // nolint: cyclop
+func eventStreamProcessor(ctx context.Context, eventChan <-chan mtglib.Event, observer Observer) { //nolint: cyclop
 	defer observer.Shutdown()
 
 	for {

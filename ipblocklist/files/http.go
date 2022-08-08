@@ -22,7 +22,7 @@ func (h httpFile) Open(ctx context.Context) (io.ReadCloser, error) {
 	response, err := h.http.Do(request)
 	if err != nil {
 		if response != nil {
-			io.Copy(io.Discard, response.Body) // nolint: errcheck
+			io.Copy(io.Discard, response.Body) //nolint: errcheck
 			response.Body.Close()
 		}
 

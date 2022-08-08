@@ -85,13 +85,13 @@ func (d *dnsResolver) LookupAAAA(hostname string) []string {
 	return ips
 }
 
-func newDNSResolver(hostname string, httpClient *http.Client) (ret *dnsResolver) {
+func newDNSResolver(hostname string, httpClient *http.Client) *dnsResolver {
 	if net.ParseIP(hostname).To4() == nil {
 		// the hostname is an IPv6 address
 		hostname = fmt.Sprintf("[%s]", hostname)
 	}
 
-	ret = &dnsResolver{
+	return &dnsResolver{
 		resolver: doh.Resolver{
 			Host:       hostname,
 			Class:      doh.IN,
@@ -99,6 +99,4 @@ func newDNSResolver(hostname string, httpClient *http.Client) (ret *dnsResolver)
 		},
 		cache: map[string]dnsResolverCacheEntry{},
 	}
-
-	return
 }

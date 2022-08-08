@@ -12,7 +12,7 @@ type localFile struct {
 }
 
 func (l localFile) Open(ctx context.Context) (io.ReadCloser, error) {
-	return os.Open(l.path) // nolint: wrapcheck
+	return os.Open(l.path) //nolint: wrapcheck
 }
 
 func (l localFile) String() string {

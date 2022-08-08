@@ -24,33 +24,33 @@ func (n *EssentialsConnMock) Write(b []byte) (int, error) {
 }
 
 func (n *EssentialsConnMock) Close() error {
-	return n.Called().Error(0) // nolint: wrapcheck
+	return n.Called().Error(0) //nolint: wrapcheck
 }
 
 func (n *EssentialsConnMock) CloseRead() error {
-	return n.Called().Error(0) // nolint: wrapcheck
+	return n.Called().Error(0) //nolint: wrapcheck
 }
 
 func (n *EssentialsConnMock) CloseWrite() error {
-	return n.Called().Error(0) // nolint: wrapcheck
+	return n.Called().Error(0) //nolint: wrapcheck
 }
 
 func (n *EssentialsConnMock) LocalAddr() net.Addr {
-	return n.Called().Get(0).(net.Addr) // nolint: forcetypeassert
+	return n.Called().Get(0).(net.Addr) //nolint: forcetypeassert
 }
 
 func (n *EssentialsConnMock) RemoteAddr() net.Addr {
-	return n.Called().Get(0).(net.Addr) // nolint: forcetypeassert
+	return n.Called().Get(0).(net.Addr) //nolint: forcetypeassert
 }
 
 func (n *EssentialsConnMock) SetDeadline(t time.Time) error {
-	return n.Called(t).Error(0) // nolint: wrapcheck
+	return n.Called(t).Error(0) //nolint: wrapcheck
 }
 
 func (n *EssentialsConnMock) SetReadDeadline(t time.Time) error {
-	return n.Called(t).Error(0) // nolint: wrapcheck
+	return n.Called(t).Error(0) //nolint: wrapcheck
 }
 
 func (n *EssentialsConnMock) SetWriteDeadline(t time.Time) error {
-	return n.Called(t).Error(0) // nolint: wrapcheck
+	return n.Called(t).Error(0) //nolint: wrapcheck
 }

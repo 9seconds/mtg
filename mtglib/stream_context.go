@@ -29,7 +29,7 @@ func (s *streamContext) Done() <-chan struct{} {
 }
 
 func (s *streamContext) Err() error {
-	return s.ctx.Err() // nolint: wrapcheck
+	return s.ctx.Err() //nolint: wrapcheck
 }
 
 func (s *streamContext) Value(key interface{}) interface{} {
@@ -49,7 +49,7 @@ func (s *streamContext) Close() {
 }
 
 func (s *streamContext) ClientIP() net.IP {
-	return s.clientConn.RemoteAddr().(*net.TCPAddr).IP // nolint: forcetypeassert
+	return s.clientConn.RemoteAddr().(*net.TCPAddr).IP //nolint: forcetypeassert
 }
 
 func newStreamContext(ctx context.Context, logger Logger, clientConn essentials.Conn) *streamContext {

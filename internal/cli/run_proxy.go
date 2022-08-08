@@ -49,7 +49,7 @@ func makeNetwork(conf *config.Config, version string) (mtglib.Network, error) {
 	}
 
 	if len(conf.Network.Proxies) == 0 {
-		return network.NewNetwork(baseDialer, userAgent, dohIP, httpTimeout) // nolint: wrapcheck
+		return network.NewNetwork(baseDialer, userAgent, dohIP, httpTimeout) //nolint: wrapcheck
 	}
 
 	proxyURLs := make([]*url.URL, 0, len(conf.Network.Proxies))
@@ -66,7 +66,7 @@ func makeNetwork(conf *config.Config, version string) (mtglib.Network, error) {
 			return nil, fmt.Errorf("cannot build socks5 dialer: %w", err)
 		}
 
-		return network.NewNetwork(socksDialer, userAgent, dohIP, httpTimeout) // nolint: wrapcheck
+		return network.NewNetwork(socksDialer, userAgent, dohIP, httpTimeout) //nolint: wrapcheck
 	}
 
 	socksDialer, err := network.NewLoadBalancedSocks5Dialer(baseDialer, proxyURLs)
@@ -74,7 +74,7 @@ func makeNetwork(conf *config.Config, version string) (mtglib.Network, error) {
 		return nil, fmt.Errorf("cannot build socks5 dialer: %w", err)
 	}
 
-	return network.NewNetwork(socksDialer, userAgent, dohIP, httpTimeout) // nolint: wrapcheck
+	return network.NewNetwork(socksDialer, userAgent, dohIP, httpTimeout) //nolint: wrapcheck
 }
 
 func makeAntiReplayCache(conf *config.Config) mtglib.AntiReplayCache {
@@ -127,7 +127,12 @@ func makeIPAllowlist(conf config.ListConfig,
 	logger mtglib.Logger,
 	ntw mtglib.Network,
 	updateCallback ipblocklist.FireholUpdateCallback,
-) (allowlist mtglib.IPBlocklist, err error) {
+) (mtglib.IPBlocklist, error) {
+	var (
+		allowlist mtglib.IPBlocklist
+		err       error
+	)
+
 	if !conf.Enabled.Get(false) {
 		allowlist, err = ipblocklist.NewFireholFromFiles(
 			logger.Named("ipblocklist"),
@@ -159,7 +164,7 @@ func makeIPAllowlist(conf config.ListConfig,
 }
 
 func makeEventStream(conf *config.Config, logger mtglib.Logger) (mtglib.EventStream, error) {
-	factories := make([]events.ObserverFactory, 0, 2) // nolint: gomnd
+	factories := make([]events.ObserverFactory, 0, 2) //nolint: gomnd
 
 	if conf.Stats.StatsD.Enabled.Get(false) {
 		statsdFactory, err := stats.NewStatsd(
@@ -185,7 +190,7 @@ func makeEventStream(conf *config.Config, logger mtglib.Logger) (mtglib.EventStr
 			return nil, fmt.Errorf("cannot start a listener for prometheus: %w", err)
 		}
 
-		go prometheus.Serve(listener) // nolint: errcheck
+		go prometheus.Serve(listener) //nolint: errcheck
 
 		factories = append(factories, prometheus.Make)
 	}
@@ -197,7 +202,7 @@ func makeEventStream(conf *config.Config, logger mtglib.Logger) (mtglib.EventStr
 	return events.NewNoopStream(), nil
 }
 
-func runProxy(conf *config.Config, version string) error { // nolint: funlen
+func runProxy(conf *config.Config, version string) error { //nolint: funlen
 	logger := makeLogger(conf)
 
 	logger.BindJSON("configuration", conf.String()).Debug("configuration")
@@ -263,7 +268,7 @@ func runProxy(conf *config.Config, version string) error { // nolint: funlen
 
 	ctx := utils.RootContext()
 
-	go proxy.Serve(listener) // nolint: errcheck
+	go proxy.Serve(listener) //nolint: errcheck
 
 	<-ctx.Done()
 	listener.Close()

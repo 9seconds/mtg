@@ -21,31 +21,15 @@ const (
 )
 
 func getVersion() string {
-	goVersion, date, commit, modulesChecksum, dirty := getVersionData()
-
-	dirtySuffix := ""
-	if dirty {
-		dirtySuffix = " [dirty]"
-	}
-
-	return fmt.Sprintf("%s (%s: %s on %s%s, modules checksum %s)",
-		version,
-		goVersion,
-		date.Format(time.RFC3339),
-		commit,
-		dirtySuffix,
-		modulesChecksum)
-}
-
-func getVersionData() (goVersion string, date time.Time, commit string, modulesChecksum string, dirty bool) {
-	date = time.Now()
-
 	buildInfo, ok := debug.ReadBuildInfo()
 	if !ok {
-		return
+		return version
 	}
 
-	goVersion = buildInfo.GoVersion
+	date := time.Now()
+	commit := ""
+	goVersion := buildInfo.GoVersion
+	dirtySuffix := ""
 
 	for _, setting := range buildInfo.Settings {
 		switch setting.Key {
@@ -54,7 +38,9 @@ func getVersionData() (goVersion string, date time.Time, commit string, modulesC
 		case "vcs.revision":
 			commit = setting.Value
 		case "vcs.modified":
-			dirty, _ = strconv.ParseBool(setting.Value)
+			if dirty, _ := strconv.ParseBool(setting.Value); dirty {
+				dirtySuffix = " [dirty]"
+			}
 		}
 	}
 
@@ -62,40 +48,46 @@ func getVersionData() (goVersion string, date time.Time, commit string, modulesC
 	if _, err := io.WriteString(hasher, buildInfo.Path); err != nil {
 		panic(err)
 	}
-	binary.Write(hasher, binary.LittleEndian, uint64(1+len(buildInfo.Deps)))
+
+	binary.Write(hasher, binary.LittleEndian, uint64(1+len(buildInfo.Deps))) //nolint: errcheck
 
 	sort.Slice(buildInfo.Deps, func(i, j int) bool {
 		return buildInfo.Deps[i].Path > buildInfo.Deps[j].Path
 	})
 
 	buildInfoCheckSumModule(hasher, &buildInfo.Main)
+
 	for _, module := range buildInfo.Deps {
 		buildInfoCheckSumModule(hasher, module)
 	}
 
-	modulesChecksum = base64.StdEncoding.EncodeToString(hasher.Sum(nil))
-
-	return
+	return fmt.Sprintf("%s (%s: %s on %s%s, modules checksum %s)",
+		version,
+		goVersion,
+		date.Format(time.RFC3339),
+		commit,
+		dirtySuffix,
+		base64.StdEncoding.EncodeToString(hasher.Sum(nil)))
 }
 
 func buildInfoCheckSumModule(w io.Writer, module *debug.Module) {
-	w.Write([]byte{buildInfoModuleStart})
+	w.Write([]byte{buildInfoModuleStart}) //nolint: errcheck
 
 	if _, err := io.WriteString(w, module.Path); err != nil {
 		panic(err)
 	}
 
-	w.Write([]byte{buildInfoModuleDelimeter})
+	w.Write([]byte{buildInfoModuleDelimeter}) //nolint: errcheck
 
 	if _, err := io.WriteString(w, module.Version); err != nil {
 		panic(err)
 	}
 
-	w.Write([]byte{buildInfoModuleDelimeter})
+	w.Write([]byte{buildInfoModuleDelimeter}) //nolint: errcheck
 
 	if _, err := io.WriteString(w, module.Sum); err != nil {
 		panic(err)
 	}
 
-	w.Write([]byte{buildInfoModuleFinish})
+	w.Write([]byte{buildInfoModuleFinish}) //nolint: errcheck
 }

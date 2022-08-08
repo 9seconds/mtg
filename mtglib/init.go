@@ -110,9 +110,9 @@ const (
 // This knowledge is encapsulated into instances of such interface.
 //
 // mtglib uses Network for:
-//     1. Dialing to Telegram
-//     2. Dialing to front domain
-//     3. Doing HTTP requests (for example, for FireHOL ipblocklist).
+//  1. Dialing to Telegram
+//  2. Dialing to front domain
+//  3. Doing HTTP requests (for example, for FireHOL ipblocklist).
 type Network interface {
 	// Dial establishes context-free TCP connections.
 	Dial(network, address string) (essentials.Conn, error)

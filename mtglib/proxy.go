@@ -106,7 +106,7 @@ func (p *Proxy) Serve(listener net.Listener) error {
 			}
 		}
 
-		ipAddr := conn.RemoteAddr().(*net.TCPAddr).IP // nolint: forcetypeassert
+		ipAddr := conn.RemoteAddr().(*net.TCPAddr).IP //nolint: forcetypeassert
 		logger := p.logger.BindStr("ip", ipAddr.String())
 
 		if !p.allowlist.Contains(ipAddr) {
@@ -253,7 +253,7 @@ func (p *Proxy) doTelegramCall(ctx *streamContext) error {
 
 	p.eventStream.Send(ctx,
 		NewEventConnectedToDC(ctx.streamID,
-			conn.RemoteAddr().(*net.TCPAddr).IP, // nolint: forcetypeassert
+			conn.RemoteAddr().(*net.TCPAddr).IP, //nolint: forcetypeassert
 			ctx.dc),
 	)
 
@@ -316,7 +316,7 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 
 	pool, err := ants.NewPoolWithFunc(opts.getConcurrency(),
 		func(arg interface{}) {
-			proxy.ServeConn(arg.(essentials.Conn)) // nolint: forcetypeassert
+			proxy.ServeConn(arg.(essentials.Conn)) //nolint: forcetypeassert
 		},
 		ants.WithLogger(opts.getLogger("ants")),
 		ants.WithNonblocking(true))

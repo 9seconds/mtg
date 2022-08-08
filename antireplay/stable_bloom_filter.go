@@ -42,7 +42,7 @@ func NewStableBloomFilter(byteSize uint, errorRate float64) mtglib.AntiReplayCac
 		errorRate = DefaultStableBloomFilterErrorRate
 	}
 
-	sf := boom.NewDefaultStableBloomFilter(byteSize*8, errorRate) // nolint: gomnd
+	sf := boom.NewDefaultStableBloomFilter(byteSize*8, errorRate) //nolint: gomnd
 	sf.SetHash(xxhash.New64())
 
 	return &stableBloomFilter{

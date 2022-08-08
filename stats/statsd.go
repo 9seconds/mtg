@@ -160,7 +160,7 @@ type StatsdFactory struct {
 
 // Close stops sending requests to statsd.
 func (s StatsdFactory) Close() error {
-	return s.client.Close() // nolint: wrapcheck
+	return s.client.Close() //nolint: wrapcheck
 }
 
 // Make build a new observer.

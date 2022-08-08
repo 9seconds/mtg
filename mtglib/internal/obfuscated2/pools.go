@@ -21,7 +21,7 @@ var (
 )
 
 func acquireSha256Hasher() hash.Hash {
-	return sha256HasherPool.Get().(hash.Hash) // nolint: forcetypeassert
+	return sha256HasherPool.Get().(hash.Hash) //nolint: forcetypeassert
 }
 
 func releaseSha256Hasher(h hash.Hash) {
@@ -30,7 +30,7 @@ func releaseSha256Hasher(h hash.Hash) {
 }
 
 func acquireBytesBuffer() *bytes.Buffer {
-	return bytesBufferPool.Get().(*bytes.Buffer) // nolint: forcetypeassert
+	return bytesBufferPool.Get().(*bytes.Buffer) //nolint: forcetypeassert
 }
 
 func releaseBytesBuffer(buf *bytes.Buffer) {

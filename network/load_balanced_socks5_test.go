@@ -73,7 +73,7 @@ func (suite *LoadBalancedSocks5TestSuite) TestCannotDial() {
 }
 
 func (suite *LoadBalancedSocks5TestSuite) TestDialOk() {
-	resp, err := suite.httpClient.Get(suite.MakeURL("/get")) // nolint: noctx
+	resp, err := suite.httpClient.Get(suite.MakeURL("/get")) //nolint: noctx
 	if err == nil {
 		defer resp.Body.Close()
 	}

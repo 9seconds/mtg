@@ -14,11 +14,11 @@ type DialerMock struct {
 func (d *DialerMock) Dial(network, address string) (essentials.Conn, error) {
 	args := d.Called(network, address)
 
-	return args.Get(0).(essentials.Conn), args.Error(1) // nolint: wrapcheck, forcetypeassert
+	return args.Get(0).(essentials.Conn), args.Error(1) //nolint: wrapcheck, forcetypeassert
 }
 
 func (d *DialerMock) DialContext(ctx context.Context, network, address string) (essentials.Conn, error) {
 	args := d.Called(ctx, network, address)
 
-	return args.Get(0).(essentials.Conn), args.Error(1) // nolint: wrapcheck, forcetypeassert
+	return args.Get(0).(essentials.Conn), args.Error(1) //nolint: wrapcheck, forcetypeassert
 }

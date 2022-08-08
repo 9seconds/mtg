@@ -110,10 +110,10 @@ func (suite *CircuitBreakerTestSuite) TestHalfOpen() {
 		Port: 80,
 	})
 
-	suite.d.DialContext(suite.ctx, "tcp", "127.0.0.1") // nolint: errcheck
-	suite.d.DialContext(suite.ctx, "tcp", "127.0.0.1") // nolint: errcheck
-	suite.d.DialContext(suite.ctx, "tcp", "127.0.0.1") // nolint: errcheck
-	suite.d.DialContext(suite.ctx, "tcp", "127.0.0.1") // nolint: errcheck
+	suite.d.DialContext(suite.ctx, "tcp", "127.0.0.1") //nolint: errcheck
+	suite.d.DialContext(suite.ctx, "tcp", "127.0.0.1") //nolint: errcheck
+	suite.d.DialContext(suite.ctx, "tcp", "127.0.0.1") //nolint: errcheck
+	suite.d.DialContext(suite.ctx, "tcp", "127.0.0.1") //nolint: errcheck
 
 	time.Sleep(500 * time.Millisecond)
 

@@ -57,7 +57,7 @@ func (suite *HandshakeFrameTestSuite) TestDC() {
 		suite.T().Run(strconv.Itoa(int(incoming)), func(t *testing.T) {
 			frame := handshakeFrame{}
 
-			rand.Read(frame.data[:]) // nolint: errcheck
+			rand.Read(frame.data[:]) //nolint: errcheck
 
 			frame.data[handshakeFrameOffsetDC] = byte(incoming)
 			frame.data[handshakeFrameOffsetDC+1] = byte(incoming >> 8)

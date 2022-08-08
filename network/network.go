@@ -21,7 +21,7 @@ type networkHTTPTransport struct {
 func (n networkHTTPTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	req.Header.Set("User-Agent", n.userAgent)
 
-	return n.next.RoundTrip(req) // nolint: wrapcheck
+	return n.next.RoundTrip(req) //nolint: wrapcheck
 }
 
 type network struct {

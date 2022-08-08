@@ -171,18 +171,18 @@ func (p *PrometheusFactory) Make() events.Observer {
 
 // Serve starts an HTTP server on a given listener.
 func (p *PrometheusFactory) Serve(listener net.Listener) error {
-	return p.httpServer.Serve(listener) // nolint: wrapcheck
+	return p.httpServer.Serve(listener) //nolint: wrapcheck
 }
 
 // Close stops a factory. Please pay attention that underlying listener
 // is not closed.
 func (p *PrometheusFactory) Close() error {
-	return p.httpServer.Shutdown(context.Background()) // nolint: wrapcheck
+	return p.httpServer.Shutdown(context.Background()) //nolint: wrapcheck
 }
 
 // NewPrometheus builds an events.ObserverFactory which can serve HTTP
 // endpoint with Prometheus scrape data.
-func NewPrometheus(metricPrefix, httpPath string) *PrometheusFactory { // nolint: funlen
+func NewPrometheus(metricPrefix, httpPath string) *PrometheusFactory { //nolint: funlen
 	registry := prometheus.NewPedanticRegistry()
 	httpHandler := promhttp.HandlerFor(registry, promhttp.HandlerOpts{
 		EnableOpenMetrics: true,

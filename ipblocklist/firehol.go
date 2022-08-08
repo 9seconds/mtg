@@ -19,8 +19,8 @@ import (
 var (
 	fireholRegexpComment = regexp.MustCompile(`\s*#.*?$`)
 
-	fireholIPv4DefaultCIDR = net.CIDRMask(32, 32)   // nolint: gomnd
-	fireholIPv6DefaultCIDR = net.CIDRMask(128, 128) // nolint: gomnd
+	fireholIPv4DefaultCIDR = net.CIDRMask(32, 32)   //nolint: gomnd
+	fireholIPv6DefaultCIDR = net.CIDRMask(128, 128) //nolint: gomnd
 )
 
 // FireholUpdateCallback defines a signature of the callback that has to be
