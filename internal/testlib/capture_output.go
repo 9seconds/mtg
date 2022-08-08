@@ -27,7 +27,7 @@ func captureOutput(filefp **os.File, callback func()) string {
 	closeChan := make(chan bool)
 
 	go func() {
-		io.Copy(buf, reader) // nolint: errcheck
+		io.Copy(buf, reader) //nolint: errcheck
 		close(closeChan)
 	}()
 

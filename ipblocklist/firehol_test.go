@@ -37,7 +37,7 @@ func (suite *FireholTestSuite) SetupSuite() {
 
 		defer filefp.Close()
 
-		io.Copy(w, filefp) // nolint: errcheck
+		io.Copy(w, filefp) //nolint: errcheck
 	})
 
 	suite.httpServer = httptest.NewServer(mux)

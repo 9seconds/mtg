@@ -21,7 +21,7 @@ type networkHTTPTransport struct {
 func (n networkHTTPTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	req.Header.Set("User-Agent", n.userAgent)
 
-	return n.next.RoundTrip(req) // nolint: wrapcheck
+	return n.next.RoundTrip(req) //nolint: wrapcheck
 }
 
 type network struct {
@@ -118,8 +118,8 @@ func (n *network) dnsResolve(protocol, address string) ([]string, error) {
 	return ips, nil
 }
 
-// NewNetwork assembles an mtglib.Network compatible structure
-// based on a dialer and given params.
+// NewNetwork assembles an mtglib.Network compatible structure based on a
+// dialer and given params.
 //
 // It brings simple DNS cache and DNS-Over-HTTPS when necessary.
 func NewNetwork(dialer Dialer,

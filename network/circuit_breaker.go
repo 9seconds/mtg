@@ -59,7 +59,7 @@ func (c *circuitBreakerDialer) doClosed(ctx context.Context,
 			conn.Close()
 		}
 
-		return nil, ctx.Err() // nolint: wrapcheck
+		return nil, ctx.Err() //nolint: wrapcheck
 	case c.stateMutexChan <- true:
 		defer func() {
 			<-c.stateMutexChan
@@ -78,7 +78,7 @@ func (c *circuitBreakerDialer) doClosed(ctx context.Context,
 		c.switchState(circuitBreakerStateOpened)
 	}
 
-	return conn, err // nolint: wrapcheck
+	return conn, err //nolint: wrapcheck
 }
 
 func (c *circuitBreakerDialer) doHalfOpened(ctx context.Context,
@@ -96,7 +96,7 @@ func (c *circuitBreakerDialer) doHalfOpened(ctx context.Context,
 			conn.Close()
 		}
 
-		return nil, ctx.Err() // nolint: wrapcheck
+		return nil, ctx.Err() //nolint: wrapcheck
 	case c.stateMutexChan <- true:
 		defer func() {
 			<-c.stateMutexChan
@@ -104,7 +104,7 @@ func (c *circuitBreakerDialer) doHalfOpened(ctx context.Context,
 	}
 
 	if c.state != circuitBreakerStateHalfOpened {
-		return conn, err // nolint: wrapcheck
+		return conn, err //nolint: wrapcheck
 	}
 
 	if err == nil {
@@ -113,7 +113,7 @@ func (c *circuitBreakerDialer) doHalfOpened(ctx context.Context,
 		c.switchState(circuitBreakerStateOpened)
 	}
 
-	return conn, err // nolint: wrapcheck
+	return conn, err //nolint: wrapcheck
 }
 
 func (c *circuitBreakerDialer) switchState(state uint32) {

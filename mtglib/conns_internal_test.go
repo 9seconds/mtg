@@ -22,7 +22,7 @@ type ConnRewindBaseConn struct {
 func (c *ConnRewindBaseConn) Read(p []byte) (int, error) {
 	c.Called(p)
 
-	return c.readBuffer.Read(p) // nolint: wrapcheck
+	return c.readBuffer.Read(p) //nolint: wrapcheck
 }
 
 type ConnTrafficTestSuite struct {
@@ -69,7 +69,7 @@ func (suite *ConnTrafficTestSuite) TestReadOk() {
 	suite.Equal(10, n)
 }
 
-func (suite *ConnTrafficTestSuite) TestReadErr() { // nolint: dupl
+func (suite *ConnTrafficTestSuite) TestReadErr() { //nolint: dupl
 	suite.eventStreamMock.
 		On("Send", mock.Anything, mock.Anything).
 		Once().
@@ -125,7 +125,7 @@ func (suite *ConnTrafficTestSuite) TestWriteOk() {
 	suite.Equal(10, n)
 }
 
-func (suite *ConnTrafficTestSuite) TestWriteErr() { // nolint: dupl
+func (suite *ConnTrafficTestSuite) TestWriteErr() { //nolint: dupl
 	suite.eventStreamMock.
 		On("Send", mock.Anything, mock.Anything).
 		Once().

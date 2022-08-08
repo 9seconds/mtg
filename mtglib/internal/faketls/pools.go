@@ -12,7 +12,7 @@ var bytesBufferPool = sync.Pool{
 }
 
 func acquireBytesBuffer() *bytes.Buffer {
-	return bytesBufferPool.Get().(*bytes.Buffer) // nolint: forcetypeassert
+	return bytesBufferPool.Get().(*bytes.Buffer) //nolint: forcetypeassert
 }
 
 func releaseBytesBuffer(b *bytes.Buffer) {

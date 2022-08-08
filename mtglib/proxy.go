@@ -44,8 +44,8 @@ func (p *Proxy) DomainFrontingAddress() string {
 	return net.JoinHostPort(p.secret.Host, strconv.Itoa(p.domainFrontingPort))
 }
 
-// ServeConn serves a connection. We do not check IP blocklist and
-// concurrency limit here.
+// ServeConn serves a connection. We do not check IP blocklist and concurrency
+// limit here.
 func (p *Proxy) ServeConn(conn essentials.Conn) {
 	p.streamWaitGroup.Add(1)
 	defer p.streamWaitGroup.Done()
@@ -106,7 +106,7 @@ func (p *Proxy) Serve(listener net.Listener) error {
 			}
 		}
 
-		ipAddr := conn.RemoteAddr().(*net.TCPAddr).IP // nolint: forcetypeassert
+		ipAddr := conn.RemoteAddr().(*net.TCPAddr).IP //nolint: forcetypeassert
 		logger := p.logger.BindStr("ip", ipAddr.String())
 
 		if !p.allowlist.Contains(ipAddr) {
@@ -138,8 +138,8 @@ func (p *Proxy) Serve(listener net.Listener) error {
 	}
 }
 
-// Shutdown 'gracefully' shutdowns all connections. Please remember that
-// it does not close an underlying listener.
+// Shutdown 'gracefully' shutdowns all connections. Please remember that it
+// does not close an underlying listener.
 func (p *Proxy) Shutdown() {
 	p.ctxCancel()
 	p.streamWaitGroup.Wait()
@@ -253,7 +253,7 @@ func (p *Proxy) doTelegramCall(ctx *streamContext) error {
 
 	p.eventStream.Send(ctx,
 		NewEventConnectedToDC(ctx.streamID,
-			conn.RemoteAddr().(*net.TCPAddr).IP, // nolint: forcetypeassert
+			conn.RemoteAddr().(*net.TCPAddr).IP, //nolint: forcetypeassert
 			ctx.dc),
 	)
 
@@ -316,7 +316,7 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 
 	pool, err := ants.NewPoolWithFunc(opts.getConcurrency(),
 		func(arg interface{}) {
-			proxy.ServeConn(arg.(essentials.Conn)) // nolint: forcetypeassert
+			proxy.ServeConn(arg.(essentials.Conn)) //nolint: forcetypeassert
 		},
 		ants.WithLogger(opts.getLogger("ants")),
 		ants.WithNonblocking(true))

@@ -22,7 +22,7 @@ func (suite *ClientHandshakeTestSuite) SetupSuite() {
 
 func (suite *ClientHandshakeTestSuite) TestCannotRead() {
 	buf := bytes.NewBuffer([]byte{1, 2, 3})
-	_, _, _, err := obfuscated2.ClientHandshake([]byte{1, 2, 3}, buf) // nolint: dogsled
+	_, _, _, err := obfuscated2.ClientHandshake([]byte{1, 2, 3}, buf) //nolint: dogsled
 
 	suite.Error(err)
 }

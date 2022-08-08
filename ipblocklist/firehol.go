@@ -19,27 +19,27 @@ import (
 var (
 	fireholRegexpComment = regexp.MustCompile(`\s*#.*?$`)
 
-	fireholIPv4DefaultCIDR = net.CIDRMask(32, 32)   // nolint: gomnd
-	fireholIPv6DefaultCIDR = net.CIDRMask(128, 128) // nolint: gomnd
+	fireholIPv4DefaultCIDR = net.CIDRMask(32, 32)   //nolint: gomnd
+	fireholIPv6DefaultCIDR = net.CIDRMask(128, 128) //nolint: gomnd
 )
 
 // FireholUpdateCallback defines a signature of the callback that has to be
 // execute when ip list is updated.
 type FireholUpdateCallback func(context.Context, int)
 
-// Firehol is IPBlocklist which uses lists from FireHOL:
+// Firehol is [mtglib.IPBlocklist] which uses lists from FireHOL:
 // https://iplists.firehol.org/
 //
-// It can use both local files and remote URLs. This is not necessary
-// that blocklists should be taken from this website, we expect only
-// compatible formats here.
+// It can use both local files and remote URLs. This is not necessary that
+// blocklists should be taken from this website, we expect only compatible
+// formats here.
 //
 // Example of the format:
 //
-//     # this is a comment
-//     # to ignore
-//     127.0.0.1   # you can specify an IP
-//     10.0.0.0/8  # or cidr
+//	# this is a comment
+//	# to ignore
+//	127.0.0.1   # you can specify an IP
+//	10.0.0.0/8  # or cidr
 type Firehol struct {
 	ctx         context.Context
 	ctxCancel   context.CancelFunc
@@ -78,8 +78,7 @@ func (f *Firehol) Contains(ip net.IP) bool {
 
 // Run starts a background update process.
 //
-// This is a blocking method so you probably want to run it in a
-// goroutine.
+// This is a blocking method so you probably want to run it in a goroutine.
 func (f *Firehol) Run(updateEach time.Duration) {
 	if updateEach == 0 {
 		updateEach = DefaultFireholUpdateEach
@@ -211,8 +210,8 @@ func (f *Firehol) updateParseLine(text string) (*net.IPNet, error) {
 
 // NewFirehol creates a new instance of FireHOL IP blocklist.
 //
-// This method does not start an update process so please execute Run
-// when it is necessary.
+// This method does not start an update process so please execute Run when it
+// is necessary.
 func NewFirehol(logger mtglib.Logger, network mtglib.Network,
 	downloadConcurrency uint,
 	urls []string,
@@ -244,6 +243,9 @@ func NewFirehol(logger mtglib.Logger, network mtglib.Network,
 	return NewFireholFromFiles(logger, downloadConcurrency, blocklists, updateCallback)
 }
 
+// NewFirehol creates a new instance of FireHOL IP blocklist.
+//
+// This method creates this instances from a given list of files.
 func NewFireholFromFiles(logger mtglib.Logger,
 	downloadConcurrency uint,
 	blocklists []files.File,

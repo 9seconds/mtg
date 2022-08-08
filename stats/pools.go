@@ -11,7 +11,7 @@ var streamInfoPool = sync.Pool{
 }
 
 func acquireStreamInfo() *streamInfo {
-	return streamInfoPool.Get().(*streamInfo) // nolint: forcetypeassert
+	return streamInfoPool.Get().(*streamInfo) //nolint: forcetypeassert
 }
 
 func releaseStreamInfo(info *streamInfo) {

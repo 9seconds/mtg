@@ -86,7 +86,7 @@ func (suite *ProxyTestSuite) SetupSuite() {
 
 	suite.listener = listener
 
-	go suite.p.Serve(suite.listener) // nolint: errcheck
+	go suite.p.Serve(suite.listener) //nolint: errcheck
 }
 
 func (suite *ProxyTestSuite) TearDownSuite() {
@@ -179,7 +179,7 @@ func (suite *ProxyTestSuite) TestHTTPSRequest() {
 
 	addr := fmt.Sprintf("https://%s/headers", suite.ProxyAddress())
 
-	resp, err := client.Get(addr) // nolint: noctx
+	resp, err := client.Get(addr) //nolint: noctx
 	suite.NoError(err)
 
 	defer resp.Body.Close()
@@ -191,7 +191,7 @@ func (suite *ProxyTestSuite) TestHTTPSRequest() {
 
 	jsonStruct := struct {
 		Headers struct {
-			TraceID string `json:"X-Amzn-Trace-Id"` // nolint: tagliatelle
+			TraceID string `json:"X-Amzn-Trace-Id"` //nolint: tagliatelle
 		} `json:"headers"`
 	}{}
 
@@ -221,7 +221,7 @@ func (suite *ProxyTestSuite) TestMakeRealRequest() {
 		_, err := tg.NewClient(tgClient).HelpGetConfig(ctx)
 		suite.NoError(err)
 
-		return err // nolint: wrapcheck
+		return err //nolint: wrapcheck
 	}))
 }
 

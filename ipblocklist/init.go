@@ -1,8 +1,8 @@
 // Package ipblocklist contains default implementation of the
-// IPBlocklist for mtg.
+// [mtglib.IPBlocklist] for mtg.
 //
-// Please check documentation for mtglib.IPBlocklist interface to get an
-// idea of this abstraction.
+// Please check documentation for [mtglib.IPBlocklist] interface to get an idea
+// of this abstraction.
 package ipblocklist
 
 import "time"
@@ -12,7 +12,7 @@ const (
 	// concurrent downloads of ip blocklists for Firehol.
 	DefaultFireholDownloadConcurrency = 1
 
-	// DefaultFireholUpdateEach defines a default time period when
-	// Firehol requests updates of the blocklists.
+	// DefaultFireholUpdateEach defines a default time period when Firehol
+	// requests updates of the blocklists.
 	DefaultFireholUpdateEach = 6 * time.Hour
 )

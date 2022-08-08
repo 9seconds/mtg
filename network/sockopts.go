@@ -10,13 +10,13 @@ import (
 //
 // bufferSize setting is deprecated and ignored.
 func SetClientSocketOptions(conn net.Conn, bufferSize int) error {
-	return setCommonSocketOptions(conn.(*net.TCPConn)) // nolint: forcetypeassert
+	return setCommonSocketOptions(conn.(*net.TCPConn)) //nolint: forcetypeassert
 }
 
 // SetServerSocketOptions tunes a TCP socket that represents a connection to
 // remote server like Telegram or fronting domain (but not end user).
 func SetServerSocketOptions(conn net.Conn, bufferSize int) error {
-	return setCommonSocketOptions(conn.(*net.TCPConn)) // nolint: forcetypeassert
+	return setCommonSocketOptions(conn.(*net.TCPConn)) //nolint: forcetypeassert
 }
 
 func setCommonSocketOptions(conn *net.TCPConn) error {

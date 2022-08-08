@@ -31,7 +31,7 @@ func (suite *NetworkTestSuite) TestLocalHTTPRequest() {
 
 	client := ntw.MakeHTTPClient(nil)
 
-	resp, err := client.Get(suite.httpServer.URL + "/headers") // nolint: noctx
+	resp, err := client.Get(suite.httpServer.URL + "/headers") //nolint: noctx
 	suite.NoError(err)
 
 	defer resp.Body.Close()
@@ -42,7 +42,7 @@ func (suite *NetworkTestSuite) TestLocalHTTPRequest() {
 
 	jsonStruct := struct {
 		Headers struct {
-			UserAgent []string `json:"User-Agent"` // nolint: tagliatelle
+			UserAgent []string `json:"User-Agent"` //nolint: tagliatelle
 		} `json:"headers"`
 	}{}
 
@@ -56,7 +56,7 @@ func (suite *NetworkTestSuite) TestRealHTTPRequest() {
 
 	client := ntw.MakeHTTPClient(nil)
 
-	resp, err := client.Get("https://httpbin.org/headers") // nolint: noctx
+	resp, err := client.Get("https://httpbin.org/headers") //nolint: noctx
 	suite.NoError(err)
 
 	defer resp.Body.Close()
@@ -67,7 +67,7 @@ func (suite *NetworkTestSuite) TestRealHTTPRequest() {
 
 	jsonStruct := struct {
 		Headers struct {
-			UserAgent string `json:"User-Agent"` // nolint: tagliatelle
+			UserAgent string `json:"User-Agent"` //nolint: tagliatelle
 		} `json:"headers"`
 	}{}
 

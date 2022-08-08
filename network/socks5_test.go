@@ -33,7 +33,7 @@ func (suite *Socks5TestSuite) TestRequestFailed() {
 	dialer, _ := network.NewSocks5Dialer(suite.d, proxyURL)
 	httpClient := suite.MakeHTTPClient(dialer)
 
-	resp, err := httpClient.Get(suite.MakeURL("/get")) // nolint: noctx
+	resp, err := httpClient.Get(suite.MakeURL("/get")) //nolint: noctx
 	if err == nil {
 		defer resp.Body.Close()
 	}
@@ -46,7 +46,7 @@ func (suite *Socks5TestSuite) TestRequestOk() {
 	dialer, _ := network.NewSocks5Dialer(suite.d, proxyURL)
 	httpClient := suite.MakeHTTPClient(dialer)
 
-	resp, err := httpClient.Get(suite.MakeURL("/get")) // nolint: noctx
+	resp, err := httpClient.Get(suite.MakeURL("/get")) //nolint: noctx
 	if err == nil {
 		defer resp.Body.Close()
 	}

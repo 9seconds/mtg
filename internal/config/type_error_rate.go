@@ -12,7 +12,7 @@ type TypeErrorRate struct {
 }
 
 func (t *TypeErrorRate) Set(value string) error {
-	parsedValue, err := strconv.ParseFloat(value, 64) // nolint: gomnd
+	parsedValue, err := strconv.ParseFloat(value, 64) //nolint: gomnd
 	if err != nil {
 		return fmt.Errorf("value is not a float (%s): %w", value, err)
 	}
@@ -43,5 +43,5 @@ func (t TypeErrorRate) MarshalJSON() ([]byte, error) {
 }
 
 func (t TypeErrorRate) String() string {
-	return strconv.FormatFloat(t.Value, 'f', -1, 64) // nolint: gomnd
+	return strconv.FormatFloat(t.Value, 'f', -1, 64) //nolint: gomnd
 }

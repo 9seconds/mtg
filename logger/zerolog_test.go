@@ -116,6 +116,6 @@ func (suite *ZeroLoggerTestSuite) TestIndependence() {
 	suite.NotContains("lalala", log12Output)
 }
 
-func TestZeroLogger(t *testing.T) { // nolint: paralleltest
+func TestZeroLogger(t *testing.T) { //nolint: paralleltest
 	suite.Run(t, &ZeroLoggerTestSuite{})
 }

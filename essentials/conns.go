@@ -5,19 +5,19 @@ import (
 	"net"
 )
 
-// CloseableReader is a reader interface that can close its reading end.
+// CloseableReader is an [io.Reader] interface that can close its reading end.
 type CloseableReader interface {
 	io.Reader
 	CloseRead() error
 }
 
-// CloseableWriter is a writer that can close its writing end.
+// CloseableWriter is an [io.Writer] that can close its writing end.
 type CloseableWriter interface {
 	io.Writer
 	CloseWrite() error
 }
 
-// Conn is an extension of net.Conn that can close its ends. This mostly
+// Conn is an extension of [net.Conn] that can close its ends. This mostly
 // implies TCP connections.
 type Conn interface {
 	net.Conn

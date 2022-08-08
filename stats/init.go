@@ -1,4 +1,4 @@
-// Stats package has implementations of events.Observers for different
+// Stats package has implementations of [events.Observer] for different
 // monitoring systems.
 //
 // Observer is a consumer of events produced by mtg. Consumers, defined

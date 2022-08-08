@@ -57,7 +57,7 @@ func (suite *DefaultDialerTestSuite) TestConnectOk() {
 func (suite *DefaultDialerTestSuite) TestHTTPRequest() {
 	httpClient := suite.MakeHTTPClient(suite.d)
 
-	resp, err := httpClient.Get(suite.MakeURL("/get")) // nolint: noctx
+	resp, err := httpClient.Get(suite.MakeURL("/get")) //nolint: noctx
 	if err == nil {
 		defer resp.Body.Close()
 	}

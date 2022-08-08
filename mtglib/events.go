@@ -29,13 +29,13 @@ type EventStart struct {
 	RemoteIP net.IP
 }
 
-// EventConnectedToDC is emitted when mtg proxy has connected to a
-// Telegram server.
+// EventConnectedToDC is emitted when mtg proxy has connected to a Telegram
+// server.
 type EventConnectedToDC struct {
 	eventBase
 
-	// RemoteIP is an IP address of the Telegram server proxy has been
-	// connected to.
+	// RemoteIP is an IP address of the Telegram server proxy has been connected
+	// to.
 	RemoteIP net.IP
 
 	// DC is an index of the datacenter proxy has been connected to.
@@ -49,15 +49,15 @@ type EventTraffic struct {
 	// Traffic is a count of bytes which were transmitted.
 	Traffic uint
 
-	// IsRead defines if we _read_ or _write_ to connection. A rule of
-	// thumb is simple: EventTraffic is bound to a remote connection. Not
-	// to a client one, but either to Telegram or front domain one.
+	// IsRead defines if we _read_ or _write_ to connection. A rule of thumb is
+	// simple: EventTraffic is bound to a remote connection. Not to a client one,
+	// but either to Telegram or front domain one.
 	//
-	// In the case of Telegram, isRead means that we've fetched some bytes
-	// from Telegram to send it to a client.
+	// In the case of Telegram, isRead means that we've fetched some bytes from
+	// Telegram to send it to a client.
 	//
-	// In the case of the front domain, it means that we've fetched some
-	// bytes from this domain to send it to a client.
+	// In the case of the front domain, it means that we've fetched some bytes
+	// from this domain to send it to a client.
 	IsRead bool
 }
 
@@ -66,20 +66,20 @@ type EventFinish struct {
 	eventBase
 }
 
-// EventDomainFronting is emitted when we connect to a front domain
-// instead of Telegram server.
+// EventDomainFronting is emitted when we connect to a front domain instead of
+// Telegram server.
 type EventDomainFronting struct {
 	eventBase
 }
 
-// EventConcurrencyLimited is emitted when connection was declined
-// because of the concurrency limit of the worker pool.
+// EventConcurrencyLimited is emitted when connection was declined because of
+// the concurrency limit of the worker pool.
 type EventConcurrencyLimited struct {
 	eventBase
 }
 
-// EventIPBlocklisted is emitted when connection was declined because
-// IP address was found in IP blocklist.
+// EventIPBlocklisted is emitted when connection was declined because IP
+// address was found in IP blocklist.
 type EventIPBlocklisted struct {
 	eventBase
 

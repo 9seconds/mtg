@@ -56,7 +56,7 @@ func ParseClientHello(secret, handshake []byte) (ClientHello, error) {
 	if len(handshake)-4 != int(handshakeLength) {
 		return hello,
 			fmt.Errorf("incorrect handshake size. manifested=%d, real=%d",
-				handshakeLength, len(handshake)-4) // nolint: gomnd
+				handshakeLength, len(handshake)-4) //nolint: gomnd
 	}
 
 	copy(hello.Random[:], handshake[ClientHelloRandomOffset:])
@@ -72,7 +72,7 @@ func ParseClientHello(secret, handshake []byte) (ClientHello, error) {
 	// mac is calculated for the whole record, not only
 	// for the payload part
 	mac := hmac.New(sha256.New, secret)
-	rec.Dump(mac) // nolint: errcheck
+	rec.Dump(mac) //nolint: errcheck
 
 	computedRandom := mac.Sum(nil)
 
@@ -100,7 +100,7 @@ func parseSessionID(hello *ClientHello, handshake []byte) {
 }
 
 func parseCipherSuite(hello *ClientHello, handshake []byte) {
-	cipherSuiteOffset := ClientHelloSessionIDOffset + len(hello.SessionID) + 3 // nolint: gomnd
+	cipherSuiteOffset := ClientHelloSessionIDOffset + len(hello.SessionID) + 3 //nolint: gomnd
 	hello.CipherSuite = binary.BigEndian.Uint16(handshake[cipherSuiteOffset : cipherSuiteOffset+2])
 }
 

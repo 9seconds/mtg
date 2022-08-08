@@ -18,7 +18,7 @@ func (t *TypeHostPort) Set(value string) error {
 		return fmt.Errorf("incorrect host:port value (%v): %w", value, err)
 	}
 
-	portValue, err := strconv.ParseUint(port, 10, 16) // nolint: gomnd
+	portValue, err := strconv.ParseUint(port, 10, 16) //nolint: gomnd
 	if err != nil {
 		return fmt.Errorf("incorrect port number (%v): %w", value, err)
 	}

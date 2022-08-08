@@ -25,16 +25,16 @@ type PrometheusTestSuite struct {
 func (suite *PrometheusTestSuite) Get() (string, error) {
 	addr := fmt.Sprintf("http://%s/", suite.httpListener.Addr().String())
 
-	resp, err := http.Get(addr) // nolint: noctx
+	resp, err := http.Get(addr) //nolint: noctx
 	if err != nil {
-		return "", err // nolint: wrapcheck
+		return "", err //nolint: wrapcheck
 	}
 
 	defer resp.Body.Close()
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", err // nolint: wrapcheck
+		return "", err //nolint: wrapcheck
 	}
 
 	return string(data), nil
@@ -45,7 +45,7 @@ func (suite *PrometheusTestSuite) SetupTest() {
 	suite.factory = stats.NewPrometheus("mtg", "/")
 	suite.prometheus = suite.factory.Make()
 
-	go suite.factory.Serve(suite.httpListener) // nolint: errcheck
+	go suite.factory.Serve(suite.httpListener) //nolint: errcheck
 }
 
 func (suite *PrometheusTestSuite) TearDownTest() {

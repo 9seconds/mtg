@@ -14,7 +14,7 @@ type Listener struct {
 func (l Listener) Accept() (net.Conn, error) {
 	conn, err := l.Listener.Accept()
 	if err != nil {
-		return nil, err // nolint: wrapcheck
+		return nil, err //nolint: wrapcheck
 	}
 
 	if err := network.SetClientSocketOptions(conn, 0); err != nil {

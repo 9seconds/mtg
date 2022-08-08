@@ -19,7 +19,7 @@ func FuzzServerSend(f *testing.F) {
 			Once().
 			Run(func(args mock.Arguments) {
 				message := make([]byte, len(data))
-				handshakeData.decryptor.XORKeyStream(message, args.Get(0).([]byte)) // nolint: forcetypeassert
+				handshakeData.decryptor.XORKeyStream(message, args.Get(0).([]byte)) //nolint: forcetypeassert
 				assert.Equal(t, message, data)
 			})
 
@@ -45,7 +45,7 @@ func FuzzServerReceive(f *testing.F) {
 			Run(func(args mock.Arguments) {
 				message := make([]byte, len(data))
 				handshakeData.encryptor.XORKeyStream(message, data)
-				copy(args.Get(0).([]byte), message) // nolint: forcetypeassert
+				copy(args.Get(0).([]byte), message) //nolint: forcetypeassert
 			})
 
 		n, err := handshakeData.proxyConn.Read(buffer)

@@ -30,7 +30,7 @@ func (suite *ServerHandshakeTestSuite) TestSendToTelegram() {
 		Once().
 		Run(func(args mock.Arguments) {
 			message := make([]byte, len(messageToTelegram))
-			suite.data.decryptor.XORKeyStream(message, args.Get(0).([]byte)) // nolint: forcetypeassert
+			suite.data.decryptor.XORKeyStream(message, args.Get(0).([]byte)) //nolint: forcetypeassert
 			suite.Equal(messageToTelegram, message)
 		})
 
@@ -50,7 +50,7 @@ func (suite *ServerHandshakeTestSuite) TestRecieveFromTelegram() {
 		Run(func(args mock.Arguments) {
 			message := make([]byte, len(messageFromTelegram))
 			suite.data.encryptor.XORKeyStream(message, messageFromTelegram)
-			copy(args.Get(0).([]byte), message) // nolint: forcetypeassert
+			copy(args.Get(0).([]byte), message) //nolint: forcetypeassert
 		})
 
 	n, err := suite.data.proxyConn.Read(buffer)

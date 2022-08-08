@@ -19,6 +19,7 @@ func (m memFile) String() string {
 	return "mem"
 }
 
+// NewMem returns an openable file that is kept in RAM.
 func NewMem(networks []*net.IPNet) File {
 	builder := strings.Builder{}
 

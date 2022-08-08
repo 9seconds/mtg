@@ -23,20 +23,20 @@ var handshakeConnectionType = []byte{0xdd, 0xdd, 0xdd, 0xdd}
 
 // A structure of obfuscated2 handshake frame is following:
 //
-//    [frameOffsetFirst:frameOffsetKey:frameOffsetIV:frameOffsetMagic:frameOffsetDC:frameOffsetEnd].
+//	[frameOffsetFirst:frameOffsetKey:frameOffsetIV:frameOffsetMagic:frameOffsetDC:frameOffsetEnd].
 //
-//    - 8 bytes of noise
-//    - 32 bytes of AES Key
-//    - 16 bytes of AES IV
-//    - 4 bytes of 'connection type' - this has some setting like a connection type
-//    - 2 bytes of 'DC'. DC is little endian int16
-//    - 2 bytes of noise
+//	- 8 bytes of noise
+//	- 32 bytes of AES Key
+//	- 16 bytes of AES IV
+//	- 4 bytes of 'connection type' - this has some setting like a connection type
+//	- 2 bytes of 'DC'. DC is little endian int16
+//	- 2 bytes of noise
 type handshakeFrame struct {
 	data [handshakeFrameLen]byte
 }
 
 func (h *handshakeFrame) dc() int {
-	idx := int16(h.data[handshakeFrameOffsetDC]) | int16(h.data[handshakeFrameOffsetDC+1])<<8 // nolint: gomnd, lll // little endian for int16 is here
+	idx := int16(h.data[handshakeFrameOffsetDC]) | int16(h.data[handshakeFrameOffsetDC+1])<<8 //nolint: gomnd, lll // little endian for int16 is here
 
 	switch {
 	case idx > 0:

@@ -24,7 +24,7 @@ func (c connTraffic) Read(b []byte) (int, error) {
 		c.stream.Send(c.ctx, NewEventTraffic(c.streamID, uint(n), true))
 	}
 
-	return n, err // nolint: wrapcheck
+	return n, err //nolint: wrapcheck
 }
 
 func (c connTraffic) Write(b []byte) (int, error) {
@@ -34,7 +34,7 @@ func (c connTraffic) Write(b []byte) (int, error) {
 		c.stream.Send(c.ctx, NewEventTraffic(c.streamID, uint(n), false))
 	}
 
-	return n, err // nolint: wrapcheck
+	return n, err //nolint: wrapcheck
 }
 
 type connRewind struct {
@@ -49,7 +49,7 @@ func (c *connRewind) Read(p []byte) (int, error) {
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
 
-	return c.active.Read(p) // nolint: wrapcheck
+	return c.active.Read(p) //nolint: wrapcheck
 }
 
 func (c *connRewind) Rewind() {
