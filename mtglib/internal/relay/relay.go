@@ -38,10 +38,7 @@ func pump(log Logger, src, dst essentials.Conn, direction string) {
 	defer src.CloseRead()  //nolint: errcheck
 	defer dst.CloseWrite() //nolint: errcheck
 
-	copyBuffer := acquireCopyBuffer()
-	defer releaseCopyBuffer(copyBuffer)
-
-	n, err := io.CopyBuffer(src, dst, *copyBuffer)
+	n, err := ioCopy(src, dst)
 
 	switch {
 	case err == nil:
