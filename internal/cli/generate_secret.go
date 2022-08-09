@@ -15,9 +15,9 @@ func (g *GenerateSecret) Run(cli *CLI, _ string) error {
 	secret := mtglib.GenerateSecret(cli.GenerateSecret.HostName)
 
 	if g.Hex {
-		fmt.Println(secret.Hex()) // nolint: forbidigo
+		fmt.Println(secret.Hex()) //nolint: forbidigo
 	} else {
-		fmt.Println(secret.Base64()) // nolint: forbidigo
+		fmt.Println(secret.Base64()) //nolint: forbidigo
 	}
 
 	return nil

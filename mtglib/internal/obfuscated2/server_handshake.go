@@ -47,12 +47,12 @@ func generateServerHanshakeFrame() serverHandshakeFrame {
 			panic(err)
 		}
 
-		if frame.data[0] == 0xef { // nolint: gomnd // taken from tg sources
+		if frame.data[0] == 0xef { //nolint: gomnd // taken from tg sources
 			continue
 		}
 
 		switch binary.LittleEndian.Uint32(frame.data[:4]) {
-		case 0x44414548, 0x54534f50, 0x20544547, 0x4954504f, 0xeeeeeeee: // nolint: gomnd // taken from tg sources
+		case 0x44414548, 0x54534f50, 0x20544547, 0x4954504f, 0xeeeeeeee: //nolint: gomnd // taken from tg sources
 			continue
 		}
 

@@ -24,13 +24,13 @@ type ConnMock struct {
 func (m *ConnMock) Read(p []byte) (int, error) {
 	m.Called(p)
 
-	return m.readBuffer.Read(p) // nolint: wrapcheck
+	return m.readBuffer.Read(p) //nolint: wrapcheck
 }
 
 func (m *ConnMock) Write(p []byte) (int, error) {
 	m.Called(p)
 
-	return m.writeBuffer.Write(p) // nolint: wrapcheck
+	return m.writeBuffer.Write(p) //nolint: wrapcheck
 }
 
 type ConnTestSuite struct {
@@ -61,14 +61,14 @@ func (suite *ConnTestSuite) TestRead() {
 	rec.Version = record.Version12
 
 	rec.Payload.WriteByte(0x01)
-	rec.Dump(&suite.connMock.readBuffer) // nolint: errcheck
+	rec.Dump(&suite.connMock.readBuffer) //nolint: errcheck
 	rec.Reset()
 
 	rec.Type = record.TypeApplicationData
 	rec.Version = record.Version12
 
 	rec.Payload.Write([]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10})
-	rec.Dump(&suite.connMock.readBuffer) // nolint: errcheck
+	rec.Dump(&suite.connMock.readBuffer) //nolint: errcheck
 
 	resultBuffer := &bytes.Buffer{}
 	buf := make([]byte, 2)
@@ -95,14 +95,14 @@ func (suite *ConnTestSuite) TestReadUnexpected() {
 	rec.Version = record.Version12
 
 	rec.Payload.WriteByte(0x01)
-	rec.Dump(&suite.connMock.readBuffer) // nolint: errcheck
+	rec.Dump(&suite.connMock.readBuffer) //nolint: errcheck
 	rec.Reset()
 
 	rec.Type = record.TypeHandshake
 	rec.Version = record.Version12
 
 	rec.Payload.Write([]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10})
-	rec.Dump(&suite.connMock.readBuffer) // nolint: errcheck
+	rec.Dump(&suite.connMock.readBuffer) //nolint: errcheck
 
 	buf := make([]byte, 2)
 
@@ -141,7 +141,7 @@ func (suite *ConnTestSuite) TestWrite() {
 
 		suite.Equal(record.TypeApplicationData, rec.Type)
 		suite.Equal(record.Version12, rec.Version)
-		rec.Payload.WriteTo(buf) // nolint: errcheck
+		rec.Payload.WriteTo(buf) //nolint: errcheck
 	}
 
 	suite.Equal(dataToRec, buf.Bytes())

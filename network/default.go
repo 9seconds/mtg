@@ -19,7 +19,7 @@ func (d *defaultDialer) Dial(network, address string) (essentials.Conn, error) {
 
 func (d *defaultDialer) DialContext(ctx context.Context, network, address string) (essentials.Conn, error) {
 	switch network {
-	case "tcp", "tcp4", "tcp6": // nolint: goconst
+	case "tcp", "tcp4", "tcp6": //nolint: goconst
 	default:
 		return nil, fmt.Errorf("unsupported network %s", network)
 	}
@@ -36,7 +36,7 @@ func (d *defaultDialer) DialContext(ctx context.Context, network, address string
 		return nil, fmt.Errorf("cannot set socket options: %w", err)
 	}
 
-	return conn.(essentials.Conn), nil // nolint: forcetypeassert
+	return conn.(essentials.Conn), nil //nolint: forcetypeassert
 }
 
 // NewDefaultDialer build a new dialer which dials bypassing proxies

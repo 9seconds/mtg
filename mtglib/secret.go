@@ -17,28 +17,27 @@ var secretEmptyKey [SecretKeyLength]byte
 // "ee367a189aee18fa31c190054efd4a8e9573746f726167652e676f6f676c65617069732e636f6d".
 // Actually, this is a serialized datastructure of 2 parts: key and host.
 //
-//     ee367a189aee18fa31c190054efd4a8e9573746f726167652e676f6f676c65617069732e636f6d
-//     |-|-------------------------------|-------------------------------------------
-//     p key                             hostname
+//	ee367a189aee18fa31c190054efd4a8e9573746f726167652e676f6f676c65617069732e636f6d
+//	|-|-------------------------------|-------------------------------------------
+//	p key                             hostname
 //
-// Serialized secret starts with 'ee'. Actually, in the past we also had
-// 'dd' secrets and prefixless ones. But this is history. Currently,
-// we do have only 'ee' secrets which mean faketls + protection from
-// statistical attacks on a length. 'ee' is a byte 238 (0xee).
+// Serialized secret starts with 'ee'. Actually, in the past we also had 'dd'
+// secrets and prefixless ones. But this is history. Currently, we do have only
+// 'ee' secrets which mean faketls + protection from statistical attacks on a
+// length. 'ee' is a byte 238 (0xee).
 //
-// After that, we have 16 bytes of the key. This is a random generated
-// secret data of the proxy and this data is used to derive
-// authentication schemas. These secrets are mixed into hmacs and sha256
-// checksums which are used to build AEAD ciphers for obfuscated2
-// protocol and ensure faketls handshake.
+// After that, we have 16 bytes of the key. This is a random generated secret
+// data of the proxy and this data is used to derive authentication schemas.
+// These secrets are mixed into hmacs and sha256 checksums which are used to
+// build AEAD ciphers for obfuscated2 protocol and ensure faketls handshake.
 //
-// Host is a domain fronting hostname in latin1 (ASCII) encoding. This
-// hostname should be used for SNI in faketls and MTG verifies it. Also,
-// this is when mtg gets about a domain fronting hostname.
+// Host is a domain fronting hostname in latin1 (ASCII) encoding. This hostname
+// should be used for SNI in faketls and MTG verifies it. Also, this is when
+// mtg gets about a domain fronting hostname.
 //
-// Secrets can be serialized into 2 forms: hex and base64. If
-// you decode both forms into bytes, you'll get the same byte array.
-// Telegram clients nowadays accept all forms.
+// Secrets can be serialized into 2 forms: hex and base64. If you decode both
+// forms into bytes, you'll get the same byte array. Telegram clients nowadays
+// accept all forms.
 type Secret struct {
 	// Key is a set of bytes used for traffic authentication.
 	Key [SecretKeyLength]byte
@@ -75,7 +74,7 @@ func (s *Secret) Set(text string) error {
 		return fmt.Errorf("incorrect secret format: %w", err)
 	}
 
-	if len(decoded) < 2 { // nolint: gomnd // we need at least 1 byte here
+	if len(decoded) < 2 { //nolint: gomnd // we need at least 1 byte here
 		return fmt.Errorf("secret is truncated, length=%d", len(decoded))
 	}
 

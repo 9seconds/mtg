@@ -9,7 +9,7 @@ import (
 	"github.com/OneOfOne/xxhash"
 )
 
-// EventStream is a default implementation of the mtglib.EventStream
+// EventStream is a default implementation of the [mtglib.EventStream]
 // interface.
 //
 // EventStream manages a set of goroutines, observers. Main
@@ -77,7 +77,7 @@ func NewEventStream(observerFactories []ObserverFactory) EventStream {
 	return rv
 }
 
-func eventStreamProcessor(ctx context.Context, eventChan <-chan mtglib.Event, observer Observer) { // nolint: cyclop
+func eventStreamProcessor(ctx context.Context, eventChan <-chan mtglib.Event, observer Observer) { //nolint: cyclop
 	defer observer.Shutdown()
 
 	for {

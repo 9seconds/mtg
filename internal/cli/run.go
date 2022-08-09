@@ -7,7 +7,7 @@ import (
 )
 
 type Run struct {
-	ConfigPath string `kong:"arg,required,type='existingfile',help='Path to the configuration file.',name='config-path'"` // nolint: lll
+	ConfigPath string `kong:"arg,required,type='existingfile',help='Path to the configuration file.',name='config-path'"` //nolint: lll
 }
 
 func (r *Run) Run(cli *CLI, version string) error {

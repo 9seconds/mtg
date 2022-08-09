@@ -2,7 +2,7 @@ ROOT_DIR     := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 IMAGE_NAME   := mtg
 APP_NAME     := $(IMAGE_NAME)
 
-GOLANGCI_LINT_VERSION := v1.45.0
+GOLANGCI_LINT_VERSION := v1.48.0
 
 VERSION            := $(shell git describe --exact-match HEAD 2>/dev/null || git describe --tags --always)
 COMMON_BUILD_FLAGS := -trimpath -mod=readonly -ldflags="-extldflags '-static' -s -w -X 'main.version=$(VERSION)'"

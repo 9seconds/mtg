@@ -23,24 +23,24 @@ func SendWelcomePacket(writer io.Writer, secret []byte, clientHello ClientHello)
 	rec.Version = record.Version12
 
 	generateServerHello(&rec.Payload, clientHello)
-	rec.Dump(buf) // nolint: errcheck
+	rec.Dump(buf) //nolint: errcheck
 	rec.Reset()
 
 	rec.Type = record.TypeChangeCipherSpec
 	rec.Version = record.Version12
 	rec.Payload.WriteByte(ChangeCipherValue)
 
-	rec.Dump(buf) // nolint: errcheck
+	rec.Dump(buf) //nolint: errcheck
 	rec.Reset()
 
 	rec.Type = record.TypeApplicationData
 	rec.Version = record.Version12
 
-	if _, err := io.CopyN(&rec.Payload, rand.Reader, int64(1024+mrand.Intn(3092))); err != nil { // nolint: gomnd
+	if _, err := io.CopyN(&rec.Payload, rand.Reader, int64(1024+mrand.Intn(3092))); err != nil { //nolint: gomnd
 		panic(err)
 	}
 
-	rec.Dump(buf) // nolint: errcheck
+	rec.Dump(buf) //nolint: errcheck
 
 	packet := buf.Bytes()
 	mac := hmac.New(sha256.New, secret)
@@ -51,7 +51,7 @@ func SendWelcomePacket(writer io.Writer, secret []byte, clientHello ClientHello)
 	copy(packet[WelcomePacketRandomOffset:], mac.Sum(nil))
 
 	if _, err := writer.Write(packet); err != nil {
-		return err // nolint: wrapcheck
+		return err //nolint: wrapcheck
 	}
 
 	return nil
@@ -87,6 +87,6 @@ func generateServerHello(writer io.Writer, clientHello ClientHello) {
 	binary.BigEndian.PutUint32(header[:], uint32(bodyBuf.Len()))
 	header[0] = HandshakeTypeServer
 
-	writer.Write(header[:]) // nolint: errcheck
-	bodyBuf.WriteTo(writer) // nolint: errcheck
+	writer.Write(header[:]) //nolint: errcheck
+	bodyBuf.WriteTo(writer) //nolint: errcheck
 }

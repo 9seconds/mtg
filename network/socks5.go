@@ -136,10 +136,10 @@ func (s socks5Dialer) connect(conn io.ReadWriter, address string) error {
 	return nil
 }
 
-// NewSocks5Dialer build a new dialer from a given one (so, in theory
-// you can chain here). Proxy parameters are passed with URI in a form of:
+// NewSocks5Dialer build a new dialer from a given one (so, in theory you can
+// chain here). Proxy parameters are passed with URI in a form of:
 //
-//     socks5://[user:[password]]@host:port
+//	socks5://[user:[password]]@host:port
 func NewSocks5Dialer(baseDialer Dialer, proxyURL *url.URL) (Dialer, error) {
 	if _, _, err := net.SplitHostPort(proxyURL.Host); err != nil {
 		return nil, fmt.Errorf("incorrect url %s", proxyURL.Redacted())

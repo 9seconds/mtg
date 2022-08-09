@@ -22,7 +22,7 @@ type HTTPTestSuite struct {
 }
 
 func (suite *HTTPTestSuite) makeFile(path string) (files.File, error) {
-	return files.NewHTTP(suite.httpClient, suite.httpServer.URL+"/"+path) // nolint: wrapcheck
+	return files.NewHTTP(suite.httpClient, suite.httpServer.URL+"/"+path) //nolint: wrapcheck
 }
 
 func (suite *HTTPTestSuite) SetupSuite() {

@@ -10,7 +10,7 @@ type TypeConcurrency struct {
 }
 
 func (t *TypeConcurrency) Set(value string) error {
-	concurrencyValue, err := strconv.ParseUint(value, 10, 16) // nolint: gomnd
+	concurrencyValue, err := strconv.ParseUint(value, 10, 16) //nolint: gomnd
 	if err != nil {
 		return fmt.Errorf("value is not uint (%s): %w", value, err)
 	}
@@ -41,5 +41,5 @@ func (t TypeConcurrency) MarshalJSON() ([]byte, error) {
 }
 
 func (t TypeConcurrency) String() string {
-	return strconv.FormatUint(uint64(t.Value), 10) // nolint: gomnd
+	return strconv.FormatUint(uint64(t.Value), 10) //nolint: gomnd
 }
