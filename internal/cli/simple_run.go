@@ -20,10 +20,11 @@ type SimpleRun struct {
 	DomainFrontingPort  uint64        `kong:"name='domain-fronting-port',short='p',default='443',help='A port to access for domain fronting.'"`                        //nolint: lll
 	DOHIP               net.IP        `kong:"name='doh-ip',short='n',default='9.9.9.9',help='IP address of DNS-over-HTTP to use.'"`                                    //nolint: lll
 	Timeout             time.Duration `kong:"name='timeout',short='t',default='10s',help='Network timeout to use'"`                                                    //nolint: lll
+	Socks5Proxies       []string      `kong:"name='socks5-proxy',short='s',help='Socks5 proxies to use for network access.'"`                                          //nolint: lll
 	AntiReplayCacheSize string        `kong:"name='antireplay-cache-size',short='a',default='1MB',help='A size of anti-replay cache to use.'"`                         //nolint: lll
 }
 
-func (s *SimpleRun) Run(cli *CLI, version string) error { //nolint: cyclop
+func (s *SimpleRun) Run(cli *CLI, version string) error { //nolint: cyclop,funlen
 	conf := &config.Config{}
 
 	if err := conf.BindTo.Set(s.BindTo); err != nil {
@@ -64,6 +65,16 @@ func (s *SimpleRun) Run(cli *CLI, version string) error { //nolint: cyclop
 
 	if err := conf.Defense.AntiReplay.MaxSize.Set(s.AntiReplayCacheSize); err != nil {
 		return fmt.Errorf("incorrect antireplay-cache-size: %w", err)
+	}
+
+	for _, v := range s.Socks5Proxies {
+		proxyURL := config.TypeProxyURL{}
+
+		if err := proxyURL.Set(v); err != nil {
+			return fmt.Errorf("incorrect socks5 proxy URL: %w", err)
+		}
+
+		conf.Network.Proxies = append(conf.Network.Proxies, proxyURL)
 	}
 
 	conf.Debug.Value = s.Debug
