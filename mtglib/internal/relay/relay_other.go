@@ -13,5 +13,5 @@ func ioCopy(dst io.Writer, src io.Reader) (int64, error) {
 	copyBuffer := acquireCopyBuffer()
 	defer releaseCopyBuffer(copyBuffer)
 
-	return io.CopyBuffer(writerOnly{dst}, src, *copyBuffer)
+	return io.CopyBuffer(writerOnly{dst}, src, *copyBuffer) //nolint: wrapcheck
 }

@@ -1,6 +1,13 @@
+//go:build !linux
+// +build !linux
+
 package relay
 
 import "sync"
+
+const (
+	copyBufferSize = 64 * 1024
+)
 
 var copyBufferPool = sync.Pool{
 	New: func() interface{} {
