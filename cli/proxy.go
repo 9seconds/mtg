@@ -19,7 +19,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-func Proxy() error { // nolint: funlen,cyclop
+func Proxy() error { //nolint: funlen,cyclop
 	ctx := utils.GetSignalContext()
 
 	atom := zap.NewAtomicLevel()
@@ -41,7 +41,7 @@ func Proxy() error { // nolint: funlen,cyclop
 	))
 
 	zap.ReplaceGlobals(logger)
-	defer logger.Sync() // nolint: errcheck
+	defer logger.Sync() //nolint: errcheck
 
 	if err := config.InitPublicAddress(ctx); err != nil {
 		Fatal(err)

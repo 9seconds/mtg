@@ -17,19 +17,19 @@ type wrapperTelegramStats struct {
 }
 
 func (w *wrapperTelegramStats) Write(p []byte) (int, error) {
-	return w.parent.Write(p) // nolint: wrapcheck
+	return w.parent.Write(p) //nolint: wrapcheck
 }
 
 func (w *wrapperTelegramStats) WriteTimeout(p []byte, timeout time.Duration) (int, error) {
-	return w.parent.WriteTimeout(p, timeout) // nolint: wrapcheck
+	return w.parent.WriteTimeout(p, timeout) //nolint: wrapcheck
 }
 
 func (w *wrapperTelegramStats) Read(p []byte) (int, error) {
-	return w.parent.Read(p) // nolint: wrapcheck
+	return w.parent.Read(p) //nolint: wrapcheck
 }
 
 func (w *wrapperTelegramStats) ReadTimeout(p []byte, timeout time.Duration) (int, error) {
-	return w.parent.ReadTimeout(p, timeout) // nolint: wrapcheck
+	return w.parent.ReadTimeout(p, timeout) //nolint: wrapcheck
 }
 
 func (w *wrapperTelegramStats) Conn() net.Conn {
@@ -56,7 +56,7 @@ func (w *wrapperTelegramStats) Close() error {
 		stats.Stats.TelegramDisconnected(w.dc, w.RemoteAddr())
 	})
 
-	return err // nolint: wrapcheck
+	return err //nolint: wrapcheck
 }
 
 func NewTelegramStats(dc conntypes.DC, parent conntypes.StreamReadWriteCloser) conntypes.StreamReadWriteCloser {

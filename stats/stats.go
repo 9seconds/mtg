@@ -28,11 +28,11 @@ func Init(ctx context.Context) error {
 		Handler: mux,
 	}
 
-	go srv.Serve(listener) // nolint: errcheck
+	go srv.Serve(listener) //nolint: errcheck
 
 	go func() {
 		<-ctx.Done()
-		srv.Shutdown(context.Background()) // nolint: errcheck, contextcheck
+		srv.Shutdown(context.Background()) //nolint: errcheck
 	}()
 
 	Stats = multiStats(stats)

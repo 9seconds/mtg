@@ -36,8 +36,8 @@ func (s ServerHello) WelcomePacket() []byte {
 	}
 	recChangeCipher.WriteBytes(buf)
 
-	hostCert := make([]byte, 1024+mrand.Intn(3092)) // nolint: gosec, gomnd
-	rand.Read(hostCert)                             // nolint: errcheck
+	hostCert := make([]byte, 1024+mrand.Intn(3092)) //nolint: gosec, gomnd
+	rand.Read(hostCert)                             //nolint: errcheck
 
 	recData := Record{
 		Type:    RecordTypeApplicationData,
@@ -66,8 +66,8 @@ func NewServerHello(clientHello *ClientHello) *ServerHello {
 	rv.SessionID = make([]byte, len(clientHello.SessionID))
 	copy(rv.SessionID, clientHello.SessionID)
 
-	tail := bytes.NewBuffer(CipherSuiteType_TLS_AES_128_GCM_SHA256_Bytes)
-	tail.WriteByte(0x00) // nolint: gomnd // no compression
+	tail := bytes.NewBuffer(CipherSuiteType_TLS_AES_128_GCM_SHA256_Bytes) //nolint: nosnakecase
+	tail.WriteByte(0x00)                                                  //nolint: gomnd // no compression
 	makeTLSExtensions(tail)
 	rv.Tail = RawBytes(tail.Bytes())
 
@@ -75,7 +75,7 @@ func NewServerHello(clientHello *ClientHello) *ServerHello {
 }
 
 func makeTLSExtensions(buf io.Writer) {
-	buf.Write([]byte{ // nolint: errcheck
+	buf.Write([]byte{ //nolint: errcheck
 		0x00, 0x2e, // 46 bytes of data
 		0x00, 0x33, // Extension - Key Share
 		0x00, 0x24, // 36 bytes
@@ -85,11 +85,11 @@ func makeTLSExtensions(buf io.Writer) {
 
 	var scalar [32]byte
 
-	rand.Read(scalar[:]) // nolint: errcheck
+	rand.Read(scalar[:]) //nolint: errcheck
 	curve, _ := curve25519.X25519(scalar[:], curve25519.Basepoint)
-	buf.Write(curve) // nolint: errcheck
+	buf.Write(curve) //nolint: errcheck
 
-	buf.Write([]byte{ // nolint: errcheck
+	buf.Write([]byte{ //nolint: errcheck
 		0x00, 0x2b, // Extension - Supported Versions
 		0x00, 0x02, // 2 bytes are following
 		0x03, 0x04, // TLS 1.3

@@ -18,23 +18,23 @@ type wrapperTimeout struct {
 }
 
 func (w *wrapperTimeout) WriteTimeout(p []byte, timeout time.Duration) (int, error) {
-	return w.parent.WriteTimeout(p, timeout) // nolint: wrapcheck
+	return w.parent.WriteTimeout(p, timeout) //nolint: wrapcheck
 }
 
 func (w *wrapperTimeout) Write(p []byte) (int, error) {
-	return w.parent.WriteTimeout(p, timeoutWrite) // nolint: wrapcheck
+	return w.parent.WriteTimeout(p, timeoutWrite) //nolint: wrapcheck
 }
 
 func (w *wrapperTimeout) ReadTimeout(p []byte, timeout time.Duration) (int, error) {
-	return w.parent.ReadTimeout(p, timeout) // nolint: wrapcheck
+	return w.parent.ReadTimeout(p, timeout) //nolint: wrapcheck
 }
 
 func (w *wrapperTimeout) Read(p []byte) (int, error) {
-	return w.parent.ReadTimeout(p, timeoutRead) // nolint: wrapcheck
+	return w.parent.ReadTimeout(p, timeoutRead) //nolint: wrapcheck
 }
 
 func (w *wrapperTimeout) Close() error {
-	return w.parent.Close() // nolint: wrapcheck
+	return w.parent.Close() //nolint: wrapcheck
 }
 
 func (w *wrapperTimeout) Conn() net.Conn {

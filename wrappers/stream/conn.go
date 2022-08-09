@@ -43,7 +43,7 @@ func (w *wrapperConn) Write(p []byte) (int, error) {
 		w.Close()
 	}
 
-	return n, err // nolint: wrapcheck
+	return n, err //nolint: wrapcheck
 }
 
 func (w *wrapperConn) ReadTimeout(p []byte, timeout time.Duration) (int, error) {
@@ -64,13 +64,13 @@ func (w *wrapperConn) Read(p []byte) (int, error) {
 		w.Close()
 	}
 
-	return n, err // nolint: wrapcheck
+	return n, err //nolint: wrapcheck
 }
 
 func (w *wrapperConn) Close() error {
 	w.logger.Debugw("Close connection")
 
-	return w.parent.Close() // nolint: wrapcheck
+	return w.parent.Close() //nolint: wrapcheck
 }
 
 func (w *wrapperConn) Conn() net.Conn {
@@ -93,9 +93,9 @@ func newConn(parent net.Conn,
 	connID conntypes.ConnID,
 	purpose connPurpose,
 ) conntypes.StreamReadWriteCloser {
-	localAddr := *parent.LocalAddr().(*net.TCPAddr) // nolint: forcetypeassert
+	localAddr := *parent.LocalAddr().(*net.TCPAddr) //nolint: forcetypeassert
 
-	if parent.RemoteAddr().(*net.TCPAddr).IP.To4() != nil { // nolint: forcetypeassert
+	if parent.RemoteAddr().(*net.TCPAddr).IP.To4() != nil { //nolint: forcetypeassert
 		if config.C.PublicIPv4.IP != nil {
 			localAddr.IP = config.C.PublicIPv4.IP
 		}
@@ -118,7 +118,7 @@ func newConn(parent net.Conn,
 		parent:     parent,
 		connID:     connID,
 		logger:     logger,
-		remoteAddr: parent.RemoteAddr().(*net.TCPAddr), // nolint: forcetypeassert
+		remoteAddr: parent.RemoteAddr().(*net.TCPAddr), //nolint: forcetypeassert
 		localAddr:  &localAddr,
 	}
 }

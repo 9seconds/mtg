@@ -30,7 +30,7 @@ type connection struct {
 	channelConnDetach chan conntypes.ConnID
 }
 
-func (c *connection) run() { // nolint: cyclop
+func (c *connection) run() { //nolint: cyclop
 	defer c.Close()
 
 	ttl := time.NewTimer(connectionTTL)
@@ -148,7 +148,7 @@ func newConnection(req *protocol.TelegramRequest) (*connection, error) {
 		return nil, fmt.Errorf("cannot create a new connection: %w", err)
 	}
 
-	id := rand.Int() // nolint: gosec
+	id := rand.Int() //nolint: gosec
 	rv := &connection{
 		conn: conn,
 		id:   id,

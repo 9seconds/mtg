@@ -2,10 +2,10 @@ package api
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 )
 
-const secretURL = "https://core.telegram.org/getProxySecret" // nolint: gas
+const secretURL = "https://core.telegram.org/getProxySecret" //nolint: gas
 
 func Secret() ([]byte, error) {
 	resp, err := request(secretURL)
@@ -15,7 +15,7 @@ func Secret() ([]byte, error) {
 
 	defer resp.Close()
 
-	secret, err := ioutil.ReadAll(resp)
+	secret, err := io.ReadAll(resp)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read response: %w", err)
 	}

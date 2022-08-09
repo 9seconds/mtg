@@ -20,7 +20,7 @@ type wrapperFakeTLS struct {
 
 func (w *wrapperFakeTLS) Write(p []byte) (int, error) {
 	return w.write(p, func(b []byte) (int, error) {
-		return w.parent.Write(b) // nolint: wrapcheck
+		return w.parent.Write(b) //nolint: wrapcheck
 	})
 }
 
@@ -30,7 +30,7 @@ func (w *wrapperFakeTLS) WriteTimeout(p []byte, timeout time.Duration) (int, err
 	return w.write(p, func(b []byte) (int, error) {
 		elapsed := time.Since(startTime)
 		if elapsed > timeout {
-			return w.parent.WriteTimeout(b, timeout-elapsed) // nolint: wrapcheck
+			return w.parent.WriteTimeout(b, timeout-elapsed) //nolint: wrapcheck
 		}
 
 		return 0, errors.New("timeout")
@@ -73,7 +73,7 @@ func (w *wrapperFakeTLS) RemoteAddr() *net.TCPAddr {
 }
 
 func (w *wrapperFakeTLS) Close() error {
-	return w.parent.Close() // nolint: wrapcheck
+	return w.parent.Close() //nolint: wrapcheck
 }
 
 func NewFakeTLS(socket conntypes.StreamReadWriteCloser) conntypes.StreamReadWriteCloser {
@@ -85,7 +85,7 @@ func NewFakeTLS(socket conntypes.StreamReadWriteCloser) conntypes.StreamReadWrit
 		for {
 			rec, err := tlstypes.ReadRecord(faketls.parent)
 			if err != nil {
-				return nil, err // nolint: wrapcheck
+				return nil, err //nolint: wrapcheck
 			}
 
 			switch rec.Type {

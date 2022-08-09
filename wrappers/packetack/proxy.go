@@ -42,11 +42,11 @@ func (w *wrapperProxy) Write(packet conntypes.Packet, acks *conntypes.Connection
 	buf.Write(rpc.ProxyRequestProxyTag)
 	buf.WriteByte(byte(len(config.C.AdTag)))
 	buf.Write(config.C.AdTag)
-	buf.Write(make([]byte, (4-buf.Len()%4)%4)) // nolint: gomnd
+	buf.Write(make([]byte, (4-buf.Len()%4)%4)) //nolint: gomnd
 	buf.Grow(len(packet))
 	buf.Write(packet)
 
-	return w.proxy.Write(buf.Bytes()) // nolint: wrapcheck
+	return w.proxy.Write(buf.Bytes()) //nolint: wrapcheck
 }
 
 func (w *wrapperProxy) Read(acks *conntypes.ConnectionAcks) (conntypes.Packet, error) {

@@ -41,7 +41,7 @@ func (r *HandshakeResponse) Valid() error {
 // NewHandshakeResponse constructs new handshake response from the given
 // data.
 func NewHandshakeResponse(data []byte) (*HandshakeResponse, error) {
-	if len(data) != 32 { // nolint: gomnd
+	if len(data) != 32 { //nolint: gomnd
 		return nil, fmt.Errorf("incorrect handshake response length %d", len(data))
 	}
 

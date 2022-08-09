@@ -18,7 +18,7 @@ type Handshake struct {
 func (h *Handshake) WriteBytes(writer io.Writer) {
 	packetBuf := bytes.Buffer{}
 
-	writer.Write([]byte{byte(h.Type)}) // nolint: errcheck
+	writer.Write([]byte{byte(h.Type)}) //nolint: errcheck
 
 	packetBuf.Write(h.Version.Bytes())
 	packetBuf.Write(h.Random[:])
@@ -30,8 +30,8 @@ func (h *Handshake) WriteBytes(writer io.Writer) {
 	sizeUint24Bytes := sizeUint24[:]
 	sizeUint24Bytes[0], sizeUint24Bytes[2] = sizeUint24Bytes[2], sizeUint24Bytes[0]
 
-	writer.Write(sizeUint24Bytes) // nolint: errcheck
-	packetBuf.WriteTo(writer)     // nolint: errcheck
+	writer.Write(sizeUint24Bytes) //nolint: errcheck
+	packetBuf.WriteTo(writer)     //nolint: errcheck
 }
 
 func (h *Handshake) Len() int {

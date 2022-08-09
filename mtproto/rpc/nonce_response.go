@@ -44,7 +44,7 @@ func (r *NonceResponse) Valid(req *NonceRequest) error {
 
 // NewNonceResponse build new nonce response based on the given data.
 func NewNonceResponse(data []byte) (*NonceResponse, error) {
-	if len(data) != 32 { // nolint: gomnd
+	if len(data) != 32 { //nolint: gomnd
 		return nil, fmt.Errorf("unexpected message length %d", len(data))
 	}
 

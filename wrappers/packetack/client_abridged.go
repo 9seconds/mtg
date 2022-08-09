@@ -39,9 +39,9 @@ func (w *wrapperClientAbridged) Read(acks *conntypes.ConnectionAcks) (conntypes.
 	}
 
 	if msgLength == clientAbridgedSmallPacketLength {
-		buf.Grow(3) // nolint: gomnd
+		buf.Grow(3) //nolint: gomnd
 
-		if _, err := io.CopyN(&buf, w.parent, 3); err != nil { // nolint: gomnd
+		if _, err := io.CopyN(&buf, w.parent, 3); err != nil { //nolint: gomnd
 			return nil, fmt.Errorf("cannot read correct message length: %w", err)
 		}
 
@@ -75,7 +75,7 @@ func (w *wrapperClientAbridged) Write(packet conntypes.Packet, acks *conntypes.C
 		return nil
 	}
 
-	packetLength := len(packet) / 4 // nolint: gomnd
+	packetLength := len(packet) / 4 //nolint: gomnd
 
 	switch {
 	case packetLength < clientAbridgedSmallPacketLength:
@@ -104,7 +104,7 @@ func (w *wrapperClientAbridged) Write(packet conntypes.Packet, acks *conntypes.C
 }
 
 func (w *wrapperClientAbridged) Close() error {
-	return w.parent.Close() // nolint: wrapcheck
+	return w.parent.Close() //nolint: wrapcheck
 }
 
 func (w *wrapperClientAbridged) Conn() net.Conn {

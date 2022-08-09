@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"strings"
@@ -41,12 +40,12 @@ func fetchIP(ctx context.Context, network string) (net.IP, error) {
 		Timeout: ifconfigTimeout,
 		Transport: &http.Transport{
 			DialContext: func(ctx context.Context, _, addr string) (net.Conn, error) {
-				return dialer.DialContext(ctx, network, addr) // nolint: wrapcheck
+				return dialer.DialContext(ctx, network, addr) //nolint: wrapcheck
 			},
 		},
 	}
 
-	req, err := http.NewRequest("GET", ifconfigAddress, nil)
+	req, err := http.NewRequest(http.MethodGet, ifconfigAddress, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create a request: %w", err)
 	}
@@ -54,7 +53,7 @@ func fetchIP(ctx context.Context, network string) (net.IP, error) {
 	resp, err := client.Do(req.WithContext(ctx))
 	if err != nil {
 		if resp != nil {
-			io.Copy(ioutil.Discard, resp.Body) // nolint: errcheck
+			io.Copy(io.Discard, resp.Body) //nolint: errcheck
 		}
 
 		return nil, fmt.Errorf("cannot perform a request: %w", err)
@@ -62,7 +61,7 @@ func fetchIP(ctx context.Context, network string) (net.IP, error) {
 
 	defer resp.Body.Close()
 
-	respDataBytes, err := ioutil.ReadAll(resp.Body)
+	respDataBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read response body: %w", err)
 	}

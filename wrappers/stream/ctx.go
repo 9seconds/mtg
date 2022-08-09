@@ -23,7 +23,7 @@ func (w *wrapperCtx) WriteTimeout(p []byte, timeout time.Duration) (int, error) 
 
 		return 0, fmt.Errorf("cannot write because context was closed: %w", w.ctx.Err())
 	default:
-		return w.parent.WriteTimeout(p, timeout) // nolint: wrapcheck
+		return w.parent.WriteTimeout(p, timeout) //nolint: wrapcheck
 	}
 }
 
@@ -34,7 +34,7 @@ func (w *wrapperCtx) Write(p []byte) (int, error) {
 
 		return 0, fmt.Errorf("cannot write because context was closed: %w", w.ctx.Err())
 	default:
-		return w.parent.Write(p) // nolint: wrapcheck
+		return w.parent.Write(p) //nolint: wrapcheck
 	}
 }
 
@@ -45,7 +45,7 @@ func (w *wrapperCtx) ReadTimeout(p []byte, timeout time.Duration) (int, error) {
 
 		return 0, fmt.Errorf("cannot write because context was closed: %w", w.ctx.Err())
 	default:
-		return w.parent.ReadTimeout(p, timeout) // nolint: wrapcheck
+		return w.parent.ReadTimeout(p, timeout) //nolint: wrapcheck
 	}
 }
 
@@ -56,14 +56,14 @@ func (w *wrapperCtx) Read(p []byte) (int, error) {
 
 		return 0, fmt.Errorf("cannot write because context was closed: %w", w.ctx.Err())
 	default:
-		return w.parent.Read(p) // nolint: wrapcheck
+		return w.parent.Read(p) //nolint: wrapcheck
 	}
 }
 
 func (w *wrapperCtx) Close() error {
 	w.cancel()
 
-	return w.parent.Close() // nolint: wrapcheck
+	return w.parent.Close() //nolint: wrapcheck
 }
 
 func (w *wrapperCtx) Conn() net.Conn {

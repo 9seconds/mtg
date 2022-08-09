@@ -29,9 +29,9 @@ func (r *NonceRequest) Bytes() []byte {
 
 // NewNonceRequest builds new none request based on proxy secret.
 func NewNonceRequest(proxySecret []byte) (*NonceRequest, error) {
-	nonce := make([]byte, 16)      // nolint: gomnd
-	keySelector := make([]byte, 4) // nolint: gomnd
-	cryptoTS := make([]byte, 4)    // nolint: gomnd
+	nonce := make([]byte, 16)      //nolint: gomnd
+	keySelector := make([]byte, 4) //nolint: gomnd
+	cryptoTS := make([]byte, 4)    //nolint: gomnd
 
 	if _, err := rand.Read(nonce); err != nil {
 		return nil, fmt.Errorf("cannot generate nonce: %w", err)
@@ -39,7 +39,7 @@ func NewNonceRequest(proxySecret []byte) (*NonceRequest, error) {
 
 	copy(keySelector, proxySecret)
 	// 256 ^ 4 - do not know how to name
-	timestamp := time.Now().Truncate(time.Second).Unix() % 4294967296 // nolint: gomnd
+	timestamp := time.Now().Truncate(time.Second).Unix() % 4294967296 //nolint: gomnd
 	binary.LittleEndian.PutUint32(cryptoTS, uint32(timestamp))
 
 	return &NonceRequest{

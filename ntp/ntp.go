@@ -14,7 +14,7 @@ const autoUpdatePeriod = time.Minute
 
 // Fetch fetches the data on time drift.
 func Fetch() (time.Duration, error) {
-	url := config.C.NTPServers[rand.Intn(len(config.C.NTPServers))] // nolint: gosec
+	url := config.C.NTPServers[rand.Intn(len(config.C.NTPServers))] //nolint: gosec
 
 	resp, err := ntp.Query(url)
 	if err != nil {

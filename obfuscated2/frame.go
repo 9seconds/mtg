@@ -44,11 +44,11 @@ func (f *Frame) Unique() []byte {
 	return f.data[frameOffsetFirst:frameOffsetDC]
 }
 
-func (f *Frame) Invert() (nf Frame) {
-	nf = *f
+func (f *Frame) Invert() Frame {
+	nf := *f
 	for i := 0; i < frameLenKey+frameLenIV; i++ {
 		nf.data[frameOffsetFirst+i] = f.data[frameOffsetIV-1-i]
 	}
 
-	return
+	return nf
 }

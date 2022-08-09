@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"time"
 )
@@ -22,7 +21,7 @@ func request(url string) (io.ReadCloser, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), apiHTTPTimeout)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -33,12 +32,12 @@ func request(url string) (io.ReadCloser, error) {
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		if resp != nil {
-			io.Copy(ioutil.Discard, resp.Body) // nolint: errcheck
+			io.Copy(io.Discard, resp.Body) //nolint: errcheck
 			resp.Body.Close()
 		}
 
 		return nil, fmt.Errorf("cannot perform a request: %w", err)
 	}
 
-	return resp.Body, err // nolint: wrapcheck
+	return resp.Body, err //nolint: wrapcheck
 }

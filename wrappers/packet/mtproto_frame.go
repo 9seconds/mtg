@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"hash/crc32"
 	"io"
-	"io/ioutil"
 	"net"
 
 	"github.com/9seconds/mtg/conntypes"
@@ -28,11 +27,14 @@ var mtprotoFramePadding = []byte{0x04, 0x00, 0x00, 0x00}
 //
 // MSGLEN is the length of the message + len of seqno and msglen.
 // SEQNO is the number of frame in the receive/send sequence. If client
-//   sends a message with SeqNo 18, it has to receive message with SeqNo 18.
+//
+//	sends a message with SeqNo 18, it has to receive message with SeqNo 18.
+//
 // MSG is the data which has to be written
 // CRC32 is the CRC32 checksum of MSGLEN + SEQNO + MSG
 // PADDING is custom padding schema to complete frame length to such that
-//    len(frame) % 16 == 0
+//
+//	len(frame) % 16 == 0
 type wrapperMtprotoFrame struct {
 	parent     conntypes.StreamReadWriteCloser
 	logger     *zap.SugaredLogger
@@ -40,7 +42,7 @@ type wrapperMtprotoFrame struct {
 	writeSeqNo int32
 }
 
-func (w *wrapperMtprotoFrame) Read() (conntypes.Packet, error) { // nolint: funlen, cyclop
+func (w *wrapperMtprotoFrame) Read() (conntypes.Packet, error) { //nolint: funlen, cyclop
 	buf := &bytes.Buffer{}
 
 	sum := crc32.NewIEEE()
@@ -50,7 +52,7 @@ func (w *wrapperMtprotoFrame) Read() (conntypes.Packet, error) { // nolint: funl
 		buf.Reset()
 		sum.Reset()
 
-		if _, err := io.CopyN(writer, w.parent, 4); err != nil { // nolint: gomnd
+		if _, err := io.CopyN(writer, w.parent, 4); err != nil { //nolint: gomnd
 			return nil, fmt.Errorf("cannot read frame padding: %w", err)
 		}
 
@@ -72,23 +74,23 @@ func (w *wrapperMtprotoFrame) Read() (conntypes.Packet, error) { // nolint: funl
 
 	buf.Reset()
 
-	if _, err := io.CopyN(writer, w.parent, int64(messageLength)-4-4); err != nil { // nolint: gomnd
+	if _, err := io.CopyN(writer, w.parent, int64(messageLength)-4-4); err != nil { //nolint: gomnd
 		return nil, fmt.Errorf("cannot read the message frame: %w", err)
 	}
 
 	var seqNo int32
 
-	binary.Read(buf, binary.LittleEndian, &seqNo) // nolint: errcheck
+	binary.Read(buf, binary.LittleEndian, &seqNo) //nolint: errcheck
 
 	if seqNo != w.readSeqNo {
 		return nil, fmt.Errorf("unexpected sequence number %d (wait for %d)", seqNo, w.readSeqNo)
 	}
 
-	data, _ := ioutil.ReadAll(buf)
+	data, _ := io.ReadAll(buf)
 	buf.Reset()
 	// write to buf, not to writer. This is because we are going to fetch
 	// crc32 checksum.
-	if _, err := io.CopyN(buf, w.parent, 4); err != nil { // nolint: gomnd
+	if _, err := io.CopyN(buf, w.parent, 4); err != nil { //nolint: gomnd
 		return nil, fmt.Errorf("cannot read checksum: %w", err)
 	}
 
@@ -109,18 +111,18 @@ func (w *wrapperMtprotoFrame) Read() (conntypes.Packet, error) { // nolint: funl
 }
 
 func (w *wrapperMtprotoFrame) Write(p conntypes.Packet) error {
-	messageLength := 4 + 4 + len(p) + 4 // nolint: gomnd
+	messageLength := 4 + 4 + len(p) + 4 //nolint: gomnd
 	paddingLength := (aes.BlockSize - messageLength%aes.BlockSize) % aes.BlockSize
 
 	buf := &bytes.Buffer{}
 
-	binary.Write(buf, binary.LittleEndian, uint32(messageLength)) // nolint: errcheck
-	binary.Write(buf, binary.LittleEndian, w.writeSeqNo)          // nolint: errcheck
+	binary.Write(buf, binary.LittleEndian, uint32(messageLength)) //nolint: errcheck
+	binary.Write(buf, binary.LittleEndian, w.writeSeqNo)          //nolint: errcheck
 	buf.Write(p)
 
 	checksum := crc32.ChecksumIEEE(buf.Bytes())
-	binary.Write(buf, binary.LittleEndian, checksum)              // nolint: errcheck
-	buf.Write(bytes.Repeat(mtprotoFramePadding, paddingLength/4)) // nolint: gomnd
+	binary.Write(buf, binary.LittleEndian, checksum)              //nolint: errcheck
+	buf.Write(bytes.Repeat(mtprotoFramePadding, paddingLength/4)) //nolint: gomnd
 
 	w.logger.Debugw("Write MTProto frame",
 		"length", len(p),
@@ -132,11 +134,11 @@ func (w *wrapperMtprotoFrame) Write(p conntypes.Packet) error {
 
 	_, err := w.parent.Write(buf.Bytes())
 
-	return err // nolint: wrapcheck
+	return err //nolint: wrapcheck
 }
 
 func (w *wrapperMtprotoFrame) Close() error {
-	return w.parent.Close() // nolint: wrapcheck
+	return w.parent.Close() //nolint: wrapcheck
 }
 
 func (w *wrapperMtprotoFrame) Conn() net.Conn {

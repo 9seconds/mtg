@@ -14,13 +14,13 @@ const directPipeBufferSize = 1024
 func directConnection(request *protocol.TelegramRequest) error {
 	telegramConnRaw, err := obfuscated2.TelegramProtocol(request)
 	if err != nil {
-		return err // nolint: wrapcheck
+		return err //nolint: wrapcheck
 	}
 
 	defer telegramConnRaw.Close()
 
 	wg := &sync.WaitGroup{}
-	wg.Add(2) // nolint: gomnd
+	wg.Add(2) //nolint: gomnd
 
 	go directPipe(telegramConnRaw, request.ClientConn, wg, request.Logger)
 

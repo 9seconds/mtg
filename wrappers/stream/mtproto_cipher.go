@@ -100,11 +100,11 @@ func mtprotoDeriveKeys(purpose mtprotoCipherPurpose,
 	message.Write(req.Nonce)
 
 	data := message.Bytes()
-	md5sum := md5.Sum(data[1:]) // nolint: gas
-	sha1sum := sha1.Sum(data)   // nolint: gosec
+	md5sum := md5.Sum(data[1:]) //nolint: gas
+	sha1sum := sha1.Sum(data)   //nolint: gosec
 
 	key := append(md5sum[:12], sha1sum[:]...)
-	iv := md5.Sum(data[2:]) // nolint: gas
+	iv := md5.Sum(data[2:]) //nolint: gas
 
 	return key, iv[:]
 }

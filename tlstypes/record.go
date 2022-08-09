@@ -16,9 +16,9 @@ type Record struct {
 }
 
 func (r Record) WriteBytes(writer io.Writer) {
-	writer.Write([]byte{byte(r.Type)})                           // nolint: errcheck
-	writer.Write(r.Version.Bytes())                              // nolint: errcheck
-	binary.Write(writer, binary.BigEndian, uint16(r.Data.Len())) // nolint: errcheck
+	writer.Write([]byte{byte(r.Type)})                           //nolint: errcheck
+	writer.Write(r.Version.Bytes())                              //nolint: errcheck
+	binary.Write(writer, binary.BigEndian, uint16(r.Data.Len())) //nolint: errcheck
 	r.Data.WriteBytes(writer)
 }
 
@@ -65,7 +65,9 @@ func ReadRecord(reader io.Reader) (Record, error) {
 	return rec, nil
 }
 
-func MakeRecords(raw []byte) (arr []Record) {
+func MakeRecords(raw []byte) []Record {
+	var arr []Record
+
 	for len(raw) > 0 {
 		chunkSize := recordMaxChunkSize
 		if chunkSize > len(raw) {
@@ -80,5 +82,5 @@ func MakeRecords(raw []byte) (arr []Record) {
 		raw = raw[chunkSize:]
 	}
 
-	return
+	return arr
 }

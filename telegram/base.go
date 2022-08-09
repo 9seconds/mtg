@@ -51,7 +51,7 @@ func (b *baseTelegram) dial(dc conntypes.DC,
 }
 
 func (b *baseTelegram) getAddresses(dc conntypes.DC, protocol conntypes.ConnectionProtocol) []string {
-	addresses := make([]string, 0, 2) // nolint: gomnd
+	addresses := make([]string, 0, 2) //nolint: gomnd
 	protos := []conntypes.ConnectionProtocol{
 		conntypes.ConnectionProtocolIPv6,
 		conntypes.ConnectionProtocolIPv4,
@@ -86,7 +86,7 @@ func (b *baseTelegram) chooseAddress(addresses map[conntypes.DC][]string,
 	case len(addrs) == 1:
 		return addrs[0]
 	case len(addrs) > 1:
-		return addrs[rand.Intn(len(addrs))] // nolint: gosec
+		return addrs[rand.Intn(len(addrs))] //nolint: gosec
 	}
 
 	return ""

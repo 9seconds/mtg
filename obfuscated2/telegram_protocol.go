@@ -39,7 +39,8 @@ func TelegramProtocol(req *protocol.TelegramRequest) (conntypes.StreamReadWriteC
 	return stream.NewObfuscated2(conn, encryptor, decryptor), nil
 }
 
-func generateFrame(cp protocol.ClientProtocol) (fm Frame) {
+func generateFrame(cp protocol.ClientProtocol) Frame {
+	fm := Frame{}
 	data := fm.Bytes()
 
 	for {
@@ -47,22 +48,22 @@ func generateFrame(cp protocol.ClientProtocol) (fm Frame) {
 			continue
 		}
 
-		if data[0] == 0xef { // nolint: gomnd
+		if data[0] == 0xef { //nolint: gomnd
 			continue
 		}
 
-		val := (uint32(data[3]) << 24) | (uint32(data[2]) << 16) | (uint32(data[1]) << 8) | uint32(data[0])        // nolint: gomnd, lll
-		if val == 0x44414548 || val == 0x54534f50 || val == 0x20544547 || val == 0x4954504f || val == 0xeeeeeeee { // nolint: lll
+		val := (uint32(data[3]) << 24) | (uint32(data[2]) << 16) | (uint32(data[1]) << 8) | uint32(data[0])        //nolint: gomnd, lll
+		if val == 0x44414548 || val == 0x54534f50 || val == 0x20544547 || val == 0x4954504f || val == 0xeeeeeeee { //nolint: lll
 			continue
 		}
 
-		val = (uint32(data[7]) << 24) | (uint32(data[6]) << 16) | (uint32(data[5]) << 8) | uint32(data[4]) // nolint: gomnd
-		if val == 0x00000000 {                                                                             // nolint: gomnd
+		val = (uint32(data[7]) << 24) | (uint32(data[6]) << 16) | (uint32(data[5]) << 8) | uint32(data[4]) //nolint: gomnd
+		if val == 0x00000000 {                                                                             //nolint: gomnd
 			continue
 		}
 
 		copy(fm.Magic(), cp.ConnectionType().Tag())
 
-		return
+		return fm
 	}
 }

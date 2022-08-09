@@ -6,7 +6,7 @@ import (
 )
 
 func InitTCP(conn net.Conn, readBufferSize, writeBufferSize int) error {
-	tcpConn := conn.(*net.TCPConn) // nolint: forcetypeassert
+	tcpConn := conn.(*net.TCPConn) //nolint: forcetypeassert
 
 	if err := tcpConn.SetNoDelay(true); err != nil {
 		return fmt.Errorf("cannot set TCP_NO_DELAY: %w", err)

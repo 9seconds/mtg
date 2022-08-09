@@ -9,7 +9,6 @@ import (
 
 	"github.com/9seconds/mtg/cli"
 	"github.com/9seconds/mtg/config"
-	"github.com/9seconds/mtg/utils"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -127,10 +126,6 @@ func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
 	app.Version(getVersion())
 	app.HelpFlag.Short('h')
-
-	if err := utils.SetLimits(); err != nil {
-		cli.Fatal(err)
-	}
 
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 	case generateSecretCommand.FullCommand():

@@ -17,28 +17,28 @@ func (w *wrapperTrafficStats) Write(p []byte) (int, error) {
 	n, err := w.parent.Write(p)
 	stats.Stats.EgressTraffic(n)
 
-	return n, err // nolint: wrapcheck
+	return n, err //nolint: wrapcheck
 }
 
 func (w *wrapperTrafficStats) WriteTimeout(p []byte, timeout time.Duration) (int, error) {
 	n, err := w.parent.WriteTimeout(p, timeout)
 	stats.Stats.EgressTraffic(n)
 
-	return n, err // nolint: wrapcheck
+	return n, err //nolint: wrapcheck
 }
 
 func (w *wrapperTrafficStats) Read(p []byte) (int, error) {
 	n, err := w.parent.Read(p)
 	stats.Stats.IngressTraffic(n)
 
-	return n, err // nolint: wrapcheck
+	return n, err //nolint: wrapcheck
 }
 
 func (w *wrapperTrafficStats) ReadTimeout(p []byte, timeout time.Duration) (int, error) {
 	n, err := w.parent.ReadTimeout(p, timeout)
 	stats.Stats.IngressTraffic(n)
 
-	return n, err // nolint: wrapcheck
+	return n, err //nolint: wrapcheck
 }
 
 func (w *wrapperTrafficStats) Conn() net.Conn {
@@ -58,7 +58,7 @@ func (w *wrapperTrafficStats) RemoteAddr() *net.TCPAddr {
 }
 
 func (w *wrapperTrafficStats) Close() error {
-	return w.parent.Close() // nolint: wrapcheck
+	return w.parent.Close() //nolint: wrapcheck
 }
 
 func NewTrafficStats(parent conntypes.StreamReadWriteCloser) conntypes.StreamReadWriteCloser {

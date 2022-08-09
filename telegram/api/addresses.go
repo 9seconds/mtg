@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	addressesURLV4 = "https://core.telegram.org/getProxyConfig"   // nolint: gas
-	addressesURLV6 = "https://core.telegram.org/getProxyConfigV6" // nolint: gas
+	addressesURLV4 = "https://core.telegram.org/getProxyConfig"   //nolint: gas
+	addressesURLV6 = "https://core.telegram.org/getProxyConfigV6" //nolint: gas
 )
 
 var addressesProxyForSplitter = regexp.MustCompile(`\s+`)
@@ -74,12 +74,12 @@ func getAddresses(url string) (map[conntypes.DC][]string, conntypes.DC, error) {
 }
 
 func addressesParseProxyFor(text string) (string, conntypes.DC, error) {
-	chunks := addressesProxyForSplitter.Split(text, 3) // nolint: gomnd
+	chunks := addressesProxyForSplitter.Split(text, 3) //nolint: gomnd
 	if len(chunks) != 3 || chunks[0] != "proxy_for" {
 		return "", 0, fmt.Errorf("incorrect config %s", text)
 	}
 
-	dc, err := strconv.ParseInt(chunks[1], 10, 16) // nolint: gomnd
+	dc, err := strconv.ParseInt(chunks[1], 10, 16) //nolint: gomnd
 	if err != nil {
 		return "", 0, fmt.Errorf("incorrect config '%s': %w", text, err)
 	}
@@ -93,14 +93,14 @@ func addressesParseProxyFor(text string) (string, conntypes.DC, error) {
 }
 
 func addressesParseDefault(text string) (conntypes.DC, error) {
-	chunks := addressesProxyForSplitter.Split(text, 2) // nolint: gomnd
+	chunks := addressesProxyForSplitter.Split(text, 2) //nolint: gomnd
 	if len(chunks) != 2 || chunks[0] != "default" {
 		return 0, fmt.Errorf("incorrect config '%s'", text)
 	}
 
 	dcString := strings.TrimRight(chunks[1], ";")
 
-	dc, err := strconv.ParseInt(dcString, 10, 16) // nolint: gomnd
+	dc, err := strconv.ParseInt(dcString, 10, 16) //nolint: gomnd
 	if err != nil {
 		return 0, fmt.Errorf("incorrect config '%s': %w", text, err)
 	}
