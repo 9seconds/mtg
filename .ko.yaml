@@ -1,0 +1,10 @@
+builds:
+- id: mtg
+  dir: .  # default is .
+  flags:
+  - -trimpath
+  - -mod=readonly
+  ldflags:
+  - -s -w
+  - -extldflags "-static"
+  - -X main.version={{.Env.VERSION}}
