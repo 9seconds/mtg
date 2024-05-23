@@ -20,8 +20,8 @@ require (
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/rs/zerolog v1.27.0
 	github.com/smira/go-statsd v1.3.2
-	github.com/stretchr/objx v0.5.0 // indirect
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/objx v0.5.2 // indirect
+	github.com/stretchr/testify v1.9.0
 	github.com/tylertreat/BoomFilters v0.0.0-20210315201527-1a82519a3e43
 	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
