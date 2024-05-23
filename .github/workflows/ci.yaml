@@ -42,30 +42,23 @@ jobs:
     strategy:
       matrix:
         go_version:
-          - ^1.19
+          - 1.22
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
       - name: Setup Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go_version }}
-
-      - name: Cache dependencies
-        uses: actions/cache@v2
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: ${{ runner.os }}-go-
 
       - name: Run tests
         run: go test -coverprofile=./coverage.txt -covermode=atomic -v ./...
 
       - name: Collect coverage
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v4
         with:
           file: ./coverage.txt
 
@@ -75,28 +68,14 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
       - name: Setup Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v5
         with:
-          go-version: ^1.18
-
-      - name: Cache fuzz results
-        uses: actions/cache@v2
-        with:
-          path: ~/.cache/go-build/fuzz
-          key: ${{ runner.os }}-go-${{ hashFiles('**/*_fuzz_test.go', '**/*_fuzz_internal_test.go') }}
-          restore-keys: ${{ runner.os }}-go-
-
-      - name: Cache dependencies
-        uses: actions/cache@v2
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: ${{ runner.os }}-go-
+          go-version: ${{ matrix.go_version }}
 
       - name: Run fuzzing
         run: make -j4 fuzz
@@ -107,16 +86,16 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
       - name: Setup Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v5
         with:
-          go-version: ^1.19
+          go-version: ${{ matrix.go_version }}
 
       - name: Run linter
-        uses: golangci/golangci-lint-action@v3
+        uses: golangci/golangci-lint-action@v6
         with:
-          version: v1.48.0
+          version: v1.58
