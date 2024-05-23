@@ -7,9 +7,9 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/9seconds/mtg/v2/internal/testlib"
-	"github.com/9seconds/mtg/v2/mtglib/internal/faketls"
-	"github.com/9seconds/mtg/v2/mtglib/internal/faketls/record"
+	"github.com/IceCodeNew/mtg/internal/testlib"
+	"github.com/IceCodeNew/mtg/mtglib/internal/faketls"
+	"github.com/IceCodeNew/mtg/mtglib/internal/faketls/record"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )

@@ -5,8 +5,8 @@ import (
 	"net"
 	"testing"
 
-	"github.com/9seconds/mtg/v2/events"
-	"github.com/9seconds/mtg/v2/mtglib"
+	"github.com/IceCodeNew/mtg/events"
+	"github.com/IceCodeNew/mtg/mtglib"
 	"github.com/stretchr/testify/suite"
 )
 

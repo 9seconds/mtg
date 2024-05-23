@@ -3,7 +3,7 @@ package antireplay
 import (
 	"sync"
 
-	"github.com/9seconds/mtg/v2/mtglib"
+	"github.com/IceCodeNew/mtg/mtglib"
 	"github.com/OneOfOne/xxhash"
 	boom "github.com/tylertreat/BoomFilters"
 )

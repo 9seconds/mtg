@@ -12,7 +12,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/9seconds/mtg/v2/internal/cli"
+	"github.com/IceCodeNew/mtg/internal/cli"
 	"github.com/alecthomas/kong"
 )
 

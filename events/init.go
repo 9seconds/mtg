@@ -16,7 +16,7 @@
 // EventStart for that session yet.
 package events
 
-import "github.com/9seconds/mtg/v2/mtglib"
+import "github.com/IceCodeNew/mtg/mtglib"
 
 // Observer is an instance that listens for the incoming events.
 //

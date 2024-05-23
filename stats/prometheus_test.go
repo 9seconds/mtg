@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/9seconds/mtg/v2/events"
-	"github.com/9seconds/mtg/v2/mtglib"
-	"github.com/9seconds/mtg/v2/stats"
+	"github.com/IceCodeNew/mtg/events"
+	"github.com/IceCodeNew/mtg/mtglib"
+	"github.com/IceCodeNew/mtg/stats"
 	"github.com/stretchr/testify/suite"
 )
 

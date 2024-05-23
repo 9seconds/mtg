@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/9seconds/mtg/v2/events"
-	"github.com/9seconds/mtg/v2/mtglib"
+	"github.com/IceCodeNew/mtg/events"
+	"github.com/IceCodeNew/mtg/mtglib"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )

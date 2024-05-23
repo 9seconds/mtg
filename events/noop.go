@@ -3,7 +3,7 @@ package events
 import (
 	"context"
 
-	"github.com/9seconds/mtg/v2/mtglib"
+	"github.com/IceCodeNew/mtg/mtglib"
 )
 
 type noop struct{}

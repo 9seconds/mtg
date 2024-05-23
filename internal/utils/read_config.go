@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/9seconds/mtg/v2/internal/config"
+	"github.com/IceCodeNew/mtg/internal/config"
 )
 
 func ReadConfig(path string) (*config.Config, error) {

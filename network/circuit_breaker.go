@@ -5,7 +5,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/9seconds/mtg/v2/essentials"
+	"github.com/IceCodeNew/mtg/essentials"
 )
 
 const (

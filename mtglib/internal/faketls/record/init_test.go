@@ -3,7 +3,7 @@ package record_test
 import (
 	"testing"
 
-	"github.com/9seconds/mtg/v2/mtglib/internal/faketls/record"
+	"github.com/IceCodeNew/mtg/mtglib/internal/faketls/record"
 	"github.com/stretchr/testify/suite"
 )
 

@@ -8,7 +8,7 @@ import (
 	"io"
 	mrand "math/rand"
 
-	"github.com/9seconds/mtg/v2/mtglib/internal/faketls/record"
+	"github.com/IceCodeNew/mtg/mtglib/internal/faketls/record"
 	"golang.org/x/crypto/curve25519"
 )
 

@@ -12,8 +12,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/9seconds/mtg/v2/internal/testlib"
-	"github.com/9seconds/mtg/v2/mtglib/internal/obfuscated2"
+	"github.com/IceCodeNew/mtg/internal/testlib"
+	"github.com/IceCodeNew/mtg/mtglib/internal/obfuscated2"
 	"github.com/stretchr/testify/require"
 )
 
