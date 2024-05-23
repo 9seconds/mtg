@@ -11,7 +11,7 @@ require (
 	github.com/d4l3k/messagediff v1.2.1 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/gotd/td v0.34.0
-	github.com/jarcoal/httpmock v1.0.8
+	github.com/jarcoal/httpmock v1.3.1
 	github.com/mccutchen/go-httpbin v1.1.1
 	github.com/panjf2000/ants/v2 v2.5.0
 	github.com/pelletier/go-toml v1.9.5
