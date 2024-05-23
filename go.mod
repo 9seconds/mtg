@@ -23,9 +23,9 @@ require (
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/stretchr/testify v1.9.0
 	github.com/tylertreat/BoomFilters v0.0.0-20210315201527-1a82519a3e43
-	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa
-	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
-	golang.org/x/sys v0.0.0-20220804214406-8e32c043e418
+	golang.org/x/crypto v0.23.0
+	golang.org/x/net v0.21.0 // indirect
+	golang.org/x/sys v0.20.0
 	google.golang.org/protobuf v1.28.1 // indirect
 )
 
