@@ -18,7 +18,7 @@ require (
 	github.com/prometheus/client_golang v1.13.0
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
-	github.com/rs/zerolog v1.27.0
+	github.com/rs/zerolog v1.33.0
 	github.com/smira/go-statsd v1.3.2
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/stretchr/testify v1.9.0
@@ -41,8 +41,8 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gotd/ige v0.1.5 // indirect
 	github.com/gotd/xor v0.1.1 // indirect
-	github.com/mattn/go-colorable v0.1.12 // indirect
-	github.com/mattn/go-isatty v0.0.14 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
