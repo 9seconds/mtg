@@ -30,7 +30,7 @@ require (
 )
 
 require (
-	github.com/txthinking/socks5 v0.0.0-20220615051428-39268faee3e6
+	github.com/txthinking/socks5 v0.0.0-20230325130024-4230056ae301
 	github.com/yl2chen/cidranger v1.0.2
 )
 
@@ -48,7 +48,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/txthinking/runnergroup v0.0.0-20220212043759-8da8edb7dae8 // indirect
-	github.com/txthinking/x v0.0.0-20210326105829-476fab902fbe // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.16.0 // indirect
