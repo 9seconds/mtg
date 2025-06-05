@@ -1,0 +1,12 @@
+{
+  "timezone": "Asia/Shanghai",
+  "extends": [
+    "schedule:earlyMondays",
+    "config:recommended",
+    // "docker:pinDigests",
+    "helpers:pinGitHubActionDigests",
+    ":configMigration",
+    ":pinDevDependencies",
+    "security:openssf-scorecard",
+  ],
+}
