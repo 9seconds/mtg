@@ -3,8 +3,8 @@ package faketls_test
 import (
 	"bytes"
 	"crypto/hmac"
+	crand "crypto/rand"
 	"crypto/sha256"
-	"math/rand"
 	"testing"
 	"time"
 
@@ -30,10 +30,10 @@ func (suite *WelcomeTestSuite) SetupTest() {
 		SessionID:   make([]byte, 32),
 	}
 
-	_, err := rand.Read(suite.h.SessionID)
+	_, err := crand.Read(suite.h.SessionID)
 	suite.NoError(err)
 
-	_, err = rand.Read(suite.h.Random[:])
+	_, err = crand.Read(suite.h.Random[:])
 	suite.NoError(err)
 
 	suite.buf = &bytes.Buffer{}

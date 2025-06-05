@@ -3,7 +3,7 @@ package network
 import (
 	"context"
 	"fmt"
-	"math/rand"
+	"math/rand/v2"
 	"net/url"
 
 	"github.com/IceCodeNew/mtg/essentials"
@@ -19,7 +19,7 @@ func (l loadBalancedSocks5Dialer) Dial(network, address string) (essentials.Conn
 
 func (l loadBalancedSocks5Dialer) DialContext(ctx context.Context, network, address string) (essentials.Conn, error) {
 	length := len(l.dialers)
-	start := rand.Intn(length)
+	start := rand.IntN(length)
 	moved := false
 
 	for i := start; i != start || !moved; i = (i + 1) % length {

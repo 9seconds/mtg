@@ -3,7 +3,7 @@ package faketls
 import (
 	"bytes"
 	"fmt"
-	"math/rand"
+	"math/rand/v2"
 
 	"github.com/IceCodeNew/mtg/essentials"
 	"github.com/IceCodeNew/mtg/mtglib/internal/faketls/record"
@@ -53,7 +53,7 @@ func (c *Conn) Write(p []byte) (int, error) {
 	lenP := len(p)
 
 	for len(p) > 0 {
-		chunkSize := rand.Intn(record.TLSMaxRecordSize)
+		chunkSize := rand.IntN(record.TLSMaxRecordSize)
 		if chunkSize > len(p) || chunkSize == 0 {
 			chunkSize = len(p)
 		}

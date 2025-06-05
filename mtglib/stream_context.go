@@ -2,7 +2,7 @@ package mtglib
 
 import (
 	"context"
-	"crypto/rand"
+	crand "crypto/rand"
 	"encoding/base64"
 	"net"
 	"time"
@@ -55,7 +55,7 @@ func (s *streamContext) ClientIP() net.IP {
 func newStreamContext(ctx context.Context, logger Logger, clientConn essentials.Conn) *streamContext {
 	connIDBytes := make([]byte, ConnectionIDBytesLength)
 
-	if _, err := rand.Read(connIDBytes); err != nil {
+	if _, err := crand.Read(connIDBytes); err != nil {
 		panic(err)
 	}
 

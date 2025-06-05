@@ -1,6 +1,6 @@
 package telegram
 
-import "math/rand"
+import "math/rand/v2"
 
 type addressPool struct {
 	v4 [][]tgAddr
@@ -12,7 +12,7 @@ func (a addressPool) isValidDC(dc int) bool {
 }
 
 func (a addressPool) getRandomDC() int {
-	return 1 + rand.Intn(len(a.v4))
+	return 1 + rand.IntN(len(a.v4))
 }
 
 func (a addressPool) getV4(dc int) []tgAddr {

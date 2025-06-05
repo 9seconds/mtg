@@ -2,11 +2,11 @@ package faketls
 
 import (
 	"crypto/hmac"
-	"crypto/rand"
+	crand "crypto/rand"
 	"crypto/sha256"
 	"encoding/binary"
 	"io"
-	mrand "math/rand"
+	"math/rand/v2"
 
 	"github.com/IceCodeNew/mtg/mtglib/internal/faketls/record"
 	"golang.org/x/crypto/curve25519"
@@ -36,7 +36,7 @@ func SendWelcomePacket(writer io.Writer, secret []byte, clientHello ClientHello)
 	rec.Type = record.TypeApplicationData
 	rec.Version = record.Version12
 
-	if _, err := io.CopyN(&rec.Payload, rand.Reader, int64(1024+mrand.Intn(3092))); err != nil { //nolint: gomnd
+	if _, err := io.CopyN(&rec.Payload, crand.Reader, int64(1024+rand.IntN(3092))); err != nil { //nolint: gomnd
 		panic(err)
 	}
 
@@ -76,7 +76,7 @@ func generateServerHello(writer io.Writer, clientHello ClientHello) {
 
 	scalar := [32]byte{}
 
-	if _, err := rand.Read(scalar[:]); err != nil {
+	if _, err := crand.Read(scalar[:]); err != nil {
 		panic(err)
 	}
 

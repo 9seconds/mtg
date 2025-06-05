@@ -2,7 +2,7 @@ package obfuscated2
 
 import (
 	"crypto/cipher"
-	"crypto/rand"
+	crand "crypto/rand"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -43,7 +43,7 @@ func generateServerHanshakeFrame() serverHandshakeFrame {
 	frame := serverHandshakeFrame{}
 
 	for {
-		if _, err := rand.Read(frame.data[:]); err != nil {
+		if _, err := crand.Read(frame.data[:]); err != nil {
 			panic(err)
 		}
 

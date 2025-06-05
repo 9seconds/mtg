@@ -1,7 +1,7 @@
 package mtglib
 
 import (
-	"crypto/rand"
+	crand "crypto/rand"
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
@@ -130,7 +130,7 @@ func GenerateSecret(hostname string) Secret {
 		Host: hostname,
 	}
 
-	if _, err := rand.Read(s.Key[:]); err != nil {
+	if _, err := crand.Read(s.Key[:]); err != nil {
 		panic(err)
 	}
 
