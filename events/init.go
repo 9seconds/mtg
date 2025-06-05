@@ -11,7 +11,7 @@
 // There might be many observers, but default event stream has a guarantee
 // though. It uses StreamID as a sharding key and guarantees that a message
 // with the same StreamID will be devlivered to the same observer instance. So,
-// each producer is guarateed to get all relevant messages related to the same
+// each producer is guaranteed to get all relevant messages related to the same
 // session. It is not possible that it will get EventFinish if it has not seen
 // EventStart for that session yet.
 package events
@@ -58,7 +58,7 @@ type Observer interface {
 
 	// Shutdown stop observer. Default event stream guarantees:
 	//   1. If shutdown is executed, it is executed only once
-	//   2. Observer won't receieve any new message after this
+	//   2. Observer won't receive any new message after this
 	//      function call.
 	Shutdown()
 }

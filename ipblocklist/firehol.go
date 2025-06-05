@@ -130,7 +130,11 @@ func (f *Firehol) update() {
 				return
 			}
 
-			defer fileContent.Close()
+			defer func() {
+				if err := fileContent.Close(); err != nil {
+					logger.WarningError("failed to close file", err)
+				}
+			}()
 
 			if err := f.updateFromFile(mutex, ranger, bufio.NewScanner(fileContent)); err != nil {
 				logger.WarningError("update has failed", err)

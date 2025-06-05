@@ -77,7 +77,11 @@ func (suite *HTTPTestSuite) TestOk() {
 	readCloser, err := file.Open(suite.ctx)
 	suite.NoError(err)
 
-	defer readCloser.Close()
+	defer func() {
+		if err := readCloser.Close(); err != nil {
+			panic(err)
+		}
+	}()
 
 	data, err := io.ReadAll(readCloser)
 	suite.NoError(err)

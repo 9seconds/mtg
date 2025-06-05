@@ -271,7 +271,9 @@ func runProxy(conf *config.Config, version string) error { //nolint: funlen
 	go proxy.Serve(listener) //nolint: errcheck
 
 	<-ctx.Done()
-	listener.Close()
+	if err := listener.Close(); err != nil {
+		logger.InfoError("failed to close listener", err)
+	}
 	proxy.Shutdown()
 
 	return nil

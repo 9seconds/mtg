@@ -8,11 +8,11 @@ import (
 	"io"
 )
 
-type clientHandhakeFrame struct {
+type clientHandshakeFrame struct {
 	handshakeFrame
 }
 
-func (c *clientHandhakeFrame) decryptor(secret []byte) cipher.Stream {
+func (c *clientHandshakeFrame) decryptor(secret []byte) cipher.Stream {
 	hasher := acquireSha256Hasher()
 	defer releaseSha256Hasher(hasher)
 
@@ -22,7 +22,7 @@ func (c *clientHandhakeFrame) decryptor(secret []byte) cipher.Stream {
 	return makeAesCtr(hasher.Sum(nil), c.iv())
 }
 
-func (c *clientHandhakeFrame) encryptor(secret []byte) cipher.Stream {
+func (c *clientHandshakeFrame) encryptor(secret []byte) cipher.Stream {
 	invertedHandshake := c.invert()
 
 	hasher := acquireSha256Hasher()
@@ -35,7 +35,7 @@ func (c *clientHandhakeFrame) encryptor(secret []byte) cipher.Stream {
 }
 
 func ClientHandshake(secret []byte, reader io.Reader) (int, cipher.Stream, cipher.Stream, error) {
-	handshake := clientHandhakeFrame{}
+	handshake := clientHandshakeFrame{}
 
 	if _, err := io.ReadFull(reader, handshake.data[:]); err != nil {
 		return 0, nil, nil, fmt.Errorf("cannot read frame: %w", err)

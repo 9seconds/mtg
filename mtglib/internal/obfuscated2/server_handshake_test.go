@@ -39,7 +39,7 @@ func (suite *ServerHandshakeTestSuite) TestSendToTelegram() {
 	suite.NoError(err)
 }
 
-func (suite *ServerHandshakeTestSuite) TestRecieveFromTelegram() {
+func (suite *ServerHandshakeTestSuite) TestReceiveFromTelegram() {
 	messageFromTelegram := []byte{10, 11, 12, 13, 14, 'a'}
 	buffer := make([]byte, len(messageFromTelegram))
 

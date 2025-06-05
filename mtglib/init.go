@@ -117,7 +117,7 @@ type Network interface {
 	// Dial establishes context-free TCP connections.
 	Dial(network, address string) (essentials.Conn, error)
 
-	// DialContext dials using a context. This is a preferrable way of
+	// DialContext dials using a context. This is a preferable way of
 	// establishing TCP connections.
 	DialContext(ctx context.Context, network, address string) (essentials.Conn, error)
 

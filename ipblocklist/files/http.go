@@ -23,7 +23,9 @@ func (h httpFile) Open(ctx context.Context) (io.ReadCloser, error) {
 	if err != nil {
 		if response != nil {
 			io.Copy(io.Discard, response.Body) //nolint: errcheck
-			response.Body.Close()
+			if err := response.Body.Close(); err != nil {
+				panic(err)
+			}
 		}
 
 		return nil, fmt.Errorf("cannot get url %s: %w", h.url, err)

@@ -43,7 +43,7 @@ func ParseClientHello(secret, handshake []byte) (ClientHello, error) {
 	hello := ClientHello{}
 
 	if len(handshake) < ClientHelloMinLen {
-		return hello, fmt.Errorf("lengh of handshake is too small: %d", len(handshake))
+		return hello, fmt.Errorf("length of handshake is too small: %d", len(handshake))
 	}
 
 	if handshake[0] != HandshakeTypeClient {

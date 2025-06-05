@@ -100,8 +100,8 @@ func (suite *StatsdTestSuite) SetupTest() {
 
 func (suite *StatsdTestSuite) TearDownTest() {
 	suite.statsd.Shutdown()
-	suite.factory.Close()
-	suite.statsdServer.Close()
+	suite.NoError(suite.factory.Close())
+	suite.NoError(suite.statsdServer.Close())
 }
 
 func (suite *StatsdTestSuite) TestTelegramPath() {

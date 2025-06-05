@@ -4,7 +4,6 @@ Highly-opinionated (ex-bullshit-free) MTPROTO proxy for
 [Telegram](https://telegram.org/).
 
 [![CI](https://github.com/9seconds/mtg/actions/workflows/ci.yaml/badge.svg?branch=master)](https://github.com/9seconds/mtg/actions/workflows/ci.yaml)
-[![codecov](https://codecov.io/gh/9seconds/mtg/branch/master/graph/badge.svg?token=JfdDyGVpT4)](https://codecov.io/gh/9seconds/mtg)
 [![Go Reference](https://pkg.go.dev/badge/github.com/9seconds/mtg.svg)](https://pkg.go.dev/github.com/9seconds/mtg/v2)
 
 **If you use v1.0 or upgrade broke you proxy, please read the chapter
@@ -59,7 +58,7 @@ that probably matter.
   mtg has the support of [SOCKS5](https://en.wikipedia.org/wiki/SOCKS)
   proxies. So, in theory, you can run this proxy as a frontend
   and route traffic via [v2ray](https://www.v2ray.com/),
-  [Gost](https://docs.ginuerzh.xyz/gost/),
+  [Ghost](https://docs.ginuerzh.xyz/gost/),
   [Trojan](https://trojan-gfw.github.io/trojan/), or any other project
   you like.
 
@@ -114,7 +113,7 @@ country, you probably want to have an MTPROTO proxy as
 a frontend that transports traffic via cloaked tunnels
 made by [Trojan](https://trojan-gfw.github.io/trojan/),
 [Shadowsocks](https://shadowsocks.org), [v2ray](https://www.v2ray.com/),
-or [Gost](https://docs.ginuerzh.xyz/gost/). That's why you have to have
+or [Ghost](https://docs.ginuerzh.xyz/gost/). That's why you have to have
 the support of chaining as a first-class citizen.
 
 Yes, this is possible and doable with optional adtag support. But the
@@ -357,8 +356,8 @@ $ mtg access /etc/mtg.toml
     "port": 3128,
     "tg_url": "tg://proxy?...",
     "tg_qrcode": "https://api.qrserver.com/v1/create-qr-code?data...",
-    "tme_url": "https://t.me/proxy?...",
-    "tme_qrcode": "https://api.qrserver.com/v1/create-qr-code?data..."
+    "time_url": "https://t.me/proxy?...",
+    "time_qrcode": "https://api.qrserver.com/v1/create-qr-code?data..."
   },
   "secret": {
     "hex": "...",

@@ -17,7 +17,7 @@ var version = "dev" // has to be set by ldflags
 const (
 	buildInfoModuleStart byte = iota
 	buildInfoModuleFinish
-	buildInfoModuleDelimeter
+	buildInfoModuleDelimiter
 )
 
 func getVersion() string {
@@ -50,10 +50,10 @@ func getVersion() string {
 		hasher.Write([]byte{buildInfoModuleStart})
 
 		io.WriteString(hasher, mod.Path) //nolint: errcheck
-		hasher.Write([]byte{buildInfoModuleDelimeter})
+		hasher.Write([]byte{buildInfoModuleDelimiter})
 
 		io.WriteString(hasher, mod.Version) //nolint: errcheck
-		hasher.Write([]byte{buildInfoModuleDelimeter})
+		hasher.Write([]byte{buildInfoModuleDelimiter})
 
 		io.WriteString(hasher, mod.Sum) //nolint: errcheck
 

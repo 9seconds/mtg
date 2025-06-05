@@ -19,7 +19,7 @@ func FuzzClientHandshake(f *testing.F) {
 			return
 		}
 
-		handshake := clientHandhakeFrame{}
+		handshake := clientHandshakeFrame{}
 		require.Len(t, frame, handshakeFrameLen)
 
 		copy(handshake.data[:], frame)

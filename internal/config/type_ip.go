@@ -12,7 +12,7 @@ type TypeIP struct {
 func (t *TypeIP) Set(value string) error {
 	ip := net.ParseIP(value)
 	if ip == nil {
-		return fmt.Errorf("incorret ip %s", value)
+		return fmt.Errorf("incorrect ip %s", value)
 	}
 
 	t.Value = ip

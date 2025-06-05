@@ -23,7 +23,7 @@ func (s *serverHandshakeFrame) encryptor() cipher.Stream {
 }
 
 func ServerHandshake(writer io.Writer) (cipher.Stream, cipher.Stream, error) {
-	handshake := generateServerHanshakeFrame()
+	handshake := generateServerHandshakeFrame()
 	copyHandshake := handshake
 	encryptor := handshake.encryptor()
 	decryptor := handshake.decryptor()
@@ -39,7 +39,7 @@ func ServerHandshake(writer io.Writer) (cipher.Stream, cipher.Stream, error) {
 	return encryptor, decryptor, nil
 }
 
-func generateServerHanshakeFrame() serverHandshakeFrame {
+func generateServerHandshakeFrame() serverHandshakeFrame {
 	frame := serverHandshakeFrame{}
 
 	for {

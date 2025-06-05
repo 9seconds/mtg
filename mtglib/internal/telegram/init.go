@@ -23,7 +23,7 @@ type tgAddr struct {
 	address string
 }
 
-// https://github.com/telegramdesktop/tdesktop/blob/master/Telegram/SourceFiles/mtproto/mtproto_dc_options.cpp#L30
+// https://github.com/telegramdesktop/tdesktop/blob/520de600a0ee4edaf0a8047ba6fb0371a7e3d939/Telegram/SourceFiles/mtproto/mtproto_dc_options.cpp#L31-L58
 var (
 	productionV4Addresses = [][]tgAddr{
 		{ // dc1

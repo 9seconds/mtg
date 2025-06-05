@@ -110,7 +110,9 @@ func (p *Proxy) Serve(listener net.Listener) error {
 		logger := p.logger.BindStr("ip", ipAddr.String())
 
 		if !p.allowlist.Contains(ipAddr) {
-			conn.Close()
+			if err := conn.Close(); err != nil {
+				logger.InfoError("error closing connection", err)
+			}
 			logger.Info("ip was rejected by allowlist")
 			p.eventStream.Send(p.ctx, NewEventIPAllowlisted(ipAddr))
 
@@ -118,7 +120,9 @@ func (p *Proxy) Serve(listener net.Listener) error {
 		}
 
 		if p.blocklist.Contains(ipAddr) {
-			conn.Close()
+			if err := conn.Close(); err != nil {
+				logger.InfoError("error closing connection", err)
+			}
 			logger.Info("ip was blacklisted")
 			p.eventStream.Send(p.ctx, NewEventIPBlocklisted(ipAddr))
 
@@ -235,8 +239,9 @@ func (p *Proxy) doTelegramCall(ctx *streamContext) error {
 
 	encryptor, decryptor, err := obfuscated2.ServerHandshake(conn)
 	if err != nil {
-		conn.Close()
-
+		if err := conn.Close(); err != nil {
+			p.logger.InfoError("error closing connection", err)
+		}
 		return fmt.Errorf("cannot perform obfuscated2 handshake: %w", err)
 	}
 

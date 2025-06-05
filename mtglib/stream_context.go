@@ -40,11 +40,15 @@ func (s *streamContext) Close() {
 	s.ctxCancel()
 
 	if s.clientConn != nil {
-		s.clientConn.Close()
+		if err := s.clientConn.Close(); err != nil {
+			s.logger.InfoError("error closing clientConn", err)
+		}
 	}
 
 	if s.telegramConn != nil {
-		s.telegramConn.Close()
+		if err := s.telegramConn.Close(); err != nil {
+			s.logger.InfoError("error closing telegramConn", err)
+		}
 	}
 }
 

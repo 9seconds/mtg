@@ -36,13 +36,17 @@ func (s socks5Dialer) DialContext(ctx context.Context, network, address string) 
 	}
 
 	if err := s.handshake(conn); err != nil {
-		conn.Close()
+		if err := conn.Close(); err != nil {
+			panic(err)
+		}
 
 		return nil, fmt.Errorf("cannot perform a handshake: %w", err)
 	}
 
 	if err := s.connect(conn, address); err != nil {
-		conn.Close()
+		if err := conn.Close(); err != nil {
+			panic(err)
+		}
 
 		return nil, fmt.Errorf("cannot connect to a destination host %s: %w", address, err)
 	}

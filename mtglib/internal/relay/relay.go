@@ -9,16 +9,26 @@ import (
 )
 
 func Relay(ctx context.Context, log Logger, telegramConn, clientConn essentials.Conn) {
-	defer telegramConn.Close()
-	defer clientConn.Close()
+	defer func() {
+		if err := telegramConn.Close(); err != nil {
+			log.Printf("error closing telegramConn: %v", err)
+		}
+		if err := clientConn.Close(); err != nil {
+			log.Printf("error closing clientConn: %v", err)
+		}
+	}()
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	go func() {
 		<-ctx.Done()
-		telegramConn.Close()
-		clientConn.Close()
+		if err := telegramConn.Close(); err != nil {
+			log.Printf("error closing telegramConn: %v", err)
+		}
+		if err := clientConn.Close(); err != nil {
+			log.Printf("error closing clientConn: %v", err)
+		}
 	}()
 
 	closeChan := make(chan struct{})

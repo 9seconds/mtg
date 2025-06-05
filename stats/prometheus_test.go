@@ -30,7 +30,9 @@ func (suite *PrometheusTestSuite) Get() (string, error) {
 		return "", err //nolint: wrapcheck
 	}
 
-	defer resp.Body.Close()
+	defer func() {
+		suite.NoError(resp.Body.Close())
+	}()
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -51,7 +53,7 @@ func (suite *PrometheusTestSuite) SetupTest() {
 func (suite *PrometheusTestSuite) TearDownTest() {
 	suite.prometheus.Shutdown()
 	suite.NoError(suite.factory.Close())
-	suite.httpListener.Close()
+	suite.NoError(suite.httpListener.Close())
 }
 
 func (suite *PrometheusTestSuite) TestTelegramPath() {

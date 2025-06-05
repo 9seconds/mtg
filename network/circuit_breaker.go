@@ -56,7 +56,9 @@ func (c *circuitBreakerDialer) doClosed(ctx context.Context,
 	select {
 	case <-ctx.Done():
 		if conn != nil {
-			conn.Close()
+			if err := conn.Close(); err != nil {
+				panic(err)
+			}
 		}
 
 		return nil, ctx.Err() //nolint: wrapcheck
@@ -93,7 +95,9 @@ func (c *circuitBreakerDialer) doHalfOpened(ctx context.Context,
 	select {
 	case <-ctx.Done():
 		if conn != nil {
-			conn.Close()
+			if err := conn.Close(); err != nil {
+				panic(err)
+			}
 		}
 
 		return nil, ctx.Err() //nolint: wrapcheck

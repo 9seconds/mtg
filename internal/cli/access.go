@@ -29,12 +29,12 @@ type accessResponse struct {
 }
 
 type accessResponseURLs struct {
-	IP        net.IP `json:"ip"`
-	Port      uint   `json:"port"`
-	TgURL     string `json:"tg_url"`     //nolint: tagliatelle
-	TgQrCode  string `json:"tg_qrcode"`  //nolint: tagliatelle
-	TmeURL    string `json:"tme_url"`    //nolint: tagliatelle
-	TmeQrCode string `json:"tme_qrcode"` //nolint: tagliatelle
+	IP         net.IP `json:"ip"`
+	Port       uint   `json:"port"`
+	TgURL      string `json:"tg_url"`      //nolint: tagliatelle
+	TgQrCode   string `json:"tg_qrcode"`   //nolint: tagliatelle
+	TimeURL    string `json:"time_url"`    //nolint: tagliatelle
+	TimeQrCode string `json:"time_qrcode"` //nolint: tagliatelle
 }
 
 type Access struct {
@@ -129,7 +129,9 @@ func (a *Access) getIP(ntw mtglib.Network, protocol string) net.IP {
 
 	defer func() {
 		io.Copy(io.Discard, resp.Body) //nolint: errcheck
-		resp.Body.Close()
+		if err := resp.Body.Close(); err != nil {
+			panic(err)
+		}
 	}()
 
 	data, err := io.ReadAll(resp.Body)
@@ -170,7 +172,7 @@ func (a *Access) makeURLs(conf *config.Config, ip net.IP) *accessResponseURLs {
 			Host:     "proxy",
 			RawQuery: urlQuery,
 		}).String(),
-		TmeURL: (&url.URL{
+		TimeURL: (&url.URL{
 			Scheme:   "https",
 			Host:     "t.me",
 			Path:     "proxy",
@@ -178,7 +180,7 @@ func (a *Access) makeURLs(conf *config.Config, ip net.IP) *accessResponseURLs {
 		}).String(),
 	}
 	rv.TgQrCode = utils.MakeQRCodeURL(rv.TgURL)
-	rv.TmeQrCode = utils.MakeQRCodeURL(rv.TmeURL)
+	rv.TimeQrCode = utils.MakeQRCodeURL(rv.TimeURL)
 
 	return rv
 }

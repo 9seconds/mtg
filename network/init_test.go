@@ -78,7 +78,9 @@ func (suite *Socks5ServerTestSuite) SetupSuite() {
 }
 
 func (suite *Socks5ServerTestSuite) TearDownSuite() {
-	suite.socks5Listener.Close()
+	if err := suite.socks5Listener.Close(); err != nil {
+		panic(err)
+	}
 }
 
 func (suite *Socks5ServerTestSuite) MakeSocks5URL(user, password string) *url.URL {
