@@ -10,6 +10,13 @@ sources = ["**/*.go", "go.mod", "go.sum"]
 outputs = ["mtg"]
 run = "go build"
 
+[tasks.update]
+description = "Update dependencies"
+run = [
+    "go get -u",
+    "go mod tidy -go=1.25"
+]
+
 [tasks.lint]
 description = "Run linter"
 tools.golangci-lint = "latest"
