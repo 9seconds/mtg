@@ -1,5 +1,6 @@
 [tools]
 go = "latest"
+"go:golang.org/x/tools/gopls" = "latest"
 
 [vars]
 fuzzflags = "-fuzztime=120s"
