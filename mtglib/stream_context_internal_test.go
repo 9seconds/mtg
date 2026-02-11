@@ -24,7 +24,7 @@ func (suite *StreamContextTestSuite) SetupSuite() {
 
 func (suite *StreamContextTestSuite) SetupTest() {
 	ctx, cancel := context.WithCancel(context.Background())
-	ctx = context.WithValue(ctx, "key", "value") //nolint: golint, staticcheck
+	ctx = context.WithValue(ctx, "key", "value") //nolint: staticcheck
 
 	suite.ctxCancel = cancel
 	suite.connMock = &testlib.EssentialsConnMock{}

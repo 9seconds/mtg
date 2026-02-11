@@ -35,7 +35,7 @@ func captureOutput(filefp **os.File, callback func()) string {
 
 	callback()
 
-	writer.Close()
+	writer.Close() //nolint: errcheck
 	<-closeChan
 
 	return strings.TrimSpace(buf.String())

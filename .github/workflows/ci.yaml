@@ -39,35 +39,22 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    strategy:
-      matrix:
-        go_version:
-          - ^1.19
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
         with:
           submodules: recursive
 
-      - name: Setup Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: ${{ matrix.go_version }}
-
-      - name: Cache dependencies
-        uses: actions/cache@v2
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: ${{ runner.os }}-go-
+      - uses: jdx/mise-action@v3
+        name: Install mise
 
       - name: Run tests
-        run: go test -coverprofile=./coverage.txt -covermode=atomic -v ./...
+        run: mise tasks run covtest
 
       - name: Collect coverage
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v5
         with:
-          file: ./coverage.txt
+          files: ./coverage.txt
 
   fuzz:
     name: Fuzzing
@@ -75,31 +62,16 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
         with:
           submodules: recursive
 
-      - name: Setup Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: ^1.18
-
-      - name: Cache fuzz results
-        uses: actions/cache@v2
-        with:
-          path: ~/.cache/go-build/fuzz
-          key: ${{ runner.os }}-go-${{ hashFiles('**/*_fuzz_test.go', '**/*_fuzz_internal_test.go') }}
-          restore-keys: ${{ runner.os }}-go-
-
-      - name: Cache dependencies
-        uses: actions/cache@v2
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: ${{ runner.os }}-go-
+      - uses: jdx/mise-action@v3
+        name: Install mise
 
       - name: Run fuzzing
-        run: make -j4 fuzz
+        run: mise tasks run 'test:fuzz:*'
+
 
   lint:
     name: Lint
@@ -107,19 +79,15 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
         with:
           submodules: recursive
 
-      - name: Setup Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: ^1.19
+      - uses: jdx/mise-action@v3
+        name: Install mise
 
       - name: Run linter
-        uses: golangci/golangci-lint-action@v3
-        with:
-          version: v1.48.0
+        run: mise tasks run lint
 
   docker:
     name: Docker
@@ -127,25 +95,26 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
         with:
           submodules: recursive
 
       - name: Get Docker meta
-        id: docker_meta
-        uses: crazy-max/ghaction-docker-meta@v1
+        id: meta
+        uses: docker/metadata-action@v5
         with:
-          images: nineseconds/mtg,ghcr.io/9seconds/mtg
-          tag-semver: "{{version}},{{major}},{{major}}.{{minor}}"
+          images: nineseconds/mtg
+          tags: |
+            type=semver,pattern={{version}}
 
       - name: Setup QEMU
-        uses: docker/setup-qemu-action@v1
+        uses: docker/setup-qemu-action@v3
 
       - name: Setup BuildX
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v3
 
       - name: Setup cache
-        uses: actions/cache@v2
+        uses: actions/cache@v5
         with:
           path: /tmp/buildx-cache
           key: ${{ runner.os }}-buildx-${{ github.sha }}
@@ -154,18 +123,10 @@ jobs:
 
       - name: Login to DockerHub
         if: github.event_name != 'pull_request'
-        uses: docker/login-action@v1
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
-
-      - name: Login to GHCR.io
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v1
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GH_PAT }}
 
       - name: Build and push
         uses: docker/build-push-action@v2
@@ -174,7 +135,7 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64,linux/386,linux/arm/v7,linux/arm/v6
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.docker_meta.outputs.tags }}
-          labels: ${{ steps.docker_meta.outputs.labels }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=local,src=/tmp/buildx-cache
           cache-to: type=local,dest=/tmp/buildx-cache

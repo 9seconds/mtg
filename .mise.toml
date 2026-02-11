@@ -1,0 +1,100 @@
+[tools]
+go = "latest"
+
+[vars]
+fuzzflags = "-fuzztime=120s"
+
+[tasks.build]
+description = "Build binary"
+sources = ["**/*.go", "go.mod", "go.sum"]
+outputs = ["mtg"]
+run = "go build"
+
+[tasks.update]
+description = "Update dependencies"
+run = [
+    "go get -u",
+    "go mod tidy -go=1.25"
+]
+
+[tasks.lint]
+description = "Run linter"
+tools.golangci-lint = "latest"
+run = "golangci-lint run"
+
+[tasks.test]
+description = "Run tests"
+run = "go test -v ./..."
+
+[tasks.covtest]
+description = "Run tests with code coverage"
+run = "go test -coverprofile=coverage.txt -covermode=atomic -parallel 2 -race -v ./..."
+
+[tasks.test-all]
+description = "Run all tests"
+depends = [
+    "test",
+    "test:fuzz:*"
+]
+
+[tasks."test:fuzz:client-hello"]
+description = "Run fuzzy test for ClientHello"
+run = "go test -v {{ vars.fuzzflags }} -fuzz=FuzzClientHello ./mtglib/internal/faketls"
+
+[tasks."test:fuzz:client-handshake"]
+description = "Run fuzzy test for ClientHandshake"
+run = "go test -v {{ vars.fuzzflags }} -fuzz=FuzzClientHandshake ./mtglib/internal/obfuscated2"
+
+[tasks."test:fuzz:server-generate-handshake-frame"]
+description = "Run fuzzy test for ServerGenerateHandshakeFrame"
+run = "go test -v {{ vars.fuzzflags }} -fuzz=FuzzServerGenerateHandshakeFrame ./mtglib/internal/obfuscated2"
+
+[tasks."test:fuzz:server-receive"]
+description = "Run fuzzy test for ServerReceive"
+run = "go test -v {{ vars.fuzzflags }} -fuzz=FuzzServerReceive ./mtglib/internal/obfuscated2"
+
+[tasks."test:fuzz:server-send"]
+description = "Run fuzzy test for ServerSend"
+run = "go test -v {{ vars.fuzzflags }} -fuzz=FuzzServerSend ./mtglib/internal/obfuscated2"
+
+[tasks.static]
+description = "Build static binary"
+sources = ["**/*.go", "go.mod", "go.sum"]
+outputs = ["mtg"]
+run = """
+#!/bin/bash
+
+version="$(git describe --exact-match HEAD 2>/dev/null || git describe --tags --always)"
+go build \
+    -trimpath \
+    -mod=readonly \
+    -ldflags="-extldflags '-static' -s -w -X 'main.version=$version'" \
+    -a \
+    -tags netgo
+"""
+
+[tasks.release]
+description = "Create release tarballs"
+tools.goreleaser = "latest"
+sources = ["**/*.go", "go.mod", "go.sum", ".goreleaser.yml"]
+run = [
+    "goreleaser --snapshot --clean",
+    "find dist -depth 1 -type d | xargs -r rm -r",
+    "rm ./dist/config.yaml"
+]
+
+[tasks.image]
+description = "Build docker image"
+sources = ["**/*.go", "go.mod", "go.sum", "Dockerfile"]
+run = "docker buildx build --pull -t mtg ."
+
+[tasks.docs]
+description = "Run doc server"
+tools."go:golang.org/x/pkgsite/cmd/pkgsite" = "latest"
+run = "pkgsite -http 0.0.0.0:10000"
+
+[tasks.fmt]
+description = "Reformat source code"
+tools.gofumpt = "latest"
+sources = ["**/*.go"]
+run = "gofumpt -w --extra ."

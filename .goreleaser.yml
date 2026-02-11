@@ -1,5 +1,7 @@
 ---
 
+version: 2
+
 project_name: mtg
 
 before:
@@ -41,11 +43,13 @@ builds:
 
 archives:
   - name_template: '{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
-    format: tar.gz
+    formats:
+      - tar.gz
     wrap_in_directory: true
     format_overrides:
       - goos: windows
-        format: zip
+        formats:
+          - zip
     files:
       - LICENSE
       - README.md
@@ -55,7 +59,7 @@ gomod:
   proxy: true
 
 snapshot:
-  name_template: '{{ .Version }}'
+  version_template: '{{ .Version }}'
 
 checksum:
   name_template: '{{ .ProjectName }}-{{ .Version }}-checksums.txt'
