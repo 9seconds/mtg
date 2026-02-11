@@ -104,7 +104,8 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: nineseconds/mtg,ghcr.io/9seconds/mtg
-          tag-semver: "{{version}},{{major}},{{major}}.{{minor}}"
+          tags: |
+            type=semver,pattern={{version}}
 
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v3
