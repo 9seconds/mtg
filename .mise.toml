@@ -33,6 +33,11 @@ run = [
     "rm ./dist/config.yaml"
 ]
 
+[tasks.image]
+description = "Build docker image"
+sources = ["**/*.go", "go.mod", "go.sum", "Dockerfile"]
+run = "docker buildx build --pull -t mtg ."
+
 [tasks.docs]
 description = "Run doc server"
 tools."go:golang.org/x/pkgsite/cmd/pkgsite" = "latest"

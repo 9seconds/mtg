@@ -1,21 +1,24 @@
 ###############################################################################
 # BUILD STAGE
 
-FROM golang:1.19-alpine AS build
+FROM alpine:3 AS build
+
+ENV CGO_ENABLED=0
+ENV GOOS=linux
 
 RUN set -x \
   && apk --no-cache --update add \
     bash \
     ca-certificates \
-    curl \
     git \
-    make
+    mise
 
 COPY . /app
 WORKDIR /app
 
 RUN set -x \
-  && make -j 4 static
+  && mise trust \
+  && mise tasks run static
 
 
 ###############################################################################
