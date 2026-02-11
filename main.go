@@ -9,16 +9,11 @@
 package main
 
 import (
-	"math/rand"
-	"time"
-
 	"github.com/9seconds/mtg/v2/internal/cli"
 	"github.com/alecthomas/kong"
 )
 
 func main() {
-	rand.Seed(time.Now().UTC().UnixNano())
-
 	cli := &cli.CLI{}
 	ctx := kong.Parse(cli, kong.Vars{
 		"version": getVersion(),

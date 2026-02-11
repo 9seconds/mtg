@@ -30,10 +30,10 @@ func (suite *WelcomeTestSuite) SetupTest() {
 		SessionID:   make([]byte, 32),
 	}
 
-	_, err := rand.Read(suite.h.SessionID)
+	_, err := rand.Read(suite.h.SessionID) //nolint: staticcheck
 	suite.NoError(err)
 
-	_, err = rand.Read(suite.h.Random[:])
+	_, err = rand.Read(suite.h.Random[:]) //nolint: staticcheck
 	suite.NoError(err)
 
 	suite.buf = &bytes.Buffer{}
