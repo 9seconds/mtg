@@ -8,6 +8,22 @@ sources = ["**/*.go", "go.mod", "go.sum"]
 outputs = ["mtg"]
 run = "go build"
 
+[tasks.static]
+description = "Build static binary"
+sources = ["**/*.go", "go.mod", "go.sum"]
+outputs = ["mtg"]
+run = """
+#!/bin/bash
+
+version="$(git describe --exact-match HEAD 2>/dev/null || git describe --tags --always)"
+go build \
+    -trimpath \
+    -mod=readonly \
+    -ldflags="-extldflags '-static' -s -w -X 'main.version=$version'" \
+    -a \
+    -tags netgo
+"""
+
 [tasks.release]
 description = "Create release tarballs"
 tools.goreleaser = "latest"
