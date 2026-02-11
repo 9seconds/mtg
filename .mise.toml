@@ -2,10 +2,19 @@
 "go:golang.org/x/pkgsite/cmd/pkgsite" = "latest"
 go = "latest"
 gofumpt = "latest"
-goreleaser = "latest"
 
 [tasks.build]
 description = "Build binary"
 sources = ["**/*.go", "go.mod", "go.sum"]
 outputs = ["mtg"]
 run = "go build"
+
+[tasks.release]
+description = "Create release tarballs"
+tools.goreleaser = "latest"
+sources = ["**/*.go", "go.mod", "go.sum", ".goreleaser.yml"]
+run = [
+    "goreleaser --snapshot --clean",
+    "find dist -depth 1 -type d | xargs -r rm -r",
+    "rm ./dist/config.yaml"
+]
