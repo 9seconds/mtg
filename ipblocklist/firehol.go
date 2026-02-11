@@ -19,8 +19,8 @@ import (
 var (
 	fireholRegexpComment = regexp.MustCompile(`\s*#.*?$`)
 
-	fireholIPv4DefaultCIDR = net.CIDRMask(32, 32)   //nolint: gomnd
-	fireholIPv6DefaultCIDR = net.CIDRMask(128, 128) //nolint: gomnd
+	fireholIPv4DefaultCIDR = net.CIDRMask(32, 32)
+	fireholIPv6DefaultCIDR = net.CIDRMask(128, 128)
 )
 
 // FireholUpdateCallback defines a signature of the callback that has to be
@@ -130,7 +130,7 @@ func (f *Firehol) update() {
 				return
 			}
 
-			defer fileContent.Close()
+			defer fileContent.Close() //nolint: errcheck
 
 			if err := f.updateFromFile(mutex, ranger, bufio.NewScanner(fileContent)); err != nil {
 				logger.WarningError("update has failed", err)

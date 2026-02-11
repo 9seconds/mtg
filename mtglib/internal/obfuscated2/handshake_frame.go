@@ -36,7 +36,7 @@ type handshakeFrame struct {
 }
 
 func (h *handshakeFrame) dc() int {
-	idx := int16(h.data[handshakeFrameOffsetDC]) | int16(h.data[handshakeFrameOffsetDC+1])<<8 //nolint: gomnd, lll // little endian for int16 is here
+	idx := int16(h.data[handshakeFrameOffsetDC]) | int16(h.data[handshakeFrameOffsetDC+1])<<8 //nolint: lll // little endian for int16 is here
 
 	switch {
 	case idx > 0:

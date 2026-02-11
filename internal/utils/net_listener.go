@@ -18,7 +18,7 @@ func (l Listener) Accept() (net.Conn, error) {
 	}
 
 	if err := network.SetClientSocketOptions(conn, 0); err != nil {
-		conn.Close()
+		conn.Close() //nolint: errcheck
 
 		return nil, fmt.Errorf("cannot set TCP options: %w", err)
 	}

@@ -35,7 +35,7 @@ func (s *SimpleRun) Run(cli *CLI, version string) error { //nolint: cyclop,funle
 		return fmt.Errorf("incorrect secret: %w", err)
 	}
 
-	if err := conf.Concurrency.Set(strconv.FormatUint(s.Concurrency, 10)); err != nil { //nolint: gomnd
+	if err := conf.Concurrency.Set(strconv.FormatUint(s.Concurrency, 10)); err != nil {
 		return fmt.Errorf("incorrect concurrency: %w", err)
 	}
 
@@ -43,7 +43,7 @@ func (s *SimpleRun) Run(cli *CLI, version string) error { //nolint: cyclop,funle
 		return fmt.Errorf("incorrect prefer-ip: %w", err)
 	}
 
-	if err := conf.DomainFrontingPort.Set(strconv.FormatUint(s.DomainFrontingPort, 10)); err != nil { //nolint: gomnd
+	if err := conf.DomainFrontingPort.Set(strconv.FormatUint(s.DomainFrontingPort, 10)); err != nil {
 		return fmt.Errorf("incorrect domain-fronting-port: %w", err)
 	}
 

@@ -123,7 +123,7 @@ func (suite *ConnTestSuite) TestWrite() {
 	suite.connMock.On("Write", mock.Anything).Return(0, nil)
 
 	dataToRec := make([]byte, record.TLSMaxRecordSize*2)
-	rand.Read(dataToRec)
+	rand.Read(dataToRec) //nolint: staticcheck
 
 	n, err := suite.c.Write(dataToRec)
 	suite.NoError(err)

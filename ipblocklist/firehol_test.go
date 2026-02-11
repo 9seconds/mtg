@@ -35,7 +35,7 @@ func (suite *FireholTestSuite) SetupSuite() {
 			panic(err)
 		}
 
-		defer filefp.Close()
+		defer filefp.Close() //nolint: errcheck
 
 		io.Copy(w, filefp) //nolint: errcheck
 	})

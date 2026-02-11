@@ -78,7 +78,7 @@ func (suite *Socks5ServerTestSuite) SetupSuite() {
 }
 
 func (suite *Socks5ServerTestSuite) TearDownSuite() {
-	suite.socks5Listener.Close()
+	suite.socks5Listener.Close() //nolint: errcheck
 }
 
 func (suite *Socks5ServerTestSuite) MakeSocks5URL(user, password string) *url.URL {

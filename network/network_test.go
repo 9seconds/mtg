@@ -34,7 +34,7 @@ func (suite *NetworkTestSuite) TestLocalHTTPRequest() {
 	resp, err := client.Get(suite.httpServer.URL + "/headers") //nolint: noctx
 	suite.NoError(err)
 
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint: errcheck
 
 	data, err := io.ReadAll(resp.Body)
 	suite.NoError(err)
@@ -59,7 +59,7 @@ func (suite *NetworkTestSuite) TestRealHTTPRequest() {
 	resp, err := client.Get("https://httpbin.org/headers") //nolint: noctx
 	suite.NoError(err)
 
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint: errcheck
 
 	data, err := io.ReadAll(resp.Body)
 	suite.NoError(err)
