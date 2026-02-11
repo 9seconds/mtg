@@ -1,24 +1,27 @@
 ###############################################################################
 # BUILD STAGE
 
-FROM alpine:3 AS build
+FROM golang:1.26-alpine AS build
 
 ENV CGO_ENABLED=0
-ENV GOOS=linux
 
 RUN set -x \
   && apk --no-cache --update add \
     bash \
     ca-certificates \
-    git \
-    mise
+    git
 
 COPY . /app
 WORKDIR /app
 
 RUN set -x \
-  && mise trust \
-  && mise tasks run static
+  && version="$(git describe --exact-match HEAD 2>/dev/null || git describe --tags --always)" \
+  && go build \
+      -trimpath \
+      -mod=readonly \
+      -ldflags="-extldflags '-static' -s -w -X 'main.version=$version'" \
+      -a \
+      -tags netgo
 
 
 ###############################################################################
