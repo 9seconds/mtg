@@ -14,6 +14,10 @@ run = "go build"
 description = "Run tests"
 run = "go test -v ./..."
 
+[tasks.covtest]
+description = "Run tests with code coverage"
+run = "go test -coverprofile=coverage.txt -covermode=atomic -parallel 2 -race -v ./..."
+
 [tasks.test-all]
 description = "Run all tests"
 depends = [

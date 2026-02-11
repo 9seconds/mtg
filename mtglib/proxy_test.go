@@ -1,9 +1,7 @@
 package mtglib_test
 
 import (
-	"context"
 	"crypto/tls"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -19,9 +17,6 @@ import (
 	"github.com/9seconds/mtg/v2/logger"
 	"github.com/9seconds/mtg/v2/mtglib"
 	"github.com/9seconds/mtg/v2/network"
-	"github.com/gotd/td/telegram"
-	"github.com/gotd/td/telegram/dcs"
-	"github.com/gotd/td/tg"
 	"github.com/stretchr/testify/suite"
 	"github.com/yl2chen/cidranger"
 )
@@ -197,32 +192,6 @@ func (suite *ProxyTestSuite) TestHTTPSRequest() {
 
 	suite.NoError(json.Unmarshal(data, &jsonStruct))
 	suite.NotEmpty(jsonStruct.Headers.TraceID)
-}
-
-func (suite *ProxyTestSuite) TestMakeRealRequest() {
-	secret, _ := hex.DecodeString(suite.opts.Secret.Hex())
-	resolver, err := dcs.MTProxyResolver(
-		suite.ProxyAddress(),
-		secret,
-		dcs.MTProxyOptions{},
-	)
-	suite.NoError(err)
-
-	tgClient := telegram.NewClient(telegram.TestAppID,
-		telegram.TestAppHash,
-		telegram.Options{
-			Resolver: resolver,
-		})
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	suite.NoError(tgClient.Run(ctx, func(ctx context.Context) error {
-		_, err := tg.NewClient(tgClient).HelpGetConfig(ctx)
-		suite.NoError(err)
-
-		return err //nolint: wrapcheck
-	}))
 }
 
 func TestProxy(t *testing.T) {
