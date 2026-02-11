@@ -65,7 +65,7 @@ jobs:
         run: go test -coverprofile=./coverage.txt -covermode=atomic -v ./...
 
       - name: Collect coverage
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v5
         with:
           file: ./coverage.txt
 
