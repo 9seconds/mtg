@@ -1,6 +1,5 @@
 [tools]
 go = "latest"
-gofumpt = "latest"
 
 [tasks.build]
 description = "Build binary"
@@ -38,3 +37,9 @@ run = [
 description = "Run doc server"
 tools."go:golang.org/x/pkgsite/cmd/pkgsite" = "latest"
 run = "pkgsite -http 0.0.0.0:10000"
+
+[tasks.fmt]
+description = "Reformat source code"
+tools.gofumpt = "latest"
+sources = ["**/*.go"]
+run = "gofumpt -w --extra ."
