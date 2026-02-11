@@ -61,7 +61,7 @@ func (a *Access) Run(cli *CLI, version string) error {
 	}
 
 	wg := &sync.WaitGroup{}
-	wg.Add(2) //nolint: gomnd
+	wg.Add(2)
 
 	go func() {
 		defer wg.Done()
@@ -129,7 +129,7 @@ func (a *Access) getIP(ntw mtglib.Network, protocol string) net.IP {
 
 	defer func() {
 		io.Copy(io.Discard, resp.Body) //nolint: errcheck
-		resp.Body.Close()
+		resp.Body.Close() //nolint: errcheck
 	}()
 
 	data, err := io.ReadAll(resp.Body)

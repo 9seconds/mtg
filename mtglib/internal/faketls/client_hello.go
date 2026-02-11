@@ -56,7 +56,7 @@ func ParseClientHello(secret, handshake []byte) (ClientHello, error) {
 	if len(handshake)-4 != int(handshakeLength) {
 		return hello,
 			fmt.Errorf("incorrect handshake size. manifested=%d, real=%d",
-				handshakeLength, len(handshake)-4) //nolint: gomnd
+				handshakeLength, len(handshake)-4)
 	}
 
 	copy(hello.Random[:], handshake[ClientHelloRandomOffset:])
@@ -100,7 +100,7 @@ func parseSessionID(hello *ClientHello, handshake []byte) {
 }
 
 func parseCipherSuite(hello *ClientHello, handshake []byte) {
-	cipherSuiteOffset := ClientHelloSessionIDOffset + len(hello.SessionID) + 3 //nolint: gomnd
+	cipherSuiteOffset := ClientHelloSessionIDOffset + len(hello.SessionID) + 3
 	hello.CipherSuite = binary.BigEndian.Uint16(handshake[cipherSuiteOffset : cipherSuiteOffset+2])
 }
 

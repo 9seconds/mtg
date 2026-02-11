@@ -31,7 +31,7 @@ func (d *defaultDialer) DialContext(ctx context.Context, network, address string
 
 	// we do not need to call to end user. End users call us.
 	if err := SetServerSocketOptions(conn, 0); err != nil {
-		conn.Close()
+		conn.Close() //nolint: errcheck
 
 		return nil, fmt.Errorf("cannot set socket options: %w", err)
 	}

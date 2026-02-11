@@ -86,7 +86,7 @@ func (suite *ProxyTestSuite) SetupSuite() {
 
 func (suite *ProxyTestSuite) TearDownSuite() {
 	if suite.listener != nil {
-		suite.listener.Close()
+		suite.listener.Close() //nolint: errcheck
 	}
 
 	if suite.p != nil {
@@ -177,7 +177,7 @@ func (suite *ProxyTestSuite) TestHTTPSRequest() {
 	resp, err := client.Get(addr) //nolint: noctx
 	suite.NoError(err)
 
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint: errcheck
 
 	suite.Equal(http.StatusOK, resp.StatusCode)
 

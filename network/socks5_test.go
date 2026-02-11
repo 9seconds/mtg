@@ -35,7 +35,7 @@ func (suite *Socks5TestSuite) TestRequestFailed() {
 
 	resp, err := httpClient.Get(suite.MakeURL("/get")) //nolint: noctx
 	if err == nil {
-		defer resp.Body.Close()
+		defer resp.Body.Close() //nolint: errcheck
 	}
 
 	suite.Error(err)
@@ -48,7 +48,7 @@ func (suite *Socks5TestSuite) TestRequestOk() {
 
 	resp, err := httpClient.Get(suite.MakeURL("/get")) //nolint: noctx
 	if err == nil {
-		defer resp.Body.Close()
+		defer resp.Body.Close() //nolint: errcheck
 	}
 
 	suite.NoError(err)

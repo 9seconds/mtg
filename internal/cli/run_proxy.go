@@ -164,7 +164,7 @@ func makeIPAllowlist(conf config.ListConfig,
 }
 
 func makeEventStream(conf *config.Config, logger mtglib.Logger) (mtglib.EventStream, error) {
-	factories := make([]events.ObserverFactory, 0, 2) //nolint: gomnd
+	factories := make([]events.ObserverFactory, 0, 2)
 
 	if conf.Stats.StatsD.Enabled.Get(false) {
 		statsdFactory, err := stats.NewStatsd(
@@ -271,7 +271,7 @@ func runProxy(conf *config.Config, version string) error { //nolint: funlen
 	go proxy.Serve(listener) //nolint: errcheck
 
 	<-ctx.Done()
-	listener.Close()
+	listener.Close() //nolint: errcheck
 	proxy.Shutdown()
 
 	return nil

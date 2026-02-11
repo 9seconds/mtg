@@ -10,6 +10,11 @@ sources = ["**/*.go", "go.mod", "go.sum"]
 outputs = ["mtg"]
 run = "go build"
 
+[tasks.lint]
+description = "Run linter"
+tools.golangci-lint = "latest"
+run = "golangci-lint run"
+
 [tasks.test]
 description = "Run tests"
 run = "go test -v ./..."

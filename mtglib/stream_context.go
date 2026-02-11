@@ -40,11 +40,11 @@ func (s *streamContext) Close() {
 	s.ctxCancel()
 
 	if s.clientConn != nil {
-		s.clientConn.Close()
+		s.clientConn.Close() //nolint: errcheck
 	}
 
 	if s.telegramConn != nil {
-		s.telegramConn.Close()
+		s.telegramConn.Close() //nolint: errcheck
 	}
 }
 

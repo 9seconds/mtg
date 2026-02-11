@@ -36,7 +36,7 @@ func SendWelcomePacket(writer io.Writer, secret []byte, clientHello ClientHello)
 	rec.Type = record.TypeApplicationData
 	rec.Version = record.Version12
 
-	if _, err := io.CopyN(&rec.Payload, rand.Reader, int64(1024+mrand.Intn(3092))); err != nil { //nolint: gomnd
+	if _, err := io.CopyN(&rec.Payload, rand.Reader, int64(1024+mrand.Intn(3092))); err != nil {
 		panic(err)
 	}
 
