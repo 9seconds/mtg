@@ -1,11 +1,45 @@
 [tools]
 go = "latest"
 
+[vars]
+fuzzflags = "-fuzztime=120s"
+
 [tasks.build]
 description = "Build binary"
 sources = ["**/*.go", "go.mod", "go.sum"]
 outputs = ["mtg"]
 run = "go build"
+
+[tasks.test]
+description = "Run tests"
+run = "go test -v ./..."
+
+[tasks.test-all]
+description = "Run all tests"
+depends = [
+    "test",
+    "test:fuzz:*"
+]
+
+[tasks."test:fuzz:client-hello"]
+description = "Run fuzzy test for ClientHello"
+run = "go test -v {{ vars.fuzzflags }} -fuzz=FuzzClientHello ./mtglib/internal/faketls"
+
+[tasks."test:fuzz:client-handshake"]
+description = "Run fuzzy test for ClientHandshake"
+run = "go test -v {{ vars.fuzzflags }} -fuzz=FuzzClientHandshake ./mtglib/internal/obfuscated2"
+
+[tasks."test:fuzz:server-generate-handshake-frame"]
+description = "Run fuzzy test for ServerGenerateHandshakeFrame"
+run = "go test -v {{ vars.fuzzflags }} -fuzz=FuzzServerGenerateHandshakeFrame ./mtglib/internal/obfuscated2"
+
+[tasks."test:fuzz:server-receive"]
+description = "Run fuzzy test for ServerReceive"
+run = "go test -v {{ vars.fuzzflags }} -fuzz=FuzzServerReceive ./mtglib/internal/obfuscated2"
+
+[tasks."test:fuzz:server-send"]
+description = "Run fuzzy test for ServerSend"
+run = "go test -v {{ vars.fuzzflags }} -fuzz=FuzzServerSend ./mtglib/internal/obfuscated2"
 
 [tasks.static]
 description = "Build static binary"
