@@ -3,3 +3,9 @@
 go = "latest"
 gofumpt = "latest"
 goreleaser = "latest"
+
+[tasks.build]
+description = "Build binary"
+sources = ["**/*.go", "go.mod", "go.sum"]
+outputs = ["mtg"]
+run = "go build"
