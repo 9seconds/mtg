@@ -35,59 +35,59 @@ on:
       - ready_for_review
 
 jobs:
-  # test:
-  #   name: Test
-  #   runs-on: ubuntu-latest
-  #   timeout-minutes: 10
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v6
-  #       with:
-  #         submodules: recursive
-  #
-  #     - uses: jdx/mise-action@v3
-  #       name: Install mise
-  #
-  #     - name: Run tests
-  #       run: mise tasks run covtest
-  #
-  #     - name: Collect coverage
-  #       uses: codecov/codecov-action@v5
-  #       with:
-  #         files: ./coverage.txt
-  #
-  # fuzz:
-  #   name: Fuzzing
-  #   runs-on: ubuntu-latest
-  #   timeout-minutes: 20
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v6
-  #       with:
-  #         submodules: recursive
-  #
-  #     - uses: jdx/mise-action@v3
-  #       name: Install mise
-  #
-  #     - name: Run fuzzing
-  #       run: mise tasks run 'test:fuzz:*'
-  #
-  #
-  # lint:
-  #   name: Lint
-  #   runs-on: ubuntu-latest
-  #   timeout-minutes: 5
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v6
-  #       with:
-  #         submodules: recursive
-  #
-  #     - uses: jdx/mise-action@v3
-  #       name: Install mise
-  #
-  #     - name: Run linter
-  #       run: mise tasks run lint
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - uses: jdx/mise-action@v3
+        name: Install mise
+
+      - name: Run tests
+        run: mise tasks run covtest
+
+      - name: Collect coverage
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage.txt
+
+  fuzz:
+    name: Fuzzing
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - uses: jdx/mise-action@v3
+        name: Install mise
+
+      - name: Run fuzzing
+        run: mise tasks run 'test:fuzz:*'
+
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - uses: jdx/mise-action@v3
+        name: Install mise
+
+      - name: Run linter
+        run: mise tasks run lint
 
   docker:
     name: Docker
@@ -122,7 +122,7 @@ jobs:
             ${{ runner.os }}-buildx-
 
       - name: Login to DockerHub
-        # if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -134,7 +134,7 @@ jobs:
           pull: true
           context: .
           platforms: linux/amd64,linux/arm64,linux/386,linux/arm/v7,linux/arm/v6
-          push: false
+          push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=local,src=/tmp/buildx-cache
