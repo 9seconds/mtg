@@ -20,7 +20,7 @@ type TypeBoolTestSuite struct {
 }
 
 func (suite *TypeBoolTestSuite) TestUnmarshalFail() {
-	testData := []interface{}{
+	testData := []any{
 		"",
 		"np",
 		"нет",
@@ -29,7 +29,7 @@ func (suite *TypeBoolTestSuite) TestUnmarshalFail() {
 	}
 
 	for _, v := range testData {
-		data, err := json.Marshal(map[string]interface{}{
+		data, err := json.Marshal(map[string]any{
 			"value": v,
 		})
 		suite.NoError(err)

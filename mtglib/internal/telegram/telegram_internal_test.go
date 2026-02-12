@@ -140,7 +140,7 @@ func (suite *TelegramTestSuite) TestUnknownPreferIP() {
 func (suite *TelegramTestSuite) TestFallbackDC() {
 	dcs := make([]int, 10)
 
-	for i := 0; i < len(dcs); i++ {
+	for i := range dcs {
 		dcs[i] = suite.t.GetFallbackDC()
 	}
 

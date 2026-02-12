@@ -10,7 +10,7 @@ import (
 
 func Relay(ctx context.Context, log Logger, telegramConn, clientConn essentials.Conn) {
 	defer telegramConn.Close() //nolint: errcheck
-	defer clientConn.Close() //nolint: errcheck
+	defer clientConn.Close()   //nolint: errcheck
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -18,7 +18,7 @@ func Relay(ctx context.Context, log Logger, telegramConn, clientConn essentials.
 	go func() {
 		<-ctx.Done()
 		telegramConn.Close() //nolint: errcheck
-		clientConn.Close() //nolint: errcheck
+		clientConn.Close()   //nolint: errcheck
 	}()
 
 	closeChan := make(chan struct{})

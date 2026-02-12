@@ -249,7 +249,7 @@ type Logger interface {
 	BindJSON(name, value string) Logger
 
 	// Printf is to support log.Logger behavior.
-	Printf(format string, args ...interface{})
+	Printf(format string, args ...any)
 
 	// Info puts a message about some normal situation.
 	Info(msg string)

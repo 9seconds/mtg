@@ -64,7 +64,7 @@ func (suite *LoadBalancedSocks5TestSuite) TestCannotDial() {
 	})
 	suite.NoError(err)
 
-	for i := 0; i < network.ProxyDialerOpenThreshold*2; i++ {
+	for range network.ProxyDialerOpenThreshold * 2 {
 		_, err = lbDialer.Dial("tcp", "127.1.1.1:80")
 		suite.True(errors.Is(err, network.ErrCannotDialWithAllProxies))
 	}

@@ -3,7 +3,7 @@ package relay
 import "sync"
 
 var copyBufferPool = sync.Pool{
-	New: func() interface{} {
+	New: func() any {
 		rv := make([]byte, copyBufferSize)
 
 		return &rv

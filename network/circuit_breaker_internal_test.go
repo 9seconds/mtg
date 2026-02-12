@@ -59,7 +59,7 @@ func (suite *CircuitBreakerTestSuite) TestMultipleRunsOk() {
 		suite.ctxCancel()
 	}()
 
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		go func() {
 			defer wg.Done()
 

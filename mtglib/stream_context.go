@@ -32,7 +32,7 @@ func (s *streamContext) Err() error {
 	return s.ctx.Err() //nolint: wrapcheck
 }
 
-func (s *streamContext) Value(key interface{}) interface{} {
+func (s *streamContext) Value(key any) any {
 	return s.ctx.Value(key)
 }
 

@@ -63,7 +63,7 @@ func (h *handshakeFrame) connectionType() []byte {
 func (h *handshakeFrame) invert() handshakeFrame {
 	copyFrame := *h
 
-	for i := 0; i < handshakeFrameLenKey+handshakeFrameLenIV; i++ {
+	for i := range handshakeFrameLenKey + handshakeFrameLenIV {
 		copyFrame.data[handshakeFrameOffsetKey+i] = h.data[handshakeFrameOffsetConnectionType-1-i]
 	}
 

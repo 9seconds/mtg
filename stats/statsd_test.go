@@ -100,7 +100,7 @@ func (suite *StatsdTestSuite) SetupTest() {
 
 func (suite *StatsdTestSuite) TearDownTest() {
 	suite.statsd.Shutdown()
-	suite.factory.Close() //nolint: errcheck
+	suite.factory.Close()      //nolint: errcheck
 	suite.statsdServer.Close() //nolint: errcheck
 }
 

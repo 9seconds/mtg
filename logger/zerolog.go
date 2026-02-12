@@ -78,7 +78,7 @@ func (z *zeroLogContext) BindJSON(name, value string) mtglib.Logger {
 	}
 }
 
-func (z *zeroLogContext) Printf(format string, args ...interface{}) {
+func (z *zeroLogContext) Printf(format string, args ...any) {
 	z.Debug(fmt.Sprintf(format, args...))
 }
 

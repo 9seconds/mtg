@@ -81,32 +81,28 @@ func (n *network) dnsResolve(protocol, address string) ([]string, error) {
 
 	switch protocol {
 	case "tcp", "tcp4":
-		wg.Add(1)
 
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 
 			resolved := n.dns.LookupA(address)
 
 			mutex.Lock()
 			ips = append(ips, resolved...)
 			mutex.Unlock()
-		}()
+		})
 	}
 
 	switch protocol {
 	case "tcp", "tcp6":
-		wg.Add(1)
 
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 
 			resolved := n.dns.LookupAAAA(address)
 
 			mutex.Lock()
 			ips = append(ips, resolved...)
 			mutex.Unlock()
-		}()
+		})
 	}
 
 	wg.Wait()
