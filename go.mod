@@ -18,7 +18,7 @@ require (
 	github.com/prometheus/procfs v0.19.2 // indirect
 	github.com/rs/zerolog v1.34.0
 	github.com/smira/go-statsd v1.3.4
-	github.com/stretchr/objx v0.5.2 // indirect
+	github.com/stretchr/objx v0.5.3 // indirect
 	github.com/stretchr/testify v1.11.1
 	github.com/tylertreat/BoomFilters v0.0.0-20251117164519-53813c36cc1b
 	golang.org/x/crypto v0.48.0
