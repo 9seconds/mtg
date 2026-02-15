@@ -144,6 +144,7 @@ func (p *Proxy) Shutdown() {
 	p.ctxCancel()
 	p.streamWaitGroup.Wait()
 	p.workerPool.Release()
+	p.telegram.Shutdown()
 
 	p.allowlist.Shutdown()
 	p.blocklist.Shutdown()
@@ -292,7 +293,7 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 		return nil, fmt.Errorf("invalid settings: %w", err)
 	}
 
-	tg, err := telegram.New(opts.Network, opts.getPreferIP(), opts.UseTestDCs)
+	tg, err := telegram.New(opts.Network, opts.getPreferIP())
 	if err != nil {
 		return nil, fmt.Errorf("cannot build telegram dialer: %w", err)
 	}
@@ -313,6 +314,8 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 		allowFallbackOnUnknownDC: opts.AllowFallbackOnUnknownDC,
 		telegram:                 tg,
 	}
+
+	go tg.Run(proxy.logger.Named("telegram"), 0)
 
 	pool, err := ants.NewPoolWithFunc(opts.getConcurrency(),
 		func(arg interface{}) {

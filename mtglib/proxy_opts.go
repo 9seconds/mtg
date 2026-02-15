@@ -110,6 +110,8 @@ type ProxyOpts struct {
 	// Telegram-related projects.
 	//
 	// This is an optional setting.
+	//
+	// OBSOLETE and DEPRECATED. Ignored.
 	UseTestDCs bool
 }
 

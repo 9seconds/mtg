@@ -4,29 +4,39 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/9seconds/mtg/v2/essentials"
+	"github.com/gotd/td/telegram"
 )
 
 type Telegram struct {
-	dialer   Dialer
-	preferIP preferIP
-	pool     addressPool
+	ctx       context.Context
+	ctxCancel context.CancelFunc
+	lock      sync.RWMutex
+
+	dialer    Dialer
+	preferIP  preferIP
+	addresses dcAddresses
+	rpc       rpcClient
 }
 
-func (t Telegram) Dial(ctx context.Context, dc int) (essentials.Conn, error) {
+func (t *Telegram) Dial(ctx context.Context, dc int) (essentials.Conn, error) {
 	var addresses []tgAddr
 
+	t.lock.RLock()
 	switch t.preferIP {
 	case preferIPOnlyIPv4:
-		addresses = t.pool.getV4(dc)
+		addresses = t.addresses.getV4(dc)
 	case preferIPOnlyIPv6:
-		addresses = t.pool.getV6(dc)
+		addresses = t.addresses.getV6(dc)
 	case preferIPPreferIPv4:
-		addresses = append(t.pool.getV4(dc), t.pool.getV6(dc)...)
+		addresses = append(t.addresses.getV4(dc), t.addresses.getV6(dc)...)
 	case preferIPPreferIPv6:
-		addresses = append(t.pool.getV6(dc), t.pool.getV4(dc)...)
+		addresses = append(t.addresses.getV6(dc), t.addresses.getV4(dc)...)
 	}
+	t.lock.RUnlock()
 
 	var conn essentials.Conn
 
@@ -42,15 +52,60 @@ func (t Telegram) Dial(ctx context.Context, dc int) (essentials.Conn, error) {
 	return nil, fmt.Errorf("cannot dial to %d dc: %w", dc, err)
 }
 
-func (t Telegram) IsKnownDC(dc int) bool {
-	return t.pool.isValidDC(dc)
+func (t *Telegram) IsKnownDC(dc int) bool {
+	return t.addresses.isValidDC(dc)
 }
 
-func (t Telegram) GetFallbackDC() int {
-	return t.pool.getRandomDC()
+func (t *Telegram) GetFallbackDC() int {
+	return defaultDC
 }
 
-func New(dialer Dialer, ipPreference string, useTestDCs bool) (*Telegram, error) {
+func (t *Telegram) Shutdown() {
+	t.ctxCancel()
+}
+
+func (t *Telegram) Run(logger loggerInterface, updateEach time.Duration) {
+	if updateEach == 0 {
+		updateEach = defaultUpdateDCAddressesEach
+	}
+
+	t.update(logger)
+
+	ticker := time.NewTicker(updateEach)
+	defer func() {
+		ticker.Stop()
+
+		select {
+		case <-ticker.C:
+		default:
+		}
+	}()
+
+	for {
+		select {
+		case <-t.ctx.Done():
+			return
+		case <-ticker.C:
+			t.update(logger)
+		}
+	}
+}
+
+func (t *Telegram) update(logger loggerInterface) {
+	otherAddresses, err := t.rpc.getDCAddresses(logger, t.ctx)
+	if err != nil {
+		logger.WarningError("Cannot update DC list", err)
+		return
+	}
+
+	t.lock.Lock()
+	t.addresses = otherAddresses
+	t.lock.Unlock()
+
+	logger.Info(fmt.Sprintf("DC are updated: %v", t.addresses))
+}
+
+func New(dialer Dialer, ipPreference string) (*Telegram, error) {
 	var pref preferIP
 
 	switch strings.ToLower(ipPreference) {
@@ -66,18 +121,19 @@ func New(dialer Dialer, ipPreference string, useTestDCs bool) (*Telegram, error)
 		return nil, fmt.Errorf("unknown ip preference %s", ipPreference)
 	}
 
-	pool := addressPool{
-		v4: productionV4Addresses,
-		v6: productionV6Addresses,
-	}
-	if useTestDCs {
-		pool.v4 = testV4Addresses
-		pool.v6 = testV6Addresses
-	}
+	ctx, cancel := context.WithCancel(context.Background())
 
 	return &Telegram{
-		dialer:   dialer,
-		preferIP: pref,
-		pool:     pool,
+		ctx:       ctx,
+		ctxCancel: cancel,
+		dialer:    dialer,
+		preferIP:  pref,
+		addresses: dcAddresses{
+			v4: defaultV4Addresses,
+			v6: defaultV6Addresses,
+		},
+		rpc: rpcClient{
+			Client: telegram.NewClient(defaultAppID, defaultAppHash, telegram.Options{}),
+		},
 	}, nil
 }
