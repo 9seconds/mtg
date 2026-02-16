@@ -1,6 +1,7 @@
 [tools]
 go = "latest"
 "go:golang.org/x/tools/gopls" = "latest"
+"go:mvdan.cc/gofumpt" = "latest"
 
 [vars]
 fuzzflags = "-fuzztime=120s"
@@ -96,6 +97,5 @@ run = "pkgsite -http 0.0.0.0:10000"
 
 [tasks.fmt]
 description = "Reformat source code"
-tools.gofumpt = "latest"
 sources = ["**/*.go"]
 run = "gofumpt -w --extra ."
