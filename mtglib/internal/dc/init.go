@@ -1,7 +1,5 @@
 package dc
 
-import "time"
-
 type preferIP uint8
 
 const (
@@ -12,8 +10,7 @@ const (
 )
 
 const (
-	DefaultDC                    = 2
-	DefaultUpdateDCAddressesEach = time.Hour
+	DefaultDC = 2
 
 	defaultAppID   = 123456
 	defaultAppHash = ""

@@ -324,7 +324,12 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 		telegram:                 tg,
 	}
 
-	go tg.Run(ctx, 0) // TODO: propagate value
+	dcUpdateEach := opts.DCUpdateEach
+	if dcUpdateEach == 0 {
+		dcUpdateEach = DefaultDCUpdateEach
+	}
+
+	go tg.Run(ctx, dcUpdateEach)
 
 	pool, err := ants.NewPoolWithFunc(opts.getConcurrency(),
 		func(arg interface{}) {

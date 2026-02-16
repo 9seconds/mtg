@@ -37,10 +37,6 @@ func (t *Telegram) GetAddresses(dc int) []Addr {
 }
 
 func (t *Telegram) Run(ctx context.Context, updateEach time.Duration) {
-	if updateEach == 0 {
-		updateEach = DefaultUpdateDCAddressesEach
-	}
-
 	t.update(ctx)
 
 	ticker := time.NewTicker(updateEach)

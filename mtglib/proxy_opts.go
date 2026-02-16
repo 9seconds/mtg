@@ -119,6 +119,10 @@ type ProxyOpts struct {
 	//
 	// This is an optional setting
 	DCOverrides map[int][]string
+
+	// DCUpdateEach defines a time duration that is used to fetch a list of
+	// DCs to use from the Telegram.
+	DCUpdateEach time.Duration
 }
 
 func (p ProxyOpts) valid() error {

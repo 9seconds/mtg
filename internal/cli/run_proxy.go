@@ -263,6 +263,7 @@ func runProxy(conf *config.Config, version string) error { //nolint: funlen
 		AllowFallbackOnUnknownDC: conf.AllowFallbackOnUnknownDC.Get(false),
 		TolerateTimeSkewness:     conf.TolerateTimeSkewness.Value,
 		DCOverrides:              dcOverrides,
+		DCUpdateEach:             conf.DCUpdateEach.Get(0),
 	}
 
 	proxy, err := mtglib.NewProxy(opts)

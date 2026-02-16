@@ -80,6 +80,7 @@ func (s *SimpleRun) Run(cli *CLI, version string) error { //nolint: cyclop,funle
 	conf.Debug.Value = s.Debug
 	conf.AllowFallbackOnUnknownDC.Value = true
 	conf.Defense.AntiReplay.Enabled.Value = true
+	conf.DCUpdateEach.Value = 0
 
 	if err := conf.Validate(); err != nil {
 		return fmt.Errorf("invalid result configuration: %w", err)

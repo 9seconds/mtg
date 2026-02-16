@@ -65,9 +65,10 @@ type Config struct {
 		} `json:"prometheus"`
 	} `json:"stats"`
 	DCOverrides []struct {
-		DC  TypeDC
+		DC  TypeDC         `json:"dc"`
 		IPs []TypeHostPort `json:"ips"`
-	} `json:"dc_overrides"`
+	} `json:"dcOverrides"`
+	DCUpdateEach TypeDuration `json:"dcUpdateEach"`
 }
 
 func (c *Config) Validate() error {
