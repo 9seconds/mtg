@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/pelletier/go-toml"
+	"github.com/pelletier/go-toml/v2"
 )
 
 type tomlConfig struct {
@@ -59,6 +59,10 @@ type tomlConfig struct {
 			MetricPrefix string `toml:"metric-prefix" json:"metricPrefix,omitempty"`
 		} `toml:"prometheus" json:"prometheus,omitempty"`
 	} `toml:"stats" json:"stats,omitempty"`
+	DCOverrides []struct {
+		DC  int      `toml:"dc" json:"dc"`
+		IPs []string `toml:"ips" json:"ips"`
+	}
 }
 
 func Parse(rawData []byte) (*Config, error) {

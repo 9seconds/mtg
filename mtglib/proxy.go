@@ -302,11 +302,7 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 
 	logger := opts.getLogger("proxy")
 
-	tg, err := dc.New(
-		logger.Named("telegram"),
-		opts.getPreferIP(),
-		map[int][]string{},
-	) // TODO: propagate value
+	tg, err := dc.New(logger.Named("telegram"), opts.getPreferIP(), opts.DCOverrides)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build telegram dc fetcher: %w", err)
 	}
