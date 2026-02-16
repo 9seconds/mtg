@@ -11,9 +11,6 @@ const (
 
 const (
 	DefaultDC = 2
-
-	defaultAppID   = 123456
-	defaultAppHash = ""
 )
 
 type Logger interface {

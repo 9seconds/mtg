@@ -99,10 +99,6 @@ const (
 	// reads from Telegram after which connection will be terminated. This is
 	// required to abort stale connections.
 	TCPRelayReadTimeout = 20 * time.Second
-
-	// DefaultDCUpdateEach defines a time period that is used to fetch
-	// a relevant list of DCs to use from Telegram using its own MTPROTO API.
-	DefaultDCUpdateEach = time.Hour
 )
 
 // Network defines a knowledge how to work with a network. It may sound fun but

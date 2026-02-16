@@ -24,11 +24,11 @@ func (t *TypeDC) Set(value string) error {
 	return nil
 }
 
-func (t *TypeDC) UnmarshalText(data []byte) error {
+func (t *TypeDC) UnmarshalJSON(data []byte) error {
 	return t.Set(string(data))
 }
 
-func (t TypeDC) MarshalText() ([]byte, error) {
+func (t TypeDC) MarshalJSON() ([]byte, error) {
 	return []byte(t.String()), nil
 }
 

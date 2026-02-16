@@ -68,7 +68,6 @@ type Config struct {
 		DC  TypeDC         `json:"dc"`
 		IPs []TypeHostPort `json:"ips"`
 	} `json:"dcOverrides"`
-	DCUpdateEach TypeDuration `json:"dcUpdateEach"`
 }
 
 func (c *Config) Validate() error {

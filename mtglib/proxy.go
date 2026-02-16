@@ -300,9 +300,7 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 		return nil, fmt.Errorf("invalid settings: %w", err)
 	}
 
-	logger := opts.getLogger("proxy")
-
-	tg, err := dc.New(logger.Named("telegram"), opts.getPreferIP(), opts.DCOverrides)
+	tg, err := dc.New(opts.getPreferIP(), opts.DCOverrides)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build telegram dc fetcher: %w", err)
 	}
@@ -323,13 +321,6 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 		allowFallbackOnUnknownDC: opts.AllowFallbackOnUnknownDC,
 		telegram:                 tg,
 	}
-
-	dcUpdateEach := opts.DCUpdateEach
-	if dcUpdateEach == 0 {
-		dcUpdateEach = DefaultDCUpdateEach
-	}
-
-	go tg.Run(ctx, dcUpdateEach)
 
 	pool, err := ants.NewPoolWithFunc(opts.getConcurrency(),
 		func(arg interface{}) {

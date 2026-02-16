@@ -77,13 +77,8 @@ allow-fallback-on-unknown-dc = false
 # a default list of DCs, including some CDN IPs, but it is possible that some
 # of them are not working for you. In this case, you can override them here.
 [[dc-overrides]]
-dc = "101"
+dc = 101
 ips = ["127.0.0.1:443"]
-
-# mtg periodically updates its list of DCs, fetching them from Telegram itself.
-# This is a period of time between updates. Default value is 1h, and usually
-# more than enough.
-# dc-update-each = "24h"
 
 # network defines different network-related settings
 [network]
