@@ -2,6 +2,7 @@ package config_test
 
 import (
 	"encoding/json"
+	"strconv"
 	"testing"
 
 	"github.com/9seconds/mtg/v2/internal/config"
@@ -39,19 +40,19 @@ func (suite *TypeDCTestSuite) TestUnmarshalFail() {
 }
 
 func (suite *TypeDCTestSuite) TestUnmarshalOk() {
-	testData := map[string]int{
-		"1":   1,
-		"-1":  1,
-		"203": 203,
+	testData := map[int]int{
+		1:   1,
+		-1:  1,
+		203: 203,
 	}
 
 	for value, expected := range testData {
-		data, err := json.Marshal(map[string]string{
+		data, err := json.Marshal(map[string]int{
 			"value": value,
 		})
 		suite.NoError(err)
 
-		suite.T().Run(value, func(t *testing.T) {
+		suite.T().Run(strconv.Itoa(value), func(t *testing.T) {
 			testStruct := &typeDCTestStruct{}
 
 			assert.NoError(t, json.Unmarshal(data, testStruct))
@@ -62,9 +63,9 @@ func (suite *TypeDCTestSuite) TestUnmarshalOk() {
 }
 
 func (suite *TypeDCTestSuite) TestMarshalOk() {
-	testData := map[string]string{
-		"1":   "1",
-		"203": "203",
+	testData := map[string]int{
+		"1":   1,
+		"203": 203,
 	}
 
 	for k, v := range testData {
@@ -79,7 +80,7 @@ func (suite *TypeDCTestSuite) TestMarshalOk() {
 			data, err := json.Marshal(testStruct)
 			assert.NoError(t, err)
 
-			expectedJSON, err := json.Marshal(map[string]string{
+			expectedJSON, err := json.Marshal(map[string]int{
 				"value": expected,
 			})
 			assert.NoError(t, err)
