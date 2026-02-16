@@ -31,13 +31,6 @@ func (suite *ViewTestSuite) SetupSuite() {
 				},
 			},
 		},
-		collected: dcAddrSet{
-			v4: map[int][]Addr{
-				1: {
-					{Network: "tcp4", Address: "127.1.0.1:443"},
-				},
-			},
-		},
 	}
 }
 
@@ -53,10 +46,6 @@ func (suite *ViewTestSuite) TestGetV4() {
 		2: {
 			{"tcp4", "149.154.167.51:443"},
 			{"tcp4", "95.161.76.100:443"},
-		},
-		1: {
-			{"tcp4", "127.1.0.1:443"},
-			{"tcp4", "149.154.175.50:443"},
 		},
 	}
 

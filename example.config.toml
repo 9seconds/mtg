@@ -93,8 +93,8 @@ ips = ["127.0.0.1:443"]
 # resolver of the operating system and uses DOH instead. This is a host
 # it has to access.
 #
-# By default we use Quad9.
-doh-ip = "9.9.9.9"
+# By default we use Cloudflare.
+doh-ip = "1.1.1.1"
 
 # mtg can work via proxies (for now, we support only socks5). Proxy
 # configuration is done via list. So, you can specify many proxies
