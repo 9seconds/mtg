@@ -275,7 +275,7 @@ Flags:
   -b, --tcp-buffer="4KB"               Size of TCP buffer to use.
   -i, --prefer-ip="prefer-ipv6"        IP preference. By default we prefer IPv6 with fallback to IPv4.
   -p, --domain-fronting-port=443       A port to access for domain fronting.
-  -n, --doh-ip=9.9.9.9                 IP address of DNS-over-HTTP to use.
+  -n, --doh-ip=1.1.1.1                 IP address of DNS-over-HTTP to use.
   -t, --timeout=10s                    Network timeout to use
   -a, --antireplay-cache-size="1MB"    A size of anti-replay cache to use.
 ```

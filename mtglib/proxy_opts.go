@@ -110,7 +110,15 @@ type ProxyOpts struct {
 	// Telegram-related projects.
 	//
 	// This is an optional setting.
+	//
+	// OBSOLETE and DEPRECATED. Ignored.
 	UseTestDCs bool
+
+	// DCOverrides defines a set of IP addresses that should be used
+	// with a higher priority to those that are calculated somehow by mtg.
+	//
+	// This is an optional setting
+	DCOverrides map[int][]string
 }
 
 func (p ProxyOpts) valid() error {

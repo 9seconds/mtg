@@ -63,7 +63,7 @@ const (
 	// DefaultDOHHostname defines a default IP address for DOH host. Since mtg is
 	// simple, please pass IP address here. We do not have bootstrap servers here
 	// embedded.
-	DefaultDOHHostname = "9.9.9.9"
+	DefaultDOHHostname = "1.1.1.1"
 
 	// DNSTimeout defines a timeout for DNS queries.
 	DNSTimeout = 5 * time.Second

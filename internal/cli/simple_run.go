@@ -18,7 +18,7 @@ type SimpleRun struct {
 	TCPBuffer           string        `kong:"name='tcp-buffer',short='b',default='4KB',help='Deprecated and ignored'"`                                                 //nolint: lll
 	PreferIP            string        `kong:"name='prefer-ip',short='i',default='prefer-ipv6',help='IP preference. By default we prefer IPv6 with fallback to IPv4.'"` //nolint: lll
 	DomainFrontingPort  uint64        `kong:"name='domain-fronting-port',short='p',default='443',help='A port to access for domain fronting.'"`                        //nolint: lll
-	DOHIP               net.IP        `kong:"name='doh-ip',short='n',default='9.9.9.9',help='IP address of DNS-over-HTTP to use.'"`                                    //nolint: lll
+	DOHIP               net.IP        `kong:"name='doh-ip',short='n',default='1.1.1.1',help='IP address of DNS-over-HTTP to use.'"`                                    //nolint: lll
 	Timeout             time.Duration `kong:"name='timeout',short='t',default='10s',help='Network timeout to use'"`                                                    //nolint: lll
 	Socks5Proxies       []string      `kong:"name='socks5-proxy',short='s',help='Socks5 proxies to use for network access.'"`                                          //nolint: lll
 	AntiReplayCacheSize string        `kong:"name='antireplay-cache-size',short='a',default='1MB',help='A size of anti-replay cache to use.'"`                         //nolint: lll

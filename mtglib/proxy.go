@@ -10,11 +10,11 @@ import (
 	"time"
 
 	"github.com/9seconds/mtg/v2/essentials"
+	"github.com/9seconds/mtg/v2/mtglib/internal/dc"
 	"github.com/9seconds/mtg/v2/mtglib/internal/faketls"
 	"github.com/9seconds/mtg/v2/mtglib/internal/faketls/record"
 	"github.com/9seconds/mtg/v2/mtglib/internal/obfuscated2"
 	"github.com/9seconds/mtg/v2/mtglib/internal/relay"
-	"github.com/9seconds/mtg/v2/mtglib/internal/telegram"
 	"github.com/panjf2000/ants/v2"
 )
 
@@ -28,7 +28,7 @@ type Proxy struct {
 	tolerateTimeSkewness     time.Duration
 	domainFrontingPort       int
 	workerPool               *ants.PoolWithFunc
-	telegram                 *telegram.Telegram
+	telegram                 *dc.Telegram
 
 	secret          Secret
 	network         Network
@@ -219,18 +219,26 @@ func (p *Proxy) doObfuscated2Handshake(ctx *streamContext) error {
 }
 
 func (p *Proxy) doTelegramCall(ctx *streamContext) error {
-	dc := ctx.dc
+	dcid := ctx.dc
 
-	if p.allowFallbackOnUnknownDC && !p.telegram.IsKnownDC(dc) {
-		dc = p.telegram.GetFallbackDC()
-		ctx.logger = ctx.logger.BindInt("fallback_dc", dc)
-
+	addresses := p.telegram.GetAddresses(dcid)
+	if len(addresses) == 0 && p.allowFallbackOnUnknownDC {
+		ctx.logger = ctx.logger.BindInt("fallback_dc", dc.DefaultDC)
 		ctx.logger.Warning("unknown DC, fallbacks")
+		addresses = p.telegram.GetAddresses(dc.DefaultDC)
 	}
 
-	conn, err := p.telegram.Dial(ctx, dc)
+	var conn essentials.Conn
+	var err error
+
+	for _, addr := range addresses {
+		conn, err = p.network.Dial(addr.Network, addr.Address)
+		if err == nil {
+			break
+		}
+	}
 	if err != nil {
-		return fmt.Errorf("cannot dial to Telegram: %w", err)
+		return fmt.Errorf("no addresses to call: %w", err)
 	}
 
 	encryptor, decryptor, err := obfuscated2.ServerHandshake(conn)
@@ -292,9 +300,9 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 		return nil, fmt.Errorf("invalid settings: %w", err)
 	}
 
-	tg, err := telegram.New(opts.Network, opts.getPreferIP(), opts.UseTestDCs)
+	tg, err := dc.New(opts.getPreferIP(), opts.DCOverrides)
 	if err != nil {
-		return nil, fmt.Errorf("cannot build telegram dialer: %w", err)
+		return nil, fmt.Errorf("cannot build telegram dc fetcher: %w", err)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
