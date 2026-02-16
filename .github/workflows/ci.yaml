@@ -103,9 +103,13 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: nineseconds/mtg
+          images: |
+            nineseconds/mtg
+            ghcr.io/${{ github.repository }}
           tags: |
             type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
 
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v3
@@ -127,6 +131,14 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Login to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GH_PATH }}
 
       - name: Build and push
         uses: docker/build-push-action@v2
