@@ -71,6 +71,20 @@ tolerate-time-skewness = "5s"
 # Otherwise, chose a new DC.
 allow-fallback-on-unknown-dc = false
 
+# Telegram uses different DCs for different purposes. Unfortunately, most of
+# DCs are not public, and dependent on a location of the current user, so
+# mtg cannot know upfront about all of them, and how to access them. It has
+# a default list of DCs, including some CDN IPs, but it is possible that some
+# of them are not working for you. In this case, you can override them here.
+[[dc-overrides]]
+dc = "101"
+ips = ["127.0.0.1:443"]
+
+# mtg periodically updates its list of DCs, fetching them from Telegram itself.
+# This is a period of time between updates. Default value is 1h, and usually
+# more than enough.
+# dc-update-each = "24h"
+
 # network defines different network-related settings
 [network]
 # please be aware that mtg needs to do some external requests. For
