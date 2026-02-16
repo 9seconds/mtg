@@ -71,6 +71,15 @@ tolerate-time-skewness = "5s"
 # Otherwise, chose a new DC.
 allow-fallback-on-unknown-dc = false
 
+# Telegram uses different DCs for different purposes. Unfortunately, most of
+# DCs are not public, and dependent on a location of the current user, so
+# mtg cannot know upfront about all of them, and how to access them. It has
+# a default list of DCs, including some CDN IPs, but it is possible that some
+# of them are not working for you. In this case, you can override them here.
+[[dc-overrides]]
+dc = 101
+ips = ["127.0.0.1:443"]
+
 # network defines different network-related settings
 [network]
 # please be aware that mtg needs to do some external requests. For
@@ -84,8 +93,8 @@ allow-fallback-on-unknown-dc = false
 # resolver of the operating system and uses DOH instead. This is a host
 # it has to access.
 #
-# By default we use Quad9.
-doh-ip = "9.9.9.9"
+# By default we use Cloudflare.
+doh-ip = "1.1.1.1"
 
 # mtg can work via proxies (for now, we support only socks5). Proxy
 # configuration is done via list. So, you can specify many proxies
