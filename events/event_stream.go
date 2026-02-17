@@ -2,7 +2,7 @@ package events
 
 import (
 	"context"
-	"math/rand"
+	"math/rand/v2"
 	"runtime"
 
 	"github.com/9seconds/mtg/v2/mtglib"
