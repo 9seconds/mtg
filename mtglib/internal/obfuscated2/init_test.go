@@ -117,7 +117,7 @@ func NewServerHandshakeTestData(t *testing.T) ServerHandshakeTestData {
 
 	serverEncryptedReverted := make([]byte, len(serverEncrypted))
 
-	for i := 0; i < 32+16; i++ {
+	for i := range 32 + 16 {
 		serverEncryptedReverted[8+i] = serverEncrypted[8+32+16-1-i]
 	}
 

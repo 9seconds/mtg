@@ -64,7 +64,7 @@ func NewEventStream(observerFactories []ObserverFactory) EventStream {
 		chans:     make([]chan mtglib.Event, runtime.NumCPU()),
 	}
 
-	for i := 0; i < runtime.NumCPU(); i++ {
+	for i := range runtime.NumCPU() {
 		rv.chans[i] = make(chan mtglib.Event, 1)
 
 		if len(observerFactories) == 1 {

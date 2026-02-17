@@ -5,5 +5,5 @@ const (
 )
 
 type Logger interface {
-	Printf(msg string, args ...interface{})
+	Printf(msg string, args ...any)
 }
