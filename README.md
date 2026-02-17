@@ -162,6 +162,12 @@ This project has several main branches
 
 ## Getting started
 
+### Download mise
+
+mtg uses [mise](https://mise.jdx.dev/) to maintain its development
+dependencies + replaces a make for building things. Please
+[install](https://mise.jdx.dev/getting-started.html) it first.
+
 ### Download a tool
 
 #### Download binaries
@@ -198,13 +204,14 @@ go install github.com/9seconds/mtg/v2@latest
 ```console
 git clone https://github.com/9seconds/mtg.git
 cd mtg
-make static
+mise install
+mise tasks run build
 ```
 
 or for the docker image:
 
 ```console
-make docker
+mise tasks run image
 ```
 
 ### Generate secret
