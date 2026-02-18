@@ -6,7 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"io"
-	mrand "math/rand"
+	mrand "math/rand/v2"
 
 	"github.com/9seconds/mtg/v2/mtglib/internal/faketls/record"
 	"golang.org/x/crypto/curve25519"
@@ -36,7 +36,7 @@ func SendWelcomePacket(writer io.Writer, secret []byte, clientHello ClientHello)
 	rec.Type = record.TypeApplicationData
 	rec.Version = record.Version12
 
-	if _, err := io.CopyN(&rec.Payload, rand.Reader, int64(1024+mrand.Intn(3092))); err != nil {
+	if _, err := io.CopyN(&rec.Payload, rand.Reader, int64(1024+mrand.IntN(3092))); err != nil {
 		panic(err)
 	}
 

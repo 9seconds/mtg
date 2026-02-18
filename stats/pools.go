@@ -3,7 +3,7 @@ package stats
 import "sync"
 
 var streamInfoPool = sync.Pool{
-	New: func() interface{} {
+	New: func() any {
 		return &streamInfo{
 			tags: make(map[string]string),
 		}

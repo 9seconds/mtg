@@ -12,14 +12,11 @@ type multiObserver struct {
 
 func (m multiObserver) EventStart(evt mtglib.EventStart) {
 	wg := &sync.WaitGroup{}
-	wg.Add(len(m.observers))
 
 	for _, v := range m.observers {
-		go func(obs Observer) {
-			defer wg.Done()
-
-			obs.EventStart(evt)
-		}(v)
+		wg.Go(func() {
+			v.EventStart(evt)
+		})
 	}
 
 	wg.Wait()
@@ -27,14 +24,11 @@ func (m multiObserver) EventStart(evt mtglib.EventStart) {
 
 func (m multiObserver) EventConnectedToDC(evt mtglib.EventConnectedToDC) {
 	wg := &sync.WaitGroup{}
-	wg.Add(len(m.observers))
 
 	for _, v := range m.observers {
-		go func(obs Observer) {
-			defer wg.Done()
-
-			obs.EventConnectedToDC(evt)
-		}(v)
+		wg.Go(func() {
+			v.EventConnectedToDC(evt)
+		})
 	}
 
 	wg.Wait()
@@ -42,14 +36,11 @@ func (m multiObserver) EventConnectedToDC(evt mtglib.EventConnectedToDC) {
 
 func (m multiObserver) EventDomainFronting(evt mtglib.EventDomainFronting) {
 	wg := &sync.WaitGroup{}
-	wg.Add(len(m.observers))
 
 	for _, v := range m.observers {
-		go func(obs Observer) {
-			defer wg.Done()
-
-			obs.EventDomainFronting(evt)
-		}(v)
+		wg.Go(func() {
+			v.EventDomainFronting(evt)
+		})
 	}
 
 	wg.Wait()
@@ -57,14 +48,11 @@ func (m multiObserver) EventDomainFronting(evt mtglib.EventDomainFronting) {
 
 func (m multiObserver) EventTraffic(evt mtglib.EventTraffic) {
 	wg := &sync.WaitGroup{}
-	wg.Add(len(m.observers))
 
 	for _, v := range m.observers {
-		go func(obs Observer) {
-			defer wg.Done()
-
-			obs.EventTraffic(evt)
-		}(v)
+		wg.Go(func() {
+			v.EventTraffic(evt)
+		})
 	}
 
 	wg.Wait()
@@ -72,14 +60,11 @@ func (m multiObserver) EventTraffic(evt mtglib.EventTraffic) {
 
 func (m multiObserver) EventFinish(evt mtglib.EventFinish) {
 	wg := &sync.WaitGroup{}
-	wg.Add(len(m.observers))
 
 	for _, v := range m.observers {
-		go func(obs Observer) {
-			defer wg.Done()
-
-			obs.EventFinish(evt)
-		}(v)
+		wg.Go(func() {
+			v.EventFinish(evt)
+		})
 	}
 
 	wg.Wait()
@@ -87,14 +72,11 @@ func (m multiObserver) EventFinish(evt mtglib.EventFinish) {
 
 func (m multiObserver) EventConcurrencyLimited(evt mtglib.EventConcurrencyLimited) {
 	wg := &sync.WaitGroup{}
-	wg.Add(len(m.observers))
 
 	for _, v := range m.observers {
-		go func(obs Observer) {
-			defer wg.Done()
-
-			obs.EventConcurrencyLimited(evt)
-		}(v)
+		wg.Go(func() {
+			v.EventConcurrencyLimited(evt)
+		})
 	}
 
 	wg.Wait()
@@ -102,14 +84,11 @@ func (m multiObserver) EventConcurrencyLimited(evt mtglib.EventConcurrencyLimite
 
 func (m multiObserver) EventIPBlocklisted(evt mtglib.EventIPBlocklisted) {
 	wg := &sync.WaitGroup{}
-	wg.Add(len(m.observers))
 
 	for _, v := range m.observers {
-		go func(obs Observer) {
-			defer wg.Done()
-
-			obs.EventIPBlocklisted(evt)
-		}(v)
+		wg.Go(func() {
+			v.EventIPBlocklisted(evt)
+		})
 	}
 
 	wg.Wait()
@@ -117,14 +96,11 @@ func (m multiObserver) EventIPBlocklisted(evt mtglib.EventIPBlocklisted) {
 
 func (m multiObserver) EventReplayAttack(evt mtglib.EventReplayAttack) {
 	wg := &sync.WaitGroup{}
-	wg.Add(len(m.observers))
 
 	for _, v := range m.observers {
-		go func(obs Observer) {
-			defer wg.Done()
-
-			obs.EventReplayAttack(evt)
-		}(v)
+		wg.Go(func() {
+			v.EventReplayAttack(evt)
+		})
 	}
 
 	wg.Wait()
@@ -132,14 +108,11 @@ func (m multiObserver) EventReplayAttack(evt mtglib.EventReplayAttack) {
 
 func (m multiObserver) EventIPListSize(evt mtglib.EventIPListSize) {
 	wg := &sync.WaitGroup{}
-	wg.Add(len(m.observers))
 
 	for _, v := range m.observers {
-		go func(obs Observer) {
-			defer wg.Done()
-
-			obs.EventIPListSize(evt)
-		}(v)
+		wg.Go(func() {
+			v.EventIPListSize(evt)
+		})
 	}
 
 	wg.Wait()

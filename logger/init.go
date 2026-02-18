@@ -8,5 +8,5 @@ package logger
 // commonly used by many 3pp tools. While mtglib itself does not need it, it is
 // always a good idea to support it and have a transient end to end logging.
 type StdLikeLogger interface {
-	Printf(format string, args ...interface{})
+	Printf(format string, args ...any)
 }

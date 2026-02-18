@@ -2,9 +2,9 @@ package faketls_test
 
 import (
 	"bytes"
+	"crypto/rand"
 	"errors"
 	"io"
-	"math/rand"
 	"testing"
 
 	"github.com/9seconds/mtg/v2/internal/testlib"
@@ -123,7 +123,7 @@ func (suite *ConnTestSuite) TestWrite() {
 	suite.connMock.On("Write", mock.Anything).Return(0, nil)
 
 	dataToRec := make([]byte, record.TLSMaxRecordSize*2)
-	rand.Read(dataToRec) //nolint: staticcheck
+	rand.Read(dataToRec) //nolint: staticcheck, errcheck
 
 	n, err := suite.c.Write(dataToRec)
 	suite.NoError(err)
