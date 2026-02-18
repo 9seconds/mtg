@@ -112,18 +112,15 @@ func (f *Firehol) update() {
 	defer cancel()
 
 	wg := &sync.WaitGroup{}
-	wg.Add(len(f.blocklists))
 
 	mutex := &sync.Mutex{}
 	ranger := cidranger.NewPCTrieRanger()
 
 	for _, v := range f.blocklists {
-		go func(file files.File) {
-			defer wg.Done()
+		wg.Go(func() {
+			logger := f.logger.BindStr("filename", v.String())
 
-			logger := f.logger.BindStr("filename", file.String())
-
-			fileContent, err := file.Open(ctx)
+			fileContent, err := v.Open(ctx)
 			if err != nil {
 				logger.WarningError("update has failed", err)
 
@@ -135,7 +132,7 @@ func (f *Firehol) update() {
 			if err := f.updateFromFile(mutex, ranger, bufio.NewScanner(fileContent)); err != nil {
 				logger.WarningError("update has failed", err)
 			}
-		}(v)
+		})
 	}
 
 	wg.Wait()
