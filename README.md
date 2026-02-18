@@ -17,9 +17,9 @@ but I do not see any reasonable point of using it: adtag requires communication
 via a fragile set of middle proxies, requires complex setup that must expose
 a public IPs, has lower bandwidth and latency.
 
+mtg idea is simple: minimal unbloated proxy that can handle a reasonable scale
 ~10-20k simultaneous connections, has no user management, but ticks all
 checkboxes related to its main intent: provide a way to use Telegram.
-mtg idea is simple: minimal unbloated proxy that can handle a reasonable scale
 
 ## Rationale
 
