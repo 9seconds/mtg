@@ -10,6 +10,17 @@ Highly-opinionated (ex-bullshit-free) MTPROTO proxy for
 **If you use v1.0 or upgrade broke you proxy, please read the chapter
 [Version 2](#version-2)**
 
+If you want to have a proxy that _supports adtag_ (possibility to promote a
+channel with a special Telegram bot), I recommend to use
+[telemt](https://github.com/telemt/telemt) project. v1 of mtg supports it
+but I do not see any reasonable point of using it: adtag requires communication
+via a fragile set of middle proxies, requires complex setup that must expose
+a public IPs, has lower bandwidth and latency.
+
+~10-20k simultaneous connections, has no user management, but ticks all
+checkboxes related to its main intent: provide a way to use Telegram.
+mtg idea is simple: minimal unbloated proxy that can handle a reasonable scale
+
 ## Rationale
 
 There are several available proxies for Telegram MTPROTO available. Here
