@@ -52,6 +52,12 @@ that probably matter.
   way of doing business I suppose. I think the only viable way is to
   have a proxy that can be restored anywhere easily.
 
+* Supports proxy protocol v1/v2
+
+This makes integration with loadbalancers like HAProxy and ELB a first class
+citizen by supporting their
+[commuication protocols](https://www.haproxy.org/download/2.3/doc/proxy-protocol.txt).
+
 * **A single secret**
 
   I think that multiple secrets solve no problems and just complex

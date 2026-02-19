@@ -10,6 +10,7 @@ import (
 	"github.com/9seconds/mtg/v2/antireplay"
 	"github.com/9seconds/mtg/v2/events"
 	"github.com/9seconds/mtg/v2/internal/config"
+	"github.com/9seconds/mtg/v2/internal/proxyprotocol"
 	"github.com/9seconds/mtg/v2/internal/utils"
 	"github.com/9seconds/mtg/v2/ipblocklist"
 	"github.com/9seconds/mtg/v2/ipblocklist/files"
@@ -17,6 +18,7 @@ import (
 	"github.com/9seconds/mtg/v2/mtglib"
 	"github.com/9seconds/mtg/v2/network"
 	"github.com/9seconds/mtg/v2/stats"
+	"github.com/pires/go-proxyproto"
 	"github.com/rs/zerolog"
 	"github.com/yl2chen/cidranger"
 )
@@ -273,6 +275,14 @@ func runProxy(conf *config.Config, version string) error { //nolint: funlen
 	listener, err := utils.NewListener(conf.BindTo.Get(""), 0)
 	if err != nil {
 		return fmt.Errorf("cannot start proxy: %w", err)
+	}
+
+	if conf.ProxyProtocolListener.Get(false) {
+		listener = &proxyprotocol.ListenerAdapter{
+			Listener: proxyproto.Listener{
+				Listener: listener,
+			},
+		}
 	}
 
 	ctx := utils.RootContext()
