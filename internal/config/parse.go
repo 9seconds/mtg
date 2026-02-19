@@ -13,6 +13,7 @@ type tomlConfig struct {
 	AllowFallbackOnUnknownDC bool   `toml:"allow-fallback-on-unknown-dc" json:"allowFallbackOnUnknownDc,omitempty"`
 	Secret                   string `toml:"secret" json:"secret"`
 	BindTo                   string `toml:"bind-to" json:"bindTo"`
+	ProxyProtocolListener    bool   `toml:"proxy-protocol-listener" json:"proxyProtocolListener"`
 	PreferIP                 string `toml:"prefer-ip" json:"preferIp,omitempty"`
 	DomainFrontingPort       uint   `toml:"domain-fronting-port" json:"domainFrontingPort,omitempty"`
 	TolerateTimeSkewness     string `toml:"tolerate-time-skewness" json:"tolerateTimeSkewness,omitempty"`

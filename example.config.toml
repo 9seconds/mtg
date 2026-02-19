@@ -23,6 +23,15 @@ secret = "ee367a189aee18fa31c190054efd4a8e9573746f726167652e676f6f676c6561706973
 # Host:port pair to run proxy on.
 bind-to = "0.0.0.0:3128"
 
+# This defines what types of traffic mtg listens to. If you are not sure,
+# then definitely keep it disable. Enable it only and only if incoming traffic
+# is coming from some sort of load-balancer like HAProxy or ELB.
+# https://www.haproxy.org/download/2.3/doc/proxy-protocol.txt
+#
+# mtg uses a library that supports v1 and v2 versions of ProxyProtocol.
+# default value is false.
+# proxy-protocol-listener = false
+
 # Defines how many concurrent connections are allowed to this proxy.
 # All other incoming connections are going to be dropped.
 concurrency = 8192

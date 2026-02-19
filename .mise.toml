@@ -1,7 +1,10 @@
 [tools]
-go = "latest"
+"go:golang.org/x/pkgsite/cmd/pkgsite" = "latest"
 "go:golang.org/x/tools/gopls" = "latest"
 "go:mvdan.cc/gofumpt" = "latest"
+go = "latest"
+golangci-lint = "latest"
+goreleaser = "latest"
 
 [vars]
 fuzzflags = "-fuzztime=120s"
@@ -21,7 +24,6 @@ run = [
 
 [tasks.lint]
 description = "Run linter"
-tools.golangci-lint = "latest"
 run = "golangci-lint run"
 
 [tasks.test]
@@ -77,7 +79,6 @@ go build \
 
 [tasks.release]
 description = "Create release tarballs"
-tools.goreleaser = "latest"
 sources = ["**/*.go", "go.mod", "go.sum", ".goreleaser.yml"]
 run = [
     "goreleaser --snapshot --clean",
@@ -92,7 +93,6 @@ run = "docker buildx build --pull -t mtg ."
 
 [tasks.docs]
 description = "Run doc server"
-tools."go:golang.org/x/pkgsite/cmd/pkgsite" = "latest"
 run = "pkgsite -http 0.0.0.0:10000"
 
 [tasks.fmt]

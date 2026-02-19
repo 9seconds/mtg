@@ -28,6 +28,7 @@ require (
 
 require (
 	github.com/pelletier/go-toml/v2 v2.2.4
+	github.com/pires/go-proxyproto v0.11.0
 	github.com/txthinking/socks5 v0.0.0-20251011041537-5c31f201a10e
 	github.com/yl2chen/cidranger v1.0.2
 )

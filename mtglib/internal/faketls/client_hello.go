@@ -76,7 +76,7 @@ func ParseClientHello(secret, handshake []byte) (ClientHello, error) {
 
 	computedRandom := mac.Sum(nil)
 
-	for i := 0; i < RandomLen; i++ {
+	for i := range RandomLen {
 		computedRandom[i] ^= hello.Random[i]
 	}
 
