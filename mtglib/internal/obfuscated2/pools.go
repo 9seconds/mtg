@@ -9,12 +9,12 @@ import (
 
 var (
 	sha256HasherPool = sync.Pool{
-		New: func() interface{} {
+		New: func() any {
 			return sha256.New()
 		},
 	}
 	bytesBufferPool = sync.Pool{
-		New: func() interface{} {
+		New: func() any {
 			return &bytes.Buffer{}
 		},
 	}

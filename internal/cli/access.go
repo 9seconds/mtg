@@ -61,11 +61,8 @@ func (a *Access) Run(cli *CLI, version string) error {
 	}
 
 	wg := &sync.WaitGroup{}
-	wg.Add(2)
 
-	go func() {
-		defer wg.Done()
-
+	wg.Go(func() {
 		ip := a.PublicIPv4
 		if ip == nil {
 			ip = a.getIP(ntw, "tcp4")
@@ -76,11 +73,8 @@ func (a *Access) Run(cli *CLI, version string) error {
 		}
 
 		resp.IPv4 = a.makeURLs(conf, ip)
-	}()
-
-	go func() {
-		defer wg.Done()
-
+	})
+	wg.Go(func() {
 		ip := a.PublicIPv6
 		if ip == nil {
 			ip = a.getIP(ntw, "tcp6")
@@ -91,7 +85,7 @@ func (a *Access) Run(cli *CLI, version string) error {
 		}
 
 		resp.IPv6 = a.makeURLs(conf, ip)
-	}()
+	})
 
 	wg.Wait()
 

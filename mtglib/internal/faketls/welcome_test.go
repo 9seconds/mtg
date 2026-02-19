@@ -3,8 +3,8 @@ package faketls_test
 import (
 	"bytes"
 	"crypto/hmac"
+	"crypto/rand"
 	"crypto/sha256"
-	"math/rand"
 	"testing"
 	"time"
 

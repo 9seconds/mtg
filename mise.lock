@@ -7,10 +7,32 @@ backend = "core:go"
 "platforms.macos-x64" = { checksum = "sha256:1ca28b7703cbea05a65b2a1d92d6b308610ef92f8824578a0874f2e60c9d5a22", url = "https://dl.google.com/go/go1.26.0.darwin-amd64.tar.gz"}
 "platforms.windows-x64" = { checksum = "sha256:9bbe0fc64236b2b51f6255c05c4232532b8ecc0e6d2e00950bd3021d8a4d07d4", url = "https://dl.google.com/go/go1.26.0.windows-amd64.zip"}
 
+[[tools."go:golang.org/x/pkgsite/cmd/pkgsite"]]
+version = "latest"
+backend = "go:golang.org/x/pkgsite/cmd/pkgsite"
+
 [[tools."go:golang.org/x/tools/gopls"]]
-version = "0.21.0"
+version = "0.21.1"
 backend = "go:golang.org/x/tools/gopls"
 
 [[tools."go:mvdan.cc/gofumpt"]]
 version = "0.9.2"
 backend = "go:mvdan.cc/gofumpt"
+
+[[tools.golangci-lint]]
+version = "2.10.1"
+backend = "aqua:golangci/golangci-lint"
+"platforms.linux-arm64" = { checksum = "sha256:6652b42ae02915eb2f9cb2a2e0cac99514c8eded8388d88ae3e06e1a52c00de8", url = "https://github.com/golangci/golangci-lint/releases/download/v2.10.1/golangci-lint-2.10.1-linux-arm64.tar.gz"}
+"platforms.linux-x64" = { checksum = "sha256:dfa775874cf0561b404a02a8f4481fc69b28091da95aa697259820d429b09c99", url = "https://github.com/golangci/golangci-lint/releases/download/v2.10.1/golangci-lint-2.10.1-linux-amd64.tar.gz"}
+"platforms.macos-arm64" = { checksum = "sha256:03bfadf67e52b441b7ec21305e501c717df93c959836d66c7f97312654acb297", url = "https://github.com/golangci/golangci-lint/releases/download/v2.10.1/golangci-lint-2.10.1-darwin-arm64.tar.gz"}
+"platforms.macos-x64" = { checksum = "sha256:66fb0da81b8033b477f97eea420d4b46b230ca172b8bb87c6610109f3772b6b6", url = "https://github.com/golangci/golangci-lint/releases/download/v2.10.1/golangci-lint-2.10.1-darwin-amd64.tar.gz"}
+"platforms.windows-x64" = { checksum = "sha256:c60c87695e79db8e320f0e5be885059859de52bb5ee5f11be5577828570bc2a3", url = "https://github.com/golangci/golangci-lint/releases/download/v2.10.1/golangci-lint-2.10.1-windows-amd64.zip"}
+
+[[tools.goreleaser]]
+version = "2.13.3"
+backend = "aqua:goreleaser/goreleaser"
+"platforms.linux-arm64" = { checksum = "sha256:156656d0f874542d618568bd50afd3d33ced2e8aab2c60cc7c21e1b9fa52031e", url = "https://github.com/goreleaser/goreleaser/releases/download/v2.13.3/goreleaser_Linux_arm64.tar.gz"}
+"platforms.linux-x64" = { checksum = "sha256:4b66f2f78f78561330350651ade557b70328664718490f37834749073af21d20", url = "https://github.com/goreleaser/goreleaser/releases/download/v2.13.3/goreleaser_Linux_x86_64.tar.gz"}
+"platforms.macos-arm64" = { checksum = "sha256:5516c37779efb3935d5b213cda3b0b9025ae94ddbcb51df6919acbcdef4194b0", url = "https://github.com/goreleaser/goreleaser/releases/download/v2.13.3/goreleaser_Darwin_all.tar.gz"}
+"platforms.macos-x64" = { checksum = "sha256:5516c37779efb3935d5b213cda3b0b9025ae94ddbcb51df6919acbcdef4194b0", url = "https://github.com/goreleaser/goreleaser/releases/download/v2.13.3/goreleaser_Darwin_all.tar.gz"}
+"platforms.windows-x64" = { checksum = "sha256:c5586c4ed749ca358ad61ed73ee4b8039cfa68daae8c23e69fb086d549dfb31d", url = "https://github.com/goreleaser/goreleaser/releases/download/v2.13.3/goreleaser_Windows_x86_64.zip"}

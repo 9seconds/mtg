@@ -10,6 +10,17 @@ Highly-opinionated (ex-bullshit-free) MTPROTO proxy for
 **If you use v1.0 or upgrade broke you proxy, please read the chapter
 [Version 2](#version-2)**
 
+If you want to have a proxy that _supports adtag_ (possibility to promote a
+channel with a special Telegram bot), I recommend to use
+[telemt](https://github.com/telemt/telemt) project. v1 of mtg supports it
+but I do not see any reasonable point of using it: adtag requires communication
+via a fragile set of middle proxies, requires complex setup that must expose
+a public IPs, has lower bandwidth and latency.
+
+mtg idea is simple: minimal unbloated proxy that can handle a reasonable scale
+~10-20k simultaneous connections, has no user management, but ticks all
+checkboxes related to its main intent: provide a way to use Telegram.
+
 ## Rationale
 
 There are several available proxies for Telegram MTPROTO available. Here
@@ -18,6 +29,7 @@ are the most notable:
 * [Official](https://github.com/TelegramMessenger/MTProxy)
 * [Python](https://github.com/alexbers/mtprotoproxy)
 * [Erlang](https://github.com/seriyps/mtproto_proxy)
+* [Telemt (Rust)](https://github.com/telemt/telemt)
 
 You can use any of these. They work great and all implementations have
 feature parity now. This includes support of adtag, replay attack
@@ -39,6 +51,12 @@ that probably matter.
   [ShadowSocks](https://shadowsocks.org): promoted channels is a strange
   way of doing business I suppose. I think the only viable way is to
   have a proxy that can be restored anywhere easily.
+
+* **Supports proxy protocol v1/v2**
+
+  This makes integration with loadbalancers like HAProxy and ELB a first class
+  citizen by supporting their
+  [commuication protocols](https://www.haproxy.org/download/2.3/doc/proxy-protocol.txt).
 
 * **A single secret**
 
@@ -162,6 +180,12 @@ This project has several main branches
 
 ## Getting started
 
+### Download mise
+
+mtg uses [mise](https://mise.jdx.dev/) to maintain its development
+dependencies + replaces a make for building things. Please
+[install](https://mise.jdx.dev/getting-started.html) it first.
+
 ### Download a tool
 
 #### Download binaries
@@ -198,13 +222,14 @@ go install github.com/9seconds/mtg/v2@latest
 ```console
 git clone https://github.com/9seconds/mtg.git
 cd mtg
-make static
+mise install
+mise tasks run build
 ```
 
 or for the docker image:
 
 ```console
-make docker
+mise tasks run image
 ```
 
 ### Generate secret

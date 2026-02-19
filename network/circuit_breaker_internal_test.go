@@ -52,17 +52,9 @@ func (suite *CircuitBreakerTestSuite) TestMultipleRunsOk() {
 		Return(suite.connMock, nil)
 
 	wg := &sync.WaitGroup{}
-	wg.Add(5)
 
-	go func() {
-		wg.Wait()
-		suite.ctxCancel()
-	}()
-
-	for i := 0; i < 5; i++ {
-		go func() {
-			defer wg.Done()
-
+	for range 5 {
+		wg.Go(func() {
 			conn, err := suite.d.DialContext(suite.ctx, "tcp", "127.0.0.1")
 
 			suite.mutex.Lock()
@@ -70,8 +62,13 @@ func (suite *CircuitBreakerTestSuite) TestMultipleRunsOk() {
 
 			suite.NoError(err)
 			suite.Equal("127.0.0.1:3128", conn.RemoteAddr().String())
-		}()
+		})
 	}
+
+	go func() {
+		wg.Wait()
+		suite.ctxCancel()
+	}()
 
 	suite.Eventually(func() bool {
 		_, ok := <-suite.ctx.Done()
