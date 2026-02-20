@@ -1,0 +1,13 @@
+{
+  "secret": "NnoYmu4Y+jHBkAVO/UqOlQ",
+  "frame": "M2WyxeiwIQB+ZOFxNzSNHtu9OdESkfxv3JkKFimCxUoYA3BD/Ql9nXB/OIonCKLUKCcS0VzZ2P6/+5oQ9GI8YA",
+  "dc": 2,
+  "encrypted": {
+    "text": "AQIDBAUGBwgJCg",
+    "cipher": "tzAwrCz00odERg"
+  },
+  "decrypted": {
+    "text": "QkIvwGQDgA",
+    "cipher": "YWJjZGVmZw"
+  }
+}
