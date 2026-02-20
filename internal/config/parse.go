@@ -16,6 +16,7 @@ type tomlConfig struct {
 	ProxyProtocolListener    bool   `toml:"proxy-protocol-listener" json:"proxyProtocolListener"`
 	PreferIP                 string `toml:"prefer-ip" json:"preferIp,omitempty"`
 	DomainFrontingPort       uint   `toml:"domain-fronting-port" json:"domainFrontingPort,omitempty"`
+	DomainFrontingIP         string `toml:"domain-fronting-ip" json:"domainFrontingIp,omitempty"`
 	TolerateTimeSkewness     string `toml:"tolerate-time-skewness" json:"tolerateTimeSkewness,omitempty"`
 	Concurrency              uint   `toml:"concurrency" json:"concurrency,omitempty"`
 	Defense                  struct {

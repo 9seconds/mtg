@@ -59,6 +59,14 @@ prefer-ip = "prefer-ipv6"
 # access.
 domain-fronting-port = 443
 
+# By default, mtg resolves the fronting hostname (from the secret) via DNS
+# to establish a TCP connection. If DNS resolution of that hostname is blocked,
+# you can specify an IP address to connect to directly. The hostname is still
+# used for SNI in the TLS handshake.
+#
+# default value is not set (DNS resolution is used).
+# domain-fronting-ip = "142.250.185.112"
+
 # FakeTLS can compare timestamps to prevent probes. Each message has
 # encrypted timestamp. So, mtg can compare this timestamp and decide if
 # we need to proceed with connection or not.
