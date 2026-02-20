@@ -27,6 +27,7 @@ type Proxy struct {
 	allowFallbackOnUnknownDC bool
 	tolerateTimeSkewness     time.Duration
 	domainFrontingPort       int
+	domainFrontingIP         string
 	workerPool               *ants.PoolWithFunc
 	telegram                 *dc.Telegram
 
@@ -40,8 +41,14 @@ type Proxy struct {
 }
 
 // DomainFrontingAddress returns a host:port pair for a fronting domain.
+// If DomainFrontingIP is set, it is used instead of resolving the hostname.
 func (p *Proxy) DomainFrontingAddress() string {
-	return net.JoinHostPort(p.secret.Host, strconv.Itoa(p.domainFrontingPort))
+	host := p.secret.Host
+	if p.domainFrontingIP != "" {
+		host = p.domainFrontingIP
+	}
+
+	return net.JoinHostPort(host, strconv.Itoa(p.domainFrontingPort))
 }
 
 // ServeConn serves a connection. We do not check IP blocklist and concurrency
@@ -317,6 +324,7 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 		eventStream:              opts.EventStream,
 		logger:                   opts.getLogger("proxy"),
 		domainFrontingPort:       opts.getDomainFrontingPort(),
+		domainFrontingIP:         opts.DomainFrontingIP,
 		tolerateTimeSkewness:     opts.getTolerateTimeSkewness(),
 		allowFallbackOnUnknownDC: opts.AllowFallbackOnUnknownDC,
 		telegram:                 tg,
