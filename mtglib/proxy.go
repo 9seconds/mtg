@@ -297,12 +297,15 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 		return nil, fmt.Errorf("invalid settings: %w", err)
 	}
 
-	tg, err := dc.New(opts.getPreferIP(), opts.DCOverrides)
+	tg, err := dc.New(opts.getPreferIP())
 	if err != nil {
 		return nil, fmt.Errorf("cannot build telegram dc fetcher: %w", err)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
+	logger := opts.getLogger("proxy")
+	updatersLogger := logger.Named("telegram-updaters")
+
 	proxy := &Proxy{
 		ctx:                      ctx,
 		ctxCancel:                cancel,
@@ -312,7 +315,7 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 		blocklist:                opts.IPBlocklist,
 		allowlist:                opts.IPAllowlist,
 		eventStream:              opts.EventStream,
-		logger:                   opts.getLogger("proxy"),
+		logger:                   logger,
 		domainFrontingPort:       opts.getDomainFrontingPort(),
 		tolerateTimeSkewness:     opts.getTolerateTimeSkewness(),
 		allowFallbackOnUnknownDC: opts.AllowFallbackOnUnknownDC,
@@ -321,6 +324,14 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 			Secret: opts.Secret.Key[:],
 		},
 	}
+
+	publicConfigUpdater := dc.NewPublicConfigUpdater(
+		tg,
+		updatersLogger.Named("public-config"),
+		opts.Network.MakeHTTPClient(nil),
+	)
+	go publicConfigUpdater.Run(ctx, dc.PublicConfigUpdateURLv4, "tcp4")
+	go publicConfigUpdater.Run(ctx, dc.PublicConfigUpdateURLv6, "tcp6")
 
 	pool, err := ants.NewPoolWithFunc(opts.getConcurrency(),
 		func(arg any) {

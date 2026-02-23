@@ -1,17 +1,23 @@
 package dc
 
 import (
+	"context"
 	"fmt"
-	"net"
 	"strings"
+	"sync"
 )
 
 type Telegram struct {
+	ctx      context.Context
+	lock     sync.RWMutex
 	view     dcView
 	preferIP preferIP
 }
 
 func (t *Telegram) GetAddresses(dc int) []Addr {
+	t.lock.RLock()
+	defer t.lock.RUnlock()
+
 	switch t.preferIP {
 	case preferIPOnlyIPv4:
 		return t.view.getV4(dc)
@@ -24,7 +30,7 @@ func (t *Telegram) GetAddresses(dc int) []Addr {
 	return append(t.view.getV6(dc), t.view.getV4(dc)...)
 }
 
-func New(ipPreference string, userOverrides map[int][]string) (*Telegram, error) {
+func New(ipPreference string) (*Telegram, error) {
 	var pref preferIP
 
 	switch strings.ToLower(ipPreference) {
@@ -40,40 +46,7 @@ func New(ipPreference string, userOverrides map[int][]string) (*Telegram, error)
 		return nil, fmt.Errorf("unknown ip preference %s", ipPreference)
 	}
 
-	overrides := dcAddrSet{
-		v4: map[int][]Addr{},
-		v6: map[int][]Addr{},
-	}
-	for dc, addrs := range userOverrides {
-		for _, addr := range addrs {
-			host, _, err := net.SplitHostPort(addr)
-			if err != nil {
-				return nil, fmt.Errorf("incorrect host %s: %w", addr, err)
-			}
-
-			parsed := net.ParseIP(host)
-			if parsed == nil {
-				return nil, fmt.Errorf("incorrect host %s", addr)
-			}
-
-			if parsed.To4() != nil {
-				overrides.v4[dc] = append(overrides.v4[dc], Addr{
-					Network: "tcp4",
-					Address: addr,
-				})
-			} else {
-				overrides.v6[dc] = append(overrides.v6[dc], Addr{
-					Network: "tcp6",
-					Address: addr,
-				})
-			}
-		}
-	}
-
 	return &Telegram{
-		view: dcView{
-			overrides: overrides,
-		},
 		preferIP: pref,
 	}, nil
 }

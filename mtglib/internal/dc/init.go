@@ -1,5 +1,10 @@
 package dc
 
+import (
+	"context"
+	"time"
+)
+
 type preferIP uint8
 
 const (
@@ -10,12 +15,27 @@ const (
 )
 
 const (
+	// Default DC to connect to if not sure.
 	DefaultDC = 2
+
+	// How often should we request updates from
+	// https://core.telegram.org/getProxyConfig
+	PublicConfigUpdateEach  = time.Hour
+	PublicConfigUpdateURLv4 = "https://core.telegram.org/getProxyConfig"
+	PublicConfigUpdateURLv6 = "https://core.telegram.org/getProxyConfigV6"
+
+	// How often should we extract hosts from Telegram using help.getConfig
+	// method.
+	OwnConfigUpdateEach = time.Hour
 )
 
 type Logger interface {
 	Info(msg string)
 	WarningError(msg string, err error)
+}
+
+type Updater interface {
+	Run(ctx context.Context)
 }
 
 var (
@@ -54,19 +74,6 @@ var (
 			},
 			5: {
 				{Network: "tcp6", Address: "[2001:b28:f23f:f005::a]:443"},
-			},
-		},
-	}
-
-	defaultDCOverridesAddrSet = dcAddrSet{
-		v4: map[int][]Addr{
-			203: {
-				{Network: "tcp4", Address: "91.105.192.100:443"},
-			},
-		},
-		v6: map[int][]Addr{
-			203: {
-				{Network: "tcp6", Address: "[2a0a:f280:0203:000a:5000:0000:0000:0100]:443"},
 			},
 		},
 	}

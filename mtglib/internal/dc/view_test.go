@@ -16,7 +16,7 @@ type ViewTestSuite struct {
 
 func (suite *ViewTestSuite) SetupSuite() {
 	suite.view = dcView{
-		overrides: dcAddrSet{
+		publicConfigs: dcAddrSet{
 			v4: map[int][]Addr{
 				111: {
 					{Network: "tcp4", Address: "127.0.0.1:443"},
@@ -37,15 +37,14 @@ func (suite *ViewTestSuite) SetupSuite() {
 func (suite *ViewTestSuite) TestGetV4() {
 	testData := map[int][]Addr{
 		111: {
-			{"tcp4", "127.0.0.1:443"},
+			{Network: "tcp4", Address: "127.0.0.1:443"},
 		},
 		203: {
-			{"tcp4", "127.0.0.2:443"},
-			{"tcp4", "91.105.192.100:443"},
+			{Network: "tcp4", Address: "127.0.0.2:443"},
 		},
 		2: {
-			{"tcp4", "149.154.167.51:443"},
-			{"tcp4", "95.161.76.100:443"},
+			{Network: "tcp4", Address: "149.154.167.51:443"},
+			{Network: "tcp4", Address: "95.161.76.100:443"},
 		},
 	}
 
@@ -60,11 +59,10 @@ func (suite *ViewTestSuite) TestGetV6() {
 	testData := map[int][]Addr{
 		111: {},
 		203: {
-			{"tcp6", "xxx"},
-			{"tcp6", "[2a0a:f280:0203:000a:5000:0000:0000:0100]:443"},
+			{Network: "tcp6", Address: "xxx"},
 		},
 		1: {
-			{"tcp6", "[2001:b28:f23d:f001::a]:443"},
+			{Network: "tcp6", Address: "[2001:b28:f23d:f001::a]:443"},
 		},
 	}
 
