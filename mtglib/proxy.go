@@ -243,14 +243,14 @@ func (p *Proxy) doTelegramCall(ctx *streamContext) error {
 		return fmt.Errorf("no addresses to call: %w", err)
 	}
 
-	conn, err = foundAddr.Obfuscator.SendHandshake(conn, ctx.dc)
+	tgConn, err := foundAddr.Obfuscator.SendHandshake(conn, ctx.dc)
 	if err != nil {
 		conn.Close()
 		return fmt.Errorf("cannot perform server handshake: %w", err)
 	}
 
 	ctx.telegramConn = connTraffic{
-		Conn:     conn,
+		Conn:     tgConn,
 		streamID: ctx.streamID,
 		stream:   p.eventStream,
 		ctx:      ctx,
