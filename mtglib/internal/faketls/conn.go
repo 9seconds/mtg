@@ -47,10 +47,7 @@ func (c *Conn) Write(p []byte) (int, error) {
 	rec.Type = record.TypeApplicationData
 	rec.Version = record.Version12
 
-	sendBuffer := acquireBytesBuffer()
-	defer releaseBytesBuffer(sendBuffer)
-
-	lenP := len(p)
+	written := 0
 
 	for len(p) > 0 {
 		chunkSize := rand.IntN(record.TLSMaxRecordSize)
@@ -60,14 +57,16 @@ func (c *Conn) Write(p []byte) (int, error) {
 
 		rec.Payload.Reset()
 		rec.Payload.Write(p[:chunkSize])
-		rec.Dump(sendBuffer) //nolint: errcheck
+
+		err := rec.Dump(c.Conn)
+		written += chunkSize
+
+		if err != nil {
+			return written, err
+		}
 
 		p = p[chunkSize:]
 	}
 
-	if _, err := c.Conn.Write(sendBuffer.Bytes()); err != nil {
-		return 0, err //nolint: wrapcheck
-	}
-
-	return lenP, nil
+	return written, nil
 }
