@@ -13,7 +13,7 @@ import (
 	"github.com/9seconds/mtg/v2/mtglib/internal/dc"
 	"github.com/9seconds/mtg/v2/mtglib/internal/faketls"
 	"github.com/9seconds/mtg/v2/mtglib/internal/faketls/record"
-	"github.com/9seconds/mtg/v2/mtglib/internal/obfuscated2"
+	"github.com/9seconds/mtg/v2/mtglib/internal/obfuscation"
 	"github.com/9seconds/mtg/v2/mtglib/internal/relay"
 	"github.com/panjf2000/ants/v2"
 )
@@ -29,6 +29,7 @@ type Proxy struct {
 	domainFrontingPort       int
 	workerPool               *ants.PoolWithFunc
 	telegram                 *dc.Telegram
+	clientObfuscatror        obfuscation.Obfuscator
 
 	secret          Secret
 	network         Network
@@ -70,8 +71,8 @@ func (p *Proxy) ServeConn(conn essentials.Conn) {
 		return
 	}
 
-	if err := p.doObfuscated2Handshake(ctx); err != nil {
-		p.logger.InfoError("obfuscated2 handshake is failed", err)
+	if err := p.doObfuscatedHandshake(ctx); err != nil {
+		p.logger.InfoError("obfuscated handshake is failed", err)
 
 		return
 	}
@@ -201,19 +202,15 @@ func (p *Proxy) doFakeTLSHandshake(ctx *streamContext) bool {
 	return true
 }
 
-func (p *Proxy) doObfuscated2Handshake(ctx *streamContext) error {
-	dc, encryptor, decryptor, err := obfuscated2.ClientHandshake(p.secret.Key[:], ctx.clientConn)
+func (p *Proxy) doObfuscatedHandshake(ctx *streamContext) error {
+	dc, conn, err := p.clientObfuscatror.ReadHandshake(ctx.clientConn)
 	if err != nil {
 		return fmt.Errorf("cannot process client handshake: %w", err)
 	}
 
 	ctx.dc = dc
+	ctx.clientConn = conn
 	ctx.logger = ctx.logger.BindInt("dc", dc)
-	ctx.clientConn = obfuscated2.Conn{
-		Conn:      ctx.clientConn,
-		Encryptor: encryptor,
-		Decryptor: decryptor,
-	}
 
 	return nil
 }
@@ -223,17 +220,22 @@ func (p *Proxy) doTelegramCall(ctx *streamContext) error {
 
 	addresses := p.telegram.GetAddresses(dcid)
 	if len(addresses) == 0 && p.allowFallbackOnUnknownDC {
-		ctx.logger = ctx.logger.BindInt("fallback_dc", dc.DefaultDC)
+		ctx.logger = ctx.logger.BindInt("original_dc", dcid)
 		ctx.logger.Warning("unknown DC, fallbacks")
+		ctx.dc = dc.DefaultDC
 		addresses = p.telegram.GetAddresses(dc.DefaultDC)
 	}
 
-	var conn essentials.Conn
-	var err error
+	var (
+		conn      essentials.Conn
+		err       error
+		foundAddr dc.Addr
+	)
 
 	for _, addr := range addresses {
 		conn, err = p.network.Dial(addr.Network, addr.Address)
 		if err == nil {
+			foundAddr = addr
 			break
 		}
 	}
@@ -241,22 +243,17 @@ func (p *Proxy) doTelegramCall(ctx *streamContext) error {
 		return fmt.Errorf("no addresses to call: %w", err)
 	}
 
-	encryptor, decryptor, err := obfuscated2.ServerHandshake(conn)
+	conn, err = foundAddr.Obfuscator.SendHandshake(conn, ctx.dc)
 	if err != nil {
-		conn.Close() //nolint: errcheck
-
-		return fmt.Errorf("cannot perform obfuscated2 handshake: %w", err)
+		conn.Close()
+		return fmt.Errorf("cannot perform server handshake: %w", err)
 	}
 
-	ctx.telegramConn = obfuscated2.Conn{
-		Conn: connTraffic{
-			Conn:     conn,
-			streamID: ctx.streamID,
-			stream:   p.eventStream,
-			ctx:      ctx,
-		},
-		Encryptor: encryptor,
-		Decryptor: decryptor,
+	ctx.telegramConn = connTraffic{
+		Conn:     conn,
+		streamID: ctx.streamID,
+		stream:   p.eventStream,
+		ctx:      ctx,
 	}
 
 	p.eventStream.Send(ctx,
@@ -320,6 +317,9 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 		tolerateTimeSkewness:     opts.getTolerateTimeSkewness(),
 		allowFallbackOnUnknownDC: opts.AllowFallbackOnUnknownDC,
 		telegram:                 tg,
+		clientObfuscatror: obfuscation.Obfuscator{
+			Secret: opts.Secret.Key[:],
+		},
 	}
 
 	pool, err := ants.NewPoolWithFunc(opts.getConcurrency(),
