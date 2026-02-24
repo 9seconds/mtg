@@ -30,6 +30,7 @@ type Proxy struct {
 	domainFrontingIP         string
 	workerPool               *ants.PoolWithFunc
 	telegram                 *dc.Telegram
+	configUpdater            *dc.PublicConfigUpdater
 	clientObfuscatror        obfuscation.Obfuscator
 
 	secret          Secret
@@ -152,6 +153,7 @@ func (p *Proxy) Shutdown() {
 	p.ctxCancel()
 	p.streamWaitGroup.Wait()
 	p.workerPool.Release()
+	p.configUpdater.Wait()
 
 	p.allowlist.Shutdown()
 	p.blocklist.Shutdown()
@@ -328,18 +330,18 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 		tolerateTimeSkewness:     opts.getTolerateTimeSkewness(),
 		allowFallbackOnUnknownDC: opts.AllowFallbackOnUnknownDC,
 		telegram:                 tg,
+		configUpdater: dc.NewPublicConfigUpdater(
+			tg,
+			updatersLogger.Named("public-config"),
+			opts.Network.MakeHTTPClient(nil),
+		),
 		clientObfuscatror: obfuscation.Obfuscator{
 			Secret: opts.Secret.Key[:],
 		},
 	}
 
-	publicConfigUpdater := dc.NewPublicConfigUpdater(
-		tg,
-		updatersLogger.Named("public-config"),
-		opts.Network.MakeHTTPClient(nil),
-	)
-	go publicConfigUpdater.Run(ctx, dc.PublicConfigUpdateURLv4, "tcp4")
-	go publicConfigUpdater.Run(ctx, dc.PublicConfigUpdateURLv6, "tcp6")
+	proxy.configUpdater.Run(ctx, dc.PublicConfigUpdateURLv4, "tcp4")
+	proxy.configUpdater.Run(ctx, dc.PublicConfigUpdateURLv6, "tcp6")
 
 	pool, err := ants.NewPoolWithFunc(opts.getConcurrency(),
 		func(arg any) {

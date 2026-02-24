@@ -19,7 +19,7 @@ type PublicConfigUpdater struct {
 	tg   *Telegram
 }
 
-func (p PublicConfigUpdater) Run(ctx context.Context, url, network string) {
+func (p *PublicConfigUpdater) Run(ctx context.Context, url, network string) {
 	p.run(ctx, func() error {
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 		if err != nil {
@@ -81,8 +81,8 @@ func (p PublicConfigUpdater) Run(ctx context.Context, url, network string) {
 	})
 }
 
-func NewPublicConfigUpdater(tg *Telegram, logger Logger, client *http.Client) PublicConfigUpdater {
-	return PublicConfigUpdater{
+func NewPublicConfigUpdater(tg *Telegram, logger Logger, client *http.Client) *PublicConfigUpdater {
+	return &PublicConfigUpdater{
 		updater: updater{
 			logger: logger,
 			period: PublicConfigUpdateEach,
