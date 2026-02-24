@@ -24,12 +24,13 @@ type Proxy struct {
 	ctxCancel       context.CancelFunc
 	streamWaitGroup sync.WaitGroup
 
-	allowFallbackOnUnknownDC bool
-	tolerateTimeSkewness     time.Duration
-	domainFrontingPort       int
-	domainFrontingIP         string
-	workerPool               *ants.PoolWithFunc
-	telegram                 *dc.Telegram
+	allowFallbackOnUnknownDC    bool
+	tolerateTimeSkewness        time.Duration
+	domainFrontingPort          int
+	domainFrontingIP            string
+	domainFrontingProxyProtocol bool
+	workerPool                  *ants.PoolWithFunc
+	telegram                    *dc.Telegram
 	configUpdater            *dc.PublicConfigUpdater
 	clientObfuscatror        obfuscation.Obfuscator
 
@@ -285,6 +286,10 @@ func (p *Proxy) doDomainFronting(ctx *streamContext, conn *connRewind) {
 		return
 	}
 
+	if p.domainFrontingProxyProtocol {
+		frontConn = newConnProxyProtocol(ctx.clientConn, frontConn)
+	}
+
 	frontConn = connTraffic{
 		Conn:     frontConn,
 		ctx:      ctx,
@@ -316,20 +321,20 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 	updatersLogger := logger.Named("telegram-updaters")
 
 	proxy := &Proxy{
-		ctx:                      ctx,
-		ctxCancel:                cancel,
-		secret:                   opts.Secret,
-		network:                  opts.Network,
-		antiReplayCache:          opts.AntiReplayCache,
-		blocklist:                opts.IPBlocklist,
-		allowlist:                opts.IPAllowlist,
-		eventStream:              opts.EventStream,
+		ctx:                         ctx,
+		ctxCancel:                   cancel,
+		secret:                      opts.Secret,
+		network:                     opts.Network,
+		antiReplayCache:             opts.AntiReplayCache,
+		blocklist:                   opts.IPBlocklist,
+		allowlist:                   opts.IPAllowlist,
+		eventStream:                 opts.EventStream,
 		logger:                   logger,
-		domainFrontingPort:       opts.getDomainFrontingPort(),
-		domainFrontingIP:         opts.DomainFrontingIP,
-		tolerateTimeSkewness:     opts.getTolerateTimeSkewness(),
-		allowFallbackOnUnknownDC: opts.AllowFallbackOnUnknownDC,
-		telegram:                 tg,
+		domainFrontingPort:          opts.getDomainFrontingPort(),
+		domainFrontingIP:            opts.DomainFrontingIP,
+		tolerateTimeSkewness:        opts.getTolerateTimeSkewness(),
+		allowFallbackOnUnknownDC:    opts.AllowFallbackOnUnknownDC,
+		telegram:                    tg,
 		configUpdater: dc.NewPublicConfigUpdater(
 			tg,
 			updatersLogger.Named("public-config"),
@@ -338,6 +343,7 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 		clientObfuscatror: obfuscation.Obfuscator{
 			Secret: opts.Secret.Key[:],
 		},
+		domainFrontingProxyProtocol: opts.DomainFrontingProxyProtocol,
 	}
 
 	proxy.configUpdater.Run(ctx, dc.PublicConfigUpdateURLv4, "tcp4")

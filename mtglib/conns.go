@@ -3,9 +3,12 @@ package mtglib
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
+	"net"
 
 	"github.com/9seconds/mtg/v2/essentials"
+	"github.com/pires/go-proxyproto"
 )
 
 type connTraffic struct {
@@ -58,4 +61,37 @@ func newConnRewind(conn essentials.Conn) *connRewind {
 	rv.active = io.TeeReader(conn, &rv.buf)
 
 	return rv
+}
+
+type connProxyProtocol struct {
+	essentials.Conn
+
+	sourceAddr     net.Addr
+	headersWritten bool
+}
+
+func (c *connProxyProtocol) Write(p []byte) (int, error) {
+	if !c.headersWritten {
+		headers := proxyproto.HeaderProxyFromAddrs(2, c.sourceAddr, c.RemoteAddr())
+
+		toSend, err := headers.Format()
+		if err != nil {
+			panic(err)
+		}
+
+		if _, err := c.Conn.Write(toSend); err != nil {
+			return 0, fmt.Errorf("cannot send proxy protocol header: %w", err)
+		}
+
+		c.headersWritten = true
+	}
+
+	return c.Conn.Write(p)
+}
+
+func newConnProxyProtocol(source, target essentials.Conn) *connProxyProtocol {
+	return &connProxyProtocol{
+		Conn:       target,
+		sourceAddr: source.RemoteAddr(),
+	}
 }
