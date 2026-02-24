@@ -1,6 +1,7 @@
 [tools]
 "go:golang.org/x/pkgsite/cmd/pkgsite" = "latest"
 "go:golang.org/x/tools/gopls" = "latest"
+"go:golang.org/x/vuln/cmd/govulncheck" = "latest"
 "go:mvdan.cc/gofumpt" = "latest"
 go = "latest"
 golangci-lint = "latest"
@@ -25,6 +26,10 @@ run = [
 [tasks.lint]
 description = "Run linter"
 run = "golangci-lint run"
+
+[tasks.vuln]
+description = "Test for vulnerabilities"
+run = "govulncheck ./..."
 
 [tasks.test]
 description = "Run tests"
