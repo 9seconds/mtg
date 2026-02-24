@@ -18,6 +18,7 @@ type SimpleRun struct {
 	TCPBuffer           string        `kong:"name='tcp-buffer',short='b',default='4KB',help='Deprecated and ignored'"`                                                 //nolint: lll
 	PreferIP            string        `kong:"name='prefer-ip',short='i',default='prefer-ipv6',help='IP preference. By default we prefer IPv6 with fallback to IPv4.'"` //nolint: lll
 	DomainFrontingPort  uint64        `kong:"name='domain-fronting-port',short='p',default='443',help='A port to access for domain fronting.'"`                        //nolint: lll
+	DomainFrontingIP    string        `kong:"name='domain-fronting-ip',help='An IP address to use for domain fronting instead of resolving the hostname via DNS.'"`    //nolint: lll
 	DOHIP               net.IP        `kong:"name='doh-ip',short='n',default='1.1.1.1',help='IP address of DNS-over-HTTP to use.'"`                                    //nolint: lll
 	Timeout             time.Duration `kong:"name='timeout',short='t',default='10s',help='Network timeout to use'"`                                                    //nolint: lll
 	Socks5Proxies       []string      `kong:"name='socks5-proxy',short='s',help='Socks5 proxies to use for network access.'"`                                          //nolint: lll
@@ -45,6 +46,12 @@ func (s *SimpleRun) Run(cli *CLI, version string) error { //nolint: cyclop,funle
 
 	if err := conf.DomainFrontingPort.Set(strconv.FormatUint(s.DomainFrontingPort, 10)); err != nil {
 		return fmt.Errorf("incorrect domain-fronting-port: %w", err)
+	}
+
+	if s.DomainFrontingIP != "" {
+		if err := conf.DomainFrontingIP.Set(s.DomainFrontingIP); err != nil {
+			return fmt.Errorf("incorrect domain-fronting-ip: %w", err)
+		}
 	}
 
 	if err := conf.Network.DOHIP.Set(s.DOHIP.String()); err != nil {

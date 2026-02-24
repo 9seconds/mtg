@@ -1,6 +1,7 @@
 [tools]
 "go:golang.org/x/pkgsite/cmd/pkgsite" = "latest"
 "go:golang.org/x/tools/gopls" = "latest"
+"go:golang.org/x/vuln/cmd/govulncheck" = "latest"
 "go:mvdan.cc/gofumpt" = "latest"
 go = "latest"
 golangci-lint = "latest"
@@ -19,12 +20,16 @@ run = "go build"
 description = "Update dependencies"
 run = [
     "go get -u",
-    "go mod tidy -go=1.25"
+    "go mod tidy -go=1.26"
 ]
 
 [tasks.lint]
 description = "Run linter"
 run = "golangci-lint run"
+
+[tasks.vuln]
+description = "Test for vulnerabilities"
+run = "govulncheck ./..."
 
 [tasks.test]
 description = "Run tests"
@@ -47,19 +52,11 @@ run = "go test -v {{ vars.fuzzflags }} -fuzz=FuzzClientHello ./mtglib/internal/f
 
 [tasks."test:fuzz:client-handshake"]
 description = "Run fuzzy test for ClientHandshake"
-run = "go test -v {{ vars.fuzzflags }} -fuzz=FuzzClientHandshake ./mtglib/internal/obfuscated2"
+run = "go test -v {{ vars.fuzzflags }} -fuzz=FuzzClientServerHandshake ./mtglib/internal/obfuscation"
 
-[tasks."test:fuzz:server-generate-handshake-frame"]
-description = "Run fuzzy test for ServerGenerateHandshakeFrame"
-run = "go test -v {{ vars.fuzzflags }} -fuzz=FuzzServerGenerateHandshakeFrame ./mtglib/internal/obfuscated2"
-
-[tasks."test:fuzz:server-receive"]
-description = "Run fuzzy test for ServerReceive"
-run = "go test -v {{ vars.fuzzflags }} -fuzz=FuzzServerReceive ./mtglib/internal/obfuscated2"
-
-[tasks."test:fuzz:server-send"]
-description = "Run fuzzy test for ServerSend"
-run = "go test -v {{ vars.fuzzflags }} -fuzz=FuzzServerSend ./mtglib/internal/obfuscated2"
+[tasks."test:fuzz:server-handshake-frame"]
+description = "Run fuzzy test for GenerateHandshakeFrame"
+run = "go test -v {{ vars.fuzzflags }} -fuzz=FuzzGenerateHandshakeFrame ./mtglib/internal/obfuscation"
 
 [tasks.static]
 description = "Build static binary"

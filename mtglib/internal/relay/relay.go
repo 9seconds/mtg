@@ -35,13 +35,12 @@ func Relay(ctx context.Context, log Logger, telegramConn, clientConn essentials.
 }
 
 func pump(log Logger, src, dst essentials.Conn, direction string) {
+	var buf [copyBufferSize]byte
+
 	defer src.CloseRead()  //nolint: errcheck
 	defer dst.CloseWrite() //nolint: errcheck
 
-	copyBuffer := acquireCopyBuffer()
-	defer releaseCopyBuffer(copyBuffer)
-
-	n, err := io.CopyBuffer(src, dst, *copyBuffer)
+	n, err := io.CopyBuffer(src, dst, buf[:])
 
 	switch {
 	case err == nil:

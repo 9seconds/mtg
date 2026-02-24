@@ -9,16 +9,23 @@ import (
 )
 
 type tomlConfig struct {
-	Debug                    bool   `toml:"debug" json:"debug,omitempty"`
-	AllowFallbackOnUnknownDC bool   `toml:"allow-fallback-on-unknown-dc" json:"allowFallbackOnUnknownDc,omitempty"`
-	Secret                   string `toml:"secret" json:"secret"`
-	BindTo                   string `toml:"bind-to" json:"bindTo"`
-	ProxyProtocolListener    bool   `toml:"proxy-protocol-listener" json:"proxyProtocolListener"`
-	PreferIP                 string `toml:"prefer-ip" json:"preferIp,omitempty"`
-	DomainFrontingPort       uint   `toml:"domain-fronting-port" json:"domainFrontingPort,omitempty"`
-	TolerateTimeSkewness     string `toml:"tolerate-time-skewness" json:"tolerateTimeSkewness,omitempty"`
-	Concurrency              uint   `toml:"concurrency" json:"concurrency,omitempty"`
-	Defense                  struct {
+	Debug                       bool   `toml:"debug" json:"debug,omitempty"`
+	AllowFallbackOnUnknownDC    bool   `toml:"allow-fallback-on-unknown-dc" json:"allowFallbackOnUnknownDc,omitempty"`
+	Secret                      string `toml:"secret" json:"secret"`
+	BindTo                      string `toml:"bind-to" json:"bindTo"`
+	ProxyProtocolListener       bool   `toml:"proxy-protocol-listener" json:"proxyProtocolListener"`
+	PreferIP                    string `toml:"prefer-ip" json:"preferIp,omitempty"`
+	DomainFrontingPort          uint   `toml:"domain-fronting-port" json:"domainFrontingPort,omitempty"`
+	DomainFrontingIP            string `toml:"domain-fronting-ip" json:"domainFrontingIp,omitempty"`
+	DomainFrontingProxyProtocol bool   `toml:"domain-fronting-proxy-protocol" json:"domainFrontingProxyProtocol,omitempty"`
+	TolerateTimeSkewness        string `toml:"tolerate-time-skewness" json:"tolerateTimeSkewness,omitempty"`
+	Concurrency                 uint   `toml:"concurrency" json:"concurrency,omitempty"`
+	DomainFronting              struct {
+		IP            string `toml:"ip" json:"ip,omitempty"`
+		Port          uint   `toml:"port" json:"port,omitempty"`
+		ProxyProtocol bool   `toml:"proxy-protocol" json:"proxyProtocol,omitempty"`
+	} `toml:"domain-fronting" json:"domainFronting,omitempty"`
+	Defense struct {
 		AntiReplay struct {
 			Enabled   bool    `toml:"enabled" json:"enabled,omitempty"`
 			MaxSize   string  `toml:"max-size" json:"maxSize,omitempty"`
@@ -60,10 +67,6 @@ type tomlConfig struct {
 			MetricPrefix string `toml:"metric-prefix" json:"metricPrefix,omitempty"`
 		} `toml:"prometheus" json:"prometheus,omitempty"`
 	} `toml:"stats" json:"stats,omitempty"`
-	DCOverrides []struct {
-		DC  uint     `toml:"dc" json:"dc"`
-		IPs []string `toml:"ips" json:"ips"`
-	} `toml:"dc-overrides" json:"dcOverrides,omitempty"`
 }
 
 func Parse(rawData []byte) (*Config, error) {

@@ -36,13 +36,6 @@ bind-to = "0.0.0.0:3128"
 # All other incoming connections are going to be dropped.
 concurrency = 8192
 
-# A size of user-space buffer for TCP to use. Since we do 2 connections,
-# then we have tcp-buffer * (4 + 2) per each connection: read/write for
-# each connection + 2 copy buffers to pump the data between sockets.
-#
-# Deprecated: this setting is no longer makes any effect.
-# tcp-buffer = "4kb"
-
 # Sometimes you want to enforce mtg to use some types of
 # IP connectivity to Telegram. We have 4 modes:
 #   - prefer-ipv6:
@@ -57,7 +50,28 @@ prefer-ip = "prefer-ipv6"
 
 # FakeTLS uses domain fronting protection. So it needs to know a port to
 # access.
-domain-fronting-port = 443
+#
+# Deprecated: use [domain-fronting] configuration block. If relevant option
+# is defined there, this one would be ignored.
+# domain-fronting-port = 443
+
+# By default, mtg resolves the fronting hostname (from the secret) via DNS
+# to establish a TCP connection. If DNS resolution of that hostname is blocked,
+# you can specify an IP address to connect to directly. The hostname is still
+# used for SNI in the TLS handshake.
+#
+# default value is not set (DNS resolution is used).
+#
+# Deprecated: use [domain-fronting] configuration block. If relevant option
+# is defined there, this one would be ignored.
+# domain-fronting-ip = "10.0.0.10"
+
+# This makes a communication between both fronting website and mtg to use
+# proxy protocol.
+#
+# Deprecated: use [domain-fronting] configuration block. If relevant option
+# is defined there, this one would be ignored.
+# domain-fronting-proxy-protocol = false
 
 # FakeTLS can compare timestamps to prevent probes. Each message has
 # encrypted timestamp. So, mtg can compare this timestamp and decide if
@@ -80,14 +94,26 @@ tolerate-time-skewness = "5s"
 # Otherwise, chose a new DC.
 allow-fallback-on-unknown-dc = false
 
-# Telegram uses different DCs for different purposes. Unfortunately, most of
-# DCs are not public, and dependent on a location of the current user, so
-# mtg cannot know upfront about all of them, and how to access them. It has
-# a default list of DCs, including some CDN IPs, but it is possible that some
-# of them are not working for you. In this case, you can override them here.
-[[dc-overrides]]
-dc = 101
-ips = ["127.0.0.1:443"]
+# This section is relevant to communication with fronting domain. Usually
+# you do not need to setup anything here but there are plenty of cases, especially
+# if you put mtg behind load balancer, when some specific configuration is
+# required.
+[domain-fronting]
+# By default, mtg resolves the fronting hostname (from the secret) via DNS
+# to establish a TCP connection. If DNS resolution of that hostname is blocked,
+# you can specify an IP address to connect to directly. The hostname is still
+# used for SNI in the TLS handshake.
+#
+# default value is not set (DNS resolution is used).
+# ip = "10.10.10.11"
+
+# FakeTLS uses domain fronting protection. So it needs to know a port to
+# access. Default value is 443
+# port = 443
+
+# This makes a communication between both fronting website and mtg to use
+# proxy protocol.
+# proxy-protocol = false
 
 # network defines different network-related settings
 [network]
