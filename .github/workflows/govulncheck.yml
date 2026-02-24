@@ -1,0 +1,38 @@
+---
+
+name: Vulnerability checks
+
+permissions:
+  actions: read
+  checks: read
+  contents: read
+  deployments: read
+  issues: read
+  discussions: read
+  pull-requests: read
+  repository-projects: read
+  security-events: read
+  statuses: read
+
+on:
+  push:
+  pull_request:
+  schedule: # daily at 10:22 UTC
+    - cron: '22 10 * * *'
+  workflow_dispatch:
+
+jobs:
+  vuln:
+    name: Test vulnerabilities
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+      with:
+        submodules: recursive
+
+    - uses: jdx/mise-action@v3
+      name: Install mise
+
+    - name: Run tests
+      run: mise tasks run vuln

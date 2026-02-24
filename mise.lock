@@ -15,6 +15,10 @@ backend = "go:golang.org/x/pkgsite/cmd/pkgsite"
 version = "0.21.1"
 backend = "go:golang.org/x/tools/gopls"
 
+[[tools."go:golang.org/x/vuln/cmd/govulncheck"]]
+version = "1.1.4"
+backend = "go:golang.org/x/vuln/cmd/govulncheck"
+
 [[tools."go:mvdan.cc/gofumpt"]]
 version = "0.9.2"
 backend = "go:mvdan.cc/gofumpt"
