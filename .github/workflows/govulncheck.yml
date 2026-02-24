@@ -31,8 +31,11 @@ jobs:
       with:
         submodules: recursive
 
-    - uses: jdx/mise-action@v3
-      name: Install mise
+    - name: Setup Go
+      uses: actions/setup-go@v6
+      with:
+        go-version-file: go.mod
 
-    - name: Run tests
-      run: mise tasks run vuln
+    - name: Check for vulnerabilities
+      run: |
+        go run golang.org/x/vuln/cmd/govulncheck@latest ./...
