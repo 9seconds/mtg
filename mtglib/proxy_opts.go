@@ -93,6 +93,15 @@ type ProxyOpts struct {
 	// This is an optional setting.
 	DomainFrontingPort uint
 
+	// DomainFrontingIP is an IP address to use when connecting to the fronting
+	// domain instead of resolving the hostname from the secret via DNS.
+	//
+	// This is useful when DNS resolution of the fronting host is blocked.
+	// The hostname from the secret is still used for SNI in the TLS handshake.
+	//
+	// This is an optional setting.
+	DomainFrontingIP string
+
 	// AllowFallbackOnUnknownDC defines how proxy behaves if unknown DC was
 	// requested. If this setting is set to false, then such connection will be
 	// rejected. Otherwise, proxy will chose any DC.

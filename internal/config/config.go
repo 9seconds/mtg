@@ -28,6 +28,7 @@ type Config struct {
 	ProxyProtocolListener    TypeBool        `json:"proxyProtocolListener"`
 	PreferIP                 TypePreferIP    `json:"preferIp"`
 	DomainFrontingPort       TypePort        `json:"domainFrontingPort"`
+	DomainFrontingIP         TypeIP          `json:"domainFrontingIp"`
 	TolerateTimeSkewness     TypeDuration    `json:"tolerateTimeSkewness"`
 	Concurrency              TypeConcurrency `json:"concurrency"`
 	Defense                  struct {
