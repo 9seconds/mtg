@@ -20,7 +20,12 @@ type tomlConfig struct {
 	DomainFrontingProxyProtocol bool   `toml:"domain-fronting-proxy-protocol" json:"domainFrontingProxyProtocol,omitempty"`
 	TolerateTimeSkewness        string `toml:"tolerate-time-skewness" json:"tolerateTimeSkewness,omitempty"`
 	Concurrency                 uint   `toml:"concurrency" json:"concurrency,omitempty"`
-	Defense                     struct {
+	DomainFronting              struct {
+		IP            string `toml:"ip" json:"ip,omitempty"`
+		Port          uint   `toml:"port" json:"port,omitempty"`
+		ProxyProtocol bool   `toml:"proxy-protocol" json:"proxyProtocol,omitempty"`
+	} `toml:"domain-fronting" json:"domainFronting,omitempty"`
+	Defense struct {
 		AntiReplay struct {
 			Enabled   bool    `toml:"enabled" json:"enabled,omitempty"`
 			MaxSize   string  `toml:"max-size" json:"maxSize,omitempty"`

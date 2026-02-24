@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"net"
 
 	"github.com/9seconds/mtg/v2/mtglib"
 )
@@ -32,7 +33,12 @@ type Config struct {
 	DomainFrontingProxyProtocol TypeBool        `json:"domainFrontingProxyProtocol"`
 	TolerateTimeSkewness        TypeDuration    `json:"tolerateTimeSkewness"`
 	Concurrency                 TypeConcurrency `json:"concurrency"`
-	Defense                     struct {
+	DomainFronting              struct {
+		IP            TypeIP   `json:"ip"`
+		Port          TypePort `json:"port"`
+		ProxyProtocol TypeBool `json:"proxyProtocol"`
+	} `json:"domainFronting"`
+	Defense struct {
 		AntiReplay struct {
 			Optional
 
@@ -67,6 +73,27 @@ type Config struct {
 			MetricPrefix TypeMetricPrefix `json:"metricPrefix"`
 		} `json:"prometheus"`
 	} `json:"stats"`
+}
+
+func (c *Config) GetDomainFrontingPort(defaultValue uint) uint {
+	if port := c.DomainFronting.Port.Get(0); port != 0 {
+		return port
+	}
+	return c.DomainFrontingPort.Get(defaultValue)
+}
+
+func (c *Config) GetDomainFrontingIP(defaultValue net.IP) string {
+	if ip := c.DomainFronting.IP.Get(nil); ip != nil {
+		return ip.String()
+	}
+	if ip := c.DomainFrontingIP.Get(defaultValue); ip != nil {
+		return ip.String()
+	}
+	return ""
+}
+
+func (c *Config) GetDomainFrontingProxyProtocol(defaultValue bool) bool {
+	return c.DomainFronting.ProxyProtocol.Get(false) || c.DomainFrontingProxyProtocol.Get(defaultValue)
 }
 
 func (c *Config) Validate() error {
