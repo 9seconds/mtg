@@ -21,17 +21,18 @@ type ListConfig struct {
 }
 
 type Config struct {
-	Debug                    TypeBool        `json:"debug"`
-	AllowFallbackOnUnknownDC TypeBool        `json:"allowFallbackOnUnknownDc"`
-	Secret                   mtglib.Secret   `json:"secret"`
-	BindTo                   TypeHostPort    `json:"bindTo"`
-	ProxyProtocolListener    TypeBool        `json:"proxyProtocolListener"`
-	PreferIP                 TypePreferIP    `json:"preferIp"`
-	DomainFrontingPort       TypePort        `json:"domainFrontingPort"`
-	DomainFrontingIP         TypeIP          `json:"domainFrontingIp"`
-	TolerateTimeSkewness     TypeDuration    `json:"tolerateTimeSkewness"`
-	Concurrency              TypeConcurrency `json:"concurrency"`
-	Defense                  struct {
+	Debug                       TypeBool        `json:"debug"`
+	AllowFallbackOnUnknownDC    TypeBool        `json:"allowFallbackOnUnknownDc"`
+	Secret                      mtglib.Secret   `json:"secret"`
+	BindTo                      TypeHostPort    `json:"bindTo"`
+	ProxyProtocolListener       TypeBool        `json:"proxyProtocolListener"`
+	PreferIP                    TypePreferIP    `json:"preferIp"`
+	DomainFrontingPort          TypePort        `json:"domainFrontingPort"`
+	DomainFrontingIP            TypeIP          `json:"domainFrontingIp"`
+	DomainFrontingProxyProtocol TypeBool        `json:"domainFrontingProxyProtocol"`
+	TolerateTimeSkewness        TypeDuration    `json:"tolerateTimeSkewness"`
+	Concurrency                 TypeConcurrency `json:"concurrency"`
+	Defense                     struct {
 		AntiReplay struct {
 			Optional
 

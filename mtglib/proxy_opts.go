@@ -102,6 +102,14 @@ type ProxyOpts struct {
 	// This is an optional setting.
 	DomainFrontingIP string
 
+	// DomainFrontingProxyProtocol is used if communication between upstream
+	// endpoint and mtg supports proxy protocol. This is useful in case
+	// if mtg is also placed behind load balancer, and this will make
+	// fronting webserver to know about real IP addresses
+	//
+	// This is an optional setting.
+	DomainFrontingProxyProtocol bool
+
 	// AllowFallbackOnUnknownDC defines how proxy behaves if unknown DC was
 	// requested. If this setting is set to false, then such connection will be
 	// rejected. Otherwise, proxy will chose any DC.
