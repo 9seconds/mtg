@@ -29,8 +29,8 @@ func (p PublicConfigUpdater) Run(ctx context.Context, url, network string) {
 		resp, err := p.http.Do(req)
 		if err != nil {
 			if resp != nil {
-				io.Copy(io.Discard, resp.Body)
-				resp.Body.Close()
+				io.Copy(io.Discard, resp.Body) //nolint: errcheck
+				resp.Body.Close()              //nolint: errcheck
 			}
 			return fmt.Errorf("cannot fetch url %s: %w", url, err)
 		}

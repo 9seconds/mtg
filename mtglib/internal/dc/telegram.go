@@ -1,14 +1,12 @@
 package dc
 
 import (
-	"context"
 	"fmt"
 	"strings"
 	"sync"
 )
 
 type Telegram struct {
-	ctx      context.Context
 	lock     sync.RWMutex
 	view     dcView
 	preferIP preferIP

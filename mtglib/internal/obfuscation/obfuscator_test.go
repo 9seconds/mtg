@@ -20,7 +20,7 @@ type ObfuscatorTestSuite struct {
 }
 
 func (s *ObfuscatorTestSuite) SetupSuite() {
-	s.SnapshotTestSuite.Setup("", "client-handshake")
+	s.Setup("", "client-handshake")
 
 	secret := mtglib.GenerateSecret("hostname.com")
 	s.secret = &secret

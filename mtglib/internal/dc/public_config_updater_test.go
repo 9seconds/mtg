@@ -90,7 +90,7 @@ lala 0 0
 	s.responseHandler = func(w http.ResponseWriter) {
 		done = true
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(result))
+		w.Write([]byte(result)) //nolint: errcheck
 	}
 	go s.u.Run(s.ctx, s.srv.URL, "tcp4")
 
@@ -114,7 +114,7 @@ proxy_for -100 101.10.0.0:3333;
 	s.responseHandler = func(w http.ResponseWriter) {
 		done = true
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(result))
+		w.Write([]byte(result)) //nolint: errcheck
 	}
 	go s.u.Run(s.ctx, s.srv.URL, "tcp4")
 

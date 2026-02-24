@@ -245,7 +245,7 @@ func (p *Proxy) doTelegramCall(ctx *streamContext) error {
 
 	tgConn, err := foundAddr.Obfuscator.SendHandshake(conn, ctx.dc)
 	if err != nil {
-		conn.Close()
+		conn.Close() // nolint: errcheck
 		return fmt.Errorf("cannot perform server handshake: %w", err)
 	}
 
