@@ -20,7 +20,7 @@ run = "go build"
 description = "Update dependencies"
 run = [
     "go get -u",
-    "go mod tidy -go=1.25"
+    "go mod tidy -go=1.26"
 ]
 
 [tasks.lint]
