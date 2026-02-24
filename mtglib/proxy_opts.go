@@ -93,6 +93,23 @@ type ProxyOpts struct {
 	// This is an optional setting.
 	DomainFrontingPort uint
 
+	// DomainFrontingIP is an IP address to use when connecting to the fronting
+	// domain instead of resolving the hostname from the secret via DNS.
+	//
+	// This is useful when DNS resolution of the fronting host is blocked.
+	// The hostname from the secret is still used for SNI in the TLS handshake.
+	//
+	// This is an optional setting.
+	DomainFrontingIP string
+
+	// DomainFrontingProxyProtocol is used if communication between upstream
+	// endpoint and mtg supports proxy protocol. This is useful in case
+	// if mtg is also placed behind load balancer, and this will make
+	// fronting webserver to know about real IP addresses
+	//
+	// This is an optional setting.
+	DomainFrontingProxyProtocol bool
+
 	// AllowFallbackOnUnknownDC defines how proxy behaves if unknown DC was
 	// requested. If this setting is set to false, then such connection will be
 	// rejected. Otherwise, proxy will chose any DC.
@@ -117,7 +134,7 @@ type ProxyOpts struct {
 	// DCOverrides defines a set of IP addresses that should be used
 	// with a higher priority to those that are calculated somehow by mtg.
 	//
-	// This is an optional setting
+	// OBSOLETE and DEPRECATED. Ignored.
 	DCOverrides map[int][]string
 }
 

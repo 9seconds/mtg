@@ -1,6 +1,7 @@
 package faketls
 
 import (
+	"bytes"
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
@@ -13,8 +14,7 @@ import (
 )
 
 func SendWelcomePacket(writer io.Writer, secret []byte, clientHello ClientHello) error {
-	buf := acquireBytesBuffer()
-	defer releaseBytesBuffer(buf)
+	buf := &bytes.Buffer{}
 
 	rec := record.AcquireRecord()
 	defer record.ReleaseRecord(rec)
@@ -58,8 +58,7 @@ func SendWelcomePacket(writer io.Writer, secret []byte, clientHello ClientHello)
 }
 
 func generateServerHello(writer io.Writer, clientHello ClientHello) {
-	bodyBuf := acquireBytesBuffer()
-	defer releaseBytesBuffer(bodyBuf)
+	bodyBuf := &bytes.Buffer{}
 
 	sliceBuf := [2]byte{}
 	digest := [RandomLen]byte{}

@@ -13,7 +13,7 @@ import (
 	"github.com/9seconds/mtg/v2/mtglib/internal/dc"
 	"github.com/9seconds/mtg/v2/mtglib/internal/faketls"
 	"github.com/9seconds/mtg/v2/mtglib/internal/faketls/record"
-	"github.com/9seconds/mtg/v2/mtglib/internal/obfuscated2"
+	"github.com/9seconds/mtg/v2/mtglib/internal/obfuscation"
 	"github.com/9seconds/mtg/v2/mtglib/internal/relay"
 	"github.com/panjf2000/ants/v2"
 )
@@ -24,11 +24,15 @@ type Proxy struct {
 	ctxCancel       context.CancelFunc
 	streamWaitGroup sync.WaitGroup
 
-	allowFallbackOnUnknownDC bool
-	tolerateTimeSkewness     time.Duration
-	domainFrontingPort       int
-	workerPool               *ants.PoolWithFunc
-	telegram                 *dc.Telegram
+	allowFallbackOnUnknownDC    bool
+	tolerateTimeSkewness        time.Duration
+	domainFrontingPort          int
+	domainFrontingIP            string
+	domainFrontingProxyProtocol bool
+	workerPool                  *ants.PoolWithFunc
+	telegram                    *dc.Telegram
+	configUpdater               *dc.PublicConfigUpdater
+	clientObfuscatror           obfuscation.Obfuscator
 
 	secret          Secret
 	network         Network
@@ -40,8 +44,14 @@ type Proxy struct {
 }
 
 // DomainFrontingAddress returns a host:port pair for a fronting domain.
+// If DomainFrontingIP is set, it is used instead of resolving the hostname.
 func (p *Proxy) DomainFrontingAddress() string {
-	return net.JoinHostPort(p.secret.Host, strconv.Itoa(p.domainFrontingPort))
+	host := p.secret.Host
+	if p.domainFrontingIP != "" {
+		host = p.domainFrontingIP
+	}
+
+	return net.JoinHostPort(host, strconv.Itoa(p.domainFrontingPort))
 }
 
 // ServeConn serves a connection. We do not check IP blocklist and concurrency
@@ -70,8 +80,8 @@ func (p *Proxy) ServeConn(conn essentials.Conn) {
 		return
 	}
 
-	if err := p.doObfuscated2Handshake(ctx); err != nil {
-		p.logger.InfoError("obfuscated2 handshake is failed", err)
+	if err := p.doObfuscatedHandshake(ctx); err != nil {
+		p.logger.InfoError("obfuscated handshake is failed", err)
 
 		return
 	}
@@ -144,6 +154,7 @@ func (p *Proxy) Shutdown() {
 	p.ctxCancel()
 	p.streamWaitGroup.Wait()
 	p.workerPool.Release()
+	p.configUpdater.Wait()
 
 	p.allowlist.Shutdown()
 	p.blocklist.Shutdown()
@@ -201,19 +212,15 @@ func (p *Proxy) doFakeTLSHandshake(ctx *streamContext) bool {
 	return true
 }
 
-func (p *Proxy) doObfuscated2Handshake(ctx *streamContext) error {
-	dc, encryptor, decryptor, err := obfuscated2.ClientHandshake(p.secret.Key[:], ctx.clientConn)
+func (p *Proxy) doObfuscatedHandshake(ctx *streamContext) error {
+	dc, conn, err := p.clientObfuscatror.ReadHandshake(ctx.clientConn)
 	if err != nil {
 		return fmt.Errorf("cannot process client handshake: %w", err)
 	}
 
 	ctx.dc = dc
+	ctx.clientConn = conn
 	ctx.logger = ctx.logger.BindInt("dc", dc)
-	ctx.clientConn = obfuscated2.Conn{
-		Conn:      ctx.clientConn,
-		Encryptor: encryptor,
-		Decryptor: decryptor,
-	}
 
 	return nil
 }
@@ -223,17 +230,22 @@ func (p *Proxy) doTelegramCall(ctx *streamContext) error {
 
 	addresses := p.telegram.GetAddresses(dcid)
 	if len(addresses) == 0 && p.allowFallbackOnUnknownDC {
-		ctx.logger = ctx.logger.BindInt("fallback_dc", dc.DefaultDC)
+		ctx.logger = ctx.logger.BindInt("original_dc", dcid)
 		ctx.logger.Warning("unknown DC, fallbacks")
+		ctx.dc = dc.DefaultDC
 		addresses = p.telegram.GetAddresses(dc.DefaultDC)
 	}
 
-	var conn essentials.Conn
-	var err error
+	var (
+		conn      essentials.Conn
+		err       error
+		foundAddr dc.Addr
+	)
 
 	for _, addr := range addresses {
 		conn, err = p.network.Dial(addr.Network, addr.Address)
 		if err == nil {
+			foundAddr = addr
 			break
 		}
 	}
@@ -241,22 +253,17 @@ func (p *Proxy) doTelegramCall(ctx *streamContext) error {
 		return fmt.Errorf("no addresses to call: %w", err)
 	}
 
-	encryptor, decryptor, err := obfuscated2.ServerHandshake(conn)
+	tgConn, err := foundAddr.Obfuscator.SendHandshake(conn, ctx.dc)
 	if err != nil {
-		conn.Close() //nolint: errcheck
-
-		return fmt.Errorf("cannot perform obfuscated2 handshake: %w", err)
+		conn.Close() // nolint: errcheck
+		return fmt.Errorf("cannot perform server handshake: %w", err)
 	}
 
-	ctx.telegramConn = obfuscated2.Conn{
-		Conn: connTraffic{
-			Conn:     conn,
-			streamID: ctx.streamID,
-			stream:   p.eventStream,
-			ctx:      ctx,
-		},
-		Encryptor: encryptor,
-		Decryptor: decryptor,
+	ctx.telegramConn = connTraffic{
+		Conn:     tgConn,
+		streamID: ctx.streamID,
+		stream:   p.eventStream,
+		ctx:      ctx,
 	}
 
 	p.eventStream.Send(ctx,
@@ -277,6 +284,10 @@ func (p *Proxy) doDomainFronting(ctx *streamContext, conn *connRewind) {
 		p.logger.WarningError("cannot dial to the fronting domain", err)
 
 		return
+	}
+
+	if p.domainFrontingProxyProtocol {
+		frontConn = newConnProxyProtocol(ctx.clientConn, frontConn)
 	}
 
 	frontConn = connTraffic{
@@ -300,12 +311,15 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 		return nil, fmt.Errorf("invalid settings: %w", err)
 	}
 
-	tg, err := dc.New(opts.getPreferIP(), opts.DCOverrides)
+	tg, err := dc.New(opts.getPreferIP())
 	if err != nil {
 		return nil, fmt.Errorf("cannot build telegram dc fetcher: %w", err)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
+	logger := opts.getLogger("proxy")
+	updatersLogger := logger.Named("telegram-updaters")
+
 	proxy := &Proxy{
 		ctx:                      ctx,
 		ctxCancel:                cancel,
@@ -315,12 +329,25 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 		blocklist:                opts.IPBlocklist,
 		allowlist:                opts.IPAllowlist,
 		eventStream:              opts.EventStream,
-		logger:                   opts.getLogger("proxy"),
+		logger:                   logger,
 		domainFrontingPort:       opts.getDomainFrontingPort(),
+		domainFrontingIP:         opts.DomainFrontingIP,
 		tolerateTimeSkewness:     opts.getTolerateTimeSkewness(),
 		allowFallbackOnUnknownDC: opts.AllowFallbackOnUnknownDC,
 		telegram:                 tg,
+		configUpdater: dc.NewPublicConfigUpdater(
+			tg,
+			updatersLogger.Named("public-config"),
+			opts.Network.MakeHTTPClient(nil),
+		),
+		clientObfuscatror: obfuscation.Obfuscator{
+			Secret: opts.Secret.Key[:],
+		},
+		domainFrontingProxyProtocol: opts.DomainFrontingProxyProtocol,
 	}
+
+	proxy.configUpdater.Run(ctx, dc.PublicConfigUpdateURLv4, "tcp4")
+	proxy.configUpdater.Run(ctx, dc.PublicConfigUpdateURLv6, "tcp6")
 
 	pool, err := ants.NewPoolWithFunc(opts.getConcurrency(),
 		func(arg any) {
