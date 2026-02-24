@@ -1,4 +1,4 @@
-package obfuscated2
+package obfuscation
 
 import (
 	"encoding/binary"
@@ -7,9 +7,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func FuzzServerGenerateHandshakeFrame(f *testing.F) {
-	f.Fuzz(func(t *testing.T, arg int) {
-		frame := generateServerHanshakeFrame()
+func FuzzGenerateHandshakeFrame(f *testing.F) {
+	f.Fuzz(func(t *testing.T, arg int16) {
+		frame := generateHandshake(int(arg))
 
 		assert.NotEqualValues(t, 0xef, frame.data[0])
 
@@ -18,13 +18,23 @@ func FuzzServerGenerateHandshakeFrame(f *testing.F) {
 		assert.NotEqualValues(t, 0x54534f50, firstBytes)
 		assert.NotEqualValues(t, 0x20544547, firstBytes)
 		assert.NotEqualValues(t, 0x4954504f, firstBytes)
+		assert.NotEqualValues(t, 0x02010316, firstBytes)
 		assert.NotEqualValues(t, 0xeeeeeeee, firstBytes)
+		assert.NotEqualValues(t, 0xdddddddd, firstBytes)
 
 		assert.NotEqualValues(
 			t,
 			0,
 			frame.data[4]|frame.data[5]|frame.data[6]|frame.data[7])
 
-		assert.Equal(t, handshakeConnectionType, frame.connectionType())
+		assert.Equal(t, hfConnectionType[:], frame.connectionType())
+
+		if arg < 0 {
+			arg = -arg
+		} else if arg == 0 {
+			arg = defaultDC
+		}
+
+		assert.EqualValues(t, arg, frame.dc())
 	})
 }

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"io"
-	"sync"
 
 	"github.com/9seconds/mtg/v2/essentials"
 )
@@ -40,22 +39,15 @@ func (c connTraffic) Write(b []byte) (int, error) {
 type connRewind struct {
 	essentials.Conn
 
-	active io.Reader
 	buf    bytes.Buffer
-	mutex  sync.RWMutex
+	active io.Reader
 }
 
 func (c *connRewind) Read(p []byte) (int, error) {
-	c.mutex.RLock()
-	defer c.mutex.RUnlock()
-
-	return c.active.Read(p) //nolint: wrapcheck
+	return c.active.Read(p)
 }
 
 func (c *connRewind) Rewind() {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-
 	c.active = io.MultiReader(&c.buf, c.Conn)
 }
 

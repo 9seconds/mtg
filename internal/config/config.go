@@ -66,10 +66,6 @@ type Config struct {
 			MetricPrefix TypeMetricPrefix `json:"metricPrefix"`
 		} `json:"prometheus"`
 	} `json:"stats"`
-	DCOverrides []struct {
-		DC  TypeDC         `json:"dc"`
-		IPs []TypeHostPort `json:"ips"`
-	} `json:"dcOverrides"`
 }
 
 func (c *Config) Validate() error {

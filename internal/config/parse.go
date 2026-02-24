@@ -61,10 +61,6 @@ type tomlConfig struct {
 			MetricPrefix string `toml:"metric-prefix" json:"metricPrefix,omitempty"`
 		} `toml:"prometheus" json:"prometheus,omitempty"`
 	} `toml:"stats" json:"stats,omitempty"`
-	DCOverrides []struct {
-		DC  uint     `toml:"dc" json:"dc"`
-		IPs []string `toml:"ips" json:"ips"`
-	} `toml:"dc-overrides" json:"dcOverrides,omitempty"`
 }
 
 func Parse(rawData []byte) (*Config, error) {

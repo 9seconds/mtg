@@ -242,14 +242,6 @@ func runProxy(conf *config.Config, version string) error { //nolint: funlen
 		return fmt.Errorf("cannot build ip allowlist: %w", err)
 	}
 
-	dcOverrides := map[int][]string{}
-	for _, override := range conf.DCOverrides {
-		dcid := override.DC.Get()
-		for _, addr := range override.IPs {
-			dcOverrides[dcid] = append(dcOverrides[dcid], addr.Get(""))
-		}
-	}
-
 	opts := mtglib.ProxyOpts{
 		Logger:          logger,
 		Network:         ntw,
@@ -265,7 +257,6 @@ func runProxy(conf *config.Config, version string) error { //nolint: funlen
 
 		AllowFallbackOnUnknownDC: conf.AllowFallbackOnUnknownDC.Get(false),
 		TolerateTimeSkewness:     conf.TolerateTimeSkewness.Value,
-		DCOverrides:              dcOverrides,
 	}
 
 	proxy, err := mtglib.NewProxy(opts)
