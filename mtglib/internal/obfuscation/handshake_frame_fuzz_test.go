@@ -28,6 +28,13 @@ func FuzzGenerateHandshakeFrame(f *testing.F) {
 			frame.data[4]|frame.data[5]|frame.data[6]|frame.data[7])
 
 		assert.Equal(t, hfConnectionType[:], frame.connectionType())
+
+		if arg < 0 {
+			arg = -arg
+		} else if arg == 0 {
+			arg = defaultDC
+		}
+
 		assert.EqualValues(t, arg, frame.dc())
 	})
 }
