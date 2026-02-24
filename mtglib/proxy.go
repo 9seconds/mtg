@@ -31,8 +31,8 @@ type Proxy struct {
 	domainFrontingProxyProtocol bool
 	workerPool                  *ants.PoolWithFunc
 	telegram                    *dc.Telegram
-	configUpdater            *dc.PublicConfigUpdater
-	clientObfuscatror        obfuscation.Obfuscator
+	configUpdater               *dc.PublicConfigUpdater
+	clientObfuscatror           obfuscation.Obfuscator
 
 	secret          Secret
 	network         Network
@@ -321,20 +321,20 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 	updatersLogger := logger.Named("telegram-updaters")
 
 	proxy := &Proxy{
-		ctx:                         ctx,
-		ctxCancel:                   cancel,
-		secret:                      opts.Secret,
-		network:                     opts.Network,
-		antiReplayCache:             opts.AntiReplayCache,
-		blocklist:                   opts.IPBlocklist,
-		allowlist:                   opts.IPAllowlist,
-		eventStream:                 opts.EventStream,
+		ctx:                      ctx,
+		ctxCancel:                cancel,
+		secret:                   opts.Secret,
+		network:                  opts.Network,
+		antiReplayCache:          opts.AntiReplayCache,
+		blocklist:                opts.IPBlocklist,
+		allowlist:                opts.IPAllowlist,
+		eventStream:              opts.EventStream,
 		logger:                   logger,
-		domainFrontingPort:          opts.getDomainFrontingPort(),
-		domainFrontingIP:            opts.DomainFrontingIP,
-		tolerateTimeSkewness:        opts.getTolerateTimeSkewness(),
-		allowFallbackOnUnknownDC:    opts.AllowFallbackOnUnknownDC,
-		telegram:                    tg,
+		domainFrontingPort:       opts.getDomainFrontingPort(),
+		domainFrontingIP:         opts.DomainFrontingIP,
+		tolerateTimeSkewness:     opts.getTolerateTimeSkewness(),
+		allowFallbackOnUnknownDC: opts.AllowFallbackOnUnknownDC,
+		telegram:                 tg,
 		configUpdater: dc.NewPublicConfigUpdater(
 			tg,
 			updatersLogger.Named("public-config"),

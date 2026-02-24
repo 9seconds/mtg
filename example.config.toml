@@ -50,7 +50,10 @@ prefer-ip = "prefer-ipv6"
 
 # FakeTLS uses domain fronting protection. So it needs to know a port to
 # access.
-domain-fronting-port = 443
+#
+# Deprecated: use [domain-fronting] configuration block. If relevant option
+# is defined there, this one would be ignored.
+# domain-fronting-port = 443
 
 # By default, mtg resolves the fronting hostname (from the secret) via DNS
 # to establish a TCP connection. If DNS resolution of that hostname is blocked,
@@ -58,11 +61,17 @@ domain-fronting-port = 443
 # used for SNI in the TLS handshake.
 #
 # default value is not set (DNS resolution is used).
-# domain-fronting-ip = "142.250.185.112"
+#
+# Deprecated: use [domain-fronting] configuration block. If relevant option
+# is defined there, this one would be ignored.
+# domain-fronting-ip = "10.0.0.10"
 
 # This makes a communication between both fronting website and mtg to use
 # proxy protocol.
-domain-fronting-proxy-protocol = false
+#
+# Deprecated: use [domain-fronting] configuration block. If relevant option
+# is defined there, this one would be ignored.
+# domain-fronting-proxy-protocol = false
 
 # FakeTLS can compare timestamps to prevent probes. Each message has
 # encrypted timestamp. So, mtg can compare this timestamp and decide if
@@ -84,6 +93,27 @@ tolerate-time-skewness = "5s"
 # If this setting is disabled (default), mtg will reject a connection.
 # Otherwise, chose a new DC.
 allow-fallback-on-unknown-dc = false
+
+# This section is relevant to communication with fronting domain. Usually
+# you do not need to setup anything here but there are plenty of cases, especially
+# if you put mtg behind load balancer, when some specific configuration is
+# required.
+[domain-fronting]
+# By default, mtg resolves the fronting hostname (from the secret) via DNS
+# to establish a TCP connection. If DNS resolution of that hostname is blocked,
+# you can specify an IP address to connect to directly. The hostname is still
+# used for SNI in the TLS handshake.
+#
+# default value is not set (DNS resolution is used).
+# ip = "10.10.10.11"
+
+# FakeTLS uses domain fronting protection. So it needs to know a port to
+# access. Default value is 443
+# port = 443
+
+# This makes a communication between both fronting website and mtg to use
+# proxy protocol.
+# proxy-protocol = false
 
 # network defines different network-related settings
 [network]
