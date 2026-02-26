@@ -33,10 +33,10 @@ backend = "aqua:golangci/golangci-lint"
 "platforms.windows-x64" = { checksum = "sha256:c60c87695e79db8e320f0e5be885059859de52bb5ee5f11be5577828570bc2a3", url = "https://github.com/golangci/golangci-lint/releases/download/v2.10.1/golangci-lint-2.10.1-windows-amd64.zip"}
 
 [[tools.goreleaser]]
-version = "2.13.3"
+version = "2.14.1"
 backend = "aqua:goreleaser/goreleaser"
-"platforms.linux-arm64" = { checksum = "sha256:156656d0f874542d618568bd50afd3d33ced2e8aab2c60cc7c21e1b9fa52031e", url = "https://github.com/goreleaser/goreleaser/releases/download/v2.13.3/goreleaser_Linux_arm64.tar.gz"}
-"platforms.linux-x64" = { checksum = "sha256:4b66f2f78f78561330350651ade557b70328664718490f37834749073af21d20", url = "https://github.com/goreleaser/goreleaser/releases/download/v2.13.3/goreleaser_Linux_x86_64.tar.gz"}
-"platforms.macos-arm64" = { checksum = "sha256:5516c37779efb3935d5b213cda3b0b9025ae94ddbcb51df6919acbcdef4194b0", url = "https://github.com/goreleaser/goreleaser/releases/download/v2.13.3/goreleaser_Darwin_all.tar.gz"}
-"platforms.macos-x64" = { checksum = "sha256:5516c37779efb3935d5b213cda3b0b9025ae94ddbcb51df6919acbcdef4194b0", url = "https://github.com/goreleaser/goreleaser/releases/download/v2.13.3/goreleaser_Darwin_all.tar.gz"}
-"platforms.windows-x64" = { checksum = "sha256:c5586c4ed749ca358ad61ed73ee4b8039cfa68daae8c23e69fb086d549dfb31d", url = "https://github.com/goreleaser/goreleaser/releases/download/v2.13.3/goreleaser_Windows_x86_64.zip"}
+"platforms.linux-arm64" = { checksum = "sha256:a84d3b27f052c12ad5c8342d7caf1450a7174a305730aed21d72db09301e49a5", url = "https://github.com/goreleaser/goreleaser/releases/download/v2.14.1/goreleaser_Linux_arm64.tar.gz"}
+"platforms.linux-x64" = { checksum = "sha256:2df975a7acbfdeaf888d596cab0024d48ec7fb7d747e1d08b90948b791f40a5f", url = "https://github.com/goreleaser/goreleaser/releases/download/v2.14.1/goreleaser_Linux_x86_64.tar.gz"}
+"platforms.macos-arm64" = { checksum = "sha256:9f2e47f847b4f4177376fc6aa6914fbc7f673f59720076747e738b578c2e896e", url = "https://github.com/goreleaser/goreleaser/releases/download/v2.14.1/goreleaser_Darwin_all.tar.gz"}
+"platforms.macos-x64" = { checksum = "sha256:9f2e47f847b4f4177376fc6aa6914fbc7f673f59720076747e738b578c2e896e", url = "https://github.com/goreleaser/goreleaser/releases/download/v2.14.1/goreleaser_Darwin_all.tar.gz"}
+"platforms.windows-x64" = { checksum = "sha256:d7a3d8ba795e97ab8c4f8003630d300da164adf21fde5a4049440c20f15c3137", url = "https://github.com/goreleaser/goreleaser/releases/download/v2.14.1/goreleaser_Windows_x86_64.zip"}

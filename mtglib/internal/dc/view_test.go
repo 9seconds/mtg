@@ -41,6 +41,7 @@ func (suite *ViewTestSuite) TestGetV4() {
 		},
 		203: {
 			{Network: "tcp4", Address: "127.0.0.2:443"},
+			{Network: "tcp4", Address: "91.105.192.100:443"},
 		},
 		2: {
 			{Network: "tcp4", Address: "149.154.167.51:443"},
@@ -60,6 +61,7 @@ func (suite *ViewTestSuite) TestGetV6() {
 		111: {},
 		203: {
 			{Network: "tcp6", Address: "xxx"},
+			{Network: "tcp6", Address: "[2a0a:f280:0203:000a:5000:0000:0000:0100]:443"},
 		},
 		1: {
 			{Network: "tcp6", Address: "[2001:b28:f23d:f001::a]:443"},
