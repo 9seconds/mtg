@@ -346,8 +346,10 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 		domainFrontingProxyProtocol: opts.DomainFrontingProxyProtocol,
 	}
 
-	proxy.configUpdater.Run(ctx, dc.PublicConfigUpdateURLv4, "tcp4")
-	proxy.configUpdater.Run(ctx, dc.PublicConfigUpdateURLv6, "tcp6")
+	if opts.AutoUpdate {
+		proxy.configUpdater.Run(ctx, dc.PublicConfigUpdateURLv4, "tcp4")
+		proxy.configUpdater.Run(ctx, dc.PublicConfigUpdateURLv6, "tcp6")
+	}
 
 	pool, err := ants.NewPoolWithFunc(opts.getConcurrency(),
 		func(arg any) {

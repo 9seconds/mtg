@@ -28,6 +28,7 @@ type Config struct {
 	BindTo                      TypeHostPort    `json:"bindTo"`
 	ProxyProtocolListener       TypeBool        `json:"proxyProtocolListener"`
 	PreferIP                    TypePreferIP    `json:"preferIp"`
+	AutoUpdate                  TypeBool        `json:"autoUpdate"`
 	DomainFrontingPort          TypePort        `json:"domainFrontingPort"`
 	DomainFrontingIP            TypeIP          `json:"domainFrontingIp"`
 	DomainFrontingProxyProtocol TypeBool        `json:"domainFrontingProxyProtocol"`

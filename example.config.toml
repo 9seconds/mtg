@@ -48,6 +48,11 @@ concurrency = 8192
 #     Only ipv4 connectivity is used
 prefer-ip = "prefer-ipv6"
 
+# If this setting is set, then mtg will try to get proxy updates from Telegram
+# Usually this is completely fine to have it disabled, because mtg has a list
+# of some core proxies hardcoded.
+auto-update = false
+
 # FakeTLS uses domain fronting protection. So it needs to know a port to
 # access.
 #

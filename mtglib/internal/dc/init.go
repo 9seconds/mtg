@@ -57,6 +57,9 @@ var defaultDCAddrSet = dcAddrSet{
 		5: {
 			{Network: "tcp4", Address: "149.154.171.5:443"},
 		},
+		203: {
+			{Network: "tcp4", Address: "91.105.192.100:443"},
+		},
 	},
 	v6: map[int][]Addr{
 		1: {
@@ -73,6 +76,9 @@ var defaultDCAddrSet = dcAddrSet{
 		},
 		5: {
 			{Network: "tcp6", Address: "[2001:b28:f23f:f005::a]:443"},
+		},
+		203: {
+			{Network: "tcp6", Address: "[2a0a:f280:0203:000a:5000:0000:0000:0100]:443"},
 		},
 	},
 }
