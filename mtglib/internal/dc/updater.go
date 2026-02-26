@@ -32,7 +32,7 @@ func (u *updater) run(ctx context.Context, callback func() error) {
 		for {
 			u.logger.Info("start update")
 			if err := callback(); err != nil {
-				u.logger.WarningError("cannot update: %w", err)
+				u.logger.WarningError("cannot update", err)
 			}
 			u.logger.Info("updated")
 

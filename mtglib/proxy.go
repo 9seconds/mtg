@@ -252,6 +252,9 @@ func (p *Proxy) doTelegramCall(ctx *streamContext) error {
 	if err != nil {
 		return fmt.Errorf("no addresses to call: %w", err)
 	}
+	if conn == nil {
+		return fmt.Errorf("no available addresses for DC %d", ctx.dc)
+	}
 
 	tgConn, err := foundAddr.Obfuscator.SendHandshake(conn, ctx.dc)
 	if err != nil {
