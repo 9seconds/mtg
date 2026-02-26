@@ -85,6 +85,12 @@ type ProxyOpts struct {
 	// This is an optional setting.
 	PreferIP string
 
+	// AutoUpdate defines if it is required to auto update proxy list from
+	// Telegram instead of relying on a hardcoded list.
+	//
+	// This is an optional setting.
+	AutoUpdate bool
+
 	// DomainFrontingPort is a port we use to connect to a fronting domain.
 	//
 	// This is required because secret does not specify a port. It specifies a

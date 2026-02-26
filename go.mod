@@ -14,7 +14,7 @@ require (
 	github.com/panjf2000/ants/v2 v2.11.5
 	github.com/prometheus/client_golang v1.23.2
 	github.com/prometheus/common v0.67.5 // indirect
-	github.com/prometheus/procfs v0.19.2 // indirect
+	github.com/prometheus/procfs v0.20.0 // indirect
 	github.com/rs/zerolog v1.34.0
 	github.com/smira/go-statsd v1.3.4
 	github.com/stretchr/objx v0.5.2 // indirect
