@@ -24,3 +24,28 @@ type Conn interface {
 	CloseableReader
 	CloseableWriter
 }
+
+type netConnWrapper struct {
+	net.Conn
+}
+
+func (n netConnWrapper) CloseRead() error {
+	if conn, ok := n.Conn.(CloseableReader); ok {
+		return conn.CloseRead()
+	}
+
+	return n.Close()
+}
+
+func (n netConnWrapper) CloseWrite() error {
+	if conn, ok := n.Conn.(CloseableWriter); ok {
+		return conn.CloseWrite()
+	}
+
+	return n.Close()
+}
+
+// WrapConn wraps a generic [net.Conn] into Conn.
+func WrapNetConn(conn net.Conn) Conn {
+	return netConnWrapper{conn}
+}

@@ -46,6 +46,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
+	github.com/things-go/go-socks5 v0.1.0 // indirect
 	github.com/txthinking/runnergroup v0.0.0-20250224021307-5864ffeb65ae // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	golang.org/x/sync v0.19.0 // indirect
