@@ -27,6 +27,7 @@ require (
 )
 
 require (
+	github.com/ncruces/go-dns v1.3.2
 	github.com/pelletier/go-toml/v2 v2.2.4
 	github.com/pires/go-proxyproto v0.11.0
 	github.com/things-go/go-socks5 v0.1.0
