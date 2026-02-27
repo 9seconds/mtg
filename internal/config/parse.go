@@ -52,6 +52,7 @@ type tomlConfig struct {
 			Idle string `toml:"idle" json:"idle,omitempty"`
 		} `toml:"timeout" json:"timeout,omitempty"`
 		DOHIP   string   `toml:"doh-ip" json:"dohIp,omitempty"`
+		DNS     string   `toml:"dns" json:"dns,omitempty"`
 		Proxies []string `toml:"proxies" json:"proxies,omitempty"`
 	} `toml:"network" json:"network,omitempty"`
 	Stats struct {
