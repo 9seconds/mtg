@@ -42,7 +42,7 @@ func (suite *SocksProxyTestSuite) SetupSuite() {
 
 	suite.noAuthServer = socks5.NewServer()
 	suite.wg.Go(func() {
-		suite.noAuthServer.Serve(suite.noAuthListener)
+		suite.noAuthServer.Serve(suite.noAuthListener) //nolint: errcheck
 	})
 
 	suite.authServer = socks5.NewServer(
@@ -54,7 +54,7 @@ func (suite *SocksProxyTestSuite) SetupSuite() {
 			},
 		}))
 	suite.wg.Go(func() {
-		suite.authServer.Serve(suite.authListener)
+		suite.authServer.Serve(suite.authListener) //nolint: errcheck
 	})
 
 	parsed, err := url.Parse("socks5://" + suite.noAuthListener.Addr().String())
@@ -115,8 +115,8 @@ func (suite *SocksProxyTestSuite) TestRead() {
 }
 
 func (suite *SocksProxyTestSuite) TearDownSuite() {
-	suite.noAuthListener.Close()
-	suite.authListener.Close()
+	suite.noAuthListener.Close() //nolint: errcheck
+	suite.authListener.Close()   //nolint: errcheck
 	suite.wg.Wait()
 	suite.EchoServerTestSuite.TearDownSuite()
 }

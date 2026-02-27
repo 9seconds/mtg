@@ -20,7 +20,7 @@ type BaseHTTPTestSuite struct {
 func (suite *BaseHTTPTestSuite) SetupSuite() {
 	suite.http = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(r.Header.Get("User-Agent")))
+		w.Write([]byte(r.Header.Get("User-Agent"))) //nolint: errcheck
 	}))
 }
 
@@ -32,7 +32,7 @@ func (suite *BaseHTTPTestSuite) TestGet() {
 	resp, err := suite.client.Get(suite.http.URL)
 	suite.NoError(err)
 
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint: errcheck
 
 	data, err := io.ReadAll(resp.Body)
 	suite.NoError(err)

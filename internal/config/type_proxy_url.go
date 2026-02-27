@@ -15,20 +15,24 @@ type TypeProxyURL struct {
 func (t *TypeProxyURL) Set(value string) error {
 	parsedURL, err := url.Parse(value)
 	if err != nil {
-		return fmt.Errorf("value is not corect URL (%s): %w", value, err)
+		return fmt.Errorf("value is not correct URL (%s): %w", value, err)
 	}
 
 	if parsedURL.Host == "" {
 		return fmt.Errorf("url has to have a schema: %s", value)
 	}
 
-	if parsedURL.Scheme != "socks5" {
+	switch parsedURL.Scheme {
+	case "socks5", "socks5h":
+	default:
 		return fmt.Errorf("unsupported schema: %s", parsedURL.Scheme)
 	}
 
 	if _, _, err := net.SplitHostPort(parsedURL.Host); err != nil {
-		parsedURL.Host = net.JoinHostPort(parsedURL.Host,
-			typeProxyURLDefaultSOCKS5Port)
+		parsedURL.Host = net.JoinHostPort(
+			parsedURL.Host,
+			typeProxyURLDefaultSOCKS5Port,
+		)
 	}
 
 	t.Value = parsedURL

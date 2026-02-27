@@ -20,7 +20,7 @@ type EchoServer struct {
 func (e *EchoServer) Run() {
 	e.wg.Go(func() {
 		<-e.ctx.Done()
-		e.listener.Close()
+		e.listener.Close() //nolint: errcheck
 	})
 
 	e.wg.Go(func() {
@@ -32,7 +32,7 @@ func (e *EchoServer) Run() {
 
 			e.wg.Go(func() {
 				<-e.ctx.Done()
-				conn.Close()
+				conn.Close() //nolint: errcheck
 			})
 			e.wg.Go(func() {
 				e.process(conn)
