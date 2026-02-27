@@ -21,14 +21,16 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/tylertreat/BoomFilters v0.0.0-20251117164519-53813c36cc1b
 	golang.org/x/crypto v0.48.0
-	golang.org/x/net v0.49.0 // indirect
+	golang.org/x/net v0.51.0
 	golang.org/x/sys v0.41.0
 	google.golang.org/protobuf v1.36.11 // indirect
 )
 
 require (
+	github.com/ncruces/go-dns v1.3.2
 	github.com/pelletier/go-toml/v2 v2.2.4
 	github.com/pires/go-proxyproto v0.11.0
+	github.com/things-go/go-socks5 v0.1.0
 	github.com/txthinking/socks5 v0.0.0-20251011041537-5c31f201a10e
 	github.com/yl2chen/cidranger v1.0.2
 )

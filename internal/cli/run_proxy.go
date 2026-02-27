@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"net/url"
 	"os"
 
 	"github.com/9seconds/mtg/v2/antireplay"
@@ -16,7 +15,7 @@ import (
 	"github.com/9seconds/mtg/v2/ipblocklist/files"
 	"github.com/9seconds/mtg/v2/logger"
 	"github.com/9seconds/mtg/v2/mtglib"
-	"github.com/9seconds/mtg/v2/network"
+	"github.com/9seconds/mtg/v2/network/v2"
 	"github.com/9seconds/mtg/v2/stats"
 	"github.com/pires/go-proxyproto"
 	"github.com/rs/zerolog"
@@ -40,43 +39,41 @@ func makeLogger(conf *config.Config) mtglib.Logger {
 }
 
 func makeNetwork(conf *config.Config, version string) (mtglib.Network, error) {
-	tcpTimeout := conf.Network.Timeout.TCP.Get(network.DefaultTimeout)
-	httpTimeout := conf.Network.Timeout.HTTP.Get(network.DefaultHTTPTimeout)
-	dohIP := conf.Network.DOHIP.Get(net.ParseIP(network.DefaultDOHHostname)).String()
-	userAgent := "mtg/" + version
-
-	baseDialer, err := network.NewDefaultDialer(tcpTimeout, 0)
+	resolver, err := network.GetDNS(conf.GetDNS())
 	if err != nil {
-		return nil, fmt.Errorf("cannot build a default dialer: %w", err)
+		return nil, fmt.Errorf("cannot create DNS resolver: %w", err)
 	}
 
-	if len(conf.Network.Proxies) == 0 {
-		return network.NewNetwork(baseDialer, userAgent, dohIP, httpTimeout) //nolint: wrapcheck
-	}
+	base := network.New(
+		resolver,
+		"mtg/"+version,
+		conf.Network.Timeout.TCP.Get(0),
+		conf.Network.Timeout.HTTP.Get(0),
+		conf.Network.Timeout.Idle.Get(0),
+	)
 
-	proxyURLs := make([]*url.URL, 0, len(conf.Network.Proxies))
-
-	for _, v := range conf.Network.Proxies {
-		if value := v.Get(nil); value != nil {
-			proxyURLs = append(proxyURLs, value)
-		}
-	}
-
-	if len(proxyURLs) == 1 {
-		socksDialer, err := network.NewSocks5Dialer(baseDialer, proxyURLs[0])
+	proxyDialers := make([]network.Network, len(conf.Network.Proxies))
+	for idx, v := range conf.Network.Proxies {
+		value, err := network.NewProxyNetwork(base, v.Get(nil))
 		if err != nil {
-			return nil, fmt.Errorf("cannot build socks5 dialer: %w", err)
+			return nil, fmt.Errorf("cannot use %v for proxy url: %w", v.Get(nil), err)
 		}
-
-		return network.NewNetwork(socksDialer, userAgent, dohIP, httpTimeout) //nolint: wrapcheck
+		proxyDialers[idx] = value
 	}
 
-	socksDialer, err := network.NewLoadBalancedSocks5Dialer(baseDialer, proxyURLs)
+	switch len(proxyDialers) {
+	case 0:
+		return base, nil
+	case 1:
+		return proxyDialers[0], nil
+	}
+
+	value, err := network.Join(proxyDialers...)
 	if err != nil {
-		return nil, fmt.Errorf("cannot build socks5 dialer: %w", err)
+		panic(err)
 	}
 
-	return network.NewNetwork(socksDialer, userAgent, dohIP, httpTimeout) //nolint: wrapcheck
+	return value, nil
 }
 
 func makeAntiReplayCache(conf *config.Config) mtglib.AntiReplayCache {
