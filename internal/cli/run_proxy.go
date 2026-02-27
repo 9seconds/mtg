@@ -39,8 +39,13 @@ func makeLogger(conf *config.Config) mtglib.Logger {
 }
 
 func makeNetwork(conf *config.Config, version string) (mtglib.Network, error) {
+	resolver, err := network.GetDNS(conf.GetDNS())
+	if err != nil {
+		return nil, fmt.Errorf("cannot create DNS resolver: %w", err)
+	}
+
 	base := network.New(
-		nil,
+		resolver,
 		"mtg/"+version,
 		conf.Network.Timeout.TCP.Get(0),
 		conf.Network.Timeout.HTTP.Get(0),
