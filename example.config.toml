@@ -137,7 +137,7 @@ allow-fallback-on-unknown-dc = false
 #
 # DEPRECATED option:
 #  If dns option is specified, it will be used instead
-doh-ip = "1.1.1.1"
+# doh-ip = "1.1.1.1"
 
 # Starting from mtg v2.1.12 we have changed a configuration for DNS. Now it
 # supports DNS-over-HTTPS, DNS-over-TLS, custom UDP resolver and system
