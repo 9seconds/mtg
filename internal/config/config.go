@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"net/url"
 
 	"github.com/9seconds/mtg/v2/mtglib"
 )
@@ -56,6 +57,7 @@ type Config struct {
 			Idle TypeDuration `json:"idle"`
 		} `json:"timeout"`
 		DOHIP   TypeIP         `json:"dohIp"`
+		DNS     TypeDNSURI     `json:"dns"`
 		Proxies []TypeProxyURL `json:"proxies"`
 	} `json:"network"`
 	Stats struct {
@@ -74,6 +76,16 @@ type Config struct {
 			MetricPrefix TypeMetricPrefix `json:"metricPrefix"`
 		} `json:"prometheus"`
 	} `json:"stats"`
+}
+
+func (c *Config) GetDNS() *url.URL {
+	var dohURL *url.URL
+
+	if dohIP := c.Network.DOHIP.Get(nil); dohIP != nil {
+		dohURL, _ = url.Parse("https://" + dohIP.String())
+	}
+
+	return c.Network.DNS.Get(dohURL)
 }
 
 func (c *Config) GetDomainFrontingPort(defaultValue uint) uint {

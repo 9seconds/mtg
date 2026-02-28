@@ -134,7 +134,32 @@ allow-fallback-on-unknown-dc = false
 # it has to access.
 #
 # By default we use Cloudflare.
+#
+# DEPRECATED option:
+#  If dns option is specified, it will be used instead
 doh-ip = "1.1.1.1"
+
+# Starting from mtg v2.1.12 we have changed a configuration for DNS. Now it
+# supports DNS-over-HTTPS, DNS-over-TLS, custom UDP resolver and system
+# resolver.
+#
+# Here is how to define DNS-over-HTTPS:
+#  - https://1.1.1.1
+#  - https://1.1.1.1/dns-query
+#  - https://cloudflare-dns.com/dns-query
+#  - https://cloudflare-dns.com
+#
+# Here is how to define DNS-over-TLS:
+#  - tls://1.1.1.1
+#  - tls://cloudflare-dns.com
+#
+# Here is how to define a custom UDP resolver (we support only IPs here)
+#  - 1.1.1.1
+#  - udp://1.1.1.1
+#
+# If you set it to empty string, default resolver will be used.
+# But please comment out doh-ip
+dns = "https://1.1.1.1"
 
 # mtg can work via proxies (for now, we support only socks5). Proxy
 # configuration is done via list. So, you can specify many proxies
@@ -149,25 +174,13 @@ doh-ip = "1.1.1.1"
 #
 # Proxy configuration is done via ordinary URI schema:
 #
-#     socks5://user:password@host:port?open_threshold=5&half_open_timeout=1m&reset_failures_timeout=10s
+#     socks5://user:password@host:port
 #
 # Only socks5 proxy is used. user/password is optional. As you can
 # see, you can specify some parameters in GET query. These parameters
 # configure circuit breaker.
-#
-# open_threshold means a number of errors which should happen so we stop
-# use a proxy.
-#
-# half_open_timeout means a time period (in Golang duration notation)
-# after which we can retry with this proxy
-#
-# reset_failures_timeout means a time period when we flush out errors
-# when circuit breaker in closed state.
-#
-# Please see https://docs.microsoft.com/en-us/azure/architecture/patterns/circuit-breaker
-# on details about circuit breakers.
 proxies = [
-    # "socks5://user:password@host:port?open_threshold=5&half_open_timeout=1m&reset_failures_timeout=10s"
+    # "socks5://user:password@host:port"
 ]
 
 # network timeouts define different settings for timeouts. tcp timeout
