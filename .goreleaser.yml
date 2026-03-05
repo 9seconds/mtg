@@ -54,6 +54,7 @@ archives:
       - LICENSE
       - README.md
       - SECURITY.md
+      - example.config.toml
 
 gomod:
   proxy: true
