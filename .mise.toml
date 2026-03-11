@@ -48,7 +48,7 @@ depends = [
 
 [tasks."test:fuzz:client-hello"]
 description = "Run fuzzy test for ClientHello"
-run = "go test -v {{ vars.fuzzflags }} -fuzz=FuzzClientHello ./mtglib/internal/faketls"
+run = "go test -v {{ vars.fuzzflags }} -fuzz=FuzzReadClientHello ./mtglib/internal/tls/fake"
 
 [tasks."test:fuzz:client-handshake"]
 description = "Run fuzzy test for ClientHandshake"
