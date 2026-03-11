@@ -20,9 +20,9 @@ const (
 	TypeHandshakeClient = 0x01
 
 	RandomLen = 32
-
 	// record_type(1) + version(2) + size(2) + handshake_type(1) + uint24_length(3) + client_version(2)
-	clientRandomOffset = 1 + 2 + 2 + 1 + 3 + 2
+	RandomOffset = 1 + 2 + 2 + 1 + 3 + 2
+
 	sniDNSNamesListType = 0
 )
 
@@ -81,7 +81,7 @@ func ReadClientHello(conn net.Conn, secret mtglib.Secret, tolerateTimeSkewness t
 
 	digest := hmac.New(sha256.New, secret.Key[:])
 	// we write a copy of the handshake with client random all nullified.
-	digest.Write(handshakeCopyBuf.Next(clientRandomOffset))
+	digest.Write(handshakeCopyBuf.Next(RandomOffset))
 	handshakeCopyBuf.Next(RandomLen)
 	digest.Write(emptyRandom[:])
 	digest.Write(handshakeCopyBuf.Bytes())
