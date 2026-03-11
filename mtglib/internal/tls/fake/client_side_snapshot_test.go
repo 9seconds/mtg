@@ -100,7 +100,12 @@ func (suite *ParseClientHelloSnapshotTestSuite) TestSnapshotOk() {
 			connMock := suite.makeConn(snapshot.GetFull())
 			defer connMock.AssertExpectations(t)
 
-			hello, err := fake.ReadClientHello(connMock, suite.secret, TolerateTime)
+			hello, err := fake.ReadClientHello(
+				connMock,
+				suite.secret.Key[:],
+				suite.secret.Host,
+				TolerateTime,
+			)
 			require.NoError(t, err)
 
 			assert.Equal(t, snapshot.GetRandom(), hello.Random[:])
@@ -131,7 +136,12 @@ func (suite *ParseClientHelloSnapshotTestSuite) TestSnapshotBad() {
 			connMock := suite.makeConn(snapshot.GetFull())
 			defer connMock.AssertExpectations(t)
 
-			_, err = fake.ReadClientHello(connMock, suite.secret, TolerateTime)
+			_, err = fake.ReadClientHello(
+				connMock,
+				suite.secret.Key[:],
+				suite.secret.Host,
+				TolerateTime,
+			)
 			assert.ErrorIs(t, err, fake.ErrBadDigest)
 		})
 	}

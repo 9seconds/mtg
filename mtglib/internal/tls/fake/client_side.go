@@ -12,7 +12,6 @@ import (
 	"slices"
 	"time"
 
-	"github.com/9seconds/mtg/v2/mtglib"
 	"github.com/9seconds/mtg/v2/mtglib/internal/tls"
 )
 
@@ -37,7 +36,12 @@ type ClientHello struct {
 	CipherSuite uint16
 }
 
-func ReadClientHello(conn net.Conn, secret mtglib.Secret, tolerateTimeSkewness time.Duration) (*ClientHello, error) {
+func ReadClientHello(
+	conn net.Conn,
+	secret []byte,
+	hostname string,
+	tolerateTimeSkewness time.Duration,
+) (*ClientHello, error) {
 	if err := conn.SetReadDeadline(time.Now().Add(ClientHelloReadTimeout)); err != nil {
 		return nil, fmt.Errorf("cannot set read deadline: %w", err)
 	}
@@ -75,11 +79,11 @@ func ReadClientHello(conn net.Conn, secret mtglib.Secret, tolerateTimeSkewness t
 		return nil, fmt.Errorf("cannot parse SNI: %w", err)
 	}
 
-	if !slices.Contains(sniHostnames, secret.Host) {
-		return nil, fmt.Errorf("cannot find %s in %v", secret.Host, sniHostnames)
+	if !slices.Contains(sniHostnames, hostname) {
+		return nil, fmt.Errorf("cannot find %s in %v", hostname, sniHostnames)
 	}
 
-	digest := hmac.New(sha256.New, secret.Key[:])
+	digest := hmac.New(sha256.New, secret)
 	// we write a copy of the handshake with client random all nullified.
 	digest.Write(handshakeCopyBuf.Next(RandomOffset))
 	handshakeCopyBuf.Next(RandomLen)

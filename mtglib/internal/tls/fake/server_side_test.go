@@ -38,7 +38,7 @@ func (suite *SendServerHelloTestSuite) SetupTest() {
 }
 
 func (suite *SendServerHelloTestSuite) TestRecordStructure() {
-	noise, err := fake.SendServerHello(suite.buf, suite.secret, suite.hello)
+	noise, err := fake.SendServerHello(suite.buf, suite.secret.Key[:], suite.hello)
 	suite.NoError(err)
 
 	var rec bytes.Buffer
@@ -65,7 +65,7 @@ func (suite *SendServerHelloTestSuite) TestRecordStructure() {
 }
 
 func (suite *SendServerHelloTestSuite) TestHMAC() {
-	noise, err := fake.SendServerHello(suite.buf, suite.secret, suite.hello)
+	noise, err := fake.SendServerHello(suite.buf, suite.secret.Key[:], suite.hello)
 	suite.NoError(err)
 
 	packet := make([]byte, suite.buf.Len())
@@ -84,7 +84,7 @@ func (suite *SendServerHelloTestSuite) TestHMAC() {
 }
 
 func (suite *SendServerHelloTestSuite) TestHandshakePayload() {
-	_, err := fake.SendServerHello(suite.buf, suite.secret, suite.hello)
+	_, err := fake.SendServerHello(suite.buf, suite.secret.Key[:], suite.hello)
 	suite.NoError(err)
 
 	packet := suite.buf.Bytes()
@@ -106,7 +106,7 @@ func (suite *SendServerHelloTestSuite) TestHandshakePayload() {
 }
 
 func (suite *SendServerHelloTestSuite) TestChangeCipherSpec() {
-	_, err := fake.SendServerHello(suite.buf, suite.secret, suite.hello)
+	_, err := fake.SendServerHello(suite.buf, suite.secret.Key[:], suite.hello)
 	suite.NoError(err)
 
 	// Skip first record

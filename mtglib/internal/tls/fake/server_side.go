@@ -8,7 +8,6 @@ import (
 	"encoding/binary"
 	"io"
 
-	"github.com/9seconds/mtg/v2/mtglib"
 	"github.com/9seconds/mtg/v2/mtglib/internal/tls"
 	"golang.org/x/crypto/curve25519"
 )
@@ -35,7 +34,7 @@ var (
 	}
 )
 
-func SendServerHello(w io.Writer, secret mtglib.Secret, clientHello *ClientHello) ([]byte, error) {
+func SendServerHello(w io.Writer, secret []byte, clientHello *ClientHello) ([]byte, error) {
 	buf := &bytes.Buffer{}
 	buf.Grow(tls.MaxRecordSize)
 
@@ -46,7 +45,7 @@ func SendServerHello(w io.Writer, secret mtglib.Secret, clientHello *ClientHello
 	generateNoise(noise)
 
 	packet := buf.Bytes()
-	digest := hmac.New(sha256.New, secret.Key[:])
+	digest := hmac.New(sha256.New, secret)
 
 	digest.Write(clientHello.Random[:])
 	digest.Write(packet)

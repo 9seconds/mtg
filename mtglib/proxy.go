@@ -11,10 +11,11 @@ import (
 
 	"github.com/9seconds/mtg/v2/essentials"
 	"github.com/9seconds/mtg/v2/mtglib/internal/dc"
-	"github.com/9seconds/mtg/v2/mtglib/internal/faketls"
-	"github.com/9seconds/mtg/v2/mtglib/internal/faketls/record"
+	"github.com/9seconds/mtg/v2/mtglib/internal/doppel"
 	"github.com/9seconds/mtg/v2/mtglib/internal/obfuscation"
 	"github.com/9seconds/mtg/v2/mtglib/internal/relay"
+	"github.com/9seconds/mtg/v2/mtglib/internal/tls"
+	"github.com/9seconds/mtg/v2/mtglib/internal/tls/fake"
 	"github.com/panjf2000/ants/v2"
 )
 
@@ -32,6 +33,7 @@ type Proxy struct {
 	workerPool                  *ants.PoolWithFunc
 	telegram                    *dc.Telegram
 	configUpdater               *dc.PublicConfigUpdater
+	doppelGanger                *doppel.Ganger
 	clientObfuscatror           obfuscation.Obfuscator
 
 	secret          Secret
@@ -161,52 +163,39 @@ func (p *Proxy) Shutdown() {
 }
 
 func (p *Proxy) doFakeTLSHandshake(ctx *streamContext) bool {
-	rec := record.AcquireRecord()
-	defer record.ReleaseRecord(rec)
-
 	rewind := newConnRewind(ctx.clientConn)
 
-	if err := rec.Read(rewind); err != nil {
+	clientHello, err := fake.ReadClientHello(
+		rewind,
+		p.secret.Key[:],
+		p.secret.Host,
+		p.tolerateTimeSkewness,
+	)
+	if err != nil {
 		p.logger.InfoError("cannot read client hello", err)
 		p.doDomainFronting(ctx, rewind)
-
 		return false
 	}
 
-	hello, err := faketls.ParseClientHello(p.secret.Key[:], rec.Payload.Bytes())
-	if err != nil {
-		p.logger.InfoError("cannot parse client hello", err)
-		p.doDomainFronting(ctx, rewind)
-
-		return false
-	}
-
-	if err := hello.Valid(p.secret.Host, p.tolerateTimeSkewness); err != nil {
-		p.logger.
-			BindStr("hostname", hello.Host).
-			BindStr("hello-time", hello.Time.String()).
-			InfoError("invalid faketls client hello", err)
-		p.doDomainFronting(ctx, rewind)
-
-		return false
-	}
-
-	if p.antiReplayCache.SeenBefore(hello.SessionID) {
+	if p.antiReplayCache.SeenBefore(clientHello.SessionID) {
 		p.logger.Warning("replay attack has been detected!")
 		p.eventStream.Send(p.ctx, NewEventReplayAttack(ctx.streamID))
 		p.doDomainFronting(ctx, rewind)
-
 		return false
 	}
 
-	if err := faketls.SendWelcomePacket(rewind, p.secret.Key[:], hello); err != nil {
+	_, err = fake.SendServerHello(ctx.clientConn, p.secret.Key[:], clientHello)
+	if err != nil {
 		p.logger.InfoError("cannot send welcome packet", err)
-
 		return false
 	}
 
-	ctx.clientConn = &faketls.Conn{
-		Conn: ctx.clientConn,
+	ctx.clientConn = tls.New(ctx.clientConn, true, true)
+
+	ctx.clientConn, err = p.doppelGanger.NewConn(ctx.clientConn)
+	if err != nil {
+		p.logger.WarningError("cannot create connection", err)
+		return false
 	}
 
 	return true
