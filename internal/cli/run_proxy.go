@@ -46,7 +46,7 @@ func makeNetwork(conf *config.Config, version string) (mtglib.Network, error) {
 
 	base := network.New(
 		resolver,
-		"mtg/"+version,
+		"",
 		conf.Network.Timeout.TCP.Get(0),
 		conf.Network.Timeout.HTTP.Get(0),
 		conf.Network.Timeout.Idle.Get(0),

@@ -28,6 +28,9 @@ const (
 	// probes.
 	DefaultTCPKeepAlivePeriod = 10 * time.Second
 
+	// User Agent to use in HTTP client.
+	UserAgent = "curl/8.5.0"
+
 	// tcpLingerTimeout defines a number of seconds to wait for sending
 	// unacknowledged data.
 	tcpLingerTimeout = 1

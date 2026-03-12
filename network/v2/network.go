@@ -76,6 +76,10 @@ func New(
 		dnsResolver = net.DefaultResolver
 	}
 
+	if userAgent == "" {
+		userAgent = UserAgent
+	}
+
 	return &network{
 		Dialer: net.Dialer{
 			Timeout:       tcpTimeout,
