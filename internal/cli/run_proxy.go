@@ -52,7 +52,7 @@ func makeNetwork(conf *config.Config, version string) (mtglib.Network, error) {
 		conf.Network.Timeout.Idle.Get(0),
 	)
 
-	proxyDialers := make([]network.Network, len(conf.Network.Proxies))
+	proxyDialers := make([]mtglib.Network, len(conf.Network.Proxies))
 	for idx, v := range conf.Network.Proxies {
 		value, err := network.NewProxyNetwork(base, v.Get(nil))
 		if err != nil {
