@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/9seconds/mtg/v2/mtglib"
 	"github.com/9seconds/mtg/v2/network/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -12,7 +13,7 @@ import (
 type BaseNetworkTestSuite struct {
 	EchoServerTestSuite
 
-	net network.Network
+	net mtglib.Network
 }
 
 func (suite *BaseNetworkTestSuite) SetupSuite() {
