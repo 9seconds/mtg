@@ -5,11 +5,12 @@ FROM golang:1.26-alpine AS build
 
 ENV CGO_ENABLED=0
 
-RUN set -x \
-  && apk --no-cache --update add \
-    bash \
-    ca-certificates \
-    git
+RUN --mount=type=cache,target=/var/cache/apk \
+    set -x \
+    && apk --update add \
+      bash \
+      ca-certificates \
+      git
 
 COPY go.mod go.sum /app/
 WORKDIR /app
