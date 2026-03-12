@@ -9,13 +9,13 @@ import (
 )
 
 const (
-	DoppelGangerMaxDurations     = 4096
+	DoppelGangerMaxDurations  = 4096
 	DoppelGangerScoutRaidEach = 30 * time.Minute
-	DoppelGangerScoutRepeats     = 10
+	DoppelGangerScoutRepeats  = 10
 )
 
 type gangerConnRequest struct {
-	ret     chan Conn
+	ret     chan<- Conn
 	payload essentials.Conn
 }
 
@@ -25,7 +25,7 @@ type Ganger struct {
 	logger    Logger
 	wg        sync.WaitGroup
 
-	scout               Scout
+	scout            Scout
 	scoutRaidEach    time.Duration
 	scoutRaidRepeats int
 
@@ -47,8 +47,9 @@ func (g *Ganger) Run() {
 }
 
 func (g *Ganger) NewConn(conn essentials.Conn) (Conn, error) {
+	rvChan := make(chan Conn)
 	req := gangerConnRequest{
-		ret:     make(chan Conn),
+		ret:     rvChan,
 		payload: conn,
 	}
 	defer close(req.ret)
@@ -62,7 +63,7 @@ func (g *Ganger) NewConn(conn essentials.Conn) (Conn, error) {
 	select {
 	case <-g.ctx.Done():
 		return Conn{}, context.Cause(g.ctx)
-	case conn := <-req.ret:
+	case conn := <-rvChan:
 		return conn, nil
 	}
 }
@@ -158,9 +159,9 @@ func NewGanger(
 	}
 
 	return &Ganger{
-		ctx:                 ctx,
-		ctxCancel:           cancel,
-		logger:              logger,
+		ctx:              ctx,
+		ctxCancel:        cancel,
+		logger:           logger,
 		scoutRaidEach:    scoutEach,
 		scoutRaidRepeats: scoutRepeats,
 		stats: &Stats{

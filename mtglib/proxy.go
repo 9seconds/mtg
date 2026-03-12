@@ -78,19 +78,32 @@ func (p *Proxy) ServeConn(conn essentials.Conn) {
 		ctx.logger.Info("Stream has been finished")
 	}()
 
-	if !p.doFakeTLSHandshake(ctx) {
+	noise, ok := p.doFakeTLSHandshake(ctx)
+	if !ok {
 		return
 	}
 
-	if err := p.doObfuscatedHandshake(ctx); err != nil {
-		p.logger.InfoError("obfuscated handshake is failed", err)
+	clientConn, err := p.doppelGanger.NewConn(ctx.clientConn)
+	if err != nil {
+		ctx.logger.InfoError("cannot wrap into doppelganger connection", err)
+		return
+	}
+	defer clientConn.Stop()
 
+	if _, err := clientConn.Write(noise); err != nil {
+		ctx.logger.InfoError("cannot send the first packet", err)
+		return
+	}
+
+	ctx.clientConn = clientConn
+
+	if err := p.doObfuscatedHandshake(ctx); err != nil {
+		ctx.logger.InfoError("obfuscated handshake is failed", err)
 		return
 	}
 
 	if err := p.doTelegramCall(ctx); err != nil {
-		p.logger.WarningError("cannot dial to telegram", err)
-
+		ctx.logger.WarningError("cannot dial to telegram", err)
 		return
 	}
 
@@ -163,7 +176,7 @@ func (p *Proxy) Shutdown() {
 	p.blocklist.Shutdown()
 }
 
-func (p *Proxy) doFakeTLSHandshake(ctx *streamContext) bool {
+func (p *Proxy) doFakeTLSHandshake(ctx *streamContext) ([]byte, bool) {
 	rewind := newConnRewind(ctx.clientConn)
 
 	clientHello, err := fake.ReadClientHello(
@@ -175,31 +188,25 @@ func (p *Proxy) doFakeTLSHandshake(ctx *streamContext) bool {
 	if err != nil {
 		p.logger.InfoError("cannot read client hello", err)
 		p.doDomainFronting(ctx, rewind)
-		return false
+		return nil, false
 	}
 
 	if p.antiReplayCache.SeenBefore(clientHello.SessionID) {
 		p.logger.Warning("replay attack has been detected!")
 		p.eventStream.Send(p.ctx, NewEventReplayAttack(ctx.streamID))
 		p.doDomainFronting(ctx, rewind)
-		return false
+		return nil, false
 	}
 
-	_, err = fake.SendServerHello(ctx.clientConn, p.secret.Key[:], clientHello)
+	noise, err := fake.SendServerHello(ctx.clientConn, p.secret.Key[:], clientHello)
 	if err != nil {
 		p.logger.InfoError("cannot send welcome packet", err)
-		return false
+		return nil, false
 	}
 
 	ctx.clientConn = tls.New(ctx.clientConn, true, true)
 
-	ctx.clientConn, err = p.doppelGanger.NewConn(ctx.clientConn)
-	if err != nil {
-		p.logger.WarningError("cannot create connection", err)
-		return false
-	}
-
-	return true
+	return noise, true
 }
 
 func (p *Proxy) doObfuscatedHandshake(ctx *streamContext) error {
