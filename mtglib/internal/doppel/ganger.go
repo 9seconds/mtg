@@ -10,7 +10,7 @@ import (
 
 const (
 	DoppelGangerMaxDurations  = 4096
-	DoppelGangerScoutRaidEach = 30 * time.Minute
+	DoppelGangerScoutRaidEach = 6 * time.Hour
 	DoppelGangerScoutRepeats  = 10
 )
 
