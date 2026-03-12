@@ -11,8 +11,12 @@ const (
 	StatsLowK        = 0.01
 	StatsHighK       = 10.0
 
-	StatsDefaultK      = 0.6
-	StatsDefaultLambda = 0.002
+	// do not calculate statistics if we have < than this number of durations
+	MinDurationsToCalculate = 100
+
+	// these values are taken from ok-cdn. measured from moscow site.
+	StatsDefaultK      = 1.2908978568647322
+	StatsDefaultLambda = 1.4258402622793287
 )
 
 // Stats is responsible for generating values that are distributed according
