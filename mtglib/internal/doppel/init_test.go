@@ -30,6 +30,10 @@ func (s SimpleNetwork) DialContext(ctx context.Context, network, address string)
 	return conn.(*net.TCPConn), nil
 }
 
+func (s SimpleNetwork) NativeDialer() *net.Dialer {
+	return &net.Dialer{}
+}
+
 func (s SimpleNetwork) MakeHTTPClient(dialFunc func(ctx context.Context, network, address string) (essentials.Conn, error)) *http.Client {
 	if dialFunc == nil {
 		dialFunc = s.DialContext
