@@ -157,6 +157,7 @@ func (p *Proxy) Shutdown() {
 	p.streamWaitGroup.Wait()
 	p.workerPool.Release()
 	p.configUpdater.Wait()
+	p.doppelGanger.Shutdown()
 
 	p.allowlist.Shutdown()
 	p.blocklist.Shutdown()
@@ -327,6 +328,14 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 		tolerateTimeSkewness:     opts.getTolerateTimeSkewness(),
 		allowFallbackOnUnknownDC: opts.AllowFallbackOnUnknownDC,
 		telegram:                 tg,
+		doppelGanger: doppel.NewGanger(
+			ctx,
+			opts.Network,
+			logger.Named("doppelganger"),
+			opts.DoppelGangerEach,
+			int(opts.DoppelGangerPerRaid),
+			opts.DoppelGangerURLs,
+		),
 		configUpdater: dc.NewPublicConfigUpdater(
 			tg,
 			updatersLogger.Named("public-config"),
@@ -337,6 +346,8 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 		},
 		domainFrontingProxyProtocol: opts.DomainFrontingProxyProtocol,
 	}
+
+	proxy.doppelGanger.Run()
 
 	if opts.AutoUpdate {
 		proxy.configUpdater.Run(ctx, dc.PublicConfigUpdateURLv4, "tcp4")

@@ -239,6 +239,11 @@ func runProxy(conf *config.Config, version string) error { //nolint: funlen
 		return fmt.Errorf("cannot build ip allowlist: %w", err)
 	}
 
+	doppelGangerURLs := make([]string, len(conf.Defense.Doppelganger.URLs))
+	for i, v := range conf.Defense.Doppelganger.URLs {
+		doppelGangerURLs[i] = v.String()
+	}
+
 	opts := mtglib.ProxyOpts{
 		Logger:          logger,
 		Network:         ntw,
@@ -256,6 +261,10 @@ func runProxy(conf *config.Config, version string) error { //nolint: funlen
 
 		AllowFallbackOnUnknownDC: conf.AllowFallbackOnUnknownDC.Get(false),
 		TolerateTimeSkewness:     conf.TolerateTimeSkewness.Value,
+
+		DoppelGangerURLs:    doppelGangerURLs,
+		DoppelGangerPerRaid: conf.Defense.Doppelganger.Repeats.Get(mtglib.DoppelGangerPerRaid),
+		DoppelGangerEach:    conf.Defense.Doppelganger.UpdateEach.Get(mtglib.DoppelGangerEach),
 	}
 
 	proxy, err := mtglib.NewProxy(opts)
