@@ -42,10 +42,10 @@ func (suite *HttpsURLTestSuite) TestUnmarshalFail() {
 
 func (suite *HttpsURLTestSuite) TestUnmarshalOk() {
 	testData := map[string]string{
-		"https://example.com":            "https://example.com",
-		"https://example.com:8443":       "https://example.com:8443",
-		"https://example.com/path?q=1":   "https://example.com/path?q=1",
-		"https://user:pass@example.com":  "https://user:pass@example.com",
+		"https://example.com":           "https://example.com",
+		"https://example.com:8443":      "https://example.com:8443",
+		"https://example.com/path?q=1":  "https://example.com/path?q=1",
+		"https://user:pass@example.com": "https://user:pass@example.com",
 	}
 
 	for k, v := range testData {

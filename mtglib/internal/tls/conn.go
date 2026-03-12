@@ -22,10 +22,8 @@ const (
 	TypeApplicationData  = 0x17
 )
 
-var (
-	// TLS 1.2 is used for both TLS 1.2 and 1.3
-	TLSVersion = [SizeVersion]byte{3, 3}
-)
+// TLS 1.2 is used for both TLS 1.2 and 1.3
+var TLSVersion = [SizeVersion]byte{3, 3}
 
 // Conn presents an established TLS 1.3 connection, after handshake
 type Conn struct {

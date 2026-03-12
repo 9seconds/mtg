@@ -13,8 +13,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type SimpleNetwork struct {
-}
+type SimpleNetwork struct{}
 
 func (s SimpleNetwork) Dial(network, address string) (essentials.Conn, error) {
 	return s.DialContext(context.Background(), network, address)
