@@ -10,7 +10,7 @@ import (
 
 const (
 	DoppelGangerMaxDurations     = 4096
-	DoppelGangerScoutMissionEach = 30 * time.Minute
+	DoppelGangerScoutRaidEach = 30 * time.Minute
 	DoppelGangerScoutRepeats     = 10
 )
 
@@ -26,8 +26,8 @@ type Ganger struct {
 	wg        sync.WaitGroup
 
 	scout               Scout
-	scoutMissionEach    time.Duration
-	scoutMissionRepeats int
+	scoutRaidEach    time.Duration
+	scoutRaidRepeats int
 
 	stats     *Stats
 	durations []time.Duration
@@ -68,7 +68,7 @@ func (g *Ganger) NewConn(conn essentials.Conn) (Conn, error) {
 }
 
 func (g *Ganger) run() {
-	scoutTicker := time.NewTicker(g.scoutMissionEach)
+	scoutTicker := time.NewTicker(g.scoutRaidEach)
 	defer func() {
 		scoutTicker.Stop()
 
@@ -84,7 +84,7 @@ func (g *Ganger) run() {
 	updatedStatsChan := make(chan *Stats)
 
 	g.wg.Go(func() {
-		g.runScoutMission(scoutCollectedChan)
+		g.runScoutRaid(scoutCollectedChan)
 	})
 
 	for {
@@ -109,7 +109,7 @@ func (g *Ganger) run() {
 			currentScoutCollectedChan = scoutCollectedChan
 		case <-scoutTicker.C:
 			g.wg.Go(func() {
-				g.runScoutMission(scoutCollectedChan)
+				g.runScoutRaid(scoutCollectedChan)
 			})
 		case req := <-g.connRequests:
 			select {
@@ -120,10 +120,10 @@ func (g *Ganger) run() {
 	}
 }
 
-func (g *Ganger) runScoutMission(rvChan chan<- []time.Duration) {
+func (g *Ganger) runScoutRaid(rvChan chan<- []time.Duration) {
 	durations := []time.Duration{}
 
-	for range g.scoutMissionRepeats {
+	for range g.scoutRaidRepeats {
 		learned, err := g.scout.Learn(g.ctx)
 		if err != nil {
 			g.logger.WarningError("cannot learn", err)
@@ -150,7 +150,7 @@ func NewGanger(
 	ctx, cancel := context.WithCancel(ctx)
 
 	if scoutEach == 0 {
-		scoutEach = DoppelGangerScoutMissionEach
+		scoutEach = DoppelGangerScoutRaidEach
 	}
 
 	if scoutRepeats == 0 {
@@ -161,8 +161,8 @@ func NewGanger(
 		ctx:                 ctx,
 		ctxCancel:           cancel,
 		logger:              logger,
-		scoutMissionEach:    scoutEach,
-		scoutMissionRepeats: scoutRepeats,
+		scoutRaidEach:    scoutEach,
+		scoutRaidRepeats: scoutRepeats,
 		stats: &Stats{
 			k:      StatsDefaultK,
 			lambda: StatsDefaultLambda,
