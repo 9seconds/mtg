@@ -33,11 +33,11 @@ run = "govulncheck ./..."
 
 [tasks.test]
 description = "Run tests"
-run = "go test -v ./..."
+run = "go test -v -race ./..."
 
 [tasks.covtest]
 description = "Run tests with code coverage"
-run = "go test -coverprofile=coverage.txt -covermode=atomic -parallel 2 -race -v ./..."
+run = "go test -coverprofile=coverage.txt -covermode=atomic -count=2 -race -v ./..."
 
 [tasks.test-all]
 description = "Run all tests"

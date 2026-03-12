@@ -5,14 +5,19 @@ FROM golang:1.26-alpine AS build
 
 ENV CGO_ENABLED=0
 
-RUN set -x \
-  && apk --no-cache --update add \
-    bash \
-    ca-certificates \
-    git
+RUN --mount=type=cache,target=/var/cache/apk \
+    set -x \
+    && apk --update add \
+      bash \
+      ca-certificates \
+      git
+
+COPY go.mod go.sum /app/
+WORKDIR /app
+
+RUN go mod download
 
 COPY . /app
-WORKDIR /app
 
 RUN set -x \
   && version="$(git describe --exact-match HEAD 2>/dev/null || git describe --tags --always)" \
