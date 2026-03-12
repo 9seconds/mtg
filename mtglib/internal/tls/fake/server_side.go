@@ -54,7 +54,7 @@ func SendServerHello(w io.Writer, secret []byte, clientHello *ClientHello) ([]by
 
 	_, err := w.Write(packet)
 
-	return noise.Bytes(), err
+	return noise.Bytes()[tls.SizeHeader:], err
 }
 
 func generateServerHello(buf *bytes.Buffer, hello *ClientHello) {

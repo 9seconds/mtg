@@ -55,13 +55,8 @@ func (suite *SendServerHelloTestSuite) TestRecordStructure() {
 
 	suite.Empty(suite.buf.Bytes())
 
-	noiseBuf := bytes.NewReader(noise)
-	rec.Reset()
-
-	recordType, _, err = tls.ReadRecord(noiseBuf, &rec)
-	suite.NoError(err)
-	suite.Equal(byte(tls.TypeApplicationData), recordType)
-	suite.Zero(noiseBuf.Len())
+	// noise is raw payload without TLS record header
+	suite.Len(noise, 1369)
 }
 
 func (suite *SendServerHelloTestSuite) TestHMAC() {
@@ -78,7 +73,13 @@ func (suite *SendServerHelloTestSuite) TestHMAC() {
 	mac := hmac.New(sha256.New, suite.secret.Key[:])
 	mac.Write(suite.hello.Random[:])
 	mac.Write(packet)
-	mac.Write(noise)
+
+	// HMAC is computed over the full noise TLS record (with header),
+	// but SendServerHello returns noise without the header,
+	// so we reconstruct the full record.
+	var fullNoise bytes.Buffer
+	tls.WriteRecord(&fullNoise, noise) //nolint: errcheck
+	mac.Write(fullNoise.Bytes())
 
 	suite.Equal(random, mac.Sum(nil))
 }

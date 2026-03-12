@@ -204,7 +204,7 @@ func (p *Proxy) doFakeTLSHandshake(ctx *streamContext) ([]byte, bool) {
 		return nil, false
 	}
 
-	ctx.clientConn = tls.New(ctx.clientConn, true, true)
+	ctx.clientConn = tls.New(ctx.clientConn, true, false)
 
 	return noise, true
 }
