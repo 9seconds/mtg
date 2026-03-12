@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/9seconds/mtg/v2/essentials"
+	"github.com/9seconds/mtg/v2/mtglib"
 )
 
 type network struct {
@@ -70,7 +71,7 @@ func New(
 	tcpTimeout,
 	httpTimeout,
 	idleTimeout time.Duration,
-) Network {
+) mtglib.Network {
 	if dnsResolver == nil {
 		dnsResolver = net.DefaultResolver
 	}

@@ -8,10 +8,11 @@ import (
 	"net/http"
 
 	"github.com/9seconds/mtg/v2/essentials"
+	"github.com/9seconds/mtg/v2/mtglib"
 )
 
 type multiNetwork struct {
-	networks []Network
+	networks []mtglib.Network
 }
 
 func (m multiNetwork) Dial(network, address string) (essentials.Conn, error) {
@@ -22,7 +23,7 @@ func (m multiNetwork) DialContext(ctx context.Context, network, address string) 
 	networks := m.networks
 
 	if len(networks) > 1 {
-		networks = make([]Network, len(m.networks))
+		networks = make([]mtglib.Network, len(m.networks))
 		copy(networks, m.networks)
 
 		rand.Shuffle(len(m.networks), func(i, j int) {
@@ -59,7 +60,7 @@ func (m multiNetwork) MakeHTTPClient(
 	return m.networks[0].MakeHTTPClient(dialFunc)
 }
 
-func Join(networks ...Network) (Network, error) {
+func Join(networks ...mtglib.Network) (mtglib.Network, error) {
 	if len(networks) == 0 {
 		return nil, errors.New("cannot join no networks")
 	}

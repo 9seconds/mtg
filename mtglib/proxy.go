@@ -279,12 +279,15 @@ func (p *Proxy) doDomainFronting(ctx *streamContext, conn *connRewind) {
 	p.eventStream.Send(p.ctx, NewEventDomainFronting(ctx.streamID))
 	conn.Rewind()
 
-	frontConn, err := p.network.DialContext(ctx, "tcp", p.DomainFrontingAddress())
+	nativeDialer := p.network.NativeDialer()
+	fConn, err := nativeDialer.DialContext(ctx, "tcp", p.DomainFrontingAddress())
 	if err != nil {
 		p.logger.WarningError("cannot dial to the fronting domain", err)
 
 		return
 	}
+
+	frontConn := essentials.WrapNetConn(fConn)
 
 	if p.domainFrontingProxyProtocol {
 		frontConn = newConnProxyProtocol(ctx.clientConn, frontConn)

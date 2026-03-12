@@ -11,10 +11,7 @@ package network
 
 import (
 	"errors"
-	"net"
 	"time"
-
-	"github.com/9seconds/mtg/v2/mtglib"
 )
 
 const (
@@ -37,9 +34,3 @@ const (
 )
 
 var ErrCannotDial = errors.New("cannot dial to any address")
-
-type Network interface {
-	mtglib.Network
-
-	NativeDialer() *net.Dialer
-}
