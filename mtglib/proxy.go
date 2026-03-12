@@ -11,10 +11,11 @@ import (
 
 	"github.com/9seconds/mtg/v2/essentials"
 	"github.com/9seconds/mtg/v2/mtglib/internal/dc"
-	"github.com/9seconds/mtg/v2/mtglib/internal/faketls"
-	"github.com/9seconds/mtg/v2/mtglib/internal/faketls/record"
+	"github.com/9seconds/mtg/v2/mtglib/internal/doppel"
 	"github.com/9seconds/mtg/v2/mtglib/internal/obfuscation"
 	"github.com/9seconds/mtg/v2/mtglib/internal/relay"
+	"github.com/9seconds/mtg/v2/mtglib/internal/tls"
+	"github.com/9seconds/mtg/v2/mtglib/internal/tls/fake"
 	"github.com/panjf2000/ants/v2"
 )
 
@@ -32,6 +33,7 @@ type Proxy struct {
 	workerPool                  *ants.PoolWithFunc
 	telegram                    *dc.Telegram
 	configUpdater               *dc.PublicConfigUpdater
+	doppelGanger                *doppel.Ganger
 	clientObfuscatror           obfuscation.Obfuscator
 
 	secret          Secret
@@ -76,19 +78,32 @@ func (p *Proxy) ServeConn(conn essentials.Conn) {
 		ctx.logger.Info("Stream has been finished")
 	}()
 
-	if !p.doFakeTLSHandshake(ctx) {
+	noise, ok := p.doFakeTLSHandshake(ctx)
+	if !ok {
 		return
 	}
 
-	if err := p.doObfuscatedHandshake(ctx); err != nil {
-		p.logger.InfoError("obfuscated handshake is failed", err)
+	clientConn, err := p.doppelGanger.NewConn(ctx.clientConn)
+	if err != nil {
+		ctx.logger.InfoError("cannot wrap into doppelganger connection", err)
+		return
+	}
+	defer clientConn.Stop()
 
+	if _, err := clientConn.Write(noise); err != nil {
+		ctx.logger.InfoError("cannot send the first packet", err)
+		return
+	}
+
+	ctx.clientConn = clientConn
+
+	if err := p.doObfuscatedHandshake(ctx); err != nil {
+		ctx.logger.InfoError("obfuscated handshake is failed", err)
 		return
 	}
 
 	if err := p.doTelegramCall(ctx); err != nil {
-		p.logger.WarningError("cannot dial to telegram", err)
-
+		ctx.logger.WarningError("cannot dial to telegram", err)
 		return
 	}
 
@@ -155,61 +170,43 @@ func (p *Proxy) Shutdown() {
 	p.streamWaitGroup.Wait()
 	p.workerPool.Release()
 	p.configUpdater.Wait()
+	p.doppelGanger.Shutdown()
 
 	p.allowlist.Shutdown()
 	p.blocklist.Shutdown()
 }
 
-func (p *Proxy) doFakeTLSHandshake(ctx *streamContext) bool {
-	rec := record.AcquireRecord()
-	defer record.ReleaseRecord(rec)
-
+func (p *Proxy) doFakeTLSHandshake(ctx *streamContext) ([]byte, bool) {
 	rewind := newConnRewind(ctx.clientConn)
 
-	if err := rec.Read(rewind); err != nil {
+	clientHello, err := fake.ReadClientHello(
+		rewind,
+		p.secret.Key[:],
+		p.secret.Host,
+		p.tolerateTimeSkewness,
+	)
+	if err != nil {
 		p.logger.InfoError("cannot read client hello", err)
 		p.doDomainFronting(ctx, rewind)
-
-		return false
+		return nil, false
 	}
 
-	hello, err := faketls.ParseClientHello(p.secret.Key[:], rec.Payload.Bytes())
-	if err != nil {
-		p.logger.InfoError("cannot parse client hello", err)
-		p.doDomainFronting(ctx, rewind)
-
-		return false
-	}
-
-	if err := hello.Valid(p.secret.Host, p.tolerateTimeSkewness); err != nil {
-		p.logger.
-			BindStr("hostname", hello.Host).
-			BindStr("hello-time", hello.Time.String()).
-			InfoError("invalid faketls client hello", err)
-		p.doDomainFronting(ctx, rewind)
-
-		return false
-	}
-
-	if p.antiReplayCache.SeenBefore(hello.SessionID) {
+	if p.antiReplayCache.SeenBefore(clientHello.SessionID) {
 		p.logger.Warning("replay attack has been detected!")
 		p.eventStream.Send(p.ctx, NewEventReplayAttack(ctx.streamID))
 		p.doDomainFronting(ctx, rewind)
-
-		return false
+		return nil, false
 	}
 
-	if err := faketls.SendWelcomePacket(rewind, p.secret.Key[:], hello); err != nil {
+	noise, err := fake.SendServerHello(ctx.clientConn, p.secret.Key[:], clientHello)
+	if err != nil {
 		p.logger.InfoError("cannot send welcome packet", err)
-
-		return false
+		return nil, false
 	}
 
-	ctx.clientConn = &faketls.Conn{
-		Conn: ctx.clientConn,
-	}
+	ctx.clientConn = tls.New(ctx.clientConn, true, false)
 
-	return true
+	return noise, true
 }
 
 func (p *Proxy) doObfuscatedHandshake(ctx *streamContext) error {
@@ -338,6 +335,14 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 		tolerateTimeSkewness:     opts.getTolerateTimeSkewness(),
 		allowFallbackOnUnknownDC: opts.AllowFallbackOnUnknownDC,
 		telegram:                 tg,
+		doppelGanger: doppel.NewGanger(
+			ctx,
+			opts.Network,
+			logger.Named("doppelganger"),
+			opts.DoppelGangerEach,
+			int(opts.DoppelGangerPerRaid),
+			opts.DoppelGangerURLs,
+		),
 		configUpdater: dc.NewPublicConfigUpdater(
 			tg,
 			updatersLogger.Named("public-config"),
@@ -348,6 +353,8 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 		},
 		domainFrontingProxyProtocol: opts.DomainFrontingProxyProtocol,
 	}
+
+	proxy.doppelGanger.Run()
 
 	if opts.AutoUpdate {
 		proxy.configUpdater.Run(ctx, dc.PublicConfigUpdateURLv4, "tcp4")

@@ -99,6 +99,13 @@ const (
 	// reads from Telegram after which connection will be terminated. This is
 	// required to abort stale connections.
 	TCPRelayReadTimeout = 20 * time.Second
+
+	// DoppelGangerPerRaid defines a number of requests to each URL
+	// per raid.
+	DoppelGangerPerRaid = 10
+
+	// DoppelGangerEach defines a time period between each crawl attempt.
+	DoppelGangerEach = 6 * time.Hour
 )
 
 // Network defines a knowledge how to work with a network. It may sound fun but

@@ -206,6 +206,67 @@ tcp = "5s"
 http = "10s"
 idle = "1m"
 
+# mtg has to mimic real websites. It does not mean domain fronting, it also
+# means that traffic characteristics should be similar to real world traffic.
+# websites and applications behave differently, their traffic patterns are also
+# different. Applications do bursts of RPC-style messages (or JSON communication,
+# does not really matter), while websites pump heavy content in HTTP2 streams
+#
+# It means that statistically there is a different between traffic shape:
+# TLS packet sizes are different, delays between packets are also different.
+# In order to avoid censorship detection based on these patterns, there is a
+# mtg subsystem called "Doppelganger" that aims to mimic website statistics
+# as close as it could.
+#
+# It does that by 2 ideas:
+#   1. Delays between TLS packets are not constant. There are many factors
+#      that come in play. Application should generate some response, it could
+#      send some headers first and stream content with chunked encoding. So
+#      some first packets could come as soon as possible, with some delays
+#      after first ones. Such phenomenon is described by different statistic
+#      distribution. There are 2 distribution that describe it: lognormal
+#      distribution and Weibul distribution. Lognormal is all about steady streams
+#      of heavy content like a video. Weibul is great about short bursts like
+#      user who requested a static page an a couple of images.
+#
+#      mtg tries to adapt Weibul distribution. It comes with some sensible
+#      defaults that were taken from ok.ru. But when you use domain fronting,
+#      it always make sense to take statistics from that website. You can specify
+#      some urls here. mtg will crawl them from time to time, accumulate time
+#      series and approximates parameters for Weibul.
+#   2. TLS record sizes are not random.
+#      https://blog.cloudflare.com/optimizing-tls-over-tcp-to-reduce-latency/
+#      https://aws.github.io/s2n-tls/usage-guide/ch08-record-sizes.html
+#
+#      The idea is that huge TLS records could negatively affect performance.
+#      You cannot simply decrypt a part of the packet, you need to wait it
+#      whole, and huge packets could involve several RTTs if you do not use
+#      any specific software that treat TLS in a very special way. So
+#      servers start with small packets, usually around MTU, and ramp up
+#      later. This optimizes a time-to-first byte so web browsers start to
+#      render early.
+#
+#      mtg uses the same technique as was introduced by Cloudflare in their
+#      patches to nginx 10 years ago:
+#      https://github.com/cloudflare/sslconfig/blob/master/patches/nginx__dynamic_tls_records.patch
+[defense.doppelganger]
+# This is a list of URLs that would be crawled by mtg to approximate delay
+# statistics. They MUST be HTTPS urls.
+#
+# You can come to the website and collect different URLs, with light and
+# heavy content. We recommend to search for CDNs.
+urls = [
+    # "https://st-ok.cdn-vk.ru/res/react/vendor/clsx-2.1.1-amd.js"
+]
+# A collection is done in raids. Each raid makes this number of requests to
+# each URL in this list. Do not use a huge number, 10 is probably ok.
+repeats-per-raid = 10
+# This is a duration between each raid. It makes no sense to have a small number
+# here as you would start to make a noticeable activity. Usually traffic patterns
+# do not change a lot, so do not expect different results if you request
+# each 10 minutes.
+raid-each = "6h"
+
 # Some countries do active probing on Telegram connections. This technique
 # allows to protect from such effort.
 #

@@ -47,8 +47,13 @@ type Config struct {
 			MaxSize   TypeBytes     `json:"maxSize"`
 			ErrorRate TypeErrorRate `json:"errorRate"`
 		} `json:"antiReplay"`
-		Blocklist ListConfig `json:"blocklist"`
-		Allowlist ListConfig `json:"allowlist"`
+		Blocklist    ListConfig `json:"blocklist"`
+		Allowlist    ListConfig `json:"allowlist"`
+		Doppelganger struct {
+			URLs       []TypeHttpsURL  `json:"urls"`
+			Repeats    TypeConcurrency `json:"repeats_per_raid"`
+			UpdateEach TypeDuration    `json:"raid_each"`
+		} `json:"doppelganger"`
 	} `json:"defense"`
 	Network struct {
 		Timeout struct {
