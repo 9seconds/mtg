@@ -79,18 +79,19 @@ func (s Scout) learn(ctx context.Context, url string) ([]time.Duration, error) {
 }
 
 func (s Scout) makeClient() (*http.Client, *ScoutConnCollected) {
+	dialer := s.network.NativeDialer()
 	collected := NewScoutConnCollected()
 	client := s.network.MakeHTTPClient(func(
 		ctx context.Context,
 		network string,
 		address string,
 	) (essentials.Conn, error) {
-		conn, err := s.network.DialContext(ctx, network, address)
+		conn, err := dialer.DialContext(ctx, network, address)
 		if err != nil {
 			return nil, err
 		}
 
-		return NewScoutConn(conn, collected), nil
+		return NewScoutConn(essentials.WrapNetConn(conn), collected), nil
 	})
 
 	return client, collected
