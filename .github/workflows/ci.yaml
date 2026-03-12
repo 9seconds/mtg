@@ -48,6 +48,16 @@ jobs:
       - uses: jdx/mise-action@v3
         name: Install mise
 
+      - name: Cache Go modules and build
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-${{ hashFiles('go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
       - name: Run tests
         run: mise tasks run covtest
 
@@ -69,6 +79,16 @@ jobs:
       - uses: jdx/mise-action@v3
         name: Install mise
 
+      - name: Cache Go modules and build
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-${{ hashFiles('go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
       - name: Run fuzzing
         run: mise tasks run 'test:fuzz:*'
 
@@ -85,6 +105,16 @@ jobs:
 
       - uses: jdx/mise-action@v3
         name: Install mise
+
+      - name: Cache Go modules and build
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-${{ hashFiles('go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
 
       - name: Run linter
         run: mise tasks run lint
