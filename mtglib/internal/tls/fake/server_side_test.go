@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/9seconds/mtg/v2/mtglib"
+	"github.com/9seconds/mtg/v2/mtglib/internal/doppel"
 	"github.com/9seconds/mtg/v2/mtglib/internal/tls"
 	"github.com/9seconds/mtg/v2/mtglib/internal/tls/fake"
 	"github.com/stretchr/testify/suite"
@@ -58,7 +59,7 @@ func (suite *SendServerHelloTestSuite) TestRecordStructure() {
 	recordType, length, err := tls.ReadRecord(suite.buf, &rec)
 	suite.NoError(err)
 	suite.Equal(byte(tls.TypeApplicationData), recordType)
-	suite.Equal(int64(1369), length)
+	suite.Greater(length, int64(doppel.TLSRecordSizeStart))
 
 	suite.Empty(suite.buf.Bytes())
 }

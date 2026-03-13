@@ -7,15 +7,17 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"io"
+	"math"
+	rnd "math/rand/v2"
 
+	"github.com/9seconds/mtg/v2/mtglib/internal/doppel"
 	"github.com/9seconds/mtg/v2/mtglib/internal/tls"
 	"golang.org/x/crypto/curve25519"
 )
 
 const (
 	TypeHandshakeServer = 0x02
-
-	ChangeCipherValue = 0x01
+	ChangeCipherValue   = 0x01
 
 	EllipticCurveLen = 32
 )
@@ -125,7 +127,8 @@ func generateChangeCipherValue(buf *bytes.Buffer) {
 }
 
 func generateNoise(buf *bytes.Buffer) {
-	data := [1369]byte{}
+	minSize := int(math.Round(0.75 * float64(doppel.TLSRecordSizeMax)))
+	data := make([]byte, minSize+rnd.IntN(doppel.TLSRecordSizeMax-minSize))
 
 	if _, err := rand.Read(data[:]); err != nil {
 		panic(err)
