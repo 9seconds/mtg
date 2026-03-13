@@ -247,7 +247,7 @@ func (suite *ConnTestSuite) TestSyncWriteBlocksAsyncWrite() {
 
 	go func() {
 		defer close(syncDone)
-		c.SyncWrite([]byte("exclusive"))
+		c.SyncWrite([]byte("exclusive")) //nolint: errcheck
 	}()
 
 	// Give SyncWrite time to acquire the lock.
@@ -258,7 +258,7 @@ func (suite *ConnTestSuite) TestSyncWriteBlocksAsyncWrite() {
 
 	go func() {
 		defer close(writeDone)
-		c.Write([]byte("blocked"))
+		c.Write([]byte("blocked")) //nolint: errcheck
 	}()
 
 	// SyncWrite should finish first.
