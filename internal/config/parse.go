@@ -48,6 +48,7 @@ type tomlConfig struct {
 			URLs       []string `toml:"urls" json:"urls,omitempty"`
 			Repeats    uint     `toml:"repeats-per-raid" json:"repeats_per_raid,omitempty"`
 			UpdateEach string   `toml:"raid-each" json:"raid_each,omitempty"`
+			DRS        bool     `toml:"drs" json:"drs,omitempty"`
 		} `toml:"doppelganger" json:"doppelganger,omitempty"`
 	} `toml:"defense" json:"defense,omitempty"`
 	Network struct {

@@ -90,7 +90,7 @@ func (p *Proxy) ServeConn(conn essentials.Conn) {
 	}
 	defer clientConn.Stop()
 
-	if _, err := clientConn.Write(noise); err != nil {
+	if _, err := clientConn.SyncWrite(noise); err != nil {
 		ctx.logger.InfoError("cannot send the first packet", err)
 		return
 	}
@@ -345,6 +345,7 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 			opts.DoppelGangerEach,
 			int(opts.DoppelGangerPerRaid),
 			opts.DoppelGangerURLs,
+			opts.DoppelGangerDRS,
 		),
 		configUpdater: dc.NewPublicConfigUpdater(
 			tg,

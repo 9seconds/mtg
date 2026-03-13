@@ -14,8 +14,8 @@ const (
 	// Please see Stats description
 	// https://blog.cloudflare.com/optimizing-tls-over-tcp-to-reduce-latency/
 	// https://github.com/cloudflare/sslconfig/blob/master/patches/nginx__dynamic_tls_records.patch
-	TLSRecordSizeStart = 1369
-	TLSRecordSizeAccel = 4229
+	TLSRecordSizeStart = 1450
+	TLSRecordSizeAccel = 4096
 	TLSRecordSizeMax   = 16384 - tls.SizeHeader
 
 	TLSCounterAccelAfter = 40

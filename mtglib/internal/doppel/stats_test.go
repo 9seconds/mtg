@@ -38,7 +38,7 @@ func (suite *StatsTestSuite) TestNewStatsRecoverParameters() {
 	knownLambda := 100.0
 
 	samples := suite.GenWeibull(knownK, knownLambda, 5000, 42)
-	stats := NewStats(samples)
+	stats := NewStats(samples, true)
 
 	suite.InDelta(knownK, stats.k, 0.1)
 	suite.InDelta(knownLambda, stats.lambda, 5.0)
@@ -50,7 +50,7 @@ func (suite *StatsTestSuite) TestNewStatsExponentialCase() {
 	knownLambda := 50.0
 
 	samples := suite.GenWeibull(knownK, knownLambda, 5000, 123)
-	stats := NewStats(samples)
+	stats := NewStats(samples, true)
 
 	suite.InDelta(knownK, stats.k, 0.1)
 	suite.InDelta(knownLambda, stats.lambda, 5.0)
@@ -64,7 +64,7 @@ func (suite *StatsTestSuite) TestNewStatsSmallK() {
 	knownLambda := 100.0
 
 	samples := suite.GenWeibull(knownK, knownLambda, 10000, 99)
-	stats := NewStats(samples)
+	stats := NewStats(samples, true)
 
 	suite.InDelta(knownK, stats.k, 0.05)
 	suite.InDelta(knownLambda, stats.lambda, 5.0)
@@ -76,7 +76,7 @@ func (suite *StatsTestSuite) TestNewStatsLargeK() {
 	knownLambda := 200.0
 
 	samples := suite.GenWeibull(knownK, knownLambda, 5000, 77)
-	stats := NewStats(samples)
+	stats := NewStats(samples, true)
 
 	suite.InDelta(knownK, stats.k, 0.3)
 	suite.InDelta(knownLambda, stats.lambda, 5.0)
@@ -121,7 +121,7 @@ func (suite *StatsTestSuite) TestNewStatsRoundTrip() {
 	knownLambda := 80.0
 
 	samples := suite.GenWeibull(knownK, knownLambda, 5000, 555)
-	stats := NewStats(samples)
+	stats := NewStats(samples, true)
 
 	n := 50000
 	sum := 0.0
@@ -138,16 +138,17 @@ func (suite *StatsTestSuite) TestNewStatsRoundTrip() {
 }
 
 func (suite *StatsTestSuite) TestSizeStartPhase() {
-	stats := &Stats{k: 1.0, lambda: 1.0}
+	stats := &Stats{k: 1.0, lambda: 1.0, drs: true}
 
 	for range TLSCounterAccelAfter {
 		size := stats.Size()
-		suite.Equal(TLSRecordSizeStart, size)
+		suite.GreaterOrEqual(size, TLSRecordSizeStart-DRSNoise)
+		suite.LessOrEqual(size, TLSRecordSizeStart)
 	}
 }
 
 func (suite *StatsTestSuite) TestSizeAccelPhase() {
-	stats := &Stats{k: 1.0, lambda: 1.0}
+	stats := &Stats{k: 1.0, lambda: 1.0, drs: true}
 
 	for range TLSCounterAccelAfter {
 		stats.Size()
@@ -155,12 +156,13 @@ func (suite *StatsTestSuite) TestSizeAccelPhase() {
 
 	for range TLSCounterMaxAfter - TLSCounterAccelAfter {
 		size := stats.Size()
-		suite.Equal(TLSRecordSizeAccel, size)
+		suite.GreaterOrEqual(size, TLSRecordSizeAccel-DRSNoise)
+		suite.LessOrEqual(size, TLSRecordSizeAccel)
 	}
 }
 
 func (suite *StatsTestSuite) TestSizeMaxPhase() {
-	stats := &Stats{k: 1.0, lambda: 1.0}
+	stats := &Stats{k: 1.0, lambda: 1.0, drs: true}
 
 	for range TLSCounterMaxAfter {
 		stats.Size()
@@ -173,7 +175,7 @@ func (suite *StatsTestSuite) TestSizeMaxPhase() {
 }
 
 func (suite *StatsTestSuite) TestSizeResetsAfterInactivity() {
-	stats := &Stats{k: 1.0, lambda: 1.0}
+	stats := &Stats{k: 1.0, lambda: 1.0, drs: true}
 
 	// Advance past start phase.
 	for range TLSCounterMaxAfter {
@@ -185,7 +187,30 @@ func (suite *StatsTestSuite) TestSizeResetsAfterInactivity() {
 	// Simulate inactivity by backdating sizeLastRequested.
 	stats.sizeLastRequested = time.Now().Add(-TLSRecordSizeResetAfter - time.Millisecond)
 
-	suite.Equal(TLSRecordSizeStart, stats.Size())
+	size := stats.Size()
+	suite.GreaterOrEqual(size, TLSRecordSizeStart-DRSNoise)
+	suite.LessOrEqual(size, TLSRecordSizeStart)
+}
+
+func (suite *StatsTestSuite) TestSizeNoDRSAlwaysMax() {
+	stats := &Stats{k: 1.0, lambda: 1.0, drs: false}
+
+	for range TLSCounterMaxAfter + 20 {
+		suite.Equal(TLSRecordSizeMax, stats.Size())
+	}
+}
+
+func (suite *StatsTestSuite) TestSizeNoDRSIgnoresCounter() {
+	stats := &Stats{k: 1.0, lambda: 1.0, drs: false}
+
+	// Even after many calls, always returns max.
+	for range 200 {
+		suite.Equal(TLSRecordSizeMax, stats.Size())
+	}
+
+	// Inactivity has no effect either.
+	stats.sizeLastRequested = time.Now().Add(-TLSRecordSizeResetAfter - time.Millisecond)
+	suite.Equal(TLSRecordSizeMax, stats.Size())
 }
 
 func TestStats(t *testing.T) {

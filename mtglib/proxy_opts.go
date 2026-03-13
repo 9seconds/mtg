@@ -157,6 +157,9 @@ type ProxyOpts struct {
 	// DoppelGangerEach defines a time period between each raid. We recommend
 	// to use hours here.
 	DoppelGangerEach time.Duration
+
+	// DoppelGangerDRS defines if TLS Dynamic Record Sizing is active.
+	DoppelGangerDRS bool
 }
 
 func (p ProxyOpts) valid() error {
