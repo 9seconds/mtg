@@ -7,15 +7,17 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"io"
+	"math"
+	rnd "math/rand/v2"
 
+	"github.com/9seconds/mtg/v2/mtglib/internal/doppel"
 	"github.com/9seconds/mtg/v2/mtglib/internal/tls"
 	"golang.org/x/crypto/curve25519"
 )
 
 const (
 	TypeHandshakeServer = 0x02
-
-	ChangeCipherValue = 0x01
+	ChangeCipherValue   = 0x01
 
 	EllipticCurveLen = 32
 )
@@ -32,27 +34,24 @@ var serverHelloSuffix = []byte{
 	0x00, 0x20, // 32 bytes of key
 }
 
-func SendServerHello(w io.Writer, secret []byte, clientHello *ClientHello) ([]byte, error) {
+func SendServerHello(w io.Writer, secret []byte, clientHello *ClientHello) error {
 	buf := &bytes.Buffer{}
 	buf.Grow(tls.MaxRecordSize)
 
 	generateServerHello(buf, clientHello)
 	generateChangeCipherValue(buf)
-
-	noise := &bytes.Buffer{}
-	generateNoise(noise)
+	generateNoise(buf)
 
 	packet := buf.Bytes()
 	digest := hmac.New(sha256.New, secret)
 
 	digest.Write(clientHello.Random[:])
 	digest.Write(packet)
-	digest.Write(noise.Bytes())
 	copy(packet[RandomOffset:], digest.Sum(nil))
 
 	_, err := w.Write(packet)
 
-	return noise.Bytes()[tls.SizeHeader:], err
+	return err
 }
 
 func generateServerHello(buf *bytes.Buffer, hello *ClientHello) {
@@ -128,7 +127,8 @@ func generateChangeCipherValue(buf *bytes.Buffer) {
 }
 
 func generateNoise(buf *bytes.Buffer) {
-	data := [1369]byte{}
+	minSize := int(math.Round(0.75 * float64(doppel.TLSRecordSizeMax)))
+	data := make([]byte, minSize+rnd.IntN(doppel.TLSRecordSizeMax-minSize))
 
 	if _, err := rand.Read(data[:]); err != nil {
 		panic(err)
