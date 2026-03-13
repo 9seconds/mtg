@@ -38,7 +38,7 @@ func (suite *SendServerHelloTestSuite) SetupTest() {
 }
 
 func (suite *SendServerHelloTestSuite) TestRecordStructure() {
-	noise, err := fake.SendServerHello(suite.buf, suite.secret.Key[:], suite.hello)
+	err := fake.SendServerHello(suite.buf, suite.secret.Key[:], suite.hello)
 	suite.NoError(err)
 
 	var rec bytes.Buffer
@@ -53,14 +53,18 @@ func (suite *SendServerHelloTestSuite) TestRecordStructure() {
 	suite.NoError(err)
 	suite.Equal(byte(tls.TypeChangeCipherSpec), recordType)
 
-	suite.Empty(suite.buf.Bytes())
+	rec.Reset()
 
-	// noise is raw payload without TLS record header
-	suite.Len(noise, 1369)
+	recordType, length, err := tls.ReadRecord(suite.buf, &rec)
+	suite.NoError(err)
+	suite.Equal(byte(tls.TypeApplicationData), recordType)
+	suite.Equal(int64(1369), length)
+
+	suite.Empty(suite.buf.Bytes())
 }
 
 func (suite *SendServerHelloTestSuite) TestHMAC() {
-	noise, err := fake.SendServerHello(suite.buf, suite.secret.Key[:], suite.hello)
+	err := fake.SendServerHello(suite.buf, suite.secret.Key[:], suite.hello)
 	suite.NoError(err)
 
 	packet := make([]byte, suite.buf.Len())
@@ -74,18 +78,11 @@ func (suite *SendServerHelloTestSuite) TestHMAC() {
 	mac.Write(suite.hello.Random[:])
 	mac.Write(packet)
 
-	// HMAC is computed over the full noise TLS record (with header),
-	// but SendServerHello returns noise without the header,
-	// so we reconstruct the full record.
-	var fullNoise bytes.Buffer
-	tls.WriteRecord(&fullNoise, noise) //nolint: errcheck
-	mac.Write(fullNoise.Bytes())
-
 	suite.Equal(random, mac.Sum(nil))
 }
 
 func (suite *SendServerHelloTestSuite) TestHandshakePayload() {
-	_, err := fake.SendServerHello(suite.buf, suite.secret.Key[:], suite.hello)
+	err := fake.SendServerHello(suite.buf, suite.secret.Key[:], suite.hello)
 	suite.NoError(err)
 
 	packet := suite.buf.Bytes()
@@ -107,7 +104,7 @@ func (suite *SendServerHelloTestSuite) TestHandshakePayload() {
 }
 
 func (suite *SendServerHelloTestSuite) TestChangeCipherSpec() {
-	_, err := fake.SendServerHello(suite.buf, suite.secret.Key[:], suite.hello)
+	err := fake.SendServerHello(suite.buf, suite.secret.Key[:], suite.hello)
 	suite.NoError(err)
 
 	// Skip first record

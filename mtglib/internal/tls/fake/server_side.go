@@ -32,27 +32,24 @@ var serverHelloSuffix = []byte{
 	0x00, 0x20, // 32 bytes of key
 }
 
-func SendServerHello(w io.Writer, secret []byte, clientHello *ClientHello) ([]byte, error) {
+func SendServerHello(w io.Writer, secret []byte, clientHello *ClientHello) error {
 	buf := &bytes.Buffer{}
 	buf.Grow(tls.MaxRecordSize)
 
 	generateServerHello(buf, clientHello)
 	generateChangeCipherValue(buf)
-
-	noise := &bytes.Buffer{}
-	generateNoise(noise)
+	generateNoise(buf)
 
 	packet := buf.Bytes()
 	digest := hmac.New(sha256.New, secret)
 
 	digest.Write(clientHello.Random[:])
 	digest.Write(packet)
-	digest.Write(noise.Bytes())
 	copy(packet[RandomOffset:], digest.Sum(nil))
 
 	_, err := w.Write(packet)
 
-	return noise.Bytes()[tls.SizeHeader:], err
+	return err
 }
 
 func generateServerHello(buf *bytes.Buffer, hello *ClientHello) {

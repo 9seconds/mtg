@@ -78,8 +78,7 @@ func (p *Proxy) ServeConn(conn essentials.Conn) {
 		ctx.logger.Info("Stream has been finished")
 	}()
 
-	noise, ok := p.doFakeTLSHandshake(ctx)
-	if !ok {
+	if !p.doFakeTLSHandshake(ctx) {
 		return
 	}
 
@@ -89,11 +88,6 @@ func (p *Proxy) ServeConn(conn essentials.Conn) {
 		return
 	}
 	defer clientConn.Stop()
-
-	if _, err := clientConn.SyncWrite(noise); err != nil {
-		ctx.logger.InfoError("cannot send the first packet", err)
-		return
-	}
 
 	ctx.clientConn = clientConn
 
@@ -176,7 +170,7 @@ func (p *Proxy) Shutdown() {
 	p.blocklist.Shutdown()
 }
 
-func (p *Proxy) doFakeTLSHandshake(ctx *streamContext) ([]byte, bool) {
+func (p *Proxy) doFakeTLSHandshake(ctx *streamContext) bool {
 	rewind := newConnRewind(ctx.clientConn)
 
 	clientHello, err := fake.ReadClientHello(
@@ -188,25 +182,24 @@ func (p *Proxy) doFakeTLSHandshake(ctx *streamContext) ([]byte, bool) {
 	if err != nil {
 		p.logger.InfoError("cannot read client hello", err)
 		p.doDomainFronting(ctx, rewind)
-		return nil, false
+		return false
 	}
 
 	if p.antiReplayCache.SeenBefore(clientHello.SessionID) {
 		p.logger.Warning("replay attack has been detected!")
 		p.eventStream.Send(p.ctx, NewEventReplayAttack(ctx.streamID))
 		p.doDomainFronting(ctx, rewind)
-		return nil, false
+		return false
 	}
 
-	noise, err := fake.SendServerHello(ctx.clientConn, p.secret.Key[:], clientHello)
-	if err != nil {
+	if err := fake.SendServerHello(ctx.clientConn, p.secret.Key[:], clientHello); err != nil {
 		p.logger.InfoError("cannot send welcome packet", err)
-		return nil, false
+		return false
 	}
 
 	ctx.clientConn = tls.New(ctx.clientConn, true, false)
 
-	return noise, true
+	return true
 }
 
 func (p *Proxy) doObfuscatedHandshake(ctx *streamContext) error {
