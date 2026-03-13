@@ -17,6 +17,9 @@ const (
 	// these values are taken from ok.ru. measured from moscow site.
 	StatsDefaultK      = 0.37846373895785335
 	StatsDefaultLambda = 1.73177086015485
+
+	// how many bytes should we drift
+	DRSNoise = 100
 )
 
 // Stats is responsible for generating values that are distributed according
@@ -66,6 +69,9 @@ type Stats struct {
 	k float64
 	// https://en.wikipedia.org/wiki/Scale_parameter
 	lambda float64
+
+	// Dynamic Record Sizing
+	drs bool
 }
 
 func (d *Stats) Delay() time.Duration {
@@ -84,20 +90,24 @@ func (d *Stats) Size() int {
 		d.sizeCounter = 0
 	}
 
+	if !d.drs {
+		return TLSRecordSizeMax
+	}
+
 	d.sizeLastRequested = time.Now()
 	d.sizeCounter++
 
 	switch {
 	case d.sizeCounter <= TLSCounterAccelAfter:
-		return TLSRecordSizeStart
+		return TLSRecordSizeStart - rand.IntN(DRSNoise)
 	case d.sizeCounter <= TLSCounterMaxAfter:
-		return TLSRecordSizeAccel
+		return TLSRecordSizeAccel - rand.IntN(DRSNoise)
 	}
 
 	return TLSRecordSizeMax
 }
 
-func NewStats(durations []time.Duration) *Stats {
+func NewStats(durations []time.Duration, drs bool) *Stats {
 	n := float64(len(durations))
 
 	// in milliseconds
@@ -150,5 +160,6 @@ func NewStats(durations []time.Duration) *Stats {
 	return &Stats{
 		k:      k,
 		lambda: lambda,
+		drs:    drs,
 	}
 }

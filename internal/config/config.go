@@ -53,6 +53,7 @@ type Config struct {
 			URLs       []TypeHttpsURL  `json:"urls"`
 			Repeats    TypeConcurrency `json:"repeats_per_raid"`
 			UpdateEach TypeDuration    `json:"raid_each"`
+			DRS        TypeBool        `json:"drs"`
 		} `json:"doppelganger"`
 	} `json:"defense"`
 	Network struct {

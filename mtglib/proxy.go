@@ -345,6 +345,7 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 			opts.DoppelGangerEach,
 			int(opts.DoppelGangerPerRaid),
 			opts.DoppelGangerURLs,
+			opts.DoppelGangerDRS,
 		),
 		configUpdater: dc.NewPublicConfigUpdater(
 			tg,

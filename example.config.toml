@@ -213,42 +213,20 @@ idle = "1m"
 # does not really matter), while websites pump heavy content in HTTP2 streams
 #
 # It means that statistically there is a different between traffic shape:
-# TLS packet sizes are different, delays between packets are also different.
+# delays between packets are also different.
 # In order to avoid censorship detection based on these patterns, there is a
 # mtg subsystem called "Doppelganger" that aims to mimic website statistics
 # as close as it could.
 #
-# It does that by 2 ideas:
-#   1. Delays between TLS packets are not constant. There are many factors
-#      that come in play. Application should generate some response, it could
-#      send some headers first and stream content with chunked encoding. So
-#      some first packets could come as soon as possible, with some delays
-#      after first ones. Such phenomenon is described by different statistic
-#      distribution. There are 2 distribution that describe it: lognormal
-#      distribution and Weibul distribution. Lognormal is all about steady streams
-#      of heavy content like a video. Weibul is great about short bursts like
-#      user who requested a static page an a couple of images.
-#
-#      mtg tries to adapt Weibul distribution. It comes with some sensible
-#      defaults that were taken from ok.ru. But when you use domain fronting,
-#      it always make sense to take statistics from that website. You can specify
-#      some urls here. mtg will crawl them from time to time, accumulate time
-#      series and approximates parameters for Weibul.
-#   2. TLS record sizes are not random.
-#      https://blog.cloudflare.com/optimizing-tls-over-tcp-to-reduce-latency/
-#      https://aws.github.io/s2n-tls/usage-guide/ch08-record-sizes.html
-#
-#      The idea is that huge TLS records could negatively affect performance.
-#      You cannot simply decrypt a part of the packet, you need to wait it
-#      whole, and huge packets could involve several RTTs if you do not use
-#      any specific software that treat TLS in a very special way. So
-#      servers start with small packets, usually around MTU, and ramp up
-#      later. This optimizes a time-to-first byte so web browsers start to
-#      render early.
-#
-#      mtg uses the same technique as was introduced by Cloudflare in their
-#      patches to nginx 10 years ago:
-#      https://github.com/cloudflare/sslconfig/blob/master/patches/nginx__dynamic_tls_records.patch
+# Delays between TLS packets are not constant. There are many factors
+# that come in play. Application should generate some response, it could
+# send some headers first and stream content with chunked encoding. So
+# some first packets could come as soon as possible, with some delays
+# after first ones. Such phenomenon is described by different statistic
+# distribution. There are 2 distribution that describe it: lognormal
+# distribution and Weibul distribution. Lognormal is all about steady streams
+# of heavy content like a video. Weibul is great about short bursts like
+# user who requested a static page an a couple of images.
 [defense.doppelganger]
 # This is a list of URLs that would be crawled by mtg to approximate delay
 # statistics. They MUST be HTTPS urls.
@@ -266,6 +244,27 @@ repeats-per-raid = 10
 # do not change a lot, so do not expect different results if you request
 # each 10 minutes.
 raid-each = "6h"
+# This enables dynamic tls record sizing.
+#
+# Some modern stacks and platforms start to use the technique that is called
+# DRS. They start with small TLS packets and ramp up eventually. First packets
+# are usually about MTU size, after that we get 4k and eventually max size.
+# This is done with a good intention: to minimize a time to the first byte,
+# so application could start doing something with the data right after first
+# RTT.
+#
+# Apparently, about 90% of application do not employ this technique, they use
+# max size always: nginx, apache, java stuff. But Golang tools, angie and
+# some specific patches activate this technique.
+#
+# In order to mimic a real website we need to know something about software
+# it uses. Usually nobody cares: openssl does 16384, Python does it, nginx
+# does it. So this setting is disabled by default.
+#
+#      https://blog.cloudflare.com/optimizing-tls-over-tcp-to-reduce-latency/
+#      https://aws.github.io/s2n-tls/usage-guide/ch08-record-sizes.html
+#      https://github.com/cloudflare/sslconfig/blob/master/patches/nginx__dynamic_tls_records.patch
+drs = false
 
 # Some countries do active probing on Telegram connections. This technique
 # allows to protect from such effort.

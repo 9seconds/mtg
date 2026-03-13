@@ -29,7 +29,7 @@ func (suite *GangerTestSuite) SetupTest() {
 		On("WarningError", mock.AnythingOfType("string"), mock.Anything).
 		Maybe()
 
-	suite.g = NewGanger(suite.ctx, suite.network, suite.log, time.Hour, 1, suite.urls)
+	suite.g = NewGanger(suite.ctx, suite.network, suite.log, time.Hour, 1, suite.urls, true)
 	suite.g.Run()
 }
 

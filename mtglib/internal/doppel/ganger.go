@@ -29,6 +29,8 @@ type Ganger struct {
 	scoutRaidEach    time.Duration
 	scoutRaidRepeats int
 
+	drs bool
+
 	stats     *Stats
 	durations []time.Duration
 
@@ -107,7 +109,7 @@ func (g *Ganger) run() {
 			g.wg.Go(func() {
 				select {
 				case <-g.ctx.Done():
-				case updatedStatsChan <- NewStats(durations):
+				case updatedStatsChan <- NewStats(durations, g.drs):
 				}
 			})
 		case stats := <-updatedStatsChan:
@@ -152,6 +154,7 @@ func NewGanger(
 	scoutEach time.Duration,
 	scoutRepeats int,
 	urls []string,
+	drs bool,
 ) *Ganger {
 	ctx, cancel := context.WithCancel(ctx)
 
@@ -169,9 +172,11 @@ func NewGanger(
 		logger:           logger,
 		scoutRaidEach:    scoutEach,
 		scoutRaidRepeats: scoutRepeats,
+		drs:              drs,
 		stats: &Stats{
 			k:      StatsDefaultK,
 			lambda: StatsDefaultLambda,
+			drs:    drs,
 		},
 		scout:        NewScout(network, urls),
 		connRequests: make(chan gangerConnRequest),
