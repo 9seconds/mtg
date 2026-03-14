@@ -61,6 +61,11 @@ const (
 //
 // In other word, a combination of Dynamic TLS Record Sizing hints us for
 // Weibull distribution.
+//
+// But we also have to keep in mind that DRS is not well spread yet. In most cases
+// users still rely on OpenSSL or webserver defaults. OpenSSL chunks with
+// biggest packet sizes, nginx relies on static setting that is 16k by default.
+// Thus, dynamic sizing has to be present but we cannot oblige users to use that.
 type Stats struct {
 	sizeLastRequested time.Time
 	sizeCounter       int
