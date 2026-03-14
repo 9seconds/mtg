@@ -6,6 +6,7 @@ import (
 	"io"
 
 	"github.com/9seconds/mtg/v2/essentials"
+	"github.com/9seconds/mtg/v2/mtglib/internal/tls"
 )
 
 func Relay(ctx context.Context, log Logger, telegramConn, clientConn essentials.Conn) {
@@ -35,7 +36,7 @@ func Relay(ctx context.Context, log Logger, telegramConn, clientConn essentials.
 }
 
 func pump(log Logger, src, dst essentials.Conn, direction string) {
-	var buf [copyBufferSize]byte
+	var buf [tls.MaxRecordPayloadSize]byte
 
 	defer src.CloseRead()  //nolint: errcheck
 	defer dst.CloseWrite() //nolint: errcheck
