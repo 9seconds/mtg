@@ -120,6 +120,8 @@ that probably matter.
   software (written in Golang) with a minimum effort + you can replace
   some parts with those you want.
 
+Please also to read about [best practices](https://github.com/9seconds/mtg/blob/master/BEST_PRACTICES.md).
+
 ### Version 2
 
 If you use version 1.x before, you are probably noticed some major

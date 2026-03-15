@@ -47,4 +47,9 @@ this is could probably be very well automated to some reasonable extent.
 
 Unfortunately, this is a best practice right now.
 
+Do not also forget about other implementation, like
+[telemt](https://github.com/telemt/telemt). Try everything. Use VPNs. It does
+not really matter which project you are going to use as long it helps you to
+stay connected.
+
 _March 2026._
