@@ -101,8 +101,13 @@ func (a *Access) Run(cli *CLI, version string) error {
 }
 
 func (a *Access) getIP(ntw mtglib.Network, protocol string) net.IP {
+	dialer := ntw.NativeDialer()
 	client := ntw.MakeHTTPClient(func(ctx context.Context, network, address string) (essentials.Conn, error) {
-		return ntw.DialContext(ctx, protocol, address) //nolint: wrapcheck
+		conn, err := dialer.DialContext(ctx, protocol, address)
+		if err != nil {
+			return nil, err
+		}
+		return essentials.WrapNetConn(conn), err
 	})
 
 	req, err := http.NewRequest(http.MethodGet, "https://ifconfig.co", nil) //nolint: noctx

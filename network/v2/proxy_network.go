@@ -6,11 +6,12 @@ import (
 	"net/url"
 
 	"github.com/9seconds/mtg/v2/essentials"
+	"github.com/9seconds/mtg/v2/mtglib"
 	"golang.org/x/net/proxy"
 )
 
 type proxyNetwork struct {
-	Network
+	mtglib.Network
 	client proxy.ContextDialer
 }
 
@@ -23,7 +24,7 @@ func (p proxyNetwork) DialContext(ctx context.Context, network, address string) 
 	return essentials.WrapNetConn(conn), nil
 }
 
-func NewProxyNetwork(base Network, proxyURL *url.URL) (*proxyNetwork, error) {
+func NewProxyNetwork(base mtglib.Network, proxyURL *url.URL) (*proxyNetwork, error) {
 	socks, err := proxy.FromURL(proxyURL, base.NativeDialer())
 	if err != nil {
 		return nil, fmt.Errorf("cannot build proxy dialer: %w", err)

@@ -33,11 +33,11 @@ run = "govulncheck ./..."
 
 [tasks.test]
 description = "Run tests"
-run = "go test -v ./..."
+run = "go test -v -race ./..."
 
 [tasks.covtest]
 description = "Run tests with code coverage"
-run = "go test -coverprofile=coverage.txt -covermode=atomic -parallel 2 -race -v ./..."
+run = "go test -coverprofile=coverage.txt -covermode=atomic -count=2 -race -v ./..."
 
 [tasks.test-all]
 description = "Run all tests"
@@ -48,7 +48,7 @@ depends = [
 
 [tasks."test:fuzz:client-hello"]
 description = "Run fuzzy test for ClientHello"
-run = "go test -v {{ vars.fuzzflags }} -fuzz=FuzzClientHello ./mtglib/internal/faketls"
+run = "go test -v {{ vars.fuzzflags }} -fuzz=FuzzReadClientHello ./mtglib/internal/tls/fake"
 
 [tasks."test:fuzz:client-handshake"]
 description = "Run fuzzy test for ClientHandshake"

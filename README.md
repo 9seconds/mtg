@@ -38,6 +38,33 @@ goal: to give a possibility to connect to Telegram in a restricted,
 censored environment. But it does it slightly differently in details
 that probably matter.
 
+* **Domain fronting**
+
+  For years mtg supports domain fronting. This technique means that it fallbacks
+  to accessing a real website in case if request fails. It could fail by many
+  reasons: anti-replay protection, accidental access to the webserver or
+  stale request. Anyway, if mtg rejects this request, it does not break a
+  connection. It connects to the websites and replicates everything that client
+  has sent, and simply proxies it back as is. Users will see a response from
+  the real website, _byte-to-byte identical_ to the response of the real netloc.
+
+* **Doppelganger**
+
+  mtg also is a doppelganger of the website it fronts. Sure, with domain fronting
+  users will see replies of the real website in case if something will go wrong.
+  But what about such cases when _everything is fine_?
+
+  In that case mtg mimics TLS connection statistical characteristics as close as
+  possible. Different application have different statistics of their patterns.
+  Big CDN steadily pumping the data, small websites burst with short easily
+  compressiable chunks of traffic.
+
+  mtg artificially emulates those delays to be statistically indistinguishable
+  from the real website even if it covers connection of the very specific app.
+  It also follows 2 most common patterns of traffic chunking, so censors
+  will have to put more resources to find out that we have Telegram here
+  but not a hookah webshop served by nginx.
+
 * **Resource-efficient**
 
   It has to be resource-efficient. It does not mean that you will see
@@ -92,6 +119,8 @@ that probably matter.
   mtg v2 was redesigned in a way so it can be embedded into your
   software (written in Golang) with a minimum effort + you can replace
   some parts with those you want.
+
+Please also to read about [best practices](https://github.com/9seconds/mtg/blob/master/BEST_PRACTICES.md).
 
 ### Version 2
 
@@ -397,6 +426,55 @@ or if you are using docker:
 ```console
 $ docker exec mtg-proxy /mtg access /config.toml
 ```
+
+## Doppelganger
+
+mtg can mimic real websites, please take a look at relevant section in example
+config file.
+
+mtg comes with some very good precollected statistics coming from
+[ok.ru](https://ok.ru/). It does not mean that you have to cover yourself
+by pretending that mtg is _ok.ru_. **Do not do that: ok.ru comes from very specific
+ASNs, but not from VPS providers you are going to use.** What I want to say
+is that defaults are very good enough to use as is because ok.ru for public
+pages has a very generic profile of TLS packets delay.
+
+But for better results it is recommended to teach mtg about the website you
+will use as a domain front. In order to do that, you need to specify URLs
+from this website. Just go to it, open WebDeveloper console and pick up
+random URLs. For better results they have to be **from the same domain name
+you are going to use as a disguise** but serve light and heavy content: pages,
+images etc. Do not use many, 2-3 will probably work.
+
+mtg will crawl these pages periodically, accumulating statistics and
+using it as you go.
+
+```toml
+[defense.doppelganger]
+urls = [
+  "https://lalala.com/index.html",
+  "https://lalala.com/contacts.html",
+]
+```
+
+This is not very necessary. Keep in mind these rules:
+
+1. If you are not sure what is this all about, do nothing. Defaults are good.
+2. All URLs must be HTTPS
+3. All URLs should be from the same domain name (but this is not a rule)
+4. Do not use a lot of pages. Use _different_ pages. mtg will start using this
+   statistics when it will accumulate enough anyway.
+5. These URLs should be directly accessible from mtg without proxies whatsoever
+6. Do not create huge raids. mtg will repeatedly crawl in raids, making N repeats.
+   Do not use high N, you do not want to be noticeable.
+7. It makes no sense to have small delay between raids. Usually webservers
+   do not update their TLS settings each hour.
+8. If you have some specific knowledge if webserver is using
+   [TLS Dynamic Record Sizing](https://blog.cloudflare.com/optimizing-tls-over-tcp-to-reduce-latency/), you
+   can use a very specific setting. This are Cloudflare, Go standard webservers,
+   [caddy](https://caddyserver.com/) and [H2O](https://h2o.examp1e.net/). If so,
+   you can enable `drs` setting.
+9. **If you are not sure, touch nothing!**
 
 ## Metrics
 

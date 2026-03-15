@@ -11,10 +11,7 @@ package network
 
 import (
 	"errors"
-	"net"
 	"time"
-
-	"github.com/9seconds/mtg/v2/mtglib"
 )
 
 const (
@@ -31,15 +28,12 @@ const (
 	// probes.
 	DefaultTCPKeepAlivePeriod = 10 * time.Second
 
+	// User Agent to use in HTTP client.
+	UserAgent = "curl/8.5.0"
+
 	// tcpLingerTimeout defines a number of seconds to wait for sending
 	// unacknowledged data.
 	tcpLingerTimeout = 1
 )
 
 var ErrCannotDial = errors.New("cannot dial to any address")
-
-type Network interface {
-	mtglib.Network
-
-	NativeDialer() *net.Dialer
-}
