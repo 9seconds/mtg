@@ -60,6 +60,10 @@ func (n *network) DialContext(ctx context.Context, protocol, address string) (es
 	return nil, fmt.Errorf("cannot dial to %s:%s: %w", protocol, address, err)
 }
 
+func (n *network) NativeDialer() *net.Dialer {
+	return &net.Dialer{}
+}
+
 func (n *network) MakeHTTPClient(dialFunc func(ctx context.Context,
 	network, address string) (essentials.Conn, error),
 ) *http.Client {

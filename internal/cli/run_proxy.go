@@ -46,13 +46,13 @@ func makeNetwork(conf *config.Config, version string) (mtglib.Network, error) {
 
 	base := network.New(
 		resolver,
-		"mtg/"+version,
+		"",
 		conf.Network.Timeout.TCP.Get(0),
 		conf.Network.Timeout.HTTP.Get(0),
 		conf.Network.Timeout.Idle.Get(0),
 	)
 
-	proxyDialers := make([]network.Network, len(conf.Network.Proxies))
+	proxyDialers := make([]mtglib.Network, len(conf.Network.Proxies))
 	for idx, v := range conf.Network.Proxies {
 		value, err := network.NewProxyNetwork(base, v.Get(nil))
 		if err != nil {
@@ -239,6 +239,11 @@ func runProxy(conf *config.Config, version string) error { //nolint: funlen
 		return fmt.Errorf("cannot build ip allowlist: %w", err)
 	}
 
+	doppelGangerURLs := make([]string, len(conf.Defense.Doppelganger.URLs))
+	for i, v := range conf.Defense.Doppelganger.URLs {
+		doppelGangerURLs[i] = v.String()
+	}
+
 	opts := mtglib.ProxyOpts{
 		Logger:          logger,
 		Network:         ntw,
@@ -256,6 +261,11 @@ func runProxy(conf *config.Config, version string) error { //nolint: funlen
 
 		AllowFallbackOnUnknownDC: conf.AllowFallbackOnUnknownDC.Get(false),
 		TolerateTimeSkewness:     conf.TolerateTimeSkewness.Value,
+
+		DoppelGangerURLs:    doppelGangerURLs,
+		DoppelGangerPerRaid: conf.Defense.Doppelganger.Repeats.Get(mtglib.DoppelGangerPerRaid),
+		DoppelGangerEach:    conf.Defense.Doppelganger.UpdateEach.Get(mtglib.DoppelGangerEach),
+		DoppelGangerDRS:     conf.Defense.Doppelganger.DRS.Get(false),
 	}
 
 	proxy, err := mtglib.NewProxy(opts)

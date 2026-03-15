@@ -142,6 +142,24 @@ type ProxyOpts struct {
 	//
 	// OBSOLETE and DEPRECATED. Ignored.
 	DCOverrides map[int][]string
+
+	// DoppelGangerURLs is a list of URLs that should be crawled by
+	// mtg to calculate parameters for statistical distribution of a
+	// traffic for fronting domains. If nothing is given, then predefined
+	// statistics is going to be used.
+	DoppelGangerURLs []string
+
+	// DoppelGangerPerRaid defines how many time each URL from
+	// DoppelGangerURLs list should be crawled per raid. We recommend to
+	// have this number ~10.
+	DoppelGangerPerRaid uint
+
+	// DoppelGangerEach defines a time period between each raid. We recommend
+	// to use hours here.
+	DoppelGangerEach time.Duration
+
+	// DoppelGangerDRS defines if TLS Dynamic Record Sizing is active.
+	DoppelGangerDRS bool
 }
 
 func (p ProxyOpts) valid() error {

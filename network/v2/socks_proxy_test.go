@@ -6,6 +6,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/9seconds/mtg/v2/mtglib"
 	"github.com/9seconds/mtg/v2/network/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,7 +18,7 @@ type SocksProxyTestSuite struct {
 	EchoServerTestSuite
 
 	wg          sync.WaitGroup
-	baseNetwork network.Network
+	baseNetwork mtglib.Network
 
 	noAuthURL *url.URL
 	authURL   *url.URL
@@ -85,7 +86,7 @@ func (suite *SocksProxyTestSuite) TestRead() {
 
 	for name, proxies := range testData {
 		suite.T().Run(name, func(t *testing.T) {
-			proxyNetworks := []network.Network{}
+			proxyNetworks := []mtglib.Network{}
 
 			for _, u := range proxies {
 				value, err := network.NewProxyNetwork(suite.baseNetwork, u)
