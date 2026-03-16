@@ -9,6 +9,7 @@ import (
 	"io"
 	rnd "math/rand/v2"
 
+	"github.com/9seconds/mtg/v2/mtglib/internal/doppel"
 	"github.com/9seconds/mtg/v2/mtglib/internal/tls"
 	"golang.org/x/crypto/curve25519"
 )
@@ -125,7 +126,14 @@ func generateChangeCipherValue(buf *bytes.Buffer) {
 }
 
 func generateNoise(buf *bytes.Buffer) {
-	data := make([]byte, int64(1024+rnd.IntN(3092)))
+	data := make(
+		[]byte,
+		int64(
+			doppel.TLSRecordSizeStart+rnd.IntN(
+				doppel.TLSRecordSizeAccel-doppel.TLSRecordSizeStart,
+			),
+		),
+	)
 
 	if _, err := rand.Read(data[:]); err != nil {
 		panic(err)
