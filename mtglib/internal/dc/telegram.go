@@ -20,7 +20,7 @@ func (t *Telegram) GetAddresses(dc int) []Addr {
 	case preferIPOnlyIPv4:
 		return t.view.getV4(dc)
 	case preferIPOnlyIPv6:
-		return t.view.getV4(dc)
+		return t.view.getV6(dc)
 	case preferIPPreferIPv4:
 		return append(t.view.getV4(dc), t.view.getV6(dc)...)
 	}
