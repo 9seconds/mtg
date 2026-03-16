@@ -3,6 +3,7 @@ package network
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"net/url"
 
 	"github.com/9seconds/mtg/v2/essentials"
@@ -15,6 +16,10 @@ type proxyNetwork struct {
 	client proxy.ContextDialer
 }
 
+func (p proxyNetwork) Dial(network, address string) (essentials.Conn, error) {
+	return p.DialContext(context.Background(), network, address)
+}
+
 func (p proxyNetwork) DialContext(ctx context.Context, network, address string) (essentials.Conn, error) {
 	conn, err := p.client.DialContext(ctx, network, address)
 	if err != nil {
@@ -22,6 +27,16 @@ func (p proxyNetwork) DialContext(ctx context.Context, network, address string) 
 	}
 
 	return essentials.WrapNetConn(conn), nil
+}
+
+func (p proxyNetwork) MakeHTTPClient(
+	dialFunc func(context.Context, string, string) (essentials.Conn, error),
+) *http.Client {
+	if dialFunc == nil {
+		dialFunc = p.DialContext
+	}
+
+	return p.Network.MakeHTTPClient(dialFunc)
 }
 
 func NewProxyNetwork(base mtglib.Network, proxyURL *url.URL) (*proxyNetwork, error) {
