@@ -50,6 +50,7 @@ func makeNetwork(conf *config.Config, version string) (mtglib.Network, error) {
 		conf.Network.Timeout.TCP.Get(0),
 		conf.Network.Timeout.HTTP.Get(0),
 		conf.Network.Timeout.Idle.Get(0),
+		network.TLSProfile(conf.Network.TLSProfile.Get(string(network.DefaultTLSProfile))),
 	)
 
 	proxyDialers := make([]mtglib.Network, len(conf.Network.Proxies))

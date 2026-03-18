@@ -17,6 +17,7 @@ type network struct {
 	httpTimeout time.Duration
 	idleTimeout time.Duration
 	userAgent   string
+	tlsProfile  TLSProfile
 }
 
 func (n *network) Dial(network, address string) (essentials.Conn, error) {
@@ -51,12 +52,7 @@ func (n *network) MakeHTTPClient(
 		Timeout: n.httpTimeout,
 		Transport: networkHTTPTransport{
 			userAgent: n.userAgent,
-			next: &http.Transport{
-				IdleConnTimeout: n.idleTimeout,
-				DialContext: func(ctx context.Context, network, address string) (net.Conn, error) {
-					return dialFunc(ctx, network, address)
-				},
-			},
+			next:      newUTLSTransport(n.tlsProfile, dialFunc),
 		},
 	}
 }
@@ -71,13 +67,18 @@ func New(
 	tcpTimeout,
 	httpTimeout,
 	idleTimeout time.Duration,
+	tlsProfile TLSProfile,
 ) mtglib.Network {
 	if dnsResolver == nil {
 		dnsResolver = net.DefaultResolver
 	}
 
+	if tlsProfile == "" {
+		tlsProfile = TLSProfileChrome
+	}
+
 	if userAgent == "" {
-		userAgent = UserAgent
+		userAgent = GetTLSProfileUserAgent(tlsProfile, UserAgent)
 	}
 
 	return &network{
@@ -89,5 +90,6 @@ func New(
 		userAgent:   userAgent,
 		idleTimeout: idleTimeout,
 		httpTimeout: httpTimeout,
+		tlsProfile:  tlsProfile,
 	}
 }

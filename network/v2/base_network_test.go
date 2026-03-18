@@ -19,7 +19,7 @@ type BaseNetworkTestSuite struct {
 func (suite *BaseNetworkTestSuite) SetupSuite() {
 	suite.EchoServerTestSuite.SetupSuite()
 
-	suite.net = network.New(nil, "agent", 0, 0, 0)
+	suite.net = network.New(nil, "agent", 0, 0, 0, "")
 }
 
 func (suite *BaseNetworkTestSuite) TestDialUnknownNetwork() {

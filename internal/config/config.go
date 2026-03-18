@@ -62,9 +62,10 @@ type Config struct {
 			HTTP TypeDuration `json:"http"`
 			Idle TypeDuration `json:"idle"`
 		} `json:"timeout"`
-		DOHIP   TypeIP         `json:"dohIp"`
-		DNS     TypeDNSURI     `json:"dns"`
-		Proxies []TypeProxyURL `json:"proxies"`
+		DOHIP      TypeIP         `json:"dohIp"`
+		DNS        TypeDNSURI     `json:"dns"`
+		Proxies    []TypeProxyURL `json:"proxies"`
+		TLSProfile TypeTLSProfile `json:"tlsProfile"`
 	} `json:"network"`
 	Stats struct {
 		StatsD struct {

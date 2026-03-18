@@ -25,7 +25,7 @@ func (suite *BaseHTTPTestSuite) SetupSuite() {
 }
 
 func (suite *BaseHTTPTestSuite) SetupTest() {
-	suite.client = network.New(nil, "mtg/1", 0, 0, 0).MakeHTTPClient(nil)
+	suite.client = network.New(nil, "mtg/1", 0, 0, 0, "").MakeHTTPClient(nil)
 }
 
 func (suite *BaseHTTPTestSuite) TestGet() {

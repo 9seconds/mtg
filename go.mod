@@ -30,12 +30,14 @@ require (
 	github.com/ncruces/go-dns v1.3.2
 	github.com/pelletier/go-toml/v2 v2.2.4
 	github.com/pires/go-proxyproto v0.11.0
+	github.com/refraction-networking/utls v1.8.2
 	github.com/things-go/go-socks5 v0.1.0
 	github.com/txthinking/socks5 v0.0.0-20251011041537-5c31f201a10e
 	github.com/yl2chen/cidranger v1.0.2
 )
 
 require (
+	github.com/andybalholm/brotli v1.0.6 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -51,6 +53,6 @@ require (
 	github.com/txthinking/runnergroup v0.0.0-20250224021307-5864ffeb65ae // indirect
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	golang.org/x/sync v0.20.0 // indirect
-	golang.org/x/tools v0.41.0 // indirect
+	golang.org/x/text v0.35.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

@@ -150,11 +150,7 @@ func makeHTTPClient(userAgent string,
 		Timeout: timeout,
 		Transport: networkHTTPTransport{
 			userAgent: userAgent,
-			next: &http.Transport{
-				DialContext: func(ctx context.Context, network, address string) (net.Conn, error) {
-					return dialFunc(ctx, network, address)
-				},
-			},
+			next:      newUTLSTransport(dialFunc),
 		},
 	}
 }

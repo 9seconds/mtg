@@ -57,9 +57,10 @@ type tomlConfig struct {
 			HTTP string `toml:"http" json:"http,omitempty"`
 			Idle string `toml:"idle" json:"idle,omitempty"`
 		} `toml:"timeout" json:"timeout,omitempty"`
-		DOHIP   string   `toml:"doh-ip" json:"dohIp,omitempty"`
-		DNS     string   `toml:"dns" json:"dns,omitempty"`
-		Proxies []string `toml:"proxies" json:"proxies,omitempty"`
+		DOHIP      string   `toml:"doh-ip" json:"dohIp,omitempty"`
+		DNS        string   `toml:"dns" json:"dns,omitempty"`
+		Proxies    []string `toml:"proxies" json:"proxies,omitempty"`
+		TLSProfile string   `toml:"tls-profile" json:"tlsProfile,omitempty"`
 	} `toml:"network" json:"network,omitempty"`
 	Stats struct {
 		StatsD struct {

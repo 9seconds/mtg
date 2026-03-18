@@ -193,6 +193,18 @@ proxies = [
     # "socks5://user:password@host:port"
 ]
 
+# TLS fingerprint profile for outgoing HTTPS connections (DNS-over-HTTPS,
+# Doppelganger scout, Telegram config updates). Go's default crypto/tls
+# has a distinctive JA3/JA4 fingerprint that DPI can identify.
+#
+# Using a browser profile makes these connections look like regular
+# browser traffic. The User-Agent header is automatically matched
+# to the selected profile.
+#
+# Supported values: "chrome", "firefox", "safari", "edge"
+# Default: "chrome"
+tls-profile = "chrome"
+
 # network timeouts define different settings for timeouts. tcp timeout
 # define a global timeout on establishing of network connections. idle
 # means a timeout on pumping data between sockset when nothing is
