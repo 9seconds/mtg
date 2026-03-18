@@ -259,9 +259,16 @@ func (p *Proxy) doTelegramCall(ctx *streamContext) error {
 		ctx:      ctx,
 	}
 
+	telegramHost, _, err := net.SplitHostPort(foundAddr.Address)
+	if err != nil {
+		conn.Close() //nolint: errcheck
+
+		return fmt.Errorf("cannot parse telegram address %s: %w", foundAddr.Address, err)
+	}
+
 	p.eventStream.Send(ctx,
 		NewEventConnectedToDC(ctx.streamID,
-			conn.RemoteAddr().(*net.TCPAddr).IP, //nolint: forcetypeassert
+			net.ParseIP(telegramHost),
 			ctx.dc),
 	)
 
