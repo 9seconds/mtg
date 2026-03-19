@@ -98,7 +98,8 @@ func (g *Ganger) run() {
 			g.durations = append(g.durations, durations...)
 
 			if len(g.durations) > DoppelGangerMaxDurations {
-				g.durations = g.durations[len(g.durations)-DoppelGangerMaxDurations:]
+				copy(g.durations, g.durations[len(g.durations)-DoppelGangerMaxDurations:])
+				g.durations = g.durations[:DoppelGangerMaxDurations]
 			}
 
 			if len(g.durations) < MinDurationsToCalculate {
