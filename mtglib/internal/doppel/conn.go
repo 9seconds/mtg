@@ -36,32 +36,6 @@ func (c Conn) Write(p []byte) (int, error) {
 	return len(p), context.Cause(c.p.ctx)
 }
 
-func (c Conn) SyncWrite(p []byte) (int, error) {
-	c.p.syncWriteLock.Lock()
-	defer c.p.syncWriteLock.Unlock()
-
-	c.p.writeCond.L.Lock()
-	// wait until buffer is exhausted
-	for c.p.writeStream.Len() != 0 && context.Cause(c.p.ctx) == nil {
-		c.p.writeCond.Wait()
-	}
-	c.p.writeStream.Write(p)
-	c.p.writeCond.L.Unlock()
-
-	if err := context.Cause(c.p.ctx); err != nil {
-		return len(p), err
-	}
-
-	c.p.writeCond.L.Lock()
-	// wait until data will be sent
-	for c.p.writeStream.Len() != 0 && context.Cause(c.p.ctx) == nil {
-		c.p.writeCond.Wait()
-	}
-	c.p.writeCond.L.Unlock()
-
-	return len(p), context.Cause(c.p.ctx)
-}
-
 func (c Conn) Start() {
 	c.p.wg.Go(func() {
 		c.start()
