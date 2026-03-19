@@ -10,7 +10,8 @@ before:
     - go generate ./...
 
 builds:
-  - binary: '{{ .ProjectName }}'
+  - id: default
+    binary: '{{ .ProjectName }}'
     goos:
       - darwin
       - freebsd
@@ -30,6 +31,7 @@ builds:
     flags:
       - -trimpath
       - -mod=readonly
+      - -pgo=auto
     ldflags: -s -w -X main.version={{ .Version }}
     ignore:
       - goos: darwin
@@ -40,9 +42,25 @@ builds:
         goarch: arm64
       - goos: openbsd
         goarch: arm64
+  - id: arm64-v9
+    binary: '{{ .ProjectName }}'
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - arm64
+    goarm64:
+      - v9.0
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+      - -mod=readonly
+      - -pgo=auto
+    ldflags: -s -w -X main.version={{ .Version }}
 
 archives:
-  - name_template: '{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+  - name_template: '{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Arm64 }}-{{ .Arm64 }}{{ end }}'
     formats:
       - tar.gz
     wrap_in_directory: true
