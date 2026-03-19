@@ -29,20 +29,24 @@ func ReadRecord(r io.Reader, w io.Writer) (byte, int64, error) {
 
 func WriteRecord(w io.Writer, payload []byte) error {
 	buf := [MaxRecordSize]byte{}
-	buf[0] = TypeApplicationData
+	copy(buf[SizeHeader:], payload)
 
-	bufV := buf[SizeRecordType:]
-	copy(bufV[:SizeVersion], TLSVersion[:])
+	return WriteRecordInPlace(w, buf[:], len(payload))
+}
 
-	bufS := bufV[SizeVersion:]
-	binary.BigEndian.PutUint16(bufS[:SizeSize], uint16(len(payload)))
-
-	bufP := buf[SizeHeader:]
-	if n := copy(bufP, payload); n != len(payload) {
-		return fmt.Errorf("copied %d bytes of payload instead of %d", n, len(payload))
+func WriteRecordInPlace(w io.Writer, buf []byte, payloadLen int) error {
+	if payloadLen > MaxRecordPayloadSize {
+		return fmt.Errorf("payload %d exceeds max %d", payloadLen, MaxRecordPayloadSize)
 	}
 
-	_, err := w.Write(buf[:SizeHeader+len(payload)])
+	buf[0] = TypeApplicationData
+	copy(buf[SizeRecordType:SizeRecordType+SizeVersion], TLSVersion[:])
+	binary.BigEndian.PutUint16(
+		buf[SizeRecordType+SizeVersion:SizeRecordType+SizeVersion+SizeSize],
+		uint16(payloadLen),
+	)
+
+	_, err := w.Write(buf[:SizeHeader+payloadLen])
 
 	return err
 }

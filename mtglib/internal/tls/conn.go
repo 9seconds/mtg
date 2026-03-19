@@ -34,7 +34,6 @@ type Conn struct {
 
 type connPayload struct {
 	readBuf      bytes.Buffer
-	writeBuf     bytes.Buffer
 	connBuffered *bufio.Reader
 	read         bool
 	write        bool
@@ -80,7 +79,6 @@ func New(conn essentials.Conn, read, write bool) Conn {
 	}
 
 	newConn.p.readBuf.Grow(DefaultBufferSize)
-	newConn.p.writeBuf.Grow(DefaultBufferSize)
 
 	return newConn
 }

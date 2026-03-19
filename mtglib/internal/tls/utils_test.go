@@ -119,6 +119,84 @@ func (suite *UtilsTestSuite) TestWriteRecordPayloadTooLarge() {
 	suite.Error(err)
 }
 
+func (suite *UtilsTestSuite) TestWriteRecordInPlace() {
+	payload := []byte("hello in-place")
+
+	var buf [MaxRecordSize]byte
+	copy(buf[SizeHeader:], payload)
+
+	err := WriteRecordInPlace(suite.dst, buf[:], len(payload))
+	suite.NoError(err)
+
+	written := suite.dst.Bytes()
+	suite.Equal(byte(TypeApplicationData), written[0])
+	suite.Equal(TLSVersion[:], written[SizeRecordType:SizeRecordType+SizeVersion])
+
+	length := binary.BigEndian.Uint16(written[SizeRecordType+SizeVersion:])
+	suite.Equal(uint16(len(payload)), length)
+	suite.Equal(payload, written[SizeHeader:])
+}
+
+func (suite *UtilsTestSuite) TestWriteRecordInPlaceRoundTrip() {
+	payload := []byte("round trip in-place")
+
+	var buf [MaxRecordSize]byte
+	copy(buf[SizeHeader:], payload)
+
+	var wire bytes.Buffer
+
+	err := WriteRecordInPlace(&wire, buf[:], len(payload))
+	suite.NoError(err)
+
+	var recovered bytes.Buffer
+
+	recordType, length, err := ReadRecord(&wire, &recovered)
+	suite.NoError(err)
+	suite.Equal(byte(TypeApplicationData), recordType)
+	suite.Equal(int64(len(payload)), length)
+	suite.Equal(payload, recovered.Bytes())
+}
+
+func (suite *UtilsTestSuite) TestWriteRecordInPlacePayloadTooLarge() {
+	var buf [MaxRecordSize]byte
+
+	err := WriteRecordInPlace(suite.dst, buf[:], MaxRecordPayloadSize+1)
+	suite.Error(err)
+}
+
+func (suite *UtilsTestSuite) TestWriteRecordInPlacePropagatesError() {
+	m := &WriterMock{}
+	m.
+		On("Write", mock.AnythingOfType("[]uint8")).
+		Once().
+		Return(0, errors.New("disk full"))
+
+	var buf [MaxRecordSize]byte
+	copy(buf[SizeHeader:], []byte("data"))
+
+	err := WriteRecordInPlace(m, buf[:], 4)
+	suite.Error(err)
+
+	m.AssertExpectations(suite.T())
+}
+
+func (suite *UtilsTestSuite) TestWriteRecordInPlaceMatchesWriteRecord() {
+	payload := []byte("equivalence check")
+
+	var legacy bytes.Buffer
+	err := WriteRecord(&legacy, payload)
+	suite.NoError(err)
+
+	var buf [MaxRecordSize]byte
+	copy(buf[SizeHeader:], payload)
+
+	var inPlace bytes.Buffer
+	err = WriteRecordInPlace(&inPlace, buf[:], len(payload))
+	suite.NoError(err)
+
+	suite.Equal(legacy.Bytes(), inPlace.Bytes())
+}
+
 func TestUtils(t *testing.T) {
 	t.Parallel()
 	suite.Run(t, &UtilsTestSuite{})
