@@ -18,6 +18,7 @@ builds:
       - linux
       - netbsd
       - openbsd
+      - windows
     goarch:
       - 386
       - amd64
@@ -36,12 +37,18 @@ builds:
     ignore:
       - goos: darwin
         goarch: 386
+      - goos: darwin
+        goarch: arm
       - goos: freebsd
         goarch: arm64
       - goos: netbsd
         goarch: arm64
       - goos: openbsd
         goarch: arm64
+      - goos: windows
+        goarch: 386
+      - goos: windows
+        goarch: arm
   - id: arm64-v9
     binary: '{{ .ProjectName }}'
     goos:
@@ -66,6 +73,7 @@ builds:
       - linux
       - netbsd
       - openbsd
+      - windows
     goarch:
       - amd64
     goamd64:
