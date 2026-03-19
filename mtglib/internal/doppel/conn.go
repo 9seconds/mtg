@@ -61,14 +61,14 @@ func (c Conn) start() {
 		for c.p.writeStream.Len() == 0 && !c.p.done {
 			c.p.writtenCond.Wait()
 		}
-		n, _ := c.p.writeStream.Read(buf[:size])
+		n, _ := c.p.writeStream.Read(buf[tls.SizeHeader : tls.SizeHeader+size])
 		c.p.writtenCond.L.Unlock()
 
 		if n == 0 {
 			continue
 		}
 
-		if err := tls.WriteRecord(c.Conn, buf[:n]); err != nil {
+		if err := tls.WriteRecordInPlace(c.Conn, buf[:], n); err != nil {
 			c.p.ctxCancel(err)
 			return
 		}
