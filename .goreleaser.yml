@@ -49,6 +49,22 @@ builds:
         goarch: 386
       - goos: windows
         goarch: arm
+  - id: mips
+    binary: '{{ .ProjectName }}'
+    goos:
+      - linux
+    goarch:
+      - mips
+      - mipsle
+    gomips:
+      - softfloat
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+      - -mod=readonly
+      - -pgo=auto
+    ldflags: -s -w -X main.version={{ .Version }}
   - id: arm64-v9
     binary: '{{ .ProjectName }}'
     goos:
