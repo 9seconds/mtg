@@ -141,6 +141,37 @@ func (suite *ConnTestSuite) TestWriteReturnsErrorAfterStop() {
 	suite.Error(err)
 }
 
+func (suite *ConnTestSuite) TestStopDoesNotDeadlockWhenStartIsWaiting() {
+	suite.connMock.
+		On("Write", mock.AnythingOfType("[]uint8")).
+		Return(0, nil).
+		Maybe()
+
+	for range 100 {
+		func() {
+			ctx, cancel := context.WithCancel(suite.ctx)
+			defer cancel()
+
+			c := NewConn(ctx, suite.connMock, &Stats{
+				k:      2.0,
+				lambda: 0.01,
+			})
+
+			done := make(chan struct{})
+			go func() {
+				defer close(done)
+				c.Stop()
+			}()
+
+			select {
+			case <-done:
+			case <-time.After(2 * time.Second):
+				suite.Fail("Stop() deadlocked: start() likely stuck in writtenCond.Wait()")
+			}
+		}()
+	}
+}
+
 func (suite *ConnTestSuite) TestStopOnUnderlyingWriteError() {
 	suite.connMock.
 		On("Write", mock.AnythingOfType("[]uint8")).
