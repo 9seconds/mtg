@@ -16,48 +16,25 @@ type Conn struct {
 }
 
 type connPayload struct {
-	ctx           context.Context
-	ctxCancel     context.CancelCauseFunc
-	clock         Clock
-	wg            sync.WaitGroup
-	syncWriteLock sync.RWMutex
-	writeStream   bytes.Buffer
-	writeCond     *sync.Cond
+	ctx         context.Context
+	ctxCancel   context.CancelCauseFunc
+	clock       Clock
+	wg          sync.WaitGroup
+	writeStream bytes.Buffer
+	writtenCond sync.Cond
+	done        bool
 }
 
 func (c Conn) Write(p []byte) (int, error) {
-	c.p.syncWriteLock.RLock()
-	defer c.p.syncWriteLock.RUnlock()
+	if len(p) == 0 {
+		return 0, context.Cause(c.p.ctx)
+	}
 
-	c.p.writeCond.L.Lock()
+	c.p.writtenCond.L.Lock()
 	c.p.writeStream.Write(p)
-	c.p.writeCond.L.Unlock()
+	c.p.writtenCond.L.Unlock()
 
-	return len(p), context.Cause(c.p.ctx)
-}
-
-func (c Conn) SyncWrite(p []byte) (int, error) {
-	c.p.syncWriteLock.Lock()
-	defer c.p.syncWriteLock.Unlock()
-
-	c.p.writeCond.L.Lock()
-	// wait until buffer is exhausted
-	for c.p.writeStream.Len() != 0 && context.Cause(c.p.ctx) == nil {
-		c.p.writeCond.Wait()
-	}
-	c.p.writeStream.Write(p)
-	c.p.writeCond.L.Unlock()
-
-	if err := context.Cause(c.p.ctx); err != nil {
-		return len(p), err
-	}
-
-	c.p.writeCond.L.Lock()
-	// wait until data will be sent
-	for c.p.writeStream.Len() != 0 && context.Cause(c.p.ctx) == nil {
-		c.p.writeCond.Wait()
-	}
-	c.p.writeCond.L.Unlock()
+	c.p.writtenCond.Signal()
 
 	return len(p), context.Cause(c.p.ctx)
 }
@@ -69,8 +46,6 @@ func (c Conn) Start() {
 }
 
 func (c Conn) start() {
-	defer c.p.writeCond.Broadcast()
-
 	buf := [tls.MaxRecordSize]byte{}
 
 	for {
@@ -80,25 +55,34 @@ func (c Conn) start() {
 		case <-c.p.clock.tick:
 		}
 
-		c.p.writeCond.L.Lock()
-		n, err := c.p.writeStream.Read(buf[:c.p.clock.stats.Size()])
-		c.p.writeCond.L.Unlock()
+		size := c.p.clock.stats.Size()
 
-		if n == 0 || err != nil {
+		c.p.writtenCond.L.Lock()
+		for c.p.writeStream.Len() == 0 && !c.p.done {
+			c.p.writtenCond.Wait()
+		}
+		n, _ := c.p.writeStream.Read(buf[tls.SizeHeader : tls.SizeHeader+size])
+		c.p.writtenCond.L.Unlock()
+
+		if n == 0 {
 			continue
 		}
 
-		if err := tls.WriteRecord(c.Conn, buf[:n]); err != nil {
+		if err := tls.WriteRecordInPlace(c.Conn, buf[:], n); err != nil {
 			c.p.ctxCancel(err)
 			return
 		}
-
-		c.p.writeCond.Signal()
 	}
 }
 
 func (c Conn) Stop() {
 	c.p.ctxCancel(nil)
+
+	c.p.writtenCond.L.Lock()
+	c.p.done = true
+	c.p.writtenCond.L.Unlock()
+	c.p.writtenCond.Broadcast()
+
 	c.p.wg.Wait()
 }
 
@@ -109,7 +93,9 @@ func NewConn(ctx context.Context, conn essentials.Conn, stats *Stats) Conn {
 		p: &connPayload{
 			ctx:       ctx,
 			ctxCancel: cancel,
-			writeCond: sync.NewCond(&sync.Mutex{}),
+			writtenCond: sync.Cond{
+				L: &sync.Mutex{},
+			},
 			clock: Clock{
 				stats: stats,
 				tick:  make(chan struct{}),
