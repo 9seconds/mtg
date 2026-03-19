@@ -58,9 +58,28 @@ builds:
       - -mod=readonly
       - -pgo=auto
     ldflags: -s -w -X main.version={{ .Version }}
+  - id: amd64-v3
+    binary: '{{ .ProjectName }}'
+    goos:
+      - darwin
+      - freebsd
+      - linux
+      - netbsd
+      - openbsd
+    goarch:
+      - amd64
+    goamd64:
+      - v3
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+      - -mod=readonly
+      - -pgo=auto
+    ldflags: -s -w -X main.version={{ .Version }}
 
 archives:
-  - name_template: '{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Arm64 }}-{{ .Arm64 }}{{ end }}'
+  - name_template: '{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Arm64 }}-{{ .Arm64 }}{{ end }}{{ if .Amd64 }}-{{ .Amd64 }}{{ end }}'
     formats:
       - tar.gz
     wrap_in_directory: true
