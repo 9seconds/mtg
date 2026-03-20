@@ -32,7 +32,6 @@ builds:
     flags:
       - -trimpath
       - -mod=readonly
-      - -pgo=auto
     ldflags: -s -w -X main.version={{ .Version }}
     ignore:
       - goos: darwin
@@ -63,7 +62,6 @@ builds:
     flags:
       - -trimpath
       - -mod=readonly
-      - -pgo=auto
     ldflags: -s -w -X main.version={{ .Version }}
   - id: arm64-v9
     binary: '{{ .ProjectName }}'
@@ -79,7 +77,6 @@ builds:
     flags:
       - -trimpath
       - -mod=readonly
-      - -pgo=auto
     ldflags: -s -w -X main.version={{ .Version }}
   - id: amd64-v3
     binary: '{{ .ProjectName }}'
@@ -99,7 +96,6 @@ builds:
     flags:
       - -trimpath
       - -mod=readonly
-      - -pgo=auto
     ldflags: -s -w -X main.version={{ .Version }}
 
 archives:
