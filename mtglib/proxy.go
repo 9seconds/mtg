@@ -361,8 +361,17 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 	proxy.doppelGanger.Run()
 
 	if opts.AutoUpdate {
-		proxy.configUpdater.Run(ctx, dc.PublicConfigUpdateURLv4, "tcp4")
-		proxy.configUpdater.Run(ctx, dc.PublicConfigUpdateURLv6, "tcp6")
+		ipv4UpdateURL := opts.AutoUpdateURLv4
+		if ipv4UpdateURL == "" {
+			ipv4UpdateURL = dc.PublicConfigUpdateURLv4
+		}
+		proxy.configUpdater.Run(ctx, ipv4UpdateURL, "tcp4")
+
+		ipv6UpdateURL := opts.AutoUpdateURLv6
+		if ipv6UpdateURL == "" {
+			ipv6UpdateURL = dc.PublicConfigUpdateURLv6
+		}
+		proxy.configUpdater.Run(ctx, ipv6UpdateURL, "tcp6")
 	}
 
 	pool, err := ants.NewPoolWithFunc(opts.getConcurrency(),

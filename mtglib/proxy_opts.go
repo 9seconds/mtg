@@ -91,6 +91,16 @@ type ProxyOpts struct {
 	// This is an optional setting.
 	AutoUpdate bool
 
+	// AutoUpdate URL to update Telegram IPv4 proxy list
+	//
+	// This is an optional setting.
+	AutoUpdateURLv4 string
+
+	// AutoUpdate URL to update Telegram IPv6 proxy list
+	//
+	// This is an optional setting.
+	AutoUpdateURLv6 string
+
 	// DomainFrontingPort is a port we use to connect to a fronting domain.
 	//
 	// This is required because secret does not specify a port. It specifies a

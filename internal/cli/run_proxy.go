@@ -258,6 +258,8 @@ func runProxy(conf *config.Config, version string) error { //nolint: funlen
 		DomainFrontingProxyProtocol: conf.GetDomainFrontingProxyProtocol(false),
 		PreferIP:                    conf.PreferIP.Get(mtglib.DefaultPreferIP),
 		AutoUpdate:                  conf.AutoUpdate.Get(false),
+		AutoUpdateURLv4:             conf.AutoUpdateURLv4.String(),
+		AutoUpdateURLv6:             conf.AutoUpdateURLv6.String(),
 
 		AllowFallbackOnUnknownDC: conf.AllowFallbackOnUnknownDC.Get(false),
 		TolerateTimeSkewness:     conf.TolerateTimeSkewness.Value,
