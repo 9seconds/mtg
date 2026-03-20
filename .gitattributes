@@ -1,0 +1,3 @@
+# git config merge.theirs.name "Always accept theirs"
+# git config merge.theirs.driver "cp %B %A"
+default.pgo binary merge=theirs
