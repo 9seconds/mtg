@@ -380,6 +380,7 @@ ExecStart=/usr/local/bin/mtg run /etc/mtg.toml
 Restart=always
 RestartSec=3
 DynamicUser=true
+LimitNOFILE=65536
 AmbientCapabilities=CAP_NET_BIND_SERVICE
 
 [Install]
