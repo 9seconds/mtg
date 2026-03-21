@@ -84,6 +84,13 @@ type Config struct {
 	} `json:"stats"`
 }
 
+func (c *Config) GetConcurrency(defaultValue uint) uint {
+	if concurrency := c.Concurrency.Get(0); concurrency != 0 {
+		return concurrency
+	}
+	return c.Concurrency.Get(defaultValue)
+}
+
 func (c *Config) GetDNS() *url.URL {
 	var dohURL *url.URL
 
