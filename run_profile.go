@@ -3,5 +3,4 @@
 package main
 
 func runProfile() {
-
 }

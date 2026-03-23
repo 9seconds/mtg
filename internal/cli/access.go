@@ -1,22 +1,16 @@
 package cli
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net"
-	"net/http"
 	"net/url"
 	"os"
 	"strconv"
-	"strings"
 	"sync"
 
-	"github.com/9seconds/mtg/v2/essentials"
 	"github.com/9seconds/mtg/v2/internal/config"
 	"github.com/9seconds/mtg/v2/internal/utils"
-	"github.com/9seconds/mtg/v2/mtglib"
 )
 
 type accessResponse struct {
@@ -65,7 +59,7 @@ func (a *Access) Run(cli *CLI, version string) error {
 	wg.Go(func() {
 		ip := a.PublicIPv4
 		if ip == nil {
-			ip = a.getIP(ntw, "tcp4")
+			ip = getIP(ntw, "tcp4")
 		}
 
 		if ip != nil {
@@ -77,7 +71,7 @@ func (a *Access) Run(cli *CLI, version string) error {
 	wg.Go(func() {
 		ip := a.PublicIPv6
 		if ip == nil {
-			ip = a.getIP(ntw, "tcp6")
+			ip = getIP(ntw, "tcp6")
 		}
 
 		if ip != nil {
@@ -98,45 +92,6 @@ func (a *Access) Run(cli *CLI, version string) error {
 	}
 
 	return nil
-}
-
-func (a *Access) getIP(ntw mtglib.Network, protocol string) net.IP {
-	dialer := ntw.NativeDialer()
-	client := ntw.MakeHTTPClient(func(ctx context.Context, network, address string) (essentials.Conn, error) {
-		conn, err := dialer.DialContext(ctx, protocol, address)
-		if err != nil {
-			return nil, err
-		}
-		return essentials.WrapNetConn(conn), err
-	})
-
-	req, err := http.NewRequest(http.MethodGet, "https://ifconfig.co", nil) //nolint: noctx
-	if err != nil {
-		panic(err)
-	}
-
-	req.Header.Add("Accept", "text/plain")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil
-	}
-
-	defer func() {
-		io.Copy(io.Discard, resp.Body) //nolint: errcheck
-		resp.Body.Close()              //nolint: errcheck
-	}()
-
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil
-	}
-
-	return net.ParseIP(strings.TrimSpace(string(data)))
 }
 
 func (a *Access) makeURLs(conf *config.Config, ip net.IP) *accessResponseURLs {

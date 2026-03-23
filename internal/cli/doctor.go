@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"net"
@@ -63,28 +64,6 @@ type Doctor struct {
 	ConfigPath string `kong:"arg,required,type='existingfile',help='Path to the configuration file.',name='config-path'"` //nolint: lll
 }
 
-type wrappedNetwork struct {
-	mtglib.Network
-}
-
-func (w wrappedNetwork) Dial(network, address string) (net.Conn, error) {
-	rv, err := w.Network.Dial(network, address)
-	if err != nil {
-		return nil, err
-	}
-
-	return rv.(net.Conn), nil
-}
-
-func (w wrappedNetwork) DialContext(ctx context.Context, network, address string) (net.Conn, error) {
-	rv, err := w.Network.DialContext(ctx, network, address)
-	if err != nil {
-		return nil, err
-	}
-
-	return rv.(net.Conn), nil
-}
-
 func (d *Doctor) Run(cli *CLI, version string) error {
 	conf, err := utils.ReadConfig(d.ConfigPath)
 	if err != nil {
@@ -140,7 +119,7 @@ func (d *Doctor) checkDeprecatedConfig() bool {
 
 	if d.conf.DomainFrontingIP.Value != nil {
 		ok = false
-		tplWDeprecatedConfig.Execute(os.Stdout, map[string]string{
+		tplWDeprecatedConfig.Execute(os.Stdout, map[string]string{ //nolint: errcheck
 			"when":        "2.3.0",
 			"old":         "domain-fronting-ip",
 			"old_section": "",
@@ -151,7 +130,7 @@ func (d *Doctor) checkDeprecatedConfig() bool {
 
 	if d.conf.DomainFrontingPort.Value != 0 {
 		ok = false
-		tplWDeprecatedConfig.Execute(os.Stdout, map[string]string{
+		tplWDeprecatedConfig.Execute(os.Stdout, map[string]string{ //nolint: errcheck
 			"when":        "2.3.0",
 			"old":         "domain-fronting-port",
 			"old_section": "",
@@ -162,7 +141,7 @@ func (d *Doctor) checkDeprecatedConfig() bool {
 
 	if d.conf.DomainFrontingProxyProtocol.Value {
 		ok = false
-		tplWDeprecatedConfig.Execute(os.Stdout, map[string]string{
+		tplWDeprecatedConfig.Execute(os.Stdout, map[string]string{ //nolint: errcheck
 			"when":        "2.3.0",
 			"old":         "domain-fronting-proxy-protocol",
 			"old_section": "",
@@ -173,7 +152,7 @@ func (d *Doctor) checkDeprecatedConfig() bool {
 
 	if d.conf.Network.DOHIP.Value != nil {
 		ok = false
-		tplWDeprecatedConfig.Execute(os.Stdout, map[string]string{
+		tplWDeprecatedConfig.Execute(os.Stdout, map[string]string{ //nolint: errcheck
 			"when":        "2.3.0",
 			"old":         "doh-ip",
 			"old_section": "network",
@@ -192,7 +171,7 @@ func (d *Doctor) checkDeprecatedConfig() bool {
 func (d *Doctor) checkTimeSkewness() bool {
 	response, err := ntp.Query("0.pool.ntp.org")
 	if err != nil {
-		tplError.Execute(os.Stdout, map[string]any{
+		tplError.Execute(os.Stdout, map[string]any{ //nolint: errcheck
 			"description": "cannot access ntp pool",
 			"error":       err,
 		})
@@ -202,19 +181,19 @@ func (d *Doctor) checkTimeSkewness() bool {
 	skewness := response.ClockOffset.Abs()
 	confValue := d.conf.TolerateTimeSkewness.Get(mtglib.DefaultTolerateTimeSkewness)
 	diff := float64(skewness) / float64(confValue)
-	context := map[string]any{
+	tplData := map[string]any{
 		"drift": response.ClockOffset,
 		"value": confValue,
 	}
 
 	switch {
 	case diff < 0.3:
-		tplOTimeSkewness.Execute(os.Stdout, context)
+		tplOTimeSkewness.Execute(os.Stdout, tplData) //nolint: errcheck
 		return true
 	case diff < 0.7:
-		tplWTimeSkewness.Execute(os.Stdout, context)
+		tplWTimeSkewness.Execute(os.Stdout, tplData) //nolint: errcheck
 	default:
-		tplETimeSkewness.Execute(os.Stdout, context)
+		tplETimeSkewness.Execute(os.Stdout, tplData) //nolint: errcheck
 	}
 
 	return false
@@ -229,11 +208,11 @@ func (d *Doctor) checkNetwork(ntw mtglib.Network) bool {
 	for _, dc := range dcs {
 		err := d.checkNetworkAddresses(ntw, essentials.TelegramCoreAddresses[dc])
 		if err == nil {
-			tplODCConnect.Execute(os.Stdout, map[string]any{
+			tplODCConnect.Execute(os.Stdout, map[string]any{ //nolint: errcheck
 				"dc": dc,
 			})
 		} else {
-			tplEDCConnect.Execute(os.Stdout, map[string]any{
+			tplEDCConnect.Execute(os.Stdout, map[string]any{ //nolint: errcheck
 				"dc":    dc,
 				"error": err,
 			})
@@ -274,6 +253,10 @@ func (d *Doctor) checkNetworkAddresses(ntw mtglib.Network, addresses []string) e
 		checkAddresses = addresses
 	}
 
+	if len(checkAddresses) == 0 {
+		return fmt.Errorf("no suitable addresses after IP version filtering")
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -288,7 +271,7 @@ func (d *Doctor) checkNetworkAddresses(ntw mtglib.Network, addresses []string) e
 			continue
 		}
 
-		conn.Close()
+		conn.Close() //nolint: errcheck
 
 		return nil
 	}
@@ -299,18 +282,29 @@ func (d *Doctor) checkNetworkAddresses(ntw mtglib.Network, addresses []string) e
 func (d *Doctor) checkSecretHost(resolver *net.Resolver, ntw mtglib.Network) bool {
 	addresses, err := resolver.LookupIPAddr(context.Background(), d.conf.Secret.Host)
 	if err != nil {
-		// TODO
+		tplError.Execute(os.Stdout, map[string]any{ //nolint: errcheck
+			"description": fmt.Sprintf("cannot resolve DNS name of %s", d.conf.Secret.Host),
+			"error":       err,
+		})
 		return false
 	}
 
-	access := &Access{}
-	ourIP4 := access.getIP(ntw, "tcp4")
-	ourIP6 := access.getIP(ntw, "tcp6")
+	ourIP4 := getIP(ntw, "tcp4")
+	ourIP6 := getIP(ntw, "tcp6")
+
+	if ourIP4 == nil && ourIP6 == nil {
+		tplError.Execute(os.Stdout, map[string]any{ //nolint: errcheck
+			"description": "cannot detect public IP address",
+			"error":       errors.New("ifconfig.co is unreachable for both IPv4 and IPv6"),
+		})
+		return false
+	}
 
 	strAddresses := []string{}
 	for _, value := range addresses {
-		if value.IP.String() == ourIP4.String() || value.IP.String() == ourIP6.String() {
-			tplODNSSNIMatch.Execute(os.Stdout, map[string]any{
+		if (ourIP4 != nil && value.IP.String() == ourIP4.String()) ||
+			(ourIP6 != nil && value.IP.String() == ourIP6.String()) {
+			tplODNSSNIMatch.Execute(os.Stdout, map[string]any{ //nolint: errcheck
 				"ip":       value.IP,
 				"hostname": d.conf.Secret.Host,
 			})
@@ -320,7 +314,7 @@ func (d *Doctor) checkSecretHost(resolver *net.Resolver, ntw mtglib.Network) boo
 		strAddresses = append(strAddresses, `"`+value.IP.String()+`"`)
 	}
 
-	tplEDNSSNIMatch.Execute(os.Stdout, map[string]any{
+	tplEDNSSNIMatch.Execute(os.Stdout, map[string]any{ //nolint: errcheck
 		"hostname": d.conf.Secret.Host,
 		"resolved": strings.Join(strAddresses, ", "),
 		"ip4":      ourIP4,
