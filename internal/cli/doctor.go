@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 	"slices"
+	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -56,6 +57,13 @@ var (
 	tplEDNSSNIMatch = template.Must(
 		template.New("").Parse("  ❌ Hostname {{ .hostname }} {{ if .resolved }}is resolved to {{ .resolved }} addresses, not {{ if .ip4 }}{{ .ip4 }}{{ else }}{{ .ip6 }}{{ end }}{{ else }}cannot be resolved to any host{{ end }}\n"),
 	)
+
+	tplOFrontingDomain = template.Must(
+		template.New("").Parse("  ✅ {{ .address }} is reachable\n"),
+	)
+	tplEFrontingDomain = template.Must(
+		template.New("").Parse("  ❌ {{ .address }}: {{ .error }}\n"),
+	)
 )
 
 type Doctor struct {
@@ -103,6 +111,9 @@ func (d *Doctor) Run(cli *CLI, version string) error {
 		fmt.Printf("Validate network connectivity with proxy %s\n", url.Get(nil))
 		everythingOK = d.checkNetwork(value) && everythingOK
 	}
+
+	fmt.Println("Validate fronting domain connectivity")
+	everythingOK = d.checkFrontingDomain(base) && everythingOK
 
 	fmt.Println("Validate SNI-DNS match")
 	everythingOK = d.checkSecretHost(resolver, base) && everythingOK
@@ -277,6 +288,38 @@ func (d *Doctor) checkNetworkAddresses(ntw mtglib.Network, addresses []string) e
 	}
 
 	return err
+}
+
+func (d *Doctor) checkFrontingDomain(ntw mtglib.Network) bool {
+	host := d.conf.Secret.Host
+	if ip := d.conf.GetDomainFrontingIP(nil); ip != "" {
+		host = ip
+	}
+
+	port := d.conf.GetDomainFrontingPort(mtglib.DefaultDomainFrontingPort)
+	address := net.JoinHostPort(host, strconv.Itoa(int(port)))
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	dialer := ntw.NativeDialer()
+
+	conn, err := dialer.DialContext(ctx, "tcp", address)
+	if err != nil {
+		tplEFrontingDomain.Execute(os.Stdout, map[string]any{ //nolint: errcheck
+			"address": address,
+			"error":   err,
+		})
+		return false
+	}
+
+	conn.Close() //nolint: errcheck
+
+	tplOFrontingDomain.Execute(os.Stdout, map[string]any{ //nolint: errcheck
+		"address": address,
+	})
+
+	return true
 }
 
 func (d *Doctor) checkSecretHost(resolver *net.Resolver, ntw mtglib.Network) bool {
