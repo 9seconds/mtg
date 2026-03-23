@@ -1,13 +1,21 @@
 package cli
 
 import (
+	"context"
 	"fmt"
+	"maps"
+	"net"
 	"os"
+	"slices"
+	"strings"
 	"text/template"
+	"time"
 
+	"github.com/9seconds/mtg/v2/essentials"
 	"github.com/9seconds/mtg/v2/internal/config"
 	"github.com/9seconds/mtg/v2/internal/utils"
 	"github.com/9seconds/mtg/v2/mtglib"
+	"github.com/9seconds/mtg/v2/network/v2"
 	"github.com/beevik/ntp"
 )
 
@@ -33,12 +41,48 @@ var (
 		template.New("").
 			Parse("  ❌ Time drift is {{ .drift }}, but tolerate-time-skewness is {{ .value }}. You will get many rejected connections!\n"),
 	)
+
+	tplODCConnect = template.Must(
+		template.New("").Parse("  ✅ DC {{ .dc }}\n"),
+	)
+	tplEDCConnect = template.Must(
+		template.New("").Parse("  ❌ DC {{ .dc }}: {{ .error }}\n"),
+	)
+
+	tplODNSSNIMatch = template.Must(
+		template.New("").Parse("  ✅ IP address {{ .ip }} matches secret hostname {{ .hostname }}\n"),
+	)
+	tplEDNSSNIMatch = template.Must(
+		template.New("").Parse("  ❌ Hostname {{ .hostname }} {{ if .resolved }}is resolved to {{ .resolved }} addresses, not {{ if .ip4 }}{{ .ip4 }}{{ else }}{{ .ip6 }}{{ end }}{{ else }}cannot be resolved to any host{{ end }}\n"),
+	)
 )
 
 type Doctor struct {
 	conf *config.Config
 
 	ConfigPath string `kong:"arg,required,type='existingfile',help='Path to the configuration file.',name='config-path'"` //nolint: lll
+}
+
+type wrappedNetwork struct {
+	mtglib.Network
+}
+
+func (w wrappedNetwork) Dial(network, address string) (net.Conn, error) {
+	rv, err := w.Network.Dial(network, address)
+	if err != nil {
+		return nil, err
+	}
+
+	return rv.(net.Conn), nil
+}
+
+func (w wrappedNetwork) DialContext(ctx context.Context, network, address string) (net.Conn, error) {
+	rv, err := w.Network.DialContext(ctx, network, address)
+	if err != nil {
+		return nil, err
+	}
+
+	return rv.(net.Conn), nil
 }
 
 func (d *Doctor) Run(cli *CLI, version string) error {
@@ -48,19 +92,41 @@ func (d *Doctor) Run(cli *CLI, version string) error {
 	}
 
 	d.conf = conf
-	everythingOK := true
 
 	fmt.Println("Deprecated options")
-	if !d.checkDeprecatedConfig() {
-		everythingOK = false
-	} else {
-		fmt.Println("  ✅ All good")
-	}
+	everythingOK := d.checkDeprecatedConfig()
 
 	fmt.Println("Time skewness")
-	if !d.checkTimeSkewness() {
-		everythingOK = false
+	everythingOK = d.checkTimeSkewness() && everythingOK
+
+	resolver, err := network.GetDNS(conf.GetDNS())
+	if err != nil {
+		return fmt.Errorf("cannot create DNS resolver: %w", err)
 	}
+
+	base := network.New(
+		resolver,
+		"",
+		conf.Network.Timeout.TCP.Get(10*time.Second),
+		conf.Network.Timeout.HTTP.Get(0),
+		conf.Network.Timeout.Idle.Get(0),
+	)
+
+	fmt.Println("Validate native network connectivity")
+	everythingOK = d.checkNetwork(base) && everythingOK
+
+	for _, url := range conf.Network.Proxies {
+		value, err := network.NewProxyNetwork(base, url.Get(nil))
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("Validate network connectivity with proxy %s\n", url.Get(nil))
+		everythingOK = d.checkNetwork(value) && everythingOK
+	}
+
+	fmt.Println("Validate SNI-DNS match")
+	everythingOK = d.checkSecretHost(resolver, base) && everythingOK
 
 	if !everythingOK {
 		os.Exit(1)
@@ -116,6 +182,10 @@ func (d *Doctor) checkDeprecatedConfig() bool {
 		})
 	}
 
+	if ok {
+		fmt.Println("  ✅ All good")
+	}
+
 	return ok
 }
 
@@ -146,6 +216,116 @@ func (d *Doctor) checkTimeSkewness() bool {
 	default:
 		tplETimeSkewness.Execute(os.Stdout, context)
 	}
+
+	return false
+}
+
+func (d *Doctor) checkNetwork(ntw mtglib.Network) bool {
+	dcs := slices.Collect(maps.Keys(essentials.TelegramCoreAddresses))
+	slices.Sort(dcs)
+
+	ok := true
+
+	for _, dc := range dcs {
+		err := d.checkNetworkAddresses(ntw, essentials.TelegramCoreAddresses[dc])
+		if err == nil {
+			tplODCConnect.Execute(os.Stdout, map[string]any{
+				"dc": dc,
+			})
+		} else {
+			tplEDCConnect.Execute(os.Stdout, map[string]any{
+				"dc":    dc,
+				"error": err,
+			})
+			ok = false
+		}
+	}
+
+	return ok
+}
+
+func (d *Doctor) checkNetworkAddresses(ntw mtglib.Network, addresses []string) error {
+	checkAddresses := []string{}
+
+	switch d.conf.PreferIP.Get("prefer-ip4") {
+	case "only-ipv4":
+		for _, addr := range addresses {
+			host, _, err := net.SplitHostPort(addr)
+			if err != nil {
+				panic(err)
+			}
+
+			if ip := net.ParseIP(host); ip != nil && ip.To4() != nil {
+				checkAddresses = append(checkAddresses, addr)
+			}
+		}
+	case "only-ipv6":
+		for _, addr := range addresses {
+			host, _, err := net.SplitHostPort(addr)
+			if err != nil {
+				panic(err)
+			}
+
+			if ip := net.ParseIP(host); ip != nil && ip.To4() == nil {
+				checkAddresses = append(checkAddresses, addr)
+			}
+		}
+	default:
+		checkAddresses = addresses
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	var (
+		conn net.Conn
+		err  error
+	)
+
+	for _, addr := range checkAddresses {
+		conn, err = ntw.DialContext(ctx, "tcp", addr)
+		if err != nil {
+			continue
+		}
+
+		conn.Close()
+
+		return nil
+	}
+
+	return err
+}
+
+func (d *Doctor) checkSecretHost(resolver *net.Resolver, ntw mtglib.Network) bool {
+	addresses, err := resolver.LookupIPAddr(context.Background(), d.conf.Secret.Host)
+	if err != nil {
+		// TODO
+		return false
+	}
+
+	access := &Access{}
+	ourIP4 := access.getIP(ntw, "tcp4")
+	ourIP6 := access.getIP(ntw, "tcp6")
+
+	strAddresses := []string{}
+	for _, value := range addresses {
+		if value.IP.String() == ourIP4.String() || value.IP.String() == ourIP6.String() {
+			tplODNSSNIMatch.Execute(os.Stdout, map[string]any{
+				"ip":       value.IP,
+				"hostname": d.conf.Secret.Host,
+			})
+			return true
+		}
+
+		strAddresses = append(strAddresses, `"`+value.IP.String()+`"`)
+	}
+
+	tplEDNSSNIMatch.Execute(os.Stdout, map[string]any{
+		"hostname": d.conf.Secret.Host,
+		"resolved": strings.Join(strAddresses, ", "),
+		"ip4":      ourIP4,
+		"ip6":      ourIP6,
+	})
 
 	return false
 }

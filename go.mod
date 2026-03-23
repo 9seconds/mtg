@@ -27,6 +27,7 @@ require (
 )
 
 require (
+	github.com/beevik/ntp v1.5.0
 	github.com/ncruces/go-dns v1.3.2
 	github.com/pelletier/go-toml/v2 v2.2.4
 	github.com/pires/go-proxyproto v0.11.0
@@ -36,7 +37,6 @@ require (
 )
 
 require (
-	github.com/beevik/ntp v1.5.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
