@@ -2,7 +2,10 @@ package dc
 
 import (
 	"context"
+	"net"
 	"time"
+
+	"github.com/9seconds/mtg/v2/essentials"
 )
 
 type preferIP uint8
@@ -39,46 +42,36 @@ type Updater interface {
 }
 
 // https://github.com/telegramdesktop/tdesktop/blob/master/Telegram/SourceFiles/mtproto/mtproto_dc_options.cpp#L30
-var defaultDCAddrSet = dcAddrSet{
-	v4: map[int][]Addr{
-		1: {
-			{Network: "tcp4", Address: "149.154.175.50:443"},
-		},
-		2: {
-			{Network: "tcp4", Address: "149.154.167.51:443"},
-			{Network: "tcp4", Address: "95.161.76.100:443"},
-		},
-		3: {
-			{Network: "tcp4", Address: "149.154.175.100:443"},
-		},
-		4: {
-			{Network: "tcp4", Address: "149.154.167.91:443"},
-		},
-		5: {
-			{Network: "tcp4", Address: "149.154.171.5:443"},
-		},
-		203: {
-			{Network: "tcp4", Address: "91.105.192.100:443"},
-		},
-	},
-	v6: map[int][]Addr{
-		1: {
-			{Network: "tcp6", Address: "[2001:b28:f23d:f001::a]:443"},
-		},
-		2: {
-			{Network: "tcp6", Address: "[2001:67c:04e8:f002::a]:443"},
-		},
-		3: {
-			{Network: "tcp6", Address: "[2001:b28:f23d:f003::a]:443"},
-		},
-		4: {
-			{Network: "tcp6", Address: "[2001:67c:04e8:f004::a]:443"},
-		},
-		5: {
-			{Network: "tcp6", Address: "[2001:b28:f23f:f005::a]:443"},
-		},
-		203: {
-			{Network: "tcp6", Address: "[2a0a:f280:0203:000a:5000:0000:0000:0100]:443"},
-		},
-	},
-}
+var defaultDCAddrSet = (func() dcAddrSet {
+	addrSet := dcAddrSet{
+		v4: make(map[int][]Addr),
+		v6: make(map[int][]Addr),
+	}
+
+	for dcid, ips := range essentials.TelegramCoreAddresses {
+		for _, addr := range ips {
+			host, _, err := net.SplitHostPort(addr)
+			if err != nil {
+				panic(err)
+			}
+
+			ip := net.ParseIP(host)
+			if ip == nil {
+				panic(addr)
+			}
+			if ip.To4() == nil {
+				addrSet.v6[dcid] = append(addrSet.v6[dcid], Addr{
+					Network: "tcp6",
+					Address: addr,
+				})
+			} else {
+				addrSet.v4[dcid] = append(addrSet.v4[dcid], Addr{
+					Network: "tcp4",
+					Address: addr,
+				})
+			}
+		}
+	}
+
+	return addrSet
+})()

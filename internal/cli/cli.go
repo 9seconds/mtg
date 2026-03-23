@@ -4,6 +4,7 @@ import "github.com/alecthomas/kong"
 
 type CLI struct {
 	GenerateSecret GenerateSecret   `kong:"cmd,help='Generate new proxy secret'"`
+	Doctor         Doctor           `kong:"cmd,help='Check that proxy can run correctly'"`
 	Access         Access           `kong:"cmd,help='Print access information.'"`
 	Run            Run              `kong:"cmd,help='Run proxy.'"`
 	SimpleRun      SimpleRun        `kong:"cmd,help='Run proxy without config file.'"`
