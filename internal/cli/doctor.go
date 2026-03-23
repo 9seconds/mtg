@@ -3,17 +3,35 @@ package cli
 import (
 	"fmt"
 	"os"
-	"strings"
 	"text/template"
 
 	"github.com/9seconds/mtg/v2/internal/config"
 	"github.com/9seconds/mtg/v2/internal/utils"
+	"github.com/9seconds/mtg/v2/mtglib"
+	"github.com/beevik/ntp"
 )
 
 var (
+	tplError = template.Must(
+		template.New("").Parse("  ‼️ {{ .description }}: {{ .error }}\n"),
+	)
+
 	tplWDeprecatedConfig = template.Must(
-		template.New("deprecated-config").
-			Parse(`  ⚠️ Option {{ .old | printf "%q" }}{{ if .old_section }} from section [{{ .old_section }}]{{ end }} is deprecated and will be removed in v{{ .when }}. Please use {{ .new | printf "%q" }}{{ if .new_section }} in [{{ .new_section }}] section{{ end }} instead.`),
+		template.New("").
+			Parse(`  ⚠️ Option {{ .old | printf "%q" }}{{ if .old_section }} from section [{{ .old_section }}]{{ end }} is deprecated and will be removed in v{{ .when }}. Please use {{ .new | printf "%q" }}{{ if .new_section }} in [{{ .new_section }}] section{{ end }} instead.` + "\n"),
+	)
+
+	tplOTimeSkewness = template.Must(
+		template.New("").
+			Parse("  ✅ Time drift is {{ .drift }}, but tolerate-time-skewness is {{ .value }}\n"),
+	)
+	tplWTimeSkewness = template.Must(
+		template.New("").
+			Parse("  ⚠️ Time drift is {{ .drift }}, but tolerate-time-skewness is {{ .value }}. Please check ntp.\n"),
+	)
+	tplETimeSkewness = template.Must(
+		template.New("").
+			Parse("  ❌ Time drift is {{ .drift }}, but tolerate-time-skewness is {{ .value }}. You will get many rejected connections!\n"),
 	)
 )
 
@@ -33,13 +51,15 @@ func (d *Doctor) Run(cli *CLI, version string) error {
 	everythingOK := true
 
 	fmt.Println("Deprecated options")
-	if errs := d.checkDeprecatedConfig(); len(errs) > 0 {
-		for _, err := range errs {
-			fmt.Println(err)
-			everythingOK = false
-		}
+	if !d.checkDeprecatedConfig() {
+		everythingOK = false
 	} else {
 		fmt.Println("  ✅ All good")
+	}
+
+	fmt.Println("Time skewness")
+	if !d.checkTimeSkewness() {
+		everythingOK = false
 	}
 
 	if !everythingOK {
@@ -49,11 +69,12 @@ func (d *Doctor) Run(cli *CLI, version string) error {
 	return nil
 }
 
-func (d *Doctor) checkDeprecatedConfig() []string {
-	errors := []string{}
+func (d *Doctor) checkDeprecatedConfig() bool {
+	ok := true
 
 	if d.conf.DomainFrontingIP.Value != nil {
-		errors = d.addError(errors, tplWDeprecatedConfig, map[string]string{
+		ok = false
+		tplWDeprecatedConfig.Execute(os.Stdout, map[string]string{
 			"when":        "2.3.0",
 			"old":         "domain-fronting-ip",
 			"old_section": "",
@@ -63,7 +84,8 @@ func (d *Doctor) checkDeprecatedConfig() []string {
 	}
 
 	if d.conf.DomainFrontingPort.Value != 0 {
-		errors = d.addError(errors, tplWDeprecatedConfig, map[string]string{
+		ok = false
+		tplWDeprecatedConfig.Execute(os.Stdout, map[string]string{
 			"when":        "2.3.0",
 			"old":         "domain-fronting-port",
 			"old_section": "",
@@ -73,7 +95,8 @@ func (d *Doctor) checkDeprecatedConfig() []string {
 	}
 
 	if d.conf.DomainFrontingProxyProtocol.Value {
-		errors = d.addError(errors, tplWDeprecatedConfig, map[string]string{
+		ok = false
+		tplWDeprecatedConfig.Execute(os.Stdout, map[string]string{
 			"when":        "2.3.0",
 			"old":         "domain-fronting-proxy-protocol",
 			"old_section": "",
@@ -83,7 +106,8 @@ func (d *Doctor) checkDeprecatedConfig() []string {
 	}
 
 	if d.conf.Network.DOHIP.Value != nil {
-		errors = d.addError(errors, tplWDeprecatedConfig, map[string]string{
+		ok = false
+		tplWDeprecatedConfig.Execute(os.Stdout, map[string]string{
 			"when":        "2.3.0",
 			"old":         "doh-ip",
 			"old_section": "network",
@@ -92,14 +116,36 @@ func (d *Doctor) checkDeprecatedConfig() []string {
 		})
 	}
 
-	return errors
+	return ok
 }
 
-func (d *Doctor) addError(messages []string, tpl *template.Template, context map[string]string) []string {
-	value := &strings.Builder{}
-	if err := tpl.Execute(value, context); err != nil {
-		panic(err)
+func (d *Doctor) checkTimeSkewness() bool {
+	response, err := ntp.Query("0.pool.ntp.org")
+	if err != nil {
+		tplError.Execute(os.Stdout, map[string]any{
+			"description": "cannot access ntp pool",
+			"error":       err,
+		})
+		return false
 	}
 
-	return append(messages, value.String())
+	skewness := response.ClockOffset.Abs()
+	confValue := d.conf.TolerateTimeSkewness.Get(mtglib.DefaultTolerateTimeSkewness)
+	diff := float64(skewness) / float64(confValue)
+	context := map[string]any{
+		"drift": response.ClockOffset,
+		"value": confValue,
+	}
+
+	switch {
+	case diff < 0.3:
+		tplOTimeSkewness.Execute(os.Stdout, context)
+		return true
+	case diff < 0.7:
+		tplWTimeSkewness.Execute(os.Stdout, context)
+	default:
+		tplETimeSkewness.Execute(os.Stdout, context)
+	}
+
+	return false
 }
