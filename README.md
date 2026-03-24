@@ -176,6 +176,9 @@ that probably matter.
   software. I also believe that in the case of throwout proxies, this
   the feature is a useless luxury.
 
+  This is very controversial topic. Please read [rationale (in russian)](https://github.com/9seconds/mtg/issues/376#issuecomment-4118726699)
+  and use [mtg-multi](https://github.com/dolonet/mtg-multi) fork if you are disagree with.
+
 * **No adtag support**
 
   Please read [Version 2](#version-2) chapter.

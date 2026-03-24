@@ -16,6 +16,12 @@ sources = ["**/*.go", "go.mod", "go.sum"]
 outputs = ["mtg"]
 run = "go build"
 
+[tasks."build:prof"]
+description = "Build binary with profiling enabled"
+sources = ["**/*.go", "go.mod", "go.sum"]
+outputs = ["mtg"]
+run = "go build -tags prof"
+
 [tasks.update]
 description = "Update dependencies"
 run = [
