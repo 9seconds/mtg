@@ -36,26 +36,41 @@ type ClientHello struct {
 	CipherSuite uint16
 }
 
+// ReadClientHelloResult contains the parsed ClientHello and the index of the
+// secret that matched the HMAC validation.
+type ReadClientHelloResult struct {
+	Hello        *ClientHello
+	MatchedIndex int
+}
+
 func ReadClientHello(
 	conn net.Conn,
 	secret []byte,
 	hostname string,
 	tolerateTimeSkewness time.Duration,
 ) (*ClientHello, error) {
+	result, err := ReadClientHelloMulti(conn, [][]byte{secret}, hostname, tolerateTimeSkewness)
+	if err != nil {
+		return nil, err
+	}
+
+	return result.Hello, nil
+}
+
+// ReadClientHelloMulti is like ReadClientHello but accepts multiple secrets.
+// It tries each secret until one validates the HMAC. On success it returns
+// the ClientHello and the index of the matched secret.
+func ReadClientHelloMulti(
+	conn net.Conn,
+	secrets [][]byte,
+	hostname string,
+	tolerateTimeSkewness time.Duration,
+) (*ReadClientHelloResult, error) {
 	if err := conn.SetReadDeadline(time.Now().Add(ClientHelloReadTimeout)); err != nil {
 		return nil, fmt.Errorf("cannot set read deadline: %w", err)
 	}
 	defer conn.SetReadDeadline(resetDeadline) //nolint: errcheck
 
-	// This is how FakeTLS is organized:
-	//  1. We create sha256 HMAC with a given secret
-	//  2. We dump there a whole TLS frame except of the fact that random
-	//     is filled with all zeroes
-	//  3. Digest is computed. This digest should be XORed with
-	//     original client random
-	//  4. New digest should be all 0 except of last 4 bytes
-	//  5. Last 4 bytes are little endian uint32 of UNIX timestamp when
-	//     this message was created.
 	handshakeCopyBuf := &bytes.Buffer{}
 	reader := io.TeeReader(conn, handshakeCopyBuf)
 
@@ -83,31 +98,41 @@ func ReadClientHello(
 		return nil, fmt.Errorf("cannot find %s in %v", hostname, sniHostnames)
 	}
 
-	digest := hmac.New(sha256.New, secret)
-	// we write a copy of the handshake with client random all nullified.
-	digest.Write(handshakeCopyBuf.Next(RandomOffset))
-	handshakeCopyBuf.Next(RandomLen)
-	digest.Write(emptyRandom[:])
-	digest.Write(handshakeCopyBuf.Bytes())
+	// Save the handshake bytes so we can reuse them for each secret attempt.
+	handshakeBytes := handshakeCopyBuf.Bytes()
 
-	computed := digest.Sum(nil)
+	for idx, secret := range secrets {
+		digest := hmac.New(sha256.New, secret)
 
-	for i := range RandomLen {
-		computed[i] ^= hello.Random[i]
+		// Write the handshake with client random all nullified.
+		digest.Write(handshakeBytes[:RandomOffset])
+		digest.Write(emptyRandom[:])
+		digest.Write(handshakeBytes[RandomOffset+RandomLen:])
+
+		computed := digest.Sum(nil)
+
+		for i := range RandomLen {
+			computed[i] ^= hello.Random[i]
+		}
+
+		if subtle.ConstantTimeCompare(emptyRandom[:RandomLen-4], computed[:RandomLen-4]) != 1 {
+			continue
+		}
+
+		timestamp := int64(binary.LittleEndian.Uint32(computed[RandomLen-4:]))
+		createdAt := time.Unix(timestamp, 0)
+
+		if tdiff := time.Since(createdAt).Abs(); tdiff > tolerateTimeSkewness {
+			continue
+		}
+
+		return &ReadClientHelloResult{
+			Hello:        hello,
+			MatchedIndex: idx,
+		}, nil
 	}
 
-	if subtle.ConstantTimeCompare(emptyRandom[:RandomLen-4], computed[:RandomLen-4]) != 1 {
-		return nil, ErrBadDigest
-	}
-
-	timestamp := int64(binary.LittleEndian.Uint32(computed[RandomLen-4:]))
-	createdAt := time.Unix(timestamp, 0)
-
-	if tdiff := time.Since(createdAt).Abs(); tdiff > tolerateTimeSkewness {
-		return nil, fmt.Errorf("timestamp %q is too old %s", createdAt, tdiff)
-	}
-
-	return hello, nil
+	return nil, ErrBadDigest
 }
 
 func parseTLSHeader(r io.Reader) (io.Reader, error) {

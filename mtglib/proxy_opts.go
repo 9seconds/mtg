@@ -9,8 +9,14 @@ import "time"
 type ProxyOpts struct {
 	// Secret defines a secret which should be used by a proxy.
 	//
-	// This is a mandatory setting.
+	// Deprecated: Use Secrets instead for multi-secret support.
+	// Kept for backward compatibility.
 	Secret Secret
+
+	// Secrets defines a map of named secrets which should be used by a proxy.
+	// If set, Secret is ignored. During FakeTLS handshake, each secret is
+	// tried until one validates.
+	Secrets map[string]Secret
 
 	// Network defines a network instance which should be used for all network
 	// communications made by proxies.
@@ -176,8 +182,31 @@ func (p ProxyOpts) valid() error {
 		return ErrEventStreamIsNotDefined
 	case p.Logger == nil:
 		return ErrLoggerIsNotDefined
-	case !p.Secret.Valid():
+	}
+
+	secrets := p.getSecrets()
+	if len(secrets) == 0 {
 		return ErrSecretInvalid
+	}
+
+	for _, s := range secrets {
+		if !s.Valid() {
+			return ErrSecretInvalid
+		}
+	}
+
+	return nil
+}
+
+// getSecrets returns the effective secrets map. If Secrets is populated, it is
+// returned directly. Otherwise the single Secret is wrapped in a map.
+func (p ProxyOpts) getSecrets() map[string]Secret {
+	if len(p.Secrets) > 0 {
+		return p.Secrets
+	}
+
+	if p.Secret.Valid() {
+		return map[string]Secret{"default": p.Secret}
 	}
 
 	return nil

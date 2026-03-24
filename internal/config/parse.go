@@ -9,10 +9,11 @@ import (
 )
 
 type tomlConfig struct {
-	Debug                       bool   `toml:"debug" json:"debug,omitempty"`
-	AllowFallbackOnUnknownDC    bool   `toml:"allow-fallback-on-unknown-dc" json:"allowFallbackOnUnknownDc,omitempty"`
-	Secret                      string `toml:"secret" json:"secret"`
-	BindTo                      string `toml:"bind-to" json:"bindTo"`
+	Debug                       bool              `toml:"debug" json:"debug,omitempty"`
+	AllowFallbackOnUnknownDC    bool              `toml:"allow-fallback-on-unknown-dc" json:"allowFallbackOnUnknownDc,omitempty"`
+	Secret                      string            `toml:"secret" json:"secret,omitempty"`
+	Secrets                     map[string]string `toml:"secrets" json:"secrets,omitempty"`
+	BindTo                      string            `toml:"bind-to" json:"bindTo"`
 	ProxyProtocolListener       bool   `toml:"proxy-protocol-listener" json:"proxyProtocolListener"`
 	PreferIP                    string `toml:"prefer-ip" json:"preferIp,omitempty"`
 	AutoUpdate                  bool   `toml:"auto-update" json:"autoUpdate,omitempty"`

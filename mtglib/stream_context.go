@@ -15,9 +15,10 @@ type streamContext struct {
 	ctxCancel    context.CancelFunc
 	clientConn   essentials.Conn
 	telegramConn essentials.Conn
-	streamID     string
-	dc           int
-	logger       Logger
+	streamID         string
+	dc               int
+	matchedSecretKey []byte
+	logger           Logger
 }
 
 func (s *streamContext) Deadline() (time.Time, bool) {

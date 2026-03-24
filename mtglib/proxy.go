@@ -34,9 +34,9 @@ type Proxy struct {
 	telegram                    *dc.Telegram
 	configUpdater               *dc.PublicConfigUpdater
 	doppelGanger                *doppel.Ganger
-	clientObfuscatror           obfuscation.Obfuscator
 
-	secret          Secret
+	secrets         []Secret
+	secretNames     []string
 	network         Network
 	antiReplayCache AntiReplayCache
 	blocklist       IPBlocklist
@@ -48,7 +48,9 @@ type Proxy struct {
 // DomainFrontingAddress returns a host:port pair for a fronting domain.
 // If DomainFrontingIP is set, it is used instead of resolving the hostname.
 func (p *Proxy) DomainFrontingAddress() string {
-	host := p.secret.Host
+	// All secrets share the same host (enforced by the secret format),
+	// so we use the first one.
+	host := p.secrets[0].Host
 	if p.domainFrontingIP != "" {
 		host = p.domainFrontingIP
 	}
@@ -173,10 +175,16 @@ func (p *Proxy) Shutdown() {
 func (p *Proxy) doFakeTLSHandshake(ctx *streamContext) bool {
 	rewind := newConnRewind(ctx.clientConn)
 
-	clientHello, err := fake.ReadClientHello(
+	// Build a slice of secret keys to try during HMAC validation.
+	secretKeys := make([][]byte, len(p.secrets))
+	for i := range p.secrets {
+		secretKeys[i] = p.secrets[i].Key[:]
+	}
+
+	result, err := fake.ReadClientHelloMulti(
 		rewind,
-		p.secret.Key[:],
-		p.secret.Host,
+		secretKeys,
+		p.secrets[0].Host,
 		p.tolerateTimeSkewness,
 	)
 	if err != nil {
@@ -185,14 +193,18 @@ func (p *Proxy) doFakeTLSHandshake(ctx *streamContext) bool {
 		return false
 	}
 
-	if p.antiReplayCache.SeenBefore(clientHello.SessionID) {
+	if p.antiReplayCache.SeenBefore(result.Hello.SessionID) {
 		p.logger.Warning("replay attack has been detected!")
 		p.eventStream.Send(p.ctx, NewEventReplayAttack(ctx.streamID))
 		p.doDomainFronting(ctx, rewind)
 		return false
 	}
 
-	if err := fake.SendServerHello(ctx.clientConn, p.secret.Key[:], clientHello); err != nil {
+	matchedSecret := p.secrets[result.MatchedIndex]
+	ctx.matchedSecretKey = matchedSecret.Key[:]
+	ctx.logger = ctx.logger.BindStr("secret_name", p.secretNames[result.MatchedIndex])
+
+	if err := fake.SendServerHello(ctx.clientConn, matchedSecret.Key[:], result.Hello); err != nil {
 		p.logger.InfoError("cannot send welcome packet", err)
 		return false
 	}
@@ -203,7 +215,12 @@ func (p *Proxy) doFakeTLSHandshake(ctx *streamContext) bool {
 }
 
 func (p *Proxy) doObfuscatedHandshake(ctx *streamContext) error {
-	dc, conn, err := p.clientObfuscatror.ReadHandshake(ctx.clientConn)
+	// Use the secret key that was matched during the FakeTLS handshake.
+	obfs := obfuscation.Obfuscator{
+		Secret: ctx.matchedSecretKey,
+	}
+
+	dc, conn, err := obfs.ReadHandshake(ctx.clientConn)
 	if err != nil {
 		return fmt.Errorf("cannot process client handshake: %w", err)
 	}
@@ -323,10 +340,20 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 	logger := opts.getLogger("proxy")
 	updatersLogger := logger.Named("telegram-updaters")
 
+	secretsMap := opts.getSecrets()
+	secretsList := make([]Secret, 0, len(secretsMap))
+	secretNames := make([]string, 0, len(secretsMap))
+
+	for name, s := range secretsMap {
+		secretNames = append(secretNames, name)
+		secretsList = append(secretsList, s)
+	}
+
 	proxy := &Proxy{
 		ctx:                      ctx,
 		ctxCancel:                cancel,
-		secret:                   opts.Secret,
+		secrets:                  secretsList,
+		secretNames:              secretNames,
 		network:                  opts.Network,
 		antiReplayCache:          opts.AntiReplayCache,
 		blocklist:                opts.IPBlocklist,
@@ -352,9 +379,6 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 			updatersLogger.Named("public-config"),
 			opts.Network.MakeHTTPClient(nil),
 		),
-		clientObfuscatror: obfuscation.Obfuscator{
-			Secret: opts.Secret.Key[:],
-		},
 		domainFrontingProxyProtocol: opts.DomainFrontingProxyProtocol,
 	}
 

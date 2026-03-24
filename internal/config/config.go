@@ -25,7 +25,8 @@ type ListConfig struct {
 type Config struct {
 	Debug                       TypeBool        `json:"debug"`
 	AllowFallbackOnUnknownDC    TypeBool        `json:"allowFallbackOnUnknownDc"`
-	Secret                      mtglib.Secret   `json:"secret"`
+	Secret                      mtglib.Secret              `json:"secret"`
+	Secrets                     map[string]mtglib.Secret   `json:"secrets"`
 	BindTo                      TypeHostPort    `json:"bindTo"`
 	ProxyProtocolListener       TypeBool        `json:"proxyProtocolListener"`
 	PreferIP                    TypePreferIP    `json:"preferIp"`
@@ -123,8 +124,16 @@ func (c *Config) GetDomainFrontingProxyProtocol(defaultValue bool) bool {
 }
 
 func (c *Config) Validate() error {
-	if !c.Secret.Valid() {
-		return fmt.Errorf("invalid secret %s", c.Secret.String())
+	if len(c.Secrets) == 0 {
+		if !c.Secret.Valid() {
+			return fmt.Errorf("invalid secret %s", c.Secret.String())
+		}
+	} else {
+		for name, s := range c.Secrets {
+			if !s.Valid() {
+				return fmt.Errorf("invalid secret %q: %s", name, s.String())
+			}
+		}
 	}
 
 	if c.BindTo.Get("") == "" {
@@ -132,6 +141,16 @@ func (c *Config) Validate() error {
 	}
 
 	return nil
+}
+
+// GetSecrets returns all secrets as a map. If the new [secrets] section is used,
+// returns that map. Otherwise, wraps the single Secret as {"default": Secret}.
+func (c *Config) GetSecrets() map[string]mtglib.Secret {
+	if len(c.Secrets) > 0 {
+		return c.Secrets
+	}
+
+	return map[string]mtglib.Secret{"default": c.Secret}
 }
 
 func (c *Config) String() string {

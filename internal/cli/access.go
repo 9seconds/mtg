@@ -11,15 +11,19 @@ import (
 
 	"github.com/9seconds/mtg/v2/internal/config"
 	"github.com/9seconds/mtg/v2/internal/utils"
+	"github.com/9seconds/mtg/v2/mtglib"
 )
 
+type accessResponseSecret struct {
+	Hex    string `json:"hex"`
+	Base64 string `json:"base64"`
+}
+
 type accessResponse struct {
-	IPv4   *accessResponseURLs `json:"ipv4,omitempty"`
-	IPv6   *accessResponseURLs `json:"ipv6,omitempty"`
-	Secret struct {
-		Hex    string `json:"hex"`
-		Base64 string `json:"base64"`
-	} `json:"secret"`
+	IPv4    *accessResponseURLs            `json:"ipv4,omitempty"`
+	IPv6    *accessResponseURLs            `json:"ipv6,omitempty"`
+	Secret  accessResponseSecret           `json:"secret"`
+	Secrets map[string]accessResponseSecret `json:"secrets,omitempty"`
 }
 
 type accessResponseURLs struct {
@@ -46,8 +50,27 @@ func (a *Access) Run(cli *CLI, version string) error {
 	}
 
 	resp := &accessResponse{}
-	resp.Secret.Base64 = conf.Secret.Base64()
-	resp.Secret.Hex = conf.Secret.Hex()
+	secrets := conf.GetSecrets()
+
+	// For backward compatibility, populate the single Secret field with the
+	// first secret (or "default" if it exists).
+	for _, s := range secrets {
+		resp.Secret.Base64 = s.Base64()
+		resp.Secret.Hex = s.Hex()
+
+		break
+	}
+
+	if len(secrets) > 1 {
+		resp.Secrets = make(map[string]accessResponseSecret, len(secrets))
+
+		for name, s := range secrets {
+			resp.Secrets[name] = accessResponseSecret{
+				Hex:    s.Hex(),
+				Base64: s.Base64(),
+			}
+		}
+	}
 
 	ntw, err := makeNetwork(conf, version)
 	if err != nil {
@@ -108,10 +131,20 @@ func (a *Access) makeURLs(conf *config.Config, ip net.IP) *accessResponseURLs {
 	values.Set("server", ip.String())
 	values.Set("port", strconv.Itoa(int(portNo)))
 
+	// Use the first available secret for URL generation.
+	secrets := conf.GetSecrets()
+	var firstSecret mtglib.Secret
+
+	for _, s := range secrets {
+		firstSecret = s
+
+		break
+	}
+
 	if a.Hex {
-		values.Set("secret", conf.Secret.Hex())
+		values.Set("secret", firstSecret.Hex())
 	} else {
-		values.Set("secret", conf.Secret.Base64())
+		values.Set("secret", firstSecret.Base64())
 	}
 
 	urlQuery := values.Encode()
