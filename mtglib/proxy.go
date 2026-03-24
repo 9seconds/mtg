@@ -75,9 +75,11 @@ func (p *Proxy) ServeConn(conn essentials.Conn) {
 	p.eventStream.Send(ctx, NewEventStart(ctx.streamID, ctx.ClientIP()))
 	ctx.logger.Info("Stream has been started")
 
+	var relayBytes int64
+
 	defer func() {
 		p.eventStream.Send(ctx, NewEventFinish(ctx.streamID))
-		ctx.logger.Info("Stream has been finished")
+		ctx.logger.BindInt("bytes", int(relayBytes)).Info("Stream has been finished")
 	}()
 
 	if !p.doFakeTLSHandshake(ctx) {
@@ -103,12 +105,13 @@ func (p *Proxy) ServeConn(conn essentials.Conn) {
 		return
 	}
 
-	relay.Relay(
+	result := relay.Relay(
 		ctx,
 		ctx.logger.Named("relay"),
 		ctx.telegramConn,
 		ctx.clientConn,
 	)
+	relayBytes = result.ClientToTelegram + result.TelegramToClient
 }
 
 // Serve starts a proxy on a given listener.
@@ -317,7 +320,7 @@ func (p *Proxy) doDomainFronting(ctx *streamContext, conn *connRewind) {
 		stream:   p.eventStream,
 	}
 
-	relay.Relay(
+	_ = relay.Relay(
 		ctx,
 		ctx.logger.Named("domain-fronting"),
 		frontConn,

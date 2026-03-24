@@ -9,7 +9,13 @@ import (
 	"github.com/9seconds/mtg/v2/mtglib/internal/tls"
 )
 
-func Relay(ctx context.Context, log Logger, telegramConn, clientConn essentials.Conn) {
+// RelayResult holds byte counts from a relay session.
+type RelayResult struct {
+	ClientToTelegram int64
+	TelegramToClient int64
+}
+
+func Relay(ctx context.Context, log Logger, telegramConn, clientConn essentials.Conn) RelayResult {
 	defer telegramConn.Close() //nolint: errcheck
 	defer clientConn.Close()   //nolint: errcheck
 
@@ -22,20 +28,27 @@ func Relay(ctx context.Context, log Logger, telegramConn, clientConn essentials.
 		clientConn.Close()   //nolint: errcheck
 	}()
 
+	var clientToTg int64
+
 	closeChan := make(chan struct{})
 
 	go func() {
 		defer close(closeChan)
 
-		pump(log, telegramConn, clientConn, "client -> telegram")
+		clientToTg = pump(log, telegramConn, clientConn, "client -> telegram")
 	}()
 
-	pump(log, clientConn, telegramConn, "telegram -> client")
+	tgToClient := pump(log, clientConn, telegramConn, "telegram -> client")
 
 	<-closeChan
+
+	return RelayResult{
+		ClientToTelegram: clientToTg,
+		TelegramToClient: tgToClient,
+	}
 }
 
-func pump(log Logger, src, dst essentials.Conn, direction string) {
+func pump(log Logger, src, dst essentials.Conn, direction string) int64 {
 	var buf [tls.MaxRecordPayloadSize]byte
 
 	defer src.CloseRead()  //nolint: errcheck
@@ -51,4 +64,6 @@ func pump(log Logger, src, dst essentials.Conn, direction string) {
 	default:
 		log.Printf("%s has been finished (written %d bytes): %v", direction, n, err)
 	}
+
+	return n
 }
