@@ -9,13 +9,7 @@ import (
 	"github.com/9seconds/mtg/v2/mtglib/internal/tls"
 )
 
-// RelayResult holds byte counts from a relay session.
-type RelayResult struct {
-	ClientToTelegram int64
-	TelegramToClient int64
-}
-
-func Relay(ctx context.Context, log Logger, telegramConn, clientConn essentials.Conn) RelayResult {
+func Relay(ctx context.Context, log Logger, telegramConn, clientConn essentials.Conn) {
 	defer telegramConn.Close() //nolint: errcheck
 	defer clientConn.Close()   //nolint: errcheck
 
@@ -28,24 +22,17 @@ func Relay(ctx context.Context, log Logger, telegramConn, clientConn essentials.
 		clientConn.Close()   //nolint: errcheck
 	}()
 
-	var clientToTg int64
-
 	closeChan := make(chan struct{})
 
 	go func() {
 		defer close(closeChan)
 
-		clientToTg = pump(log, telegramConn, clientConn, "client -> telegram")
+		pump(log, telegramConn, clientConn, "client -> telegram")
 	}()
 
-	tgToClient := pump(log, clientConn, telegramConn, "telegram -> client")
+	pump(log, clientConn, telegramConn, "telegram -> client")
 
 	<-closeChan
-
-	return RelayResult{
-		ClientToTelegram: clientToTg,
-		TelegramToClient: tgToClient,
-	}
 }
 
 func pump(log Logger, src, dst essentials.Conn, direction string) int64 {

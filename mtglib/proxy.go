@@ -110,8 +110,6 @@ func (p *Proxy) ServeConn(conn essentials.Conn) {
 		return
 	}
 
-	ctx.logger.Info("Stream is relaying")
-
 	countedClientConn := newCountingConn(ctx.clientConn, p.stats, ctx.secretName)
 
 	relay.Relay(
@@ -329,7 +327,7 @@ func (p *Proxy) doDomainFronting(ctx *streamContext, conn *connRewind) {
 		stream:   p.eventStream,
 	}
 
-	_ = relay.Relay(
+	relay.Relay(
 		ctx,
 		ctx.logger.Named("domain-fronting"),
 		frontConn,

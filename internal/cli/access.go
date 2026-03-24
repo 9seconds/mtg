@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"sort"
 	"strconv"
 	"sync"
 
@@ -52,13 +53,20 @@ func (a *Access) Run(cli *CLI, version string) error {
 	resp := &accessResponse{}
 	secrets := conf.GetSecrets()
 
-	// For backward compatibility, populate the single Secret field with the
-	// first secret (or "default" if it exists).
-	for _, s := range secrets {
-		resp.Secret.Base64 = s.Base64()
-		resp.Secret.Hex = s.Hex()
+	// Sort secret names for deterministic "first secret" selection.
+	sortedNames := make([]string, 0, len(secrets))
+	for name := range secrets {
+		sortedNames = append(sortedNames, name)
+	}
 
-		break
+	sort.Strings(sortedNames)
+
+	// For backward compatibility, populate the single Secret field with the
+	// first secret (sorted alphabetically).
+	if len(sortedNames) > 0 {
+		first := secrets[sortedNames[0]]
+		resp.Secret.Base64 = first.Base64()
+		resp.Secret.Hex = first.Hex()
 	}
 
 	if len(secrets) > 1 {
@@ -131,14 +139,19 @@ func (a *Access) makeURLs(conf *config.Config, ip net.IP) *accessResponseURLs {
 	values.Set("server", ip.String())
 	values.Set("port", strconv.Itoa(int(portNo)))
 
-	// Use the first available secret for URL generation.
+	// Use the first available secret (sorted) for URL generation.
 	secrets := conf.GetSecrets()
+	names := make([]string, 0, len(secrets))
+
+	for name := range secrets {
+		names = append(names, name)
+	}
+
+	sort.Strings(names)
+
 	var firstSecret mtglib.Secret
-
-	for _, s := range secrets {
-		firstSecret = s
-
-		break
+	if len(names) > 0 {
+		firstSecret = secrets[names[0]]
 	}
 
 	if a.Hex {
