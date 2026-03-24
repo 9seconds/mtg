@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"sort"
 	"strconv"
 	"sync"
 	"time"
@@ -344,12 +345,18 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 	updatersLogger := logger.Named("telegram-updaters")
 
 	secretsMap := opts.getSecrets()
-	secretsList := make([]Secret, 0, len(secretsMap))
 	secretNames := make([]string, 0, len(secretsMap))
 
-	for name, s := range secretsMap {
+	for name := range secretsMap {
 		secretNames = append(secretNames, name)
-		secretsList = append(secretsList, s)
+	}
+
+	sort.Strings(secretNames)
+
+	secretsList := make([]Secret, 0, len(secretsMap))
+
+	for _, name := range secretNames {
+		secretsList = append(secretsList, secretsMap[name])
 	}
 
 	proxy := &Proxy{

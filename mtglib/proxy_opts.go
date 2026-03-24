@@ -1,6 +1,9 @@
 package mtglib
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 // ProxyOpts is a structure with settings to mtg proxy.
 //
@@ -189,9 +192,17 @@ func (p ProxyOpts) valid() error {
 		return ErrSecretInvalid
 	}
 
-	for _, s := range secrets {
+	var firstHost string
+
+	for name, s := range secrets {
 		if !s.Valid() {
 			return ErrSecretInvalid
+		}
+
+		if firstHost == "" {
+			firstHost = s.Host
+		} else if s.Host != firstHost {
+			return fmt.Errorf("secret %q has host %q, but all secrets must share the same host %q", name, s.Host, firstHost)
 		}
 	}
 
