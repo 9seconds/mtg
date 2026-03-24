@@ -35,6 +35,7 @@ mtg-multi generate-secret --hex cdn.jsdelivr.net
 # Create config
 cat > config.toml << 'EOF'
 bind-to = "0.0.0.0:443"
+api-bind-to = "127.0.0.1:9090"
 
 [secrets]
 alice = "ee..."
@@ -43,7 +44,42 @@ EOF
 
 # Run
 mtg-multi run config.toml
+
+# Check stats
+curl http://127.0.0.1:9090/stats
 ```
+
+## Stats API
+
+Optional built-in HTTP endpoint for real-time per-user statistics. Enabled by setting `api-bind-to` in config.
+
+**`GET /stats`** returns:
+
+```json
+{
+  "started_at": "2026-03-24T18:05:00Z",
+  "uptime_seconds": 3600,
+  "total_connections": 12,
+  "users": {
+    "alice": {
+      "connections": 4,
+      "bytes_in": 12345,
+      "bytes_out": 678901,
+      "last_seen": "2026-03-24T19:00:00Z"
+    },
+    "bob": {
+      "connections": 0,
+      "bytes_in": 0,
+      "bytes_out": 0,
+      "last_seen": null
+    }
+  }
+}
+```
+
+- Counters use `sync/atomic` — zero overhead on the proxy hot path
+- Resets on restart (tracks current session only)
+- Bind to a loopback or private IP to keep it internal
 
 ## Build
 
