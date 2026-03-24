@@ -301,6 +301,38 @@ For example, you've bought a VPS from [Digital
 Ocean](https://www.digitalocean.com/). Then it might be a good idea to
 generate a secret for _digitalocean.com_ then.
 
+### Check configuration
+
+There is a special command for secret verification:
+
+```
+$ mtg doctor /path/to/my/config.toml
+Deprecated options
+  ✅ All good
+Time skewness
+  ✅ Time drift is -607.048µs, but tolerate-time-skewness is 5s
+Validate native network connectivity
+  ✅ DC 1
+  ✅ DC 2
+  ✅ DC 3
+  ✅ DC 4
+  ✅ DC 5
+  ✅ DC 203
+Validate network connectivity with proxy socks5://127.0.0.1:1080
+  ✅ DC 1
+  ✅ DC 2
+  ✅ DC 3
+  ✅ DC 4
+  ✅ DC 5
+  ✅ DC 203
+Validate fronting domain connectivity
+  ✅ xx.xx.xx.xx:yyy is reachable
+Validate SNI-DNS match
+  ✅ IP address xx.xx.xx.xx matches secret hostname <REDACTED>
+```
+
+It aims to find out possible inconsistencies and problems with your
+configuration. It makes sense to run it before executing any relevant commands.
 
 ### Simple run mode
 
