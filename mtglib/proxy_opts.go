@@ -169,6 +169,12 @@ type ProxyOpts struct {
 
 	// DoppelGangerDRS defines if TLS Dynamic Record Sizing is active.
 	DoppelGangerDRS bool
+
+	// APIBindTo is the address to bind the stats HTTP API server to.
+	// If empty, the stats API server is not started.
+	//
+	// This is an optional setting.
+	APIBindTo string
 }
 
 func (p ProxyOpts) valid() error {

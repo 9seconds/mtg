@@ -36,6 +36,7 @@ type Proxy struct {
 	configUpdater               *dc.PublicConfigUpdater
 	doppelGanger                *doppel.Ganger
 
+	stats           *ProxyStats
 	secrets         []Secret
 	secretNames     []string
 	network         Network
@@ -76,16 +77,19 @@ func (p *Proxy) ServeConn(conn essentials.Conn) {
 	p.eventStream.Send(ctx, NewEventStart(ctx.streamID, ctx.ClientIP()))
 	ctx.logger.Info("Stream has been started")
 
-	var relayBytes int64
-
 	defer func() {
 		p.eventStream.Send(ctx, NewEventFinish(ctx.streamID))
-		ctx.logger.BindInt("bytes", int(relayBytes)).Info("Stream has been finished")
+		ctx.logger.Info("Stream has been finished")
 	}()
 
 	if !p.doFakeTLSHandshake(ctx) {
 		return
 	}
+
+	p.stats.OnConnect(ctx.secretName)
+	p.stats.UpdateLastSeen(ctx.secretName)
+
+	defer p.stats.OnDisconnect(ctx.secretName)
 
 	clientConn, err := p.doppelGanger.NewConn(ctx.clientConn)
 	if err != nil {
@@ -106,13 +110,16 @@ func (p *Proxy) ServeConn(conn essentials.Conn) {
 		return
 	}
 
-	result := relay.Relay(
+	ctx.logger.Info("Stream is relaying")
+
+	countedClientConn := newCountingConn(ctx.clientConn, p.stats, ctx.secretName)
+
+	relay.Relay(
 		ctx,
 		ctx.logger.Named("relay"),
 		ctx.telegramConn,
-		ctx.clientConn,
+		countedClientConn,
 	)
-	relayBytes = result.ClientToTelegram + result.TelegramToClient
 }
 
 // Serve starts a proxy on a given listener.
@@ -206,7 +213,8 @@ func (p *Proxy) doFakeTLSHandshake(ctx *streamContext) bool {
 
 	matchedSecret := p.secrets[result.MatchedIndex]
 	ctx.matchedSecretKey = matchedSecret.Key[:]
-	ctx.logger = ctx.logger.BindStr("secret_name", p.secretNames[result.MatchedIndex])
+	ctx.secretName = p.secretNames[result.MatchedIndex]
+	ctx.logger = ctx.logger.BindStr("secret_name", ctx.secretName)
 
 	if err := fake.SendServerHello(ctx.clientConn, matchedSecret.Key[:], result.Hello); err != nil {
 		p.logger.InfoError("cannot send welcome packet", err)
@@ -359,9 +367,19 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 		secretsList = append(secretsList, secretsMap[name])
 	}
 
+	stats := NewProxyStats()
+	for _, name := range secretNames {
+		stats.PreRegister(name)
+	}
+
+	if opts.APIBindTo != "" {
+		stats.StartServer(ctx, opts.APIBindTo, logger)
+	}
+
 	proxy := &Proxy{
 		ctx:                      ctx,
 		ctxCancel:                cancel,
+		stats:                    stats,
 		secrets:                  secretsList,
 		secretNames:              secretNames,
 		network:                  opts.Network,

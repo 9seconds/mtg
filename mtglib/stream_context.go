@@ -18,6 +18,7 @@ type streamContext struct {
 	streamID         string
 	dc               int
 	matchedSecretKey []byte
+	secretName       string
 	logger           Logger
 }
 

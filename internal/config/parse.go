@@ -62,7 +62,8 @@ type tomlConfig struct {
 		DNS     string   `toml:"dns" json:"dns,omitempty"`
 		Proxies []string `toml:"proxies" json:"proxies,omitempty"`
 	} `toml:"network" json:"network,omitempty"`
-	Stats struct {
+	APIBindTo string `toml:"api-bind-to" json:"apiBindTo,omitempty"`
+	Stats     struct {
 		StatsD struct {
 			Enabled      bool   `toml:"enabled" json:"enabled,omitempty"`
 			Address      string `toml:"address" json:"address,omitempty"`

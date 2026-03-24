@@ -67,7 +67,8 @@ type Config struct {
 		DNS     TypeDNSURI     `json:"dns"`
 		Proxies []TypeProxyURL `json:"proxies"`
 	} `json:"network"`
-	Stats struct {
+	APIBindTo TypeHostPort `json:"apiBindTo"`
+	Stats     struct {
 		StatsD struct {
 			Optional
 
