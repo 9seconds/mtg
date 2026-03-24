@@ -2,7 +2,7 @@
 
 version: 2
 
-project_name: mtg
+project_name: mtg-multi
 
 before:
   hooks:
@@ -11,86 +11,13 @@ before:
 
 builds:
   - id: default
-    binary: '{{ .ProjectName }}'
+    binary: mtg-multi
     goos:
+      - linux
       - darwin
-      - freebsd
-      - linux
-      - netbsd
-      - openbsd
-      - windows
-    goarch:
-      - 386
-      - amd64
-      - arm
-      - arm64
-    goarm:
-      - 6
-      - 7
-    env:
-      - CGO_ENABLED=0
-    flags:
-      - -trimpath
-      - -mod=readonly
-    ldflags: -s -w -X main.version={{ .Version }}
-    ignore:
-      - goos: darwin
-        goarch: 386
-      - goos: darwin
-        goarch: arm
-      - goos: freebsd
-        goarch: arm64
-      - goos: netbsd
-        goarch: arm64
-      - goos: openbsd
-        goarch: arm64
-      - goos: windows
-        goarch: 386
-      - goos: windows
-        goarch: arm
-  - id: mips
-    binary: '{{ .ProjectName }}'
-    goos:
-      - linux
-    goarch:
-      - mips
-      - mipsle
-    gomips:
-      - softfloat
-    env:
-      - CGO_ENABLED=0
-    flags:
-      - -trimpath
-      - -mod=readonly
-    ldflags: -s -w -X main.version={{ .Version }}
-  - id: arm64-v9
-    binary: '{{ .ProjectName }}'
-    goos:
-      - darwin
-      - linux
-    goarch:
-      - arm64
-    goarm64:
-      - v9.0
-    env:
-      - CGO_ENABLED=0
-    flags:
-      - -trimpath
-      - -mod=readonly
-    ldflags: -s -w -X main.version={{ .Version }}
-  - id: amd64-v3
-    binary: '{{ .ProjectName }}'
-    goos:
-      - darwin
-      - freebsd
-      - linux
-      - netbsd
-      - openbsd
-      - windows
     goarch:
       - amd64
-    goamd64:
-      - v3
+      - arm64
     env:
       - CGO_ENABLED=0
     flags:
@@ -102,49 +29,17 @@ archives:
   - id: default
     ids:
       - default
-      - mips
-    name_template: '{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+    name_template: '{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}'
     formats:
       - tar.gz
     wrap_in_directory: true
-    format_overrides:
-      - goos: windows
-        formats:
-          - zip
     files:
       - LICENSE
       - README.md
-      - SECURITY.md
-      - BEST_PRACTICES.md
       - example.config.toml
-  - id: optimized
-    ids:
-      - arm64-v9
-      - amd64-v3
-    name_template: '{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ if .Arm64 }}-{{ .Arm64 }}{{ end }}{{ if .Amd64 }}-{{ .Amd64 }}{{ end }}'
-    formats:
-      - tar.gz
-    wrap_in_directory: true
-    format_overrides:
-      - goos: windows
-        formats:
-          - zip
-    files:
-      - LICENSE
-      - README.md
-      - SECURITY.md
-      - BEST_PRACTICES.md
-      - example.config.toml
-
-gomod:
-  proxy: true
 
 snapshot:
   version_template: '{{ .Version }}'
 
 checksum:
   name_template: '{{ .ProjectName }}-{{ .Version }}-checksums.txt'
-
-source:
-  enabled: true
-  name_template: '{{ .ProjectName }}-sources'
