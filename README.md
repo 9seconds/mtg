@@ -1,21 +1,70 @@
-# mtg
+# mtg-multi
+
+Fork of [9seconds/mtg](https://github.com/9seconds/mtg) with **multi-secret support**.
+
+The original mtg is a fast, lightweight MTPROTO proxy for Telegram — but it supports only
+a single secret per instance. This fork adds support for multiple named secrets, so you can
+give each user (or group) their own secret and revoke access individually.
+
+See also: [9seconds/mtg#376](https://github.com/9seconds/mtg/issues/376),
+[9seconds/mtg#67](https://github.com/9seconds/mtg/issues/67)
+
+## What's different from upstream mtg
+
+**One change:** config accepts multiple secrets via a `[secrets]` TOML section.
+
+```toml
+bind-to = "0.0.0.0:443"
+
+[secrets]
+alice = "ee<hex>..."
+bob   = "ee<hex>..."
+```
+
+- Each secret is tried during FakeTLS handshake (HMAC validation, microseconds per attempt)
+- Matched secret name is logged as `secret_name` field in JSON logs
+- Old single-secret config (`secret = "ee..."`) still works — backward compatible
+- Everything else (FakeTLS, domain fronting, anti-replay, blocklists, Prometheus) is unchanged
+
+## Quick start
+
+```bash
+# Generate secrets
+mtg-multi generate-secret --hex cdn.jsdelivr.net
+
+# Create config
+cat > config.toml << 'EOF'
+bind-to = "0.0.0.0:443"
+
+[secrets]
+alice = "ee..."
+bob   = "ee..."
+EOF
+
+# Run
+mtg-multi run config.toml
+```
+
+## Build
+
+```bash
+git clone https://github.com/dolonet/mtg-multi.git
+cd mtg-multi
+go build -o mtg-multi .
+
+# Cross-compile for Linux:
+GOOS=linux GOARCH=amd64 go build -o mtg-multi .
+```
+
+## Original README
+
+Everything below applies to this fork as well. The only difference is the config format
+for secrets described above.
+
+---
 
 Highly-opinionated (ex-bullshit-free) MTPROTO proxy for
 [Telegram](https://telegram.org/).
-
-[![CI](https://github.com/9seconds/mtg/actions/workflows/ci.yaml/badge.svg?branch=master)](https://github.com/9seconds/mtg/actions/workflows/ci.yaml)
-[![codecov](https://codecov.io/gh/9seconds/mtg/branch/master/graph/badge.svg?token=JfdDyGVpT4)](https://codecov.io/gh/9seconds/mtg)
-[![Go Reference](https://pkg.go.dev/badge/github.com/9seconds/mtg.svg)](https://pkg.go.dev/github.com/9seconds/mtg/v2)
-
-**If you use v1.0 or upgrade broke you proxy, please read the chapter
-[Version 2](#version-2)**
-
-If you want to have a proxy that _supports adtag_ (possibility to promote a
-channel with a special Telegram bot), I recommend to use
-[telemt](https://github.com/telemt/telemt) project. v1 of mtg supports it
-but I do not see any reasonable point of using it: adtag requires communication
-via a fragile set of middle proxies, requires complex setup that must expose
-a public IPs, has lower bandwidth and latency.
 
 mtg idea is simple: minimal unbloated proxy that can handle a reasonable scale
 ~10-20k simultaneous connections, has no user management, but ticks all
