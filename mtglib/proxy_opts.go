@@ -1,7 +1,6 @@
 package mtglib
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -170,6 +169,10 @@ type ProxyOpts struct {
 	// DoppelGangerDRS defines if TLS Dynamic Record Sizing is active.
 	DoppelGangerDRS bool
 
+	// DoppelGangerIdlePadding enables sending TLS ChangeCipherSpec records
+	// during idle periods to mimic HTTP/2 PING keepalive traffic.
+	DoppelGangerIdlePadding bool
+
 	// APIBindTo is the address to bind the stats HTTP API server to.
 	// If empty, the stats API server is not started.
 	//
@@ -198,17 +201,9 @@ func (p ProxyOpts) valid() error {
 		return ErrSecretInvalid
 	}
 
-	var firstHost string
-
-	for name, s := range secrets {
+	for _, s := range secrets {
 		if !s.Valid() {
 			return ErrSecretInvalid
-		}
-
-		if firstHost == "" {
-			firstHost = s.Host
-		} else if s.Host != firstHost {
-			return fmt.Errorf("secret %q has host %q, but all secrets must share the same host %q", name, s.Host, firstHost)
 		}
 	}
 

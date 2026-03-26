@@ -450,7 +450,7 @@ func (suite *ReadClientHelloMultiTestSuite) TestMatchesCorrectSecretAtIndex0() {
 	result, err := fake.ReadClientHelloMulti(
 		connMock,
 		[][]byte{suite.secret.Key[:], wrongSecret.Key[:]},
-		suite.secret.Host,
+		[]string{suite.secret.Host},
 		TolerateTime,
 	)
 	suite.NoError(err)
@@ -468,7 +468,7 @@ func (suite *ReadClientHelloMultiTestSuite) TestMatchesCorrectSecretAtIndex1() {
 	result, err := fake.ReadClientHelloMulti(
 		connMock,
 		[][]byte{wrongSecret.Key[:], suite.secret.Key[:]},
-		suite.secret.Host,
+		[]string{suite.secret.Host},
 		TolerateTime,
 	)
 	suite.NoError(err)
@@ -487,7 +487,7 @@ func (suite *ReadClientHelloMultiTestSuite) TestMatchesCorrectSecretAtIndex2() {
 	result, err := fake.ReadClientHelloMulti(
 		connMock,
 		[][]byte{wrong1.Key[:], wrong2.Key[:], suite.secret.Key[:]},
-		suite.secret.Host,
+		[]string{suite.secret.Host},
 		TolerateTime,
 	)
 	suite.NoError(err)
@@ -506,7 +506,7 @@ func (suite *ReadClientHelloMultiTestSuite) TestNoMatchReturnsBadDigest() {
 	_, err := fake.ReadClientHelloMulti(
 		connMock,
 		[][]byte{wrong1.Key[:], wrong2.Key[:]},
-		suite.secret.Host,
+		[]string{suite.secret.Host},
 		TolerateTime,
 	)
 	suite.ErrorIs(err, fake.ErrBadDigest)
@@ -520,7 +520,7 @@ func (suite *ReadClientHelloMultiTestSuite) TestBadSnapshotReturnsBadDigest() {
 	_, err := fake.ReadClientHelloMulti(
 		connMock,
 		[][]byte{suite.secret.Key[:]},
-		suite.secret.Host,
+		[]string{suite.secret.Host},
 		TolerateTime,
 	)
 	suite.ErrorIs(err, fake.ErrBadDigest)
