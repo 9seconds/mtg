@@ -29,7 +29,8 @@ type Ganger struct {
 	scoutRaidEach    time.Duration
 	scoutRaidRepeats int
 
-	drs bool
+	drs         bool
+	idlePadding bool
 
 	stats     *Stats
 	durations []time.Duration
@@ -123,7 +124,7 @@ func (g *Ganger) run() {
 		case req := <-g.connRequests:
 			select {
 			case <-g.ctx.Done():
-			case req.ret <- NewConn(g.ctx, req.payload, g.stats):
+			case req.ret <- NewConn(g.ctx, req.payload, g.stats, g.idlePadding):
 			}
 		}
 	}
@@ -156,6 +157,7 @@ func NewGanger(
 	scoutRepeats int,
 	urls []string,
 	drs bool,
+	idlePadding bool,
 ) *Ganger {
 	ctx, cancel := context.WithCancel(ctx)
 
@@ -174,6 +176,7 @@ func NewGanger(
 		scoutRaidEach:    scoutEach,
 		scoutRaidRepeats: scoutRepeats,
 		drs:              drs,
+		idlePadding:      idlePadding,
 		stats: &Stats{
 			k:      StatsDefaultK,
 			lambda: StatsDefaultLambda,

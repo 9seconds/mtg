@@ -66,7 +66,7 @@ func (suite *ConnTestSuite) makeConn() Conn {
 	return NewConn(suite.ctx, suite.connMock, &Stats{
 		k:      2.0,
 		lambda: 0.01,
-	})
+	}, false)
 }
 
 func (suite *ConnTestSuite) TestWriteBuffersData() {
@@ -155,7 +155,7 @@ func (suite *ConnTestSuite) TestStopDoesNotDeadlockWhenStartIsWaiting() {
 			c := NewConn(ctx, suite.connMock, &Stats{
 				k:      2.0,
 				lambda: 0.01,
-			})
+			}, false)
 
 			done := make(chan struct{})
 			go func() {
