@@ -37,10 +37,9 @@ type Proxy struct {
 	doppelGanger                *doppel.Ganger
 
 	stats            *ProxyStats
-	noiseParams      fake.NoiseParams
-	secrets          []Secret
-	secretNames      []string
-	secretHostnames  []string
+	noiseParams     fake.NoiseParams
+	secrets         []Secret
+	secretNames     []string
 	network         Network
 	antiReplayCache AntiReplayCache
 	blocklist       IPBlocklist
@@ -195,7 +194,7 @@ func (p *Proxy) doFakeTLSHandshake(ctx *streamContext) bool {
 	result, err := fake.ReadClientHelloMulti(
 		rewind,
 		secretKeys,
-		p.secretHostnames,
+		p.secrets[0].Host,
 		p.tolerateTimeSkewness,
 	)
 	if err != nil {
@@ -367,17 +366,6 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 		secretsList = append(secretsList, secretsMap[name])
 	}
 
-	// Collect unique hostnames from all secrets for SNI validation.
-	hostnameSet := make(map[string]struct{})
-	for _, s := range secretsList {
-		hostnameSet[s.Host] = struct{}{}
-	}
-	secretHostnames := make([]string, 0, len(hostnameSet))
-	for h := range hostnameSet {
-		secretHostnames = append(secretHostnames, h)
-	}
-	sort.Strings(secretHostnames)
-
 	stats := NewProxyStats()
 	for _, name := range secretNames {
 		stats.PreRegister(name)
@@ -433,7 +421,6 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 		noiseParams:              noiseParams,
 		secrets:                  secretsList,
 		secretNames:              secretNames,
-		secretHostnames:          secretHostnames,
 		network:                  opts.Network,
 		antiReplayCache:          opts.AntiReplayCache,
 		blocklist:                opts.IPBlocklist,

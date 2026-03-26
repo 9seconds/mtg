@@ -49,7 +49,7 @@ func ReadClientHello(
 	hostname string,
 	tolerateTimeSkewness time.Duration,
 ) (*ClientHello, error) {
-	result, err := ReadClientHelloMulti(conn, [][]byte{secret}, []string{hostname}, tolerateTimeSkewness)
+	result, err := ReadClientHelloMulti(conn, [][]byte{secret}, hostname, tolerateTimeSkewness)
 	if err != nil {
 		return nil, err
 	}
@@ -60,11 +60,10 @@ func ReadClientHello(
 // ReadClientHelloMulti is like ReadClientHello but accepts multiple secrets.
 // It tries each secret until one validates the HMAC. On success it returns
 // the ClientHello and the index of the matched secret.
-// hostnames is the list of acceptable SNI domains (one per secret or shared).
 func ReadClientHelloMulti(
 	conn net.Conn,
 	secrets [][]byte,
-	hostnames []string,
+	hostname string,
 	tolerateTimeSkewness time.Duration,
 ) (*ReadClientHelloResult, error) {
 	if err := conn.SetReadDeadline(time.Now().Add(ClientHelloReadTimeout)); err != nil {
@@ -95,16 +94,8 @@ func ReadClientHelloMulti(
 		return nil, fmt.Errorf("cannot parse SNI: %w", err)
 	}
 
-	// Check if the client's SNI matches any of the acceptable hostnames.
-	sniMatched := false
-	for _, hostname := range hostnames {
-		if slices.Contains(sniHostnames, hostname) {
-			sniMatched = true
-			break
-		}
-	}
-	if !sniMatched {
-		return nil, fmt.Errorf("cannot find any of %v in %v", hostnames, sniHostnames)
+	if !slices.Contains(sniHostnames, hostname) {
+		return nil, fmt.Errorf("cannot find %s in %v", hostname, sniHostnames)
 	}
 
 	// Save the handshake bytes so we can reuse them for each secret attempt.

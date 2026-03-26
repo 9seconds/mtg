@@ -1,6 +1,7 @@
 package mtglib
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -213,9 +214,17 @@ func (p ProxyOpts) valid() error {
 		return ErrSecretInvalid
 	}
 
+	var host string
+
 	for _, s := range secrets {
 		if !s.Valid() {
 			return ErrSecretInvalid
+		}
+
+		if host == "" {
+			host = s.Host
+		} else if s.Host != host {
+			return fmt.Errorf("all secrets must use the same hostname, got %q and %q", host, s.Host)
 		}
 	}
 
