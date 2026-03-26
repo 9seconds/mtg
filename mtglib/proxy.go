@@ -396,7 +396,7 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 	if err != nil {
 		logger.WarningError("cert probe failed, using default noise size", err)
 	} else {
-		noiseParams = fake.NoiseParams{Mean: probeResult.Mean, Jitter: probeResult.Jitter}
+		noiseParams = fake.NoiseParams(probeResult)
 		logger.Info(fmt.Sprintf("cert probe: host=%s mean=%d jitter=%d",
 			probeHost, probeResult.Mean, probeResult.Jitter))
 	}

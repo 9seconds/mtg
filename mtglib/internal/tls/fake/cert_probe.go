@@ -89,7 +89,7 @@ func probeSingle(addr, hostname string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	defer rawConn.Close()
+	defer rawConn.Close() //nolint: errcheck
 
 	capture := &recordCapture{conn: rawConn}
 
