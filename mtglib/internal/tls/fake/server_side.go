@@ -9,7 +9,6 @@ import (
 	"io"
 	rnd "math/rand/v2"
 
-	"github.com/9seconds/mtg/v2/mtglib/internal/doppel"
 	"github.com/9seconds/mtg/v2/mtglib/internal/tls"
 	"golang.org/x/crypto/curve25519"
 )
@@ -33,13 +32,20 @@ var serverHelloSuffix = []byte{
 	0x00, 0x20, // 32 bytes of key
 }
 
-func SendServerHello(w io.Writer, secret []byte, clientHello *ClientHello) error {
+// NoiseParams controls the size of the fake ApplicationData record in ServerHello.
+// If Mean is 0, the legacy random range (2500-4700) is used.
+type NoiseParams struct {
+	Mean   int
+	Jitter int
+}
+
+func SendServerHello(w io.Writer, secret []byte, clientHello *ClientHello, noise NoiseParams) error {
 	buf := &bytes.Buffer{}
 	buf.Grow(tls.MaxRecordSize)
 
 	generateServerHello(buf, clientHello)
 	generateChangeCipherValue(buf)
-	generateNoise(buf)
+	generateNoise(buf, noise)
 
 	packet := buf.Bytes()
 	digest := hmac.New(sha256.New, secret)
@@ -125,19 +131,31 @@ func generateChangeCipherValue(buf *bytes.Buffer) {
 	buf.WriteByte(ChangeCipherValue)
 }
 
-func generateNoise(buf *bytes.Buffer) {
-	data := make(
-		[]byte,
-		int64(
-			doppel.TLSRecordSizeStart+rnd.IntN(
-				doppel.TLSRecordSizeAccel-doppel.TLSRecordSizeStart,
-			),
-		),
-	)
+// generateNoise writes a single ApplicationData record mimicking the combined
+// size of a real TLS 1.3 encrypted server handshake (EncryptedExtensions +
+// Certificate chain + CertificateVerify + Finished ≈ 2800-5000 bytes).
+//
+// NOTE: Must be exactly ONE ApplicationData record — the Telegram client reads
+// ServerHello + CCS + 1 ApplicationData and computes HMAC over all three.
+// Multiple records would cause HMAC mismatch and connection failure.
+func generateNoise(buf *bytes.Buffer, noise NoiseParams) {
+	var size int
 
-	if _, err := rand.Read(data[:]); err != nil {
+	if noise.Mean > 0 && noise.Jitter > 0 {
+		// Calibrated: use measured cert chain size ± jitter.
+		size = noise.Mean - noise.Jitter + rnd.IntN(2*noise.Jitter)
+		if size < 1000 {
+			size = 1000
+		}
+	} else {
+		// Legacy fallback: random in 2500-4700 range.
+		size = 2500 + rnd.IntN(2200)
+	}
+
+	data := make([]byte, size)
+	if _, err := rand.Read(data); err != nil {
 		panic(err)
 	}
 
-	tls.WriteRecord(buf, data[:]) //nolint: errcheck
+	tls.WriteRecord(buf, data) //nolint: errcheck
 }

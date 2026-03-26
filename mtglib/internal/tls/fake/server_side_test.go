@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/9seconds/mtg/v2/mtglib"
-	"github.com/9seconds/mtg/v2/mtglib/internal/doppel"
 	"github.com/9seconds/mtg/v2/mtglib/internal/tls"
 	"github.com/9seconds/mtg/v2/mtglib/internal/tls/fake"
 	"github.com/stretchr/testify/suite"
@@ -39,33 +38,37 @@ func (suite *SendServerHelloTestSuite) SetupTest() {
 }
 
 func (suite *SendServerHelloTestSuite) TestRecordStructure() {
-	err := fake.SendServerHello(suite.buf, suite.secret.Key[:], suite.hello)
+	err := fake.SendServerHello(suite.buf, suite.secret.Key[:], suite.hello, fake.NoiseParams{})
 	suite.NoError(err)
 
 	var rec bytes.Buffer
 
+	// Record 1: ServerHello (Handshake)
 	recordType, _, err := tls.ReadRecord(suite.buf, &rec)
 	suite.NoError(err)
 	suite.Equal(byte(tls.TypeHandshake), recordType)
 
 	rec.Reset()
 
+	// Record 2: ChangeCipherSpec
 	recordType, _, err = tls.ReadRecord(suite.buf, &rec)
 	suite.NoError(err)
 	suite.Equal(byte(tls.TypeChangeCipherSpec), recordType)
 
+	// Record 3: Noise (single ApplicationData mimicking encrypted handshake)
 	rec.Reset()
 
 	recordType, length, err := tls.ReadRecord(suite.buf, &rec)
 	suite.NoError(err)
 	suite.Equal(byte(tls.TypeApplicationData), recordType)
-	suite.Greater(length, int64(doppel.TLSRecordSizeStart))
+	suite.GreaterOrEqual(length, int64(2500))
+	suite.LessOrEqual(length, int64(4700))
 
 	suite.Empty(suite.buf.Bytes())
 }
 
 func (suite *SendServerHelloTestSuite) TestHMAC() {
-	err := fake.SendServerHello(suite.buf, suite.secret.Key[:], suite.hello)
+	err := fake.SendServerHello(suite.buf, suite.secret.Key[:], suite.hello, fake.NoiseParams{})
 	suite.NoError(err)
 
 	packet := make([]byte, suite.buf.Len())
@@ -83,7 +86,7 @@ func (suite *SendServerHelloTestSuite) TestHMAC() {
 }
 
 func (suite *SendServerHelloTestSuite) TestHandshakePayload() {
-	err := fake.SendServerHello(suite.buf, suite.secret.Key[:], suite.hello)
+	err := fake.SendServerHello(suite.buf, suite.secret.Key[:], suite.hello, fake.NoiseParams{})
 	suite.NoError(err)
 
 	packet := suite.buf.Bytes()
@@ -105,7 +108,7 @@ func (suite *SendServerHelloTestSuite) TestHandshakePayload() {
 }
 
 func (suite *SendServerHelloTestSuite) TestChangeCipherSpec() {
-	err := fake.SendServerHello(suite.buf, suite.secret.Key[:], suite.hello)
+	err := fake.SendServerHello(suite.buf, suite.secret.Key[:], suite.hello, fake.NoiseParams{})
 	suite.NoError(err)
 
 	// Skip first record
