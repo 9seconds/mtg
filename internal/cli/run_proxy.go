@@ -269,6 +269,10 @@ func runProxy(conf *config.Config, version string) error { //nolint: funlen
 		DoppelGangerDRS:         conf.Defense.Doppelganger.DRS.Get(false),
 		DoppelGangerIdlePadding: conf.Defense.Doppelganger.IdlePadding.Get(false),
 
+		NoiseProbeCount: conf.Defense.Doppelganger.NoiseProbeCount.Get(0),
+		NoiseCacheTTL:   conf.Defense.Doppelganger.NoiseCacheTTL.Get(0),
+		NoiseCachePath:  conf.Defense.Doppelganger.NoiseCachePath,
+
 		APIBindTo: conf.APIBindTo.Get(""),
 	}
 

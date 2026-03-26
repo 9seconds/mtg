@@ -392,13 +392,38 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 	probePort := opts.getDomainFrontingPort()
 	noiseParams := fake.NoiseParams{}
 
-	probeResult, err := fake.ProbeCertSize(probeHost, probePort, 15)
-	if err != nil {
-		logger.WarningError("cert probe failed, using default noise size", err)
-	} else {
-		noiseParams = fake.NoiseParams(probeResult)
-		logger.Info(fmt.Sprintf("cert probe: host=%s mean=%d jitter=%d",
-			probeHost, probeResult.Mean, probeResult.Jitter))
+	probeCount := int(opts.NoiseProbeCount)
+	if probeCount <= 0 {
+		probeCount = 15
+	}
+
+	cacheTTL := opts.NoiseCacheTTL
+
+	// Try loading from cache first.
+	if opts.NoiseCachePath != "" {
+		if cached, ok := fake.LoadCachedProbe(opts.NoiseCachePath, probeHost, probePort, cacheTTL); ok {
+			noiseParams = fake.NoiseParams(cached)
+			logger.Info(fmt.Sprintf("cert probe: loaded from cache, host=%s mean=%d jitter=%d",
+				probeHost, cached.Mean, cached.Jitter))
+		}
+	}
+
+	// If no cached result, probe live.
+	if noiseParams.Mean == 0 {
+		probeResult, err := fake.ProbeCertSize(probeHost, probePort, probeCount)
+		if err != nil {
+			logger.WarningError("cert probe failed, using default noise size", err)
+		} else {
+			noiseParams = fake.NoiseParams(probeResult)
+			logger.Info(fmt.Sprintf("cert probe: host=%s mean=%d jitter=%d",
+				probeHost, probeResult.Mean, probeResult.Jitter))
+
+			if opts.NoiseCachePath != "" {
+				if saveErr := fake.SaveCachedProbe(opts.NoiseCachePath, probeHost, probePort, probeResult); saveErr != nil {
+					logger.WarningError("failed to save cert probe cache", saveErr)
+				}
+			}
+		}
 	}
 
 	proxy := &Proxy{

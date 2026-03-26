@@ -51,11 +51,14 @@ type Config struct {
 		Blocklist    ListConfig `json:"blocklist"`
 		Allowlist    ListConfig `json:"allowlist"`
 		Doppelganger struct {
-			URLs        []TypeHttpsURL  `json:"urls"`
-			Repeats     TypeConcurrency `json:"repeats_per_raid"`
-			UpdateEach  TypeDuration    `json:"raid_each"`
-			DRS         TypeBool        `json:"drs"`
-			IdlePadding TypeBool        `json:"idle_padding"`
+			URLs            []TypeHttpsURL  `json:"urls"`
+			Repeats         TypeConcurrency `json:"repeats_per_raid"`
+			UpdateEach      TypeDuration    `json:"raid_each"`
+			DRS             TypeBool        `json:"drs"`
+			IdlePadding     TypeBool        `json:"idle_padding"`
+			NoiseProbeCount TypeConcurrency `json:"noise_probe_count"`
+			NoiseCacheTTL   TypeDuration    `json:"noise_cache_ttl"`
+			NoiseCachePath  string          `json:"noise_cache_path"`
 		} `json:"doppelganger"`
 	} `json:"defense"`
 	Network struct {

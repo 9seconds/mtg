@@ -173,6 +173,18 @@ type ProxyOpts struct {
 	// during idle periods to mimic HTTP/2 PING keepalive traffic.
 	DoppelGangerIdlePadding bool
 
+	// NoiseProbeCount is the number of TLS connections to make when probing
+	// the fronting domain's cert chain size. Default is 15.
+	NoiseProbeCount uint
+
+	// NoiseCacheTTL is how long a cached cert probe result is considered valid.
+	// Default is 24 hours.
+	NoiseCacheTTL time.Duration
+
+	// NoiseCachePath is the file path for caching cert probe results between
+	// restarts. If empty, no caching is performed.
+	NoiseCachePath string
+
 	// APIBindTo is the address to bind the stats HTTP API server to.
 	// If empty, the stats API server is not started.
 	//

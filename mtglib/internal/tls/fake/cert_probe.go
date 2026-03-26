@@ -3,8 +3,10 @@ package fake
 import (
 	"crypto/tls"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"net"
+	"os"
 	"sync"
 	"time"
 )
@@ -13,6 +15,7 @@ const (
 	probeDialTimeout      = 10 * time.Second
 	probeHandshakeTimeout = 10 * time.Second
 	defaultProbeCount     = 15
+	defaultCacheTTL       = 24 * time.Hour
 
 	tlsTypeChangeCipherSpec = 0x14
 	tlsTypeApplicationData  = 0x17
@@ -20,8 +23,68 @@ const (
 
 // CertProbeResult holds the measured encrypted handshake size.
 type CertProbeResult struct {
-	Mean   int
-	Jitter int
+	Mean   int `json:"mean"`
+	Jitter int `json:"jitter"`
+}
+
+// CertProbeCache is the on-disk format for cached probe results.
+type CertProbeCache struct {
+	Hostname string    `json:"hostname"`
+	Port     int       `json:"port"`
+	Mean     int       `json:"mean"`
+	Jitter   int       `json:"jitter"`
+	ProbedAt time.Time `json:"probed_at"`
+}
+
+// LoadCachedProbe reads a cached probe result from path. Returns the result
+// and true if the cache exists, matches hostname:port, and is younger than ttl.
+// Otherwise returns zero value and false.
+func LoadCachedProbe(path, hostname string, port int, ttl time.Duration) (CertProbeResult, bool) {
+	if ttl <= 0 {
+		ttl = defaultCacheTTL
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return CertProbeResult{}, false
+	}
+
+	var cache CertProbeCache
+	if err := json.Unmarshal(data, &cache); err != nil {
+		return CertProbeResult{}, false
+	}
+
+	if cache.Hostname != hostname || cache.Port != port {
+		return CertProbeResult{}, false
+	}
+
+	if time.Since(cache.ProbedAt) > ttl {
+		return CertProbeResult{}, false
+	}
+
+	if cache.Mean <= 0 {
+		return CertProbeResult{}, false
+	}
+
+	return CertProbeResult{Mean: cache.Mean, Jitter: cache.Jitter}, true
+}
+
+// SaveCachedProbe writes a probe result to path as JSON.
+func SaveCachedProbe(path, hostname string, port int, result CertProbeResult) error {
+	cache := CertProbeCache{
+		Hostname: hostname,
+		Port:     port,
+		Mean:     result.Mean,
+		Jitter:   result.Jitter,
+		ProbedAt: time.Now(),
+	}
+
+	data, err := json.MarshalIndent(cache, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(path, data, 0o644) //nolint: gosec
 }
 
 // ProbeCertSize connects to hostname:port via TLS multiple times and measures
