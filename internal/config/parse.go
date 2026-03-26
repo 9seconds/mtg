@@ -46,10 +46,14 @@ type tomlConfig struct {
 			UpdateEach          string   `toml:"update-each" json:"updateEach,omitempty"`
 		} `toml:"allowlist" json:"allowlist,omitempty"`
 		Doppelganger struct {
-			URLs       []string `toml:"urls" json:"urls,omitempty"`
-			Repeats    uint     `toml:"repeats-per-raid" json:"repeats_per_raid,omitempty"`
-			UpdateEach string   `toml:"raid-each" json:"raid_each,omitempty"`
-			DRS        bool     `toml:"drs" json:"drs,omitempty"`
+			URLs            []string `toml:"urls" json:"urls,omitempty"`
+			Repeats         uint     `toml:"repeats-per-raid" json:"repeats_per_raid,omitempty"`
+			UpdateEach      string   `toml:"raid-each" json:"raid_each,omitempty"`
+			DRS             bool     `toml:"drs" json:"drs,omitempty"`
+			IdlePadding     bool     `toml:"idle_padding" json:"idle_padding,omitempty"`
+			NoiseProbeCount uint     `toml:"noise_probe_count" json:"noise_probe_count,omitempty"`
+			NoiseCacheTTL   string   `toml:"noise_cache_ttl" json:"noise_cache_ttl,omitempty"`
+			NoiseCachePath  string   `toml:"noise_cache_path" json:"noise_cache_path,omitempty"`
 		} `toml:"doppelganger" json:"doppelganger,omitempty"`
 	} `toml:"defense" json:"defense,omitempty"`
 	Network struct {
