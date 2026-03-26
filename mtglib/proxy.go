@@ -36,6 +36,7 @@ type Proxy struct {
 	doppelGanger                *doppel.Ganger
 	clientObfuscatror           obfuscation.Obfuscator
 
+	noiseParams     fake.NoiseParams
 	secret          Secret
 	network         Network
 	antiReplayCache AntiReplayCache
@@ -192,7 +193,7 @@ func (p *Proxy) doFakeTLSHandshake(ctx *streamContext) bool {
 		return false
 	}
 
-	if err := fake.SendServerHello(ctx.clientConn, p.secret.Key[:], clientHello); err != nil {
+	if err := fake.SendServerHello(ctx.clientConn, p.secret.Key[:], clientHello, p.noiseParams); err != nil {
 		p.logger.InfoError("cannot send welcome packet", err)
 		return false
 	}
@@ -323,9 +324,49 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 	logger := opts.getLogger("proxy")
 	updatersLogger := logger.Named("telegram-updaters")
 
+	// Probe the fronting domain's cert chain size for noise calibration.
+	probeHost := opts.Secret.Host
+	probePort := opts.getDomainFrontingPort()
+	noiseParams := fake.NoiseParams{}
+
+	probeCount := int(opts.NoiseProbeCount)
+	if probeCount <= 0 {
+		probeCount = 15
+	}
+
+	cacheTTL := opts.NoiseCacheTTL
+
+	// Try loading from cache first.
+	if opts.NoiseCachePath != "" {
+		if cached, ok := fake.LoadCachedProbe(opts.NoiseCachePath, probeHost, probePort, cacheTTL); ok {
+			noiseParams = fake.NoiseParams(cached)
+			logger.Info(fmt.Sprintf("cert probe: loaded from cache, host=%s mean=%d jitter=%d",
+				probeHost, cached.Mean, cached.Jitter))
+		}
+	}
+
+	// If no cached result, probe live.
+	if noiseParams.Mean == 0 {
+		probeResult, probeErr := fake.ProbeCertSize(probeHost, probePort, probeCount)
+		if probeErr != nil {
+			logger.WarningError("cert probe failed, using default noise size", probeErr)
+		} else {
+			noiseParams = fake.NoiseParams(probeResult)
+			logger.Info(fmt.Sprintf("cert probe: host=%s mean=%d jitter=%d",
+				probeHost, probeResult.Mean, probeResult.Jitter))
+
+			if opts.NoiseCachePath != "" {
+				if saveErr := fake.SaveCachedProbe(opts.NoiseCachePath, probeHost, probePort, probeResult); saveErr != nil {
+					logger.WarningError("failed to save cert probe cache", saveErr)
+				}
+			}
+		}
+	}
+
 	proxy := &Proxy{
 		ctx:                      ctx,
 		ctxCancel:                cancel,
+		noiseParams:              noiseParams,
 		secret:                   opts.Secret,
 		network:                  opts.Network,
 		antiReplayCache:          opts.AntiReplayCache,

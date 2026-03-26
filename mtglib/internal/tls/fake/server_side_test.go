@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/9seconds/mtg/v2/mtglib"
-	"github.com/9seconds/mtg/v2/mtglib/internal/doppel"
 	"github.com/9seconds/mtg/v2/mtglib/internal/tls"
 	"github.com/9seconds/mtg/v2/mtglib/internal/tls/fake"
 	"github.com/stretchr/testify/suite"
@@ -39,7 +38,7 @@ func (suite *SendServerHelloTestSuite) SetupTest() {
 }
 
 func (suite *SendServerHelloTestSuite) TestRecordStructure() {
-	err := fake.SendServerHello(suite.buf, suite.secret.Key[:], suite.hello)
+	err := fake.SendServerHello(suite.buf, suite.secret.Key[:], suite.hello, fake.NoiseParams{})
 	suite.NoError(err)
 
 	var rec bytes.Buffer
@@ -59,13 +58,13 @@ func (suite *SendServerHelloTestSuite) TestRecordStructure() {
 	recordType, length, err := tls.ReadRecord(suite.buf, &rec)
 	suite.NoError(err)
 	suite.Equal(byte(tls.TypeApplicationData), recordType)
-	suite.Greater(length, int64(doppel.TLSRecordSizeStart))
+	suite.Greater(length, int64(2500))
 
 	suite.Empty(suite.buf.Bytes())
 }
 
 func (suite *SendServerHelloTestSuite) TestHMAC() {
-	err := fake.SendServerHello(suite.buf, suite.secret.Key[:], suite.hello)
+	err := fake.SendServerHello(suite.buf, suite.secret.Key[:], suite.hello, fake.NoiseParams{})
 	suite.NoError(err)
 
 	packet := make([]byte, suite.buf.Len())
@@ -83,7 +82,7 @@ func (suite *SendServerHelloTestSuite) TestHMAC() {
 }
 
 func (suite *SendServerHelloTestSuite) TestHandshakePayload() {
-	err := fake.SendServerHello(suite.buf, suite.secret.Key[:], suite.hello)
+	err := fake.SendServerHello(suite.buf, suite.secret.Key[:], suite.hello, fake.NoiseParams{})
 	suite.NoError(err)
 
 	packet := suite.buf.Bytes()
@@ -105,7 +104,7 @@ func (suite *SendServerHelloTestSuite) TestHandshakePayload() {
 }
 
 func (suite *SendServerHelloTestSuite) TestChangeCipherSpec() {
-	err := fake.SendServerHello(suite.buf, suite.secret.Key[:], suite.hello)
+	err := fake.SendServerHello(suite.buf, suite.secret.Key[:], suite.hello, fake.NoiseParams{})
 	suite.NoError(err)
 
 	// Skip first record
@@ -122,6 +121,33 @@ func (suite *SendServerHelloTestSuite) TestChangeCipherSpec() {
 	suite.Equal(byte(tls.TypeChangeCipherSpec), recordType)
 	suite.Equal(int64(1), length)
 	suite.Equal([]byte{fake.ChangeCipherValue}, rec.Bytes())
+}
+
+func (suite *SendServerHelloTestSuite) TestCalibratedNoiseSize() {
+	noise := fake.NoiseParams{Mean: 6480, Jitter: 100}
+	err := fake.SendServerHello(suite.buf, suite.secret.Key[:], suite.hello, noise)
+	suite.NoError(err)
+
+	var rec bytes.Buffer
+
+	// Skip ServerHello
+	_, _, err = tls.ReadRecord(suite.buf, &rec)
+	suite.NoError(err)
+
+	// Skip ChangeCipherSpec
+	rec.Reset()
+	_, _, err = tls.ReadRecord(suite.buf, &rec)
+	suite.NoError(err)
+
+	// Read noise ApplicationData
+	rec.Reset()
+	recordType, length, err := tls.ReadRecord(suite.buf, &rec)
+	suite.NoError(err)
+	suite.Equal(byte(tls.TypeApplicationData), recordType)
+
+	// Should be within mean ± jitter range.
+	suite.GreaterOrEqual(length, int64(noise.Mean-noise.Jitter))
+	suite.LessOrEqual(length, int64(noise.Mean+noise.Jitter))
 }
 
 func TestSendServerHello(t *testing.T) {

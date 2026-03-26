@@ -160,6 +160,25 @@ type ProxyOpts struct {
 
 	// DoppelGangerDRS defines if TLS Dynamic Record Sizing is active.
 	DoppelGangerDRS bool
+
+	// NoiseProbeCount is the number of TLS connections to make when probing
+	// the fronting domain's cert chain size for noise calibration.
+	// Default is 15.
+	//
+	// This is an optional setting.
+	NoiseProbeCount uint
+
+	// NoiseCacheTTL is how long a cached cert probe result is considered
+	// valid. Default is 24 hours.
+	//
+	// This is an optional setting.
+	NoiseCacheTTL time.Duration
+
+	// NoiseCachePath is the file path for caching cert probe results
+	// between restarts. If empty, no caching is performed.
+	//
+	// This is an optional setting.
+	NoiseCachePath string
 }
 
 func (p ProxyOpts) valid() error {
