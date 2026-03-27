@@ -12,36 +12,46 @@ import (
 	"github.com/9seconds/mtg/v2/mtglib/internal/tls"
 )
 
+// ScoutResult holds measurements from a single scout HTTP request.
+type ScoutResult struct {
+	Durations []time.Duration
+	CertSize  int // total ApplicationData bytes during TLS handshake; 0 if unknown
+}
+
 type Scout struct {
 	network Network
 	urls    []string
 }
 
-func (s Scout) Learn(ctx context.Context) ([]time.Duration, error) {
-	var durations []time.Duration
+func (s Scout) Learn(ctx context.Context) (ScoutResult, error) {
+	var combined ScoutResult
 
 	for _, url := range s.urls {
 		learned, err := s.learn(ctx, url)
 		if err != nil {
-			return nil, err
+			return ScoutResult{}, err
 		}
 
-		durations = append(durations, learned...)
+		combined.Durations = append(combined.Durations, learned.Durations...)
+
+		if learned.CertSize > 0 && combined.CertSize == 0 {
+			combined.CertSize = learned.CertSize
+		}
 	}
 
-	return durations, nil
+	return combined, nil
 }
 
-func (s Scout) learn(ctx context.Context, url string) ([]time.Duration, error) {
+func (s Scout) learn(ctx context.Context, url string) (ScoutResult, error) {
 	client, results := s.makeClient()
 
 	if !strings.HasPrefix(url, "https://") {
-		return nil, fmt.Errorf("url %s must be https", url)
+		return ScoutResult{}, fmt.Errorf("url %s must be https", url)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return nil, err
+		return ScoutResult{}, err
 	}
 
 	resp, err := client.Do(req)
@@ -52,10 +62,12 @@ func (s Scout) learn(ctx context.Context, url string) ([]time.Duration, error) {
 	}
 
 	if err != nil || len(results.data) == 0 {
-		return nil, err
+		return ScoutResult{}, err
 	}
 
-	durations := []time.Duration{}
+	var result ScoutResult
+
+	// Compute inter-record durations (existing logic).
 	lastTimestamp := time.Time{}
 
 	for i, v := range results.data {
@@ -71,11 +83,34 @@ func (s Scout) learn(ctx context.Context, url string) ([]time.Duration, error) {
 			}
 		}
 
-		durations = append(durations, v.timestamp.Sub(lastTimestamp))
+		result.Durations = append(result.Durations, v.timestamp.Sub(lastTimestamp))
 		lastTimestamp = v.timestamp
 	}
 
-	return durations, nil
+	// Compute cert size: sum of ApplicationData payload between CCS and
+	// the first client Write (which marks the end of server handshake).
+	seenCCS := false
+	boundary := results.writeIndex
+	if boundary < 0 {
+		boundary = len(results.data)
+	}
+
+	for i, v := range results.data {
+		if i >= boundary {
+			break
+		}
+
+		if v.recordType == tls.TypeChangeCipherSpec {
+			seenCCS = true
+			continue
+		}
+
+		if seenCCS && v.recordType == tls.TypeApplicationData {
+			result.CertSize += v.payloadLen
+		}
+	}
+
+	return result, nil
 }
 
 func (s Scout) makeClient() (*http.Client, *ScoutConnCollected) {

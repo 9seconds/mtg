@@ -267,10 +267,6 @@ func runProxy(conf *config.Config, version string) error { //nolint: funlen
 		DoppelGangerPerRaid: conf.Defense.Doppelganger.Repeats.Get(mtglib.DoppelGangerPerRaid),
 		DoppelGangerEach:    conf.Defense.Doppelganger.UpdateEach.Get(mtglib.DoppelGangerEach),
 		DoppelGangerDRS:     conf.Defense.Doppelganger.DRS.Get(false),
-
-		NoiseProbeCount: conf.Defense.Doppelganger.NoiseProbeCount.Get(0),
-		NoiseCacheTTL:   conf.Defense.Doppelganger.NoiseCacheTTL.Get(0),
-		NoiseCachePath:  conf.Defense.Doppelganger.NoiseCachePath,
 	}
 
 	proxy, err := mtglib.NewProxy(opts)

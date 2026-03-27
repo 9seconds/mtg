@@ -22,9 +22,9 @@ func (suite *ScoutTestSuite) SetupSuite() {
 }
 
 func (suite *ScoutTestSuite) TestCollectResults() {
-	durations, err := suite.scout.Learn(suite.ctx)
+	result, err := suite.scout.Learn(suite.ctx)
 	suite.NoError(err)
-	suite.Less(3, len(durations))
+	suite.Less(3, len(result.Durations))
 }
 
 func (suite *ScoutTestSuite) TestCollectNothing() {

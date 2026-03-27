@@ -49,9 +49,6 @@ type tomlConfig struct {
 			Repeats         uint     `toml:"repeats-per-raid" json:"repeats_per_raid,omitempty"`
 			UpdateEach      string   `toml:"raid-each" json:"raid_each,omitempty"`
 			DRS             bool     `toml:"drs" json:"drs,omitempty"`
-			NoiseProbeCount uint     `toml:"noise-probe-count" json:"noise_probe_count,omitempty"`
-			NoiseCacheTTL   string   `toml:"noise-cache-ttl" json:"noise_cache_ttl,omitempty"`
-			NoiseCachePath  string   `toml:"noise-cache-path" json:"noise_cache_path,omitempty"`
 		} `toml:"doppelganger" json:"doppelganger,omitempty"`
 	} `toml:"defense" json:"defense,omitempty"`
 	Network struct {
