@@ -12,6 +12,13 @@ import (
 	"github.com/9seconds/mtg/v2/mtglib/internal/tls"
 )
 
+var recordBufPool = sync.Pool{
+	New: func() any {
+		buf := make([]byte, tls.MaxRecordSize)
+		return &buf
+	},
+}
+
 type Conn struct {
 	essentials.Conn
 
@@ -21,7 +28,7 @@ type Conn struct {
 type connPayload struct {
 	ctx         context.Context
 	ctxCancel   context.CancelCauseFunc
-	clock       Clock
+	stats       *Stats
 	wg          sync.WaitGroup
 	writeStream bytes.Buffer
 	writtenCond sync.Cond
@@ -51,16 +58,22 @@ func (c Conn) Start() {
 }
 
 func (c Conn) start() {
-	buf := [tls.MaxRecordSize]byte{}
+	bp := recordBufPool.Get().(*[]byte)
+	defer recordBufPool.Put(bp)
+
+	buf := *bp
+
+	timer := time.NewTimer(c.p.stats.Delay())
+	defer timer.Stop()
 
 	for {
 		select {
 		case <-c.p.ctx.Done():
 			return
-		case <-c.p.clock.tick:
+		case <-timer.C:
 		}
 
-		size := c.p.clock.stats.Size()
+		size := c.p.stats.Size()
 
 		c.p.writtenCond.L.Lock()
 		for c.p.writeStream.Len() == 0 && !c.p.done {
@@ -70,6 +83,7 @@ func (c Conn) start() {
 		c.p.writtenCond.L.Unlock()
 
 		if n == 0 {
+			timer.Reset(c.p.stats.Delay())
 			continue
 		}
 
@@ -81,6 +95,8 @@ func (c Conn) start() {
 			c.p.ctxCancel(err)
 			return
 		}
+
+		timer.Reset(c.p.stats.Delay())
 	}
 }
 
@@ -144,22 +160,16 @@ func NewConn(ctx context.Context, conn essentials.Conn, stats *Stats, idlePaddin
 		p: &connPayload{
 			ctx:         ctx,
 			ctxCancel:   cancel,
+			stats:       stats,
 			idlePadding: idlePadding,
 			writtenCond: sync.Cond{
 				L: &sync.Mutex{},
-			},
-			clock: Clock{
-				stats: stats,
-				tick:  make(chan struct{}),
 			},
 		},
 	}
 
 	rv.p.writeStream.Grow(tls.DefaultBufferSize)
 
-	rv.p.wg.Go(func() {
-		rv.p.clock.Start(ctx)
-	})
 	rv.p.wg.Go(func() {
 		rv.start()
 	})
