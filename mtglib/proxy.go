@@ -192,7 +192,10 @@ func (p *Proxy) doFakeTLSHandshake(ctx *streamContext) bool {
 		return false
 	}
 
-	if err := fake.SendServerHello(ctx.clientConn, p.secret.Key[:], clientHello); err != nil {
+	gangerNoise := p.doppelGanger.NoiseParams()
+	noiseParams := fake.NoiseParams{Mean: gangerNoise.Mean, Jitter: gangerNoise.Jitter}
+
+	if err := fake.SendServerHello(ctx.clientConn, p.secret.Key[:], clientHello, noiseParams); err != nil {
 		p.logger.InfoError("cannot send welcome packet", err)
 		return false
 	}

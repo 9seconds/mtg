@@ -14,9 +14,10 @@ type ScoutConn struct {
 
 	results *ScoutConnCollected
 	rawBuf  *bytes.Buffer
+	seenCCS bool
 }
 
-func (s ScoutConn) Read(p []byte) (int, error) {
+func (s *ScoutConn) Read(p []byte) (int, error) {
 	buf := &bytes.Buffer{}
 
 	for {
@@ -31,7 +32,11 @@ func (s ScoutConn) Read(p []byte) (int, error) {
 			return 0, err
 		}
 
-		s.results.Add(recordType)
+		if recordType == tls.TypeChangeCipherSpec {
+			s.seenCCS = true
+		}
+
+		s.results.Add(recordType, int(length))
 		s.rawBuf.Write([]byte{recordType})
 		s.rawBuf.Write(tls.TLSVersion[:])
 
@@ -45,11 +50,19 @@ func (s ScoutConn) Read(p []byte) (int, error) {
 	}
 }
 
-func NewScoutConn(conn essentials.Conn, results *ScoutConnCollected) ScoutConn {
+func (s *ScoutConn) Write(p []byte) (int, error) {
+	if s.seenCCS {
+		s.results.MarkWrite()
+	}
+
+	return s.Conn.Write(p)
+}
+
+func NewScoutConn(conn essentials.Conn, results *ScoutConnCollected) *ScoutConn {
 	rawBuf := &bytes.Buffer{}
 	rawBuf.Grow(tls.MaxRecordSize)
 
-	return ScoutConn{
+	return &ScoutConn{
 		Conn:    tls.New(conn, false, false),
 		results: results,
 		rawBuf:  rawBuf,
