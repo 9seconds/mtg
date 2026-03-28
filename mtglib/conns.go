@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"time"
 
 	"github.com/9seconds/mtg/v2/essentials"
 	"github.com/pires/go-proxyproto"
@@ -94,4 +95,22 @@ func newConnProxyProtocol(source, target essentials.Conn) *connProxyProtocol {
 		Conn:       target,
 		sourceAddr: source.RemoteAddr(),
 	}
+}
+
+type connIdleTimeout struct {
+	essentials.Conn
+
+	timeout time.Duration
+}
+
+func (c connIdleTimeout) Read(b []byte) (int, error) {
+	c.Conn.SetReadDeadline(time.Now().Add(c.timeout)) //nolint: errcheck
+
+	return c.Conn.Read(b) //nolint: wrapcheck
+}
+
+func (c connIdleTimeout) Write(b []byte) (int, error) {
+	c.Conn.SetWriteDeadline(time.Now().Add(c.timeout)) //nolint: errcheck
+
+	return c.Conn.Write(b) //nolint: wrapcheck
 }

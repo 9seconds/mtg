@@ -27,6 +27,7 @@ type Proxy struct {
 
 	allowFallbackOnUnknownDC    bool
 	tolerateTimeSkewness        time.Duration
+	idleTimeout                 time.Duration
 	domainFrontingPort          int
 	domainFrontingIP            string
 	domainFrontingProxyProtocol bool
@@ -306,8 +307,8 @@ func (p *Proxy) doDomainFronting(ctx *streamContext, conn *connRewind) {
 	relay.Relay(
 		ctx,
 		ctx.logger.Named("domain-fronting"),
-		frontConn,
-		conn,
+		connIdleTimeout{Conn: frontConn, timeout: p.idleTimeout},
+		connIdleTimeout{Conn: conn, timeout: p.idleTimeout},
 	)
 }
 
@@ -339,6 +340,7 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 		domainFrontingPort:       opts.getDomainFrontingPort(),
 		domainFrontingIP:         opts.DomainFrontingIP,
 		tolerateTimeSkewness:     opts.getTolerateTimeSkewness(),
+		idleTimeout:              opts.getIdleTimeout(),
 		allowFallbackOnUnknownDC: opts.AllowFallbackOnUnknownDC,
 		telegram:                 tg,
 		doppelGanger: doppel.NewGanger(

@@ -216,6 +216,14 @@ func (p ProxyOpts) getPreferIP() string {
 	return p.PreferIP
 }
 
+func (p ProxyOpts) getIdleTimeout() time.Duration {
+	if p.IdleTimeout == 0 {
+		return DefaultIdleTimeout
+	}
+
+	return p.IdleTimeout
+}
+
 func (p ProxyOpts) getLogger(name string) Logger {
 	return p.Logger.Named(name)
 }
