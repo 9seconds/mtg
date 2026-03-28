@@ -4,10 +4,18 @@ import (
 	"context"
 	"errors"
 	"io"
+	"sync"
 
 	"github.com/9seconds/mtg/v2/essentials"
 	"github.com/9seconds/mtg/v2/mtglib/internal/tls"
 )
+
+var bufPool = sync.Pool{
+	New: func() any {
+		b := make([]byte, tls.MaxRecordPayloadSize)
+		return &b
+	},
+}
 
 func Relay(ctx context.Context, log Logger, telegramConn, clientConn essentials.Conn) {
 	defer telegramConn.Close() //nolint: errcheck
@@ -16,11 +24,11 @@ func Relay(ctx context.Context, log Logger, telegramConn, clientConn essentials.
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	go func() {
-		<-ctx.Done()
+	stop := context.AfterFunc(ctx, func() {
 		telegramConn.Close() //nolint: errcheck
 		clientConn.Close()   //nolint: errcheck
-	}()
+	})
+	defer stop()
 
 	closeChan := make(chan struct{})
 
@@ -36,12 +44,13 @@ func Relay(ctx context.Context, log Logger, telegramConn, clientConn essentials.
 }
 
 func pump(log Logger, src, dst essentials.Conn, direction string) {
-	var buf [tls.MaxRecordPayloadSize]byte
+	bp := bufPool.Get().(*[]byte)
+	defer bufPool.Put(bp)
 
 	defer src.CloseRead()  //nolint: errcheck
 	defer dst.CloseWrite() //nolint: errcheck
 
-	n, err := io.CopyBuffer(src, dst, buf[:])
+	n, err := io.CopyBuffer(src, dst, *bp)
 
 	switch {
 	case err == nil:
