@@ -218,7 +218,7 @@ func (p ProxyOpts) getPreferIP() string {
 
 func (p ProxyOpts) getIdleTimeout() time.Duration {
 	if p.IdleTimeout == 0 {
-		return DefaultIdleTimeout
+		return time.Minute
 	}
 
 	return p.IdleTimeout

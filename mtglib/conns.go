@@ -104,13 +104,13 @@ type connIdleTimeout struct {
 }
 
 func (c connIdleTimeout) Read(b []byte) (int, error) {
-	c.Conn.SetReadDeadline(time.Now().Add(c.timeout)) //nolint: errcheck
+	c.SetReadDeadline(time.Now().Add(c.timeout)) //nolint: errcheck
 
 	return c.Conn.Read(b) //nolint: wrapcheck
 }
 
 func (c connIdleTimeout) Write(b []byte) (int, error) {
-	c.Conn.SetWriteDeadline(time.Now().Add(c.timeout)) //nolint: errcheck
+	c.SetWriteDeadline(time.Now().Add(c.timeout)) //nolint: errcheck
 
 	return c.Conn.Write(b) //nolint: wrapcheck
 }
