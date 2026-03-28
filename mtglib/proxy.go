@@ -152,6 +152,7 @@ func (p *Proxy) Serve(listener net.Listener) error {
 		case errors.Is(err, ants.ErrPoolClosed):
 			return nil
 		case errors.Is(err, ants.ErrPoolOverload):
+			conn.Close() //nolint: errcheck
 			logger.Info("connection was concurrency limited")
 			p.eventStream.Send(p.ctx, NewEventConcurrencyLimited())
 		}
