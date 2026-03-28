@@ -35,6 +35,8 @@ type Config struct {
 	DomainFrontingProxyProtocol TypeBool        `json:"domainFrontingProxyProtocol"`
 	TolerateTimeSkewness        TypeDuration    `json:"tolerateTimeSkewness"`
 	Concurrency                 TypeConcurrency `json:"concurrency"`
+	PublicIPv4                  TypeIP          `json:"publicIpv4"`
+	PublicIPv6                  TypeIP          `json:"publicIpv6"`
 	DomainFronting              struct {
 		IP            TypeIP   `json:"ip"`
 		Port          TypePort `json:"port"`
