@@ -47,7 +47,7 @@ type Ganger struct {
 
 	drs bool
 
-	stats     *Stats
+	stats     Stats
 	durations []time.Duration
 	certSizes []int
 
@@ -113,7 +113,7 @@ func (g *Ganger) run() {
 	scoutCollectedChan := make(chan scoutRaidResult)
 	currentScoutCollectedChan := scoutCollectedChan
 
-	updatedStatsChan := make(chan *Stats)
+	updatedStatsChan := make(chan Stats)
 
 	g.wg.Go(func() {
 		g.runScoutRaid(scoutCollectedChan)
@@ -256,7 +256,7 @@ func NewGanger(
 		scoutRaidEach:    scoutEach,
 		scoutRaidRepeats: scoutRepeats,
 		drs:              drs,
-		stats: &Stats{
+		stats: Stats{
 			k:      StatsDefaultK,
 			lambda: StatsDefaultLambda,
 			drs:    drs,
