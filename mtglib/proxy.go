@@ -65,10 +65,10 @@ func (p *Proxy) ServeConn(conn essentials.Conn) {
 	ctx := newStreamContext(p.ctx, p.logger, conn)
 	defer ctx.Close()
 
-	go func() {
-		<-ctx.Done()
+	stop := context.AfterFunc(ctx, func() {
 		ctx.Close()
-	}()
+	})
+	defer stop()
 
 	p.eventStream.Send(ctx, NewEventStart(ctx.streamID, ctx.ClientIP()))
 	ctx.logger.Info("Stream has been started")

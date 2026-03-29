@@ -9,6 +9,13 @@ import (
 	"github.com/9seconds/mtg/v2/mtglib/internal/tls"
 )
 
+var doppelBufPool = sync.Pool{
+	New: func() any {
+		b := make([]byte, tls.MaxRecordSize)
+		return &b
+	},
+}
+
 type Conn struct {
 	essentials.Conn
 
@@ -46,7 +53,9 @@ func (c Conn) Start() {
 }
 
 func (c Conn) start() {
-	buf := [tls.MaxRecordSize]byte{}
+	bp := doppelBufPool.Get().(*[]byte)
+	buf := *bp
+	defer doppelBufPool.Put(bp)
 
 	for {
 		select {
@@ -68,7 +77,7 @@ func (c Conn) start() {
 			continue
 		}
 
-		if err := tls.WriteRecordInPlace(c.Conn, buf[:], n); err != nil {
+		if err := tls.WriteRecordInPlace(c.Conn, buf, n); err != nil {
 			c.p.ctxCancel(err)
 			return
 		}
