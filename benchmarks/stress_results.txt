@@ -1,0 +1,41 @@
+Date: 2026-03-27
+Platform: darwin/arm64, Apple M4, 10 cores
+Test: Stress benchmarks — concurrent connections
+
+=== Concurrent Relays ===
+
+100 connections × 10 MB each (1 GB total):
+  stack_16KB:  71,826 MB/s  |  peak 5.6 MB  |  1 GC / 137 us
+  pool_16KB:   68,413 MB/s  |  peak 4.5 MB  |  1 GC / 149 us
+  pool_4KB:    66,985 MB/s  |  peak 4.3 MB  |  1 GC / 108 us
+
+500 connections × 10 MB each (5 GB total):
+  stack_16KB:  68,208 MB/s  |  peak 6.0 MB  |  10 GC / 1,171 us
+  pool_16KB:   63,587 MB/s  |  peak 6.4 MB  |  8 GC / 918 us
+  pool_4KB:    69,775 MB/s  |  peak 5.6 MB  |  8 GC / 1,011 us
+
+1000 connections × 10 MB each (10 GB total):
+  stack_16KB:  68,265 MB/s  |  peak 7.5 MB  |  14 GC / 1,618 us
+  pool_16KB:   71,258 MB/s  |  peak 9.7 MB  |  9 GC / 1,138 us
+  pool_4KB:    55,186 MB/s  |  peak 6.3 MB  |  14 GC / 1,570 us
+
+2000 connections × 1 MB each (2 GB total, many short connections):
+  stack_16KB:  45,666 MB/s  |  peak 16.0 MB  |  16 GC / 1,898 us
+  pool_16KB:   53,451 MB/s  |  peak 9.0 MB   |  16 GC / 1,723 us
+  pool_4KB:    53,367 MB/s  |  peak 8.5 MB   |  17 GC / 1,970 us
+
+500 connections × 50 MB each (25 GB total, large files):
+  stack_16KB:  70,020 MB/s  |  peak 7.3 MB  |  7 GC / 868 us
+  pool_16KB:   71,983 MB/s  |  peak 7.0 MB  |  5 GC / 653 us
+  pool_4KB:    67,908 MB/s  |  peak 6.2 MB  |  6 GC / 769 us
+
+=== Pool Contention (sync.Pool.Get/Put under parallel load) ===
+100 workers:   1.25 ns/op
+500 workers:   1.30 ns/op
+1000 workers:  1.29 ns/op
+2000 workers:  1.32 ns/op
+(No contention visible — scales perfectly)
+
+=== GC Pressure (500 conns × 10 MB) ===
+stack_16KB:  63,325 MB/s  |  12 GC / 1,286 us  |  stack 2.5 MB / heap 3.3 MB
+pool_16KB:   68,286 MB/s  |  8 GC / 933 us     |  stack 2.5 MB / heap 4.4 MB

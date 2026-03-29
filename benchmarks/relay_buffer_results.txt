@@ -1,0 +1,85 @@
+Date: 2026-03-27
+Platform: darwin/arm64, Apple M4, 10 cores
+Go version: see go version output
+Test: relay buffer size impact on syscalls and throughput
+
+=== TEST A: client→telegram (through TLS layer) ===
+Buffer reads from tls.Conn.Read() → readBuf (bytes.Buffer, memcpy).
+
+BenchmarkClientToTelegram_TLSRead/buf=4096-10      861    1405852 ns/op  7458.65 MB/s  322.0 underlying_reads  122929 B/op  1309 allocs/op
+BenchmarkClientToTelegram_TLSRead/buf=4096-10      853    1401737 ns/op  7480.55 MB/s  322.0 underlying_reads  122916 B/op  1309 allocs/op
+BenchmarkClientToTelegram_TLSRead/buf=4096-10      907    1361807 ns/op  7699.89 MB/s  322.0 underlying_reads  122919 B/op  1309 allocs/op
+BenchmarkClientToTelegram_TLSRead/buf=8192-10      855    1402162 ns/op  7478.28 MB/s  322.0 underlying_reads  127009 B/op  1309 allocs/op
+BenchmarkClientToTelegram_TLSRead/buf=8192-10      850    1416311 ns/op  7403.57 MB/s  322.0 underlying_reads  127011 B/op  1309 allocs/op
+BenchmarkClientToTelegram_TLSRead/buf=8192-10      850    1403007 ns/op  7473.78 MB/s  322.0 underlying_reads  127014 B/op  1309 allocs/op
+BenchmarkClientToTelegram_TLSRead/buf=16379-10     867    1393915 ns/op  7522.52 MB/s  322.0 underlying_reads  135204 B/op  1309 allocs/op
+BenchmarkClientToTelegram_TLSRead/buf=16379-10     859    1403641 ns/op  7470.40 MB/s  322.0 underlying_reads  135201 B/op  1309 allocs/op
+BenchmarkClientToTelegram_TLSRead/buf=16379-10     855    1390302 ns/op  7542.07 MB/s  322.0 underlying_reads  135198 B/op  1309 allocs/op
+
+=== TEST B: telegram→client (raw TCP, no TLS) ===
+Buffer directly determines read(2) size on raw connection.
+
+BenchmarkTelegramToClient_RawRead/buf=4096-10      219    5389256 ns/op  1945.68 MB/s  1281 underlying_reads  10500512 B/op  28 allocs/op
+BenchmarkTelegramToClient_RawRead/buf=4096-10      222    5377725 ns/op  1949.85 MB/s  1281 underlying_reads  10501322 B/op  28 allocs/op
+BenchmarkTelegramToClient_RawRead/buf=4096-10      222    5376614 ns/op  1950.25 MB/s  1281 underlying_reads  10497520 B/op  26 allocs/op
+BenchmarkTelegramToClient_RawRead/buf=8192-10      223    5389741 ns/op  1945.50 MB/s  1281 underlying_reads  10501422 B/op  26 allocs/op
+BenchmarkTelegramToClient_RawRead/buf=8192-10      223    5400624 ns/op  1941.58 MB/s  1281 underlying_reads  10501379 B/op  26 allocs/op
+BenchmarkTelegramToClient_RawRead/buf=8192-10      222    5396905 ns/op  1942.92 MB/s  1281 underlying_reads  10501594 B/op  26 allocs/op
+BenchmarkTelegramToClient_RawRead/buf=16379-10     223    5395730 ns/op  1943.34 MB/s  1281 underlying_reads  10509503 B/op  26 allocs/op
+BenchmarkTelegramToClient_RawRead/buf=16379-10     220    5382701 ns/op  1948.05 MB/s  1281 underlying_reads  10509719 B/op  26 allocs/op
+BenchmarkTelegramToClient_RawRead/buf=16379-10     220    5417737 ns/op  1935.45 MB/s  1281 underlying_reads  10509734 B/op  26 allocs/op
+
+=== TEST C: Media download (burst) ===
+BenchmarkMediaDownload_Burst/buf=4096-10       1390    871425 ns/op  12032.89 MB/s  1281 underlying_reads  5573 B/op  16 allocs/op
+BenchmarkMediaDownload_Burst/buf=4096-10       1448    829255 ns/op  12644.79 MB/s  1281 underlying_reads  5572 B/op  16 allocs/op
+BenchmarkMediaDownload_Burst/buf=4096-10       1448    827359 ns/op  12673.78 MB/s  1281 underlying_reads  5568 B/op  16 allocs/op
+BenchmarkMediaDownload_Burst/buf=8192-10       1443    827113 ns/op  12677.54 MB/s  1281 underlying_reads  9666 B/op  16 allocs/op
+BenchmarkMediaDownload_Burst/buf=8192-10       1447    823708 ns/op  12729.94 MB/s  1281 underlying_reads  9667 B/op  16 allocs/op
+BenchmarkMediaDownload_Burst/buf=8192-10       1455    827683 ns/op  12668.80 MB/s  1281 underlying_reads  9666 B/op  16 allocs/op
+BenchmarkMediaDownload_Burst/buf=16379-10      1448    822379 ns/op  12750.52 MB/s  1281 underlying_reads  17858 B/op  16 allocs/op
+BenchmarkMediaDownload_Burst/buf=16379-10      1430    827035 ns/op  12678.74 MB/s  1281 underlying_reads  17858 B/op  16 allocs/op
+BenchmarkMediaDownload_Burst/buf=16379-10      1370    824312 ns/op  12720.62 MB/s  1281 underlying_reads  17857 B/op  16 allocs/op
+
+=== TEST C: Media download (MTU-sized chunks ~1460 bytes) ===
+BenchmarkMediaDownload_MTU/buf=4096-10         319    3723040 ns/op  2816.45 MB/s  7184 underlying_reads  7128 B/op  17 allocs/op
+BenchmarkMediaDownload_MTU/buf=4096-10         325    3682345 ns/op  2847.58 MB/s  7184 underlying_reads  7128 B/op  17 allocs/op
+BenchmarkMediaDownload_MTU/buf=4096-10         324    3695782 ns/op  2837.22 MB/s  7184 underlying_reads  7125 B/op  17 allocs/op
+BenchmarkMediaDownload_MTU/buf=8192-10         321    3691560 ns/op  2840.47 MB/s  7184 underlying_reads  11236 B/op  17 allocs/op
+BenchmarkMediaDownload_MTU/buf=8192-10         320    3689589 ns/op  2841.99 MB/s  7184 underlying_reads  11229 B/op  17 allocs/op
+BenchmarkMediaDownload_MTU/buf=8192-10         322    3706004 ns/op  2829.40 MB/s  7184 underlying_reads  11233 B/op  17 allocs/op
+BenchmarkMediaDownload_MTU/buf=16379-10        321    3700978 ns/op  2833.24 MB/s  7184 underlying_reads  19419 B/op  17 allocs/op
+BenchmarkMediaDownload_MTU/buf=16379-10        324    3683697 ns/op  2846.53 MB/s  7184 underlying_reads  19438 B/op  17 allocs/op
+BenchmarkMediaDownload_MTU/buf=16379-10        326    3671021 ns/op  2856.36 MB/s  7184 underlying_reads  19399 B/op  17 allocs/op
+
+=== TEST C: Media upload (through TLS) ===
+BenchmarkMediaUpload_TLS/buf=4096-10          876    1373218 ns/op  7635.91 MB/s  322.0 underlying_reads  122915 B/op  1309 allocs/op
+BenchmarkMediaUpload_TLS/buf=4096-10          871    1371760 ns/op  7644.02 MB/s  322.0 underlying_reads  122913 B/op  1309 allocs/op
+BenchmarkMediaUpload_TLS/buf=4096-10          882    1374420 ns/op  7629.22 MB/s  322.0 underlying_reads  122916 B/op  1309 allocs/op
+BenchmarkMediaUpload_TLS/buf=8192-10          865    1371958 ns/op  7642.92 MB/s  322.0 underlying_reads  127009 B/op  1309 allocs/op
+BenchmarkMediaUpload_TLS/buf=8192-10          871    1367871 ns/op  7665.75 MB/s  322.0 underlying_reads  127010 B/op  1309 allocs/op
+BenchmarkMediaUpload_TLS/buf=8192-10          873    1367689 ns/op  7666.77 MB/s  322.0 underlying_reads  127015 B/op  1309 allocs/op
+BenchmarkMediaUpload_TLS/buf=16379-10         879    1359754 ns/op  7711.51 MB/s  322.0 underlying_reads  135198 B/op  1309 allocs/op
+BenchmarkMediaUpload_TLS/buf=16379-10         865    1364028 ns/op  7687.35 MB/s  322.0 underlying_reads  135198 B/op  1309 allocs/op
+BenchmarkMediaUpload_TLS/buf=16379-10         961    1340296 ns/op  7823.47 MB/s  322.0 underlying_reads  135201 B/op  1309 allocs/op
+
+=== TEST D: Small messages - telegram→client ===
+BenchmarkSmallMessages_TelegramToClient/buf=4096-10      232    5104819 ns/op  391.79 MB/s  10001 underlying_reads  5797 B/op  17 allocs/op
+BenchmarkSmallMessages_TelegramToClient/buf=4096-10      235    5082601 ns/op  393.50 MB/s  10001 underlying_reads  5842 B/op  17 allocs/op
+BenchmarkSmallMessages_TelegramToClient/buf=4096-10      238    5055601 ns/op  395.60 MB/s  10001 underlying_reads  5820 B/op  17 allocs/op
+BenchmarkSmallMessages_TelegramToClient/buf=8192-10      236    5044614 ns/op  396.46 MB/s  10001 underlying_reads  9917 B/op  17 allocs/op
+BenchmarkSmallMessages_TelegramToClient/buf=8192-10      236    5095263 ns/op  392.52 MB/s  10001 underlying_reads  9918 B/op  17 allocs/op
+BenchmarkSmallMessages_TelegramToClient/buf=8192-10      242    4991226 ns/op  400.70 MB/s  10001 underlying_reads  9924 B/op  17 allocs/op
+BenchmarkSmallMessages_TelegramToClient/buf=16379-10     242    4996066 ns/op  400.31 MB/s  10001 underlying_reads  18111 B/op  17 allocs/op
+BenchmarkSmallMessages_TelegramToClient/buf=16379-10     237    4976918 ns/op  401.86 MB/s  10001 underlying_reads  18121 B/op  17 allocs/op
+BenchmarkSmallMessages_TelegramToClient/buf=16379-10     241    4970618 ns/op  402.36 MB/s  10001 underlying_reads  18103 B/op  17 allocs/op
+
+=== TEST D: Small messages - client→telegram (TLS) ===
+BenchmarkSmallMessages_ClientToTelegram/buf=4096-10      1209    987819 ns/op  2024.66 MB/s  64.00 underlying_reads  340302 B/op  20024 allocs/op
+BenchmarkSmallMessages_ClientToTelegram/buf=4096-10      1225    987831 ns/op  2024.64 MB/s  64.00 underlying_reads  340296 B/op  20024 allocs/op
+BenchmarkSmallMessages_ClientToTelegram/buf=4096-10      1208    988322 ns/op  2023.63 MB/s  64.00 underlying_reads  340311 B/op  20024 allocs/op
+BenchmarkSmallMessages_ClientToTelegram/buf=8192-10      1210    987411 ns/op  2025.50 MB/s  64.00 underlying_reads  344393 B/op  20024 allocs/op
+BenchmarkSmallMessages_ClientToTelegram/buf=8192-10      1209    987725 ns/op  2024.86 MB/s  64.00 underlying_reads  344394 B/op  20024 allocs/op
+BenchmarkSmallMessages_ClientToTelegram/buf=8192-10      1214    989274 ns/op  2021.68 MB/s  64.00 underlying_reads  344400 B/op  20024 allocs/op
+BenchmarkSmallMessages_ClientToTelegram/buf=16379-10     1203    986219 ns/op  2027.95 MB/s  64.00 underlying_reads  352581 B/op  20024 allocs/op
+BenchmarkSmallMessages_ClientToTelegram/buf=16379-10     1212    993873 ns/op  2012.33 MB/s  64.00 underlying_reads  352589 B/op  20024 allocs/op
+BenchmarkSmallMessages_ClientToTelegram/buf=16379-10     1203    991973 ns/op  2016.18 MB/s  64.00 underlying_reads  352593 B/op  20024 allocs/op

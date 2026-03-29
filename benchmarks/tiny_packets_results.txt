@@ -1,0 +1,23 @@
+Date: 2026-03-28
+Platform: darwin/arm64, Apple M4, 10 cores
+Test: Massive tiny packets stress test
+
+=== 100 connections × 50K packets × 50 bytes (250 MB total, 5M reads) ===
+stack_16KB:  410 MB/s  8.59M pps  |  stack 1.2 MB / heap 3.1 MB  |  0 GC
+pool_16KB:   411 MB/s  8.62M pps  |  stack 1.4 MB / heap 2.1 MB  |  0 GC
+pool_4KB:    432 MB/s  9.06M pps  |  stack 1.5 MB / heap 2.0 MB  |  0 GC
+
+=== 500 connections × 10K packets × 200 bytes (1 GB total, 5M reads) ===
+stack_16KB:  1,678 MB/s  8.80M pps  |  stack 2.3 MB / heap 2.9 MB  |  3 GC / 333 us
+pool_16KB:   1,721 MB/s  9.02M pps  |  stack 2.3 MB / heap 3.3 MB  |  0 GC
+pool_4KB:    1,727 MB/s  9.05M pps  |  stack 2.2 MB / heap 2.8 MB  |  0 GC
+
+=== 1000 connections × 20K packets × 100 bytes (2 GB total, 20M reads) ===
+stack_16KB:  854 MB/s  8.96M pps  |  stack 2.9 MB / heap 2.4 MB  |  6 GC / 765 us
+pool_16KB:   828 MB/s  8.68M pps  |  stack 3.1 MB / heap 5.3 MB  |  1 GC / 143 us
+pool_4KB:    855 MB/s  8.96M pps  |  stack 2.8 MB / heap 3.2 MB  |  1 GC / 133 us
+
+=== 2000 connections × 5K packets × 50 bytes (500 MB total, 10M reads) ===
+stack_16KB:  424 MB/s  8.90M pps  |  stack 3.7 MB / heap 3.5 MB  |  11 GC / 1,545 us
+pool_16KB:   430 MB/s  9.01M pps  |  stack 4.6 MB / heap 5.0 MB  |  1 GC / 120 us
+pool_4KB:    427 MB/s  8.96M pps  |  stack 4.6 MB / heap 4.3 MB  |  1 GC / 126 us

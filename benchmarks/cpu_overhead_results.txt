@@ -1,0 +1,28 @@
+Date: 2026-03-27
+Platform: darwin/arm64, Apple M4, 10 cores
+Test: CPU overhead of stack vs pool buffer allocation
+
+=== Raw relay (no TLS), 10 MB throughput ===
+stack_16KB:  951-961 ns/op   10,906-11,018 MB/s
+pool_16KB:   957-978 ns/op   10,724-10,952 MB/s
+pool_4KB:    953-979 ns/op   10,713-11,004 MB/s
+
+Delta: <2% — within noise
+
+=== TLS relay (client→telegram direction), 10 MB ===
+stack_16KB:  1,071-1,093 ns/op   9,591-9,788 MB/s
+pool_16KB:   1,089-1,106 ns/op   9,480-9,633 MB/s
+pool_4KB:    1,083-1,092 ns/op   9,599-9,676 MB/s
+
+Delta: <2% — within noise
+
+=== Isolated Pool.Get/Put overhead ===
+7.26-7.33 ns/op (0 allocs)
+
+=== Isolated stack alloc ===
+0.25 ns/op (0 allocs)
+
+=== Analysis ===
+Pool.Get+Put adds ~7 ns overhead per connection (one-time, not per read).
+For a 10 MB transfer taking ~1,000,000 ns, this is 0.0007% overhead.
+Throughput is identical within measurement noise for all three variants.

@@ -15,7 +15,7 @@ require (
 	github.com/prometheus/client_golang v1.23.2
 	github.com/prometheus/common v0.67.5 // indirect
 	github.com/prometheus/procfs v0.20.1 // indirect
-	github.com/rs/zerolog v1.34.0
+	github.com/rs/zerolog v1.35.0
 	github.com/smira/go-statsd v1.3.4
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/stretchr/testify v1.11.1
@@ -29,7 +29,7 @@ require (
 require (
 	github.com/beevik/ntp v1.5.0
 	github.com/ncruces/go-dns v1.3.2
-	github.com/pelletier/go-toml/v2 v2.2.4
+	github.com/pelletier/go-toml/v2 v2.3.0
 	github.com/pires/go-proxyproto v0.11.0
 	github.com/things-go/go-socks5 v0.1.0
 	github.com/txthinking/socks5 v0.0.0-20251011041537-5c31f201a10e

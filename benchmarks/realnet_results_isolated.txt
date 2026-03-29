@@ -1,0 +1,277 @@
+Real TCP benchmark results — isolated processes (one process per strategy per concurrency level)
+Server: Amsterdam VPS, 1 vCPU, 961 MB RAM, Linux 6.8.0-106-generic, GOMAXPROCS=1
+Date: 2026-03-28
+Binary: benchmarks/cmd/realnet/main.go
+
+=== SUMMARY ===
+
+| Scenario         | Strategy | Duration | Throughput | Peak mem | GC cycles | GC pause total |
+|------------------|----------|----------|------------|----------|-----------|----------------|
+| 500 conn × 2MB   | stack    | 28.5s    | 70.1 MB/s  | 23.1 MB  | 5         | 342µs          |
+| 500 conn × 2MB   | pool     | 31.6s    | 63.2 MB/s  | 31.8 MB  | 4         | 341µs          |
+| 1000 conn × 1MB  | stack    | 31.6s    | 63.2 MB/s  | 40.0 MB  | 6         | 352µs          |
+| 1000 conn × 1MB  | pool     | 28.9s    | 69.2 MB/s  | 62.9 MB  | 5         | 576µs          |
+| 2000 conn × 1MB  | stack    | 2m17s    | 24.0 MB/s  | 61.4 MB  | 7         | 748µs          |
+| 2000 conn × 1MB  | pool     | 1m6s     | 60.4 MB/s  | 125.5 MB | 6         | 570µs          |
+
+Notes:
+- 2000 conn stack: connection timeouts, only 3.2 GB of 4.0 GB transferred
+- 2000 conn pool: clean run, 3.9 GB of 4.0 GB transferred (minor timeouts)
+- Peak memory = StackInuse + HeapInuse, sampled every 10ms
+- Each strategy runs in a fresh process (no baseline contamination)
+
+=== RAW OUTPUT ===
+
+--- 500 conns: STACK ONLY ---
+
+=== stack strategy, 500 connections, 2.0 MB per conn ===
+  [2.0s] 140.9 MB transferred, 70.4 MB/s
+  [4.0s] 300.7 MB transferred, 75.2 MB/s
+  [6.0s] 447.0 MB transferred, 74.5 MB/s
+  [8.0s] 583.9 MB transferred, 73.0 MB/s
+  [10.0s] 722.0 MB transferred, 72.2 MB/s
+  [12.0s] 868.4 MB transferred, 72.4 MB/s
+  [14.0s] 1010.1 MB transferred, 72.2 MB/s
+  [16.0s] 1.1 GB transferred, 71.6 MB/s
+  [18.0s] 1.3 GB transferred, 71.5 MB/s
+  [20.0s] 1.4 GB transferred, 71.1 MB/s
+  [22.0s] 1.5 GB transferred, 70.9 MB/s
+  [24.0s] 1.7 GB transferred, 70.6 MB/s
+  [26.0s] 1.8 GB transferred, 70.1 MB/s
+  [28.0s] 1.9 GB transferred, 70.0 MB/s
+
+Results:
+  Duration:       28.546s
+  Total data:     2.0 GB
+  Throughput:     70.1 MB/s
+  Peak memory:    23.1 MB (baseline 440.0 KB, delta 22.7 MB)
+  Stack (before): 224.0 KB → (after): 1.5 MB
+  Heap  (before): 216.0 KB → (after): 1.6 MB
+  Goroutines:     3 → 3
+  GC cycles:      5
+  GC total pause: 341.566µs
+  GC avg pause:   68.313µs
+
+--- 500 conns: POOL ONLY ---
+
+=== pool strategy, 500 connections, 2.0 MB per conn ===
+  [2.0s] 109.5 MB transferred, 54.8 MB/s
+  [4.0s] 233.1 MB transferred, 58.3 MB/s
+  [6.0s] 355.3 MB transferred, 59.2 MB/s
+  [8.0s] 475.9 MB transferred, 59.5 MB/s
+  [10.0s] 592.7 MB transferred, 59.3 MB/s
+  [12.0s] 707.9 MB transferred, 59.0 MB/s
+  [14.0s] 840.1 MB transferred, 60.0 MB/s
+  [16.0s] 977.7 MB transferred, 61.1 MB/s
+  [18.0s] 1.1 GB transferred, 62.4 MB/s
+  [20.0s] 1.2 GB transferred, 62.8 MB/s
+  [22.0s] 1.4 GB transferred, 62.8 MB/s
+  [24.0s] 1.5 GB transferred, 63.1 MB/s
+  [26.0s] 1.6 GB transferred, 62.8 MB/s
+  [28.0s] 1.7 GB transferred, 63.0 MB/s
+  [30.0s] 1.9 GB transferred, 63.4 MB/s
+
+Results:
+  Duration:       31.631s
+  Total data:     2.0 GB
+  Throughput:     63.2 MB/s
+  Peak memory:    31.8 MB (baseline 440.0 KB, delta 31.4 MB)
+  Stack (before): 224.0 KB → (after): 1.5 MB
+  Heap  (before): 216.0 KB → (after): 17.3 MB
+  Goroutines:     3 → 3
+  GC cycles:      4
+  GC total pause: 341.071µs
+  GC avg pause:   85.267µs
+
+--- 1000 conns: STACK ONLY ---
+
+=== stack strategy, 1000 connections, 1.0 MB per conn ===
+  [2.0s] 109.6 MB transferred, 54.8 MB/s
+  [4.0s] 252.7 MB transferred, 63.2 MB/s
+  [6.0s] 401.2 MB transferred, 66.9 MB/s
+  [8.0s] 524.8 MB transferred, 65.6 MB/s
+  [10.0s] 638.9 MB transferred, 63.9 MB/s
+  [12.0s] 763.2 MB transferred, 63.6 MB/s
+  [14.0s] 900.3 MB transferred, 64.3 MB/s
+  [16.0s] 1.0 GB transferred, 65.2 MB/s
+  [18.0s] 1.1 GB transferred, 65.2 MB/s
+  [20.0s] 1.3 GB transferred, 64.3 MB/s
+  [22.0s] 1.4 GB transferred, 63.7 MB/s
+  [24.0s] 1.5 GB transferred, 63.4 MB/s
+  [26.0s] 1.6 GB transferred, 63.1 MB/s
+  [28.0s] 1.7 GB transferred, 63.1 MB/s
+  [30.0s] 1.9 GB transferred, 63.3 MB/s
+
+Results:
+  Duration:       31.629s
+  Total data:     2.0 GB
+  Throughput:     63.2 MB/s
+  Peak memory:    40.0 MB (baseline 440.0 KB, delta 39.6 MB)
+  Stack (before): 224.0 KB → (after): 1.2 MB
+  Heap  (before): 216.0 KB → (after): 2.8 MB
+  Goroutines:     3 → 3
+  GC cycles:      6
+  GC total pause: 352.22µs
+  GC avg pause:   58.703µs
+
+--- 1000 conns: POOL ONLY ---
+
+=== pool strategy, 1000 connections, 1.0 MB per conn ===
+  [2.0s] 113.3 MB transferred, 56.6 MB/s
+  [4.0s] 253.0 MB transferred, 63.3 MB/s
+  [6.0s] 398.7 MB transferred, 66.4 MB/s
+  [8.0s] 548.1 MB transferred, 68.5 MB/s
+  [10.0s] 693.0 MB transferred, 69.3 MB/s
+  [12.0s] 833.5 MB transferred, 69.5 MB/s
+  [14.0s] 980.1 MB transferred, 70.0 MB/s
+  [16.0s] 1.1 GB transferred, 70.4 MB/s
+  [18.0s] 1.2 GB transferred, 70.2 MB/s
+  [20.0s] 1.4 GB transferred, 70.2 MB/s
+  [22.0s] 1.5 GB transferred, 70.2 MB/s
+  [24.0s] 1.6 GB transferred, 69.9 MB/s
+  [26.0s] 1.8 GB transferred, 69.7 MB/s
+  [28.0s] 1.9 GB transferred, 69.5 MB/s
+
+Results:
+  Duration:       28.899s
+  Total data:     2.0 GB
+  Throughput:     69.2 MB/s
+  Peak memory:    62.9 MB (baseline 440.0 KB, delta 62.5 MB)
+  Stack (before): 224.0 KB → (after): 320.0 KB
+  Heap  (before): 216.0 KB → (after): 34.2 MB
+  Goroutines:     3 → 3
+  GC cycles:      5
+  GC total pause: 575.835µs
+  GC avg pause:   115.167µs
+
+--- 2000 conns: STACK ONLY ---
+
+=== stack strategy, 2000 connections, 1.0 MB per conn ===
+  [2.0s] 90.0 MB transferred, 45.0 MB/s
+  [4.0s] 96.0 MB transferred, 24.0 MB/s
+  [6.0s] 102.0 MB transferred, 17.0 MB/s
+  [8.0s] 106.0 MB transferred, 13.2 MB/s
+  [10.0s] 108.0 MB transferred, 10.8 MB/s
+  [12.0s] 169.1 MB transferred, 14.1 MB/s
+  [14.0s] 246.0 MB transferred, 17.6 MB/s
+  [16.0s] 246.0 MB transferred, 15.4 MB/s
+  [18.0s] 246.0 MB transferred, 13.7 MB/s
+  [20.0s] 266.0 MB transferred, 13.3 MB/s
+  [22.0s] 274.0 MB transferred, 12.5 MB/s
+  [24.0s] 274.0 MB transferred, 11.4 MB/s
+  [26.0s] 274.0 MB transferred, 10.5 MB/s
+  [28.0s] 276.0 MB transferred, 9.9 MB/s
+  [30.0s] 276.0 MB transferred, 9.2 MB/s
+  [32.0s] 302.0 MB transferred, 9.4 MB/s
+  [34.0s] 302.0 MB transferred, 8.9 MB/s
+  [36.0s] 302.0 MB transferred, 8.4 MB/s
+  [38.0s] 437.0 MB transferred, 11.5 MB/s
+  [40.0s] 578.4 MB transferred, 14.5 MB/s
+  [42.0s] 719.2 MB transferred, 17.1 MB/s
+  [44.0s] 859.6 MB transferred, 19.5 MB/s
+  [46.0s] 996.6 MB transferred, 21.7 MB/s
+  [48.0s] 1.1 GB transferred, 23.7 MB/s
+  [50.0s] 1.2 GB transferred, 25.5 MB/s
+  [52.0s] 1.4 GB transferred, 27.2 MB/s
+  [54.0s] 1.5 GB transferred, 28.8 MB/s
+  [56.0s] 1.6 GB transferred, 30.2 MB/s
+  [58.0s] 1.8 GB transferred, 31.6 MB/s
+  [60.0s] 1.9 GB transferred, 31.8 MB/s
+  [62.0s] 1.9 GB transferred, 30.8 MB/s
+  [64.0s] 1.9 GB transferred, 29.8 MB/s
+  [66.0s] 1.9 GB transferred, 29.6 MB/s
+  [68.0s] 1.9 GB transferred, 28.7 MB/s
+  [70.0s] 2.0 GB transferred, 29.6 MB/s
+  [72.0s] 2.2 GB transferred, 30.8 MB/s
+  [74.0s] 2.3 GB transferred, 31.9 MB/s
+  [76.0s] 2.4 GB transferred, 32.9 MB/s
+  [78.0s] 2.6 GB transferred, 33.9 MB/s
+  [80.0s] 2.7 GB transferred, 34.8 MB/s
+  [82.0s] 2.8 GB transferred, 35.6 MB/s
+  [84.0s] 3.0 GB transferred, 36.5 MB/s
+  [86.0s] 3.1 GB transferred, 37.3 MB/s
+  [88.0s] 3.2 GB transferred, 36.8 MB/s
+  [90.0s] 3.2 GB transferred, 36.0 MB/s
+  [92.0s] 3.2 GB transferred, 35.2 MB/s
+  [94.0s] 3.2 GB transferred, 34.6 MB/s
+  [96.0s] 3.2 GB transferred, 33.9 MB/s
+  [98.0s] 3.2 GB transferred, 33.2 MB/s
+  [100.0s] 3.2 GB transferred, 32.5 MB/s
+  [102.0s] 3.2 GB transferred, 31.9 MB/s
+  [104.0s] 3.2 GB transferred, 31.3 MB/s
+  [106.0s] 3.2 GB transferred, 31.1 MB/s
+  [108.0s] 3.2 GB transferred, 30.6 MB/s
+  [110.0s] 3.2 GB transferred, 30.0 MB/s
+  [112.0s] 3.2 GB transferred, 29.5 MB/s
+  [114.0s] 3.2 GB transferred, 28.9 MB/s
+  [116.0s] 3.2 GB transferred, 28.4 MB/s
+  [118.0s] 3.2 GB transferred, 28.0 MB/s
+  [120.0s] 3.2 GB transferred, 27.5 MB/s
+  [122.0s] 3.2 GB transferred, 27.0 MB/s
+  [124.0s] 3.2 GB transferred, 26.6 MB/s
+  [126.0s] 3.2 GB transferred, 26.2 MB/s
+  [128.0s] 3.2 GB transferred, 25.8 MB/s
+  [130.0s] 3.2 GB transferred, 25.4 MB/s
+  [132.0s] 3.2 GB transferred, 25.0 MB/s
+client dial: dial tcp 127.0.0.1:36981: connect: connection timed out (x9)
+
+Results:
+  Duration:       2m17.37s
+  Total data:     3.2 GB
+  Throughput:     24.0 MB/s
+  Peak memory:    61.4 MB (baseline 440.0 KB, delta 61.0 MB)
+  Stack (before): 224.0 KB → (after): 1.7 MB
+  Heap  (before): 216.0 KB → (after): 3.4 MB
+  Goroutines:     3 → 3
+  GC cycles:      7
+  GC total pause: 747.714µs
+  GC avg pause:   106.816µs
+
+--- 2000 conns: POOL ONLY ---
+
+=== pool strategy, 2000 connections, 1.0 MB per conn ===
+  [2.0s] 44.2 MB transferred, 22.1 MB/s
+  [4.0s] 165.1 MB transferred, 41.3 MB/s
+  [6.0s] 294.2 MB transferred, 49.0 MB/s
+  [8.0s] 420.4 MB transferred, 52.5 MB/s
+  [10.0s] 542.3 MB transferred, 54.2 MB/s
+  [12.0s] 665.4 MB transferred, 55.5 MB/s
+  [14.0s] 794.3 MB transferred, 56.7 MB/s
+  [16.0s] 924.0 MB transferred, 57.7 MB/s
+  [18.0s] 1.0 GB transferred, 58.2 MB/s
+  [20.0s] 1.1 GB transferred, 58.1 MB/s
+  [22.0s] 1.2 GB transferred, 58.1 MB/s
+  [24.0s] 1.4 GB transferred, 58.3 MB/s
+  [26.0s] 1.5 GB transferred, 58.5 MB/s
+  [28.0s] 1.6 GB transferred, 58.9 MB/s
+  [30.0s] 1.7 GB transferred, 59.0 MB/s
+  [32.0s] 1.8 GB transferred, 59.1 MB/s
+  [34.0s] 2.0 GB transferred, 59.4 MB/s
+  [36.0s] 2.1 GB transferred, 59.5 MB/s
+  [38.0s] 2.2 GB transferred, 59.5 MB/s
+  [40.0s] 2.3 GB transferred, 59.6 MB/s
+  [42.0s] 2.4 GB transferred, 59.6 MB/s
+  [44.0s] 2.6 GB transferred, 59.9 MB/s
+  [46.0s] 2.7 GB transferred, 60.1 MB/s
+  [48.0s] 2.8 GB transferred, 60.4 MB/s
+  [50.0s] 3.0 GB transferred, 60.5 MB/s
+  [52.0s] 3.1 GB transferred, 60.6 MB/s
+  [54.0s] 3.2 GB transferred, 60.7 MB/s
+  [56.0s] 3.3 GB transferred, 60.9 MB/s
+  [58.0s] 3.4 GB transferred, 60.5 MB/s
+  [60.0s] 3.5 GB transferred, 60.4 MB/s
+  [62.0s] 3.7 GB transferred, 60.4 MB/s
+  [64.0s] 3.8 GB transferred, 60.5 MB/s
+  [66.0s] 3.9 GB transferred, 60.5 MB/s
+
+Results:
+  Duration:       1m6.189s
+  Total data:     3.9 GB
+  Throughput:     60.4 MB/s
+  Peak memory:    125.5 MB (baseline 440.0 KB, delta 125.0 MB)
+  Stack (before): 224.0 KB → (after): 1.3 MB
+  Heap  (before): 216.0 KB → (after): 68.0 MB
+  Goroutines:     3 → 3
+  GC cycles:      6
+  GC total pause: 570.3µs
+  GC avg pause:   95.05µs

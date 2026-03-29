@@ -1,0 +1,24 @@
+Date: 2026-03-27
+Platform: darwin/arm64, Apple M4, 10 cores
+
+=== Stack-allocated buffer (var buf [16379]byte) ===
+BenchmarkStackMemory/goroutines=100-10      32768 stack_per_goroutine   3276800 total_bytes
+BenchmarkStackMemory/goroutines=500-10      32768 stack_per_goroutine  16384000 total_bytes (~16 MB)
+BenchmarkStackMemory/goroutines=1000-10     32768 stack_per_goroutine  32768000 total_bytes (~32 MB)
+BenchmarkStackMemory/goroutines=2000-10     32768 stack_per_goroutine  65536000 total_bytes (~64 MB)
+
+=== Pool-allocated buffer (16 KB) ===
+BenchmarkPoolMemory_16KB/goroutines=100-10      0 stack_per_goroutine         0 total_bytes
+BenchmarkPoolMemory_16KB/goroutines=500-10     65-196 stack_per_goroutine  32768-98304 total_bytes
+BenchmarkPoolMemory_16KB/goroutines=1000-10   360-819 stack_per_goroutine  360448-835584 total_bytes
+BenchmarkPoolMemory_16KB/goroutines=2000-10  1049-1196 stack_per_goroutine  2121728-2408448 total_bytes (~2.1-2.3 MB)
+
+=== Pool-allocated buffer (4 KB) ===
+BenchmarkPoolMemory_4KB/goroutines=100-10       0 stack_per_goroutine         0 total_bytes
+BenchmarkPoolMemory_4KB/goroutines=500-10    0-262 stack_per_goroutine      0-131072 total_bytes
+BenchmarkPoolMemory_4KB/goroutines=1000-10  491-655 stack_per_goroutine  491520-655360 total_bytes
+BenchmarkPoolMemory_4KB/goroutines=2000-10 1130-1229 stack_per_goroutine  2277376-2465792 total_bytes (~2.3 MB)
+
+=== Burst test (500 goroutines per burst, 2 bursts) ===
+BenchmarkPoolMemory_Burst/poolBuf=4096-10    idle_heap=5.6-8.1 MB  burst2_stack=2.7 MB
+BenchmarkPoolMemory_Burst/poolBuf=16379-10   idle_heap=11.9-13.9 MB  burst2_stack=2.7 MB
