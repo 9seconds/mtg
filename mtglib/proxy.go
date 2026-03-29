@@ -111,13 +111,11 @@ func (p *Proxy) ServeConn(conn essentials.Conn) {
 		return
 	}
 
-	countedClientConn := newCountingConn(ctx.clientConn, p.stats, ctx.secretName)
-
 	relay.Relay(
 		ctx,
 		ctx.logger.Named("relay"),
-		ctx.telegramConn,
-		countedClientConn,
+		connIdleTimeout{Conn: ctx.telegramConn, timeout: p.idleTimeout},
+		newCountingConn(connIdleTimeout{Conn: ctx.clientConn, timeout: p.idleTimeout}, p.stats, ctx.secretName),
 	)
 }
 

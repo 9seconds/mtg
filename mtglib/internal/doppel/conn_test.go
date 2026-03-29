@@ -63,7 +63,7 @@ func (suite *ConnTestSuite) TearDownTest() {
 }
 
 func (suite *ConnTestSuite) makeConn() Conn {
-	return NewConn(suite.ctx, suite.connMock, &Stats{
+	return NewConn(suite.ctx, suite.connMock, Stats{
 		k:      2.0,
 		lambda: 0.01,
 	})
@@ -152,7 +152,7 @@ func (suite *ConnTestSuite) TestStopDoesNotDeadlockWhenStartIsWaiting() {
 			ctx, cancel := context.WithCancel(suite.ctx)
 			defer cancel()
 
-			c := NewConn(ctx, suite.connMock, &Stats{
+			c := NewConn(ctx, suite.connMock, Stats{
 				k:      2.0,
 				lambda: 0.01,
 			})
