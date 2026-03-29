@@ -332,13 +332,20 @@ func (d *Doctor) checkSecretHost(resolver *net.Resolver, ntw mtglib.Network) boo
 		return false
 	}
 
-	ourIP4 := getIP(ntw, "tcp4")
-	ourIP6 := getIP(ntw, "tcp6")
+	ourIP4 := d.conf.PublicIPv4.Get(nil)
+	if ourIP4 == nil {
+		ourIP4 = getIP(ntw, "tcp4")
+	}
+
+	ourIP6 := d.conf.PublicIPv6.Get(nil)
+	if ourIP6 == nil {
+		ourIP6 = getIP(ntw, "tcp6")
+	}
 
 	if ourIP4 == nil && ourIP6 == nil {
 		tplError.Execute(os.Stdout, map[string]any{ //nolint: errcheck
 			"description": "cannot detect public IP address",
-			"error":       errors.New("ifconfig.co is unreachable for both IPv4 and IPv6"),
+			"error":       errors.New("cannot detect automatically and public-ipv4/public-ipv6 are not set in config"),
 		})
 		return false
 	}

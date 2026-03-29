@@ -35,6 +35,8 @@ type Config struct {
 	DomainFrontingProxyProtocol TypeBool        `json:"domainFrontingProxyProtocol"`
 	TolerateTimeSkewness        TypeDuration    `json:"tolerateTimeSkewness"`
 	Concurrency                 TypeConcurrency `json:"concurrency"`
+	PublicIPv4                  TypeIP          `json:"publicIpv4"`
+	PublicIPv6                  TypeIP          `json:"publicIpv6"`
 	DomainFronting              struct {
 		IP            TypeIP   `json:"ip"`
 		Port          TypePort `json:"port"`
@@ -50,10 +52,10 @@ type Config struct {
 		Blocklist    ListConfig `json:"blocklist"`
 		Allowlist    ListConfig `json:"allowlist"`
 		Doppelganger struct {
-			URLs       []TypeHttpsURL  `json:"urls"`
-			Repeats    TypeConcurrency `json:"repeats_per_raid"`
-			UpdateEach TypeDuration    `json:"raid_each"`
-			DRS        TypeBool        `json:"drs"`
+			URLs            []TypeHttpsURL  `json:"urls"`
+			Repeats         TypeConcurrency `json:"repeats_per_raid"`
+			UpdateEach      TypeDuration    `json:"raid_each"`
+			DRS             TypeBool        `json:"drs"`
 		} `json:"doppelganger"`
 	} `json:"defense"`
 	Network struct {

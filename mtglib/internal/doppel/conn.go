@@ -4,10 +4,18 @@ import (
 	"bytes"
 	"context"
 	"sync"
+	"time"
 
 	"github.com/9seconds/mtg/v2/essentials"
 	"github.com/9seconds/mtg/v2/mtglib/internal/tls"
 )
+
+var doppelBufPool = sync.Pool{
+	New: func() any {
+		b := make([]byte, tls.MaxRecordSize)
+		return &b
+	},
+}
 
 type Conn struct {
 	essentials.Conn
@@ -18,7 +26,7 @@ type Conn struct {
 type connPayload struct {
 	ctx         context.Context
 	ctxCancel   context.CancelCauseFunc
-	clock       Clock
+	stats       Stats
 	wg          sync.WaitGroup
 	writeStream bytes.Buffer
 	writtenCond sync.Cond
@@ -39,23 +47,23 @@ func (c Conn) Write(p []byte) (int, error) {
 	return len(p), context.Cause(c.p.ctx)
 }
 
-func (c Conn) Start() {
-	c.p.wg.Go(func() {
-		c.start()
-	})
-}
-
 func (c Conn) start() {
-	buf := [tls.MaxRecordSize]byte{}
+	bp := doppelBufPool.Get().(*[]byte)
+	buf := *bp
+	defer doppelBufPool.Put(bp)
+
+	timer := time.NewTimer(c.p.stats.Delay())
+	defer timer.Stop()
 
 	for {
 		select {
 		case <-c.p.ctx.Done():
 			return
-		case <-c.p.clock.tick:
+		case <-timer.C:
+			timer.Reset(c.p.stats.Delay())
 		}
 
-		size := c.p.clock.stats.Size()
+		size := c.p.stats.Size()
 
 		c.p.writtenCond.L.Lock()
 		for c.p.writeStream.Len() == 0 && !c.p.done {
@@ -68,7 +76,7 @@ func (c Conn) start() {
 			continue
 		}
 
-		if err := tls.WriteRecordInPlace(c.Conn, buf[:], n); err != nil {
+		if err := tls.WriteRecordInPlace(c.Conn, buf, n); err != nil {
 			c.p.ctxCancel(err)
 			return
 		}
@@ -86,28 +94,22 @@ func (c Conn) Stop() {
 	c.p.wg.Wait()
 }
 
-func NewConn(ctx context.Context, conn essentials.Conn, stats *Stats) Conn {
+func NewConn(ctx context.Context, conn essentials.Conn, stats Stats) Conn {
 	ctx, cancel := context.WithCancelCause(ctx)
 	rv := Conn{
 		Conn: conn,
 		p: &connPayload{
 			ctx:       ctx,
 			ctxCancel: cancel,
+			stats:     stats,
 			writtenCond: sync.Cond{
 				L: &sync.Mutex{},
-			},
-			clock: Clock{
-				stats: stats,
-				tick:  make(chan struct{}),
 			},
 		},
 	}
 
 	rv.p.writeStream.Grow(tls.DefaultBufferSize)
 
-	rv.p.wg.Go(func() {
-		rv.p.clock.Start(ctx)
-	})
 	rv.p.wg.Go(func() {
 		rv.start()
 	})

@@ -59,6 +59,9 @@ func (a *Access) Run(cli *CLI, version string) error {
 	wg.Go(func() {
 		ip := a.PublicIPv4
 		if ip == nil {
+			ip = conf.PublicIPv4.Get(nil)
+		}
+		if ip == nil {
 			ip = getIP(ntw, "tcp4")
 		}
 
@@ -70,6 +73,9 @@ func (a *Access) Run(cli *CLI, version string) error {
 	})
 	wg.Go(func() {
 		ip := a.PublicIPv6
+		if ip == nil {
+			ip = conf.PublicIPv6.Get(nil)
+		}
 		if ip == nil {
 			ip = getIP(ntw, "tcp6")
 		}

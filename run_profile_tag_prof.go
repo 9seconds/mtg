@@ -3,7 +3,6 @@
 package main
 
 import (
-	"fmt"
 	"net"
 	"net/http"
 	_ "net/http/pprof" //nolint: gosec

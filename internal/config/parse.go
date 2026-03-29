@@ -21,6 +21,8 @@ type tomlConfig struct {
 	DomainFrontingProxyProtocol bool   `toml:"domain-fronting-proxy-protocol" json:"domainFrontingProxyProtocol,omitempty"`
 	TolerateTimeSkewness        string `toml:"tolerate-time-skewness" json:"tolerateTimeSkewness,omitempty"`
 	Concurrency                 uint   `toml:"concurrency" json:"concurrency,omitempty"`
+	PublicIPv4                  string `toml:"public-ipv4" json:"publicIpv4,omitempty"`
+	PublicIPv6                  string `toml:"public-ipv6" json:"publicIpv6,omitempty"`
 	DomainFronting              struct {
 		IP            string `toml:"ip" json:"ip,omitempty"`
 		Port          uint   `toml:"port" json:"port,omitempty"`
@@ -45,10 +47,10 @@ type tomlConfig struct {
 			UpdateEach          string   `toml:"update-each" json:"updateEach,omitempty"`
 		} `toml:"allowlist" json:"allowlist,omitempty"`
 		Doppelganger struct {
-			URLs       []string `toml:"urls" json:"urls,omitempty"`
-			Repeats    uint     `toml:"repeats-per-raid" json:"repeats_per_raid,omitempty"`
-			UpdateEach string   `toml:"raid-each" json:"raid_each,omitempty"`
-			DRS        bool     `toml:"drs" json:"drs,omitempty"`
+			URLs            []string `toml:"urls" json:"urls,omitempty"`
+			Repeats         uint     `toml:"repeats-per-raid" json:"repeats_per_raid,omitempty"`
+			UpdateEach      string   `toml:"raid-each" json:"raid_each,omitempty"`
+			DRS             bool     `toml:"drs" json:"drs,omitempty"`
 		} `toml:"doppelganger" json:"doppelganger,omitempty"`
 	} `toml:"defense" json:"defense,omitempty"`
 	Network struct {

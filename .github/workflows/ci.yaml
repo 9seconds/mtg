@@ -119,6 +119,39 @@ jobs:
       - name: Run linter
         run: mise tasks run lint
 
+  artifacts:
+    name: Build release artifacts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - uses: jdx/mise-action@v3
+        name: Install mise
+
+      - name: Cache Go modules
+        uses: actions/cache@v5
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-gomod-${{ hashFiles('go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-gomod-
+
+      - name: Cache cross-compilation build
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/go-build
+          key: ${{ runner.os }}-goreleaser-${{ hashFiles('go.sum') }}-${{ hashFiles('**/*.go') }}
+          restore-keys: |
+            ${{ runner.os }}-goreleaser-${{ hashFiles('go.sum') }}-
+            ${{ runner.os }}-goreleaser-
+
+      - name: Run release
+        run: mise tasks run release
+
   docker:
     name: Docker
     runs-on: ubuntu-latest

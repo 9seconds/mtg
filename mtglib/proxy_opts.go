@@ -160,6 +160,7 @@ type ProxyOpts struct {
 
 	// DoppelGangerDRS defines if TLS Dynamic Record Sizing is active.
 	DoppelGangerDRS bool
+
 }
 
 func (p ProxyOpts) valid() error {
@@ -213,6 +214,14 @@ func (p ProxyOpts) getPreferIP() string {
 	}
 
 	return p.PreferIP
+}
+
+func (p ProxyOpts) getIdleTimeout() time.Duration {
+	if p.IdleTimeout == 0 {
+		return time.Minute
+	}
+
+	return p.IdleTimeout
 }
 
 func (p ProxyOpts) getLogger(name string) Logger {

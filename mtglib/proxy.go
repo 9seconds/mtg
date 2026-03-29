@@ -27,6 +27,7 @@ type Proxy struct {
 
 	allowFallbackOnUnknownDC    bool
 	tolerateTimeSkewness        time.Duration
+	idleTimeout                 time.Duration
 	domainFrontingPort          int
 	domainFrontingIP            string
 	domainFrontingProxyProtocol bool
@@ -65,10 +66,10 @@ func (p *Proxy) ServeConn(conn essentials.Conn) {
 	ctx := newStreamContext(p.ctx, p.logger, conn)
 	defer ctx.Close()
 
-	go func() {
-		<-ctx.Done()
+	stop := context.AfterFunc(ctx, func() {
 		ctx.Close()
-	}()
+	})
+	defer stop()
 
 	p.eventStream.Send(ctx, NewEventStart(ctx.streamID, ctx.ClientIP()))
 	ctx.logger.Info("Stream has been started")
@@ -104,8 +105,8 @@ func (p *Proxy) ServeConn(conn essentials.Conn) {
 	relay.Relay(
 		ctx,
 		ctx.logger.Named("relay"),
-		ctx.telegramConn,
-		ctx.clientConn,
+		connIdleTimeout{Conn: ctx.telegramConn, timeout: p.idleTimeout},
+		connIdleTimeout{Conn: ctx.clientConn, timeout: p.idleTimeout},
 	)
 }
 
@@ -151,6 +152,7 @@ func (p *Proxy) Serve(listener net.Listener) error {
 		case errors.Is(err, ants.ErrPoolClosed):
 			return nil
 		case errors.Is(err, ants.ErrPoolOverload):
+			conn.Close() //nolint: errcheck
 			logger.Info("connection was concurrency limited")
 			p.eventStream.Send(p.ctx, NewEventConcurrencyLimited())
 		}
@@ -192,7 +194,10 @@ func (p *Proxy) doFakeTLSHandshake(ctx *streamContext) bool {
 		return false
 	}
 
-	if err := fake.SendServerHello(ctx.clientConn, p.secret.Key[:], clientHello); err != nil {
+	gangerNoise := p.doppelGanger.NoiseParams()
+	noiseParams := fake.NoiseParams{Mean: gangerNoise.Mean, Jitter: gangerNoise.Jitter}
+
+	if err := fake.SendServerHello(ctx.clientConn, p.secret.Key[:], clientHello, noiseParams); err != nil {
 		p.logger.InfoError("cannot send welcome packet", err)
 		return false
 	}
@@ -303,8 +308,8 @@ func (p *Proxy) doDomainFronting(ctx *streamContext, conn *connRewind) {
 	relay.Relay(
 		ctx,
 		ctx.logger.Named("domain-fronting"),
-		frontConn,
-		conn,
+		connIdleTimeout{Conn: frontConn, timeout: p.idleTimeout},
+		connIdleTimeout{Conn: conn, timeout: p.idleTimeout},
 	)
 }
 
@@ -336,6 +341,7 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 		domainFrontingPort:       opts.getDomainFrontingPort(),
 		domainFrontingIP:         opts.DomainFrontingIP,
 		tolerateTimeSkewness:     opts.getTolerateTimeSkewness(),
+		idleTimeout:              opts.getIdleTimeout(),
 		allowFallbackOnUnknownDC: opts.AllowFallbackOnUnknownDC,
 		telegram:                 tg,
 		doppelGanger: doppel.NewGanger(

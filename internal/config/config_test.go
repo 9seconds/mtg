@@ -42,6 +42,32 @@ func (suite *ConfigTestSuite) TestParseMinimalConfig() {
 	suite.Equal("0.0.0.0:3128", conf.BindTo.String())
 }
 
+func (suite *ConfigTestSuite) TestParsePublicIP() {
+	conf, err := config.Parse(suite.ReadConfig("public_ip.toml"))
+	suite.NoError(err)
+	suite.Equal("203.0.113.1", conf.PublicIPv4.Get(nil).String())
+	suite.Equal("2001:db8::1", conf.PublicIPv6.Get(nil).String())
+}
+
+func (suite *ConfigTestSuite) TestParsePublicIPv4Only() {
+	conf, err := config.Parse(suite.ReadConfig("public_ip_v4_only.toml"))
+	suite.NoError(err)
+	suite.Equal("203.0.113.1", conf.PublicIPv4.Get(nil).String())
+	suite.Nil(conf.PublicIPv6.Get(nil))
+}
+
+func (suite *ConfigTestSuite) TestParsePublicIPInvalid() {
+	_, err := config.Parse(suite.ReadConfig("public_ip_invalid.toml"))
+	suite.Error(err)
+}
+
+func (suite *ConfigTestSuite) TestParsePublicIPNotSet() {
+	conf, err := config.Parse(suite.ReadConfig("minimal.toml"))
+	suite.NoError(err)
+	suite.Nil(conf.PublicIPv4.Get(nil))
+	suite.Nil(conf.PublicIPv6.Get(nil))
+}
+
 func (suite *ConfigTestSuite) TestString() {
 	conf, err := config.Parse(suite.ReadConfig("minimal.toml"))
 	suite.NoError(err)
