@@ -38,7 +38,7 @@ func (e EventStream) Send(ctx context.Context, evt mtglib.Event) {
 	select {
 	case <-ctx.Done():
 	case <-e.ctx.Done():
-	case e.chans[int(chanNo)%len(e.chans)] <- evt:
+	case e.chans[chanNo%uint32(len(e.chans))] <- evt:
 	}
 }
 
