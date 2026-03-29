@@ -4,18 +4,9 @@ import (
 	"context"
 	"errors"
 	"io"
-	"sync"
 
 	"github.com/9seconds/mtg/v2/essentials"
-	"github.com/9seconds/mtg/v2/mtglib/internal/tls"
 )
-
-var bufPool = sync.Pool{
-	New: func() any {
-		b := make([]byte, tls.MaxRecordPayloadSize)
-		return &b
-	},
-}
 
 func Relay(ctx context.Context, log Logger, telegramConn, clientConn essentials.Conn) {
 	defer telegramConn.Close() //nolint: errcheck
@@ -44,13 +35,13 @@ func Relay(ctx context.Context, log Logger, telegramConn, clientConn essentials.
 }
 
 func pump(log Logger, src, dst essentials.Conn, direction string) {
-	bp := bufPool.Get().(*[]byte)
-	defer bufPool.Put(bp)
+	buf := acquireBuffer()
+	defer releaseBuffer(buf)
 
 	defer src.CloseRead()  //nolint: errcheck
 	defer dst.CloseWrite() //nolint: errcheck
 
-	n, err := io.CopyBuffer(src, dst, *bp)
+	n, err := io.CopyBuffer(src, dst, *buf)
 
 	switch {
 	case err == nil:
