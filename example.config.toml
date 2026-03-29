@@ -48,6 +48,13 @@ concurrency = 8192
 #     Only ipv4 connectivity is used
 prefer-ip = "prefer-ipv6"
 
+# Public IP addresses of this server. Used by 'mtg access' to generate
+# proxy links and by 'mtg doctor' to validate SNI-DNS match.
+# If not set, mtg tries to detect them automatically via ifconfig.co.
+# Set these if ifconfig.co is unreachable from your server.
+# public-ipv4 = "1.2.3.4"
+# public-ipv6 = "2001:db8::1"
+
 # If this setting is set, then mtg will try to get proxy updates from Telegram
 # Usually this is completely fine to have it disabled, because mtg has a list
 # of some core proxies hardcoded.
