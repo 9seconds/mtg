@@ -112,7 +112,7 @@ func (d *Stats) Size() int {
 	return TLSRecordSizeMax
 }
 
-func NewStats(durations []time.Duration, drs bool) *Stats {
+func NewStats(durations []time.Duration, drs bool) Stats {
 	n := float64(len(durations))
 
 	// in milliseconds
@@ -162,7 +162,7 @@ func NewStats(durations []time.Duration, drs bool) *Stats {
 	// λ = (Σxᵢᵏ / n)^(1/k)
 	lambda := math.Pow(sumXK/n, 1.0/k)
 
-	return &Stats{
+	return Stats{
 		k:      k,
 		lambda: lambda,
 		drs:    drs,

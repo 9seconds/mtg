@@ -1,0 +1,4 @@
+secret = "7oe1GqLy6TBc38CV3jx7q09nb29nbGUuY29t"
+bind-to = "0.0.0.0:3128"
+public-ipv4 = "203.0.113.1"
+public-ipv6 = "2001:db8::1"
