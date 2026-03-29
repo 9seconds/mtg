@@ -105,8 +105,8 @@ func (p *Proxy) ServeConn(conn essentials.Conn) {
 	relay.Relay(
 		ctx,
 		ctx.logger.Named("relay"),
-		ctx.telegramConn,
-		ctx.clientConn,
+		connIdleTimeout{Conn: ctx.telegramConn, timeout: p.idleTimeout},
+		connIdleTimeout{Conn: ctx.clientConn, timeout: p.idleTimeout},
 	)
 }
 
