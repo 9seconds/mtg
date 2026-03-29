@@ -3,8 +3,11 @@ package fake_test
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/json"
 	"errors"
 	"io"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -392,4 +395,138 @@ func TestParseClientHelloHandshakeBody(t *testing.T) {
 func TestParseClientHelloSNI(t *testing.T) {
 	t.Parallel()
 	suite.Run(t, &ParseClientHelloSNITestSuite{})
+}
+
+// --- ReadClientHelloMulti tests ---
+
+type ReadClientHelloMultiTestSuite struct {
+	suite.Suite
+
+	secret mtglib.Secret
+}
+
+func (suite *ReadClientHelloMultiTestSuite) SetupSuite() {
+	parsed, err := mtglib.ParseSecret(
+		"ee367a189aee18fa31c190054efd4a8e9573746f726167652e676f6f676c65617069732e636f6d",
+	)
+	require.NoError(suite.T(), err)
+
+	suite.secret = parsed
+}
+
+func (suite *ReadClientHelloMultiTestSuite) loadSnapshot(name string) []byte {
+	data, err := os.ReadFile(filepath.Join("testdata", name))
+	require.NoError(suite.T(), err)
+
+	snapshot := &clientHelloSnapshot{}
+	require.NoError(suite.T(), json.Unmarshal(data, snapshot))
+
+	return snapshot.GetFull()
+}
+
+func (suite *ReadClientHelloMultiTestSuite) makeConn(data []byte) *parseClientHelloConnMock {
+	readBuf := &bytes.Buffer{}
+	readBuf.Write(data)
+
+	connMock := &parseClientHelloConnMock{
+		readBuf: readBuf,
+	}
+
+	connMock.
+		On("SetReadDeadline", mock.AnythingOfType("time.Time")).
+		Twice().
+		Return(nil)
+
+	return connMock
+}
+
+func (suite *ReadClientHelloMultiTestSuite) TestMatchesCorrectSecretAtIndex0() {
+	payload := suite.loadSnapshot("client-hello-ok-19dfe38384b9884b.json")
+	connMock := suite.makeConn(payload)
+	defer connMock.AssertExpectations(suite.T())
+
+	wrongSecret := mtglib.GenerateSecret("storage.googleapis.com")
+
+	result, err := fake.ReadClientHelloMulti(
+		connMock,
+		[][]byte{suite.secret.Key[:], wrongSecret.Key[:]},
+		suite.secret.Host,
+		TolerateTime,
+	)
+	suite.NoError(err)
+	suite.Equal(0, result.MatchedIndex)
+	suite.NotNil(result.Hello)
+}
+
+func (suite *ReadClientHelloMultiTestSuite) TestMatchesCorrectSecretAtIndex1() {
+	payload := suite.loadSnapshot("client-hello-ok-19dfe38384b9884b.json")
+	connMock := suite.makeConn(payload)
+	defer connMock.AssertExpectations(suite.T())
+
+	wrongSecret := mtglib.GenerateSecret("storage.googleapis.com")
+
+	result, err := fake.ReadClientHelloMulti(
+		connMock,
+		[][]byte{wrongSecret.Key[:], suite.secret.Key[:]},
+		suite.secret.Host,
+		TolerateTime,
+	)
+	suite.NoError(err)
+	suite.Equal(1, result.MatchedIndex)
+	suite.NotNil(result.Hello)
+}
+
+func (suite *ReadClientHelloMultiTestSuite) TestMatchesCorrectSecretAtIndex2() {
+	payload := suite.loadSnapshot("client-hello-ok-19dfe38384b9884b.json")
+	connMock := suite.makeConn(payload)
+	defer connMock.AssertExpectations(suite.T())
+
+	wrong1 := mtglib.GenerateSecret("storage.googleapis.com")
+	wrong2 := mtglib.GenerateSecret("storage.googleapis.com")
+
+	result, err := fake.ReadClientHelloMulti(
+		connMock,
+		[][]byte{wrong1.Key[:], wrong2.Key[:], suite.secret.Key[:]},
+		suite.secret.Host,
+		TolerateTime,
+	)
+	suite.NoError(err)
+	suite.Equal(2, result.MatchedIndex)
+	suite.NotNil(result.Hello)
+}
+
+func (suite *ReadClientHelloMultiTestSuite) TestNoMatchReturnsBadDigest() {
+	payload := suite.loadSnapshot("client-hello-ok-19dfe38384b9884b.json")
+	connMock := suite.makeConn(payload)
+	defer connMock.AssertExpectations(suite.T())
+
+	wrong1 := mtglib.GenerateSecret("storage.googleapis.com")
+	wrong2 := mtglib.GenerateSecret("storage.googleapis.com")
+
+	_, err := fake.ReadClientHelloMulti(
+		connMock,
+		[][]byte{wrong1.Key[:], wrong2.Key[:]},
+		suite.secret.Host,
+		TolerateTime,
+	)
+	suite.ErrorIs(err, fake.ErrBadDigest)
+}
+
+func (suite *ReadClientHelloMultiTestSuite) TestBadSnapshotReturnsBadDigest() {
+	payload := suite.loadSnapshot("client-hello-bad-fa2e46cdb33e2a1b.json")
+	connMock := suite.makeConn(payload)
+	defer connMock.AssertExpectations(suite.T())
+
+	_, err := fake.ReadClientHelloMulti(
+		connMock,
+		[][]byte{suite.secret.Key[:]},
+		suite.secret.Host,
+		TolerateTime,
+	)
+	suite.ErrorIs(err, fake.ErrBadDigest)
+}
+
+func TestReadClientHelloMulti(t *testing.T) {
+	t.Parallel()
+	suite.Run(t, &ReadClientHelloMultiTestSuite{})
 }

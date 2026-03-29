@@ -290,8 +290,16 @@ func (d *Doctor) checkNetworkAddresses(ntw mtglib.Network, addresses []string) e
 	return err
 }
 
+func (d *Doctor) getFirstSecretHost() string {
+	for _, s := range d.conf.GetSecrets() {
+		return s.Host
+	}
+
+	return ""
+}
+
 func (d *Doctor) checkFrontingDomain(ntw mtglib.Network) bool {
-	host := d.conf.Secret.Host
+	host := d.getFirstSecretHost()
 	if ip := d.conf.GetDomainFrontingIP(nil); ip != "" {
 		host = ip
 	}
@@ -323,10 +331,10 @@ func (d *Doctor) checkFrontingDomain(ntw mtglib.Network) bool {
 }
 
 func (d *Doctor) checkSecretHost(resolver *net.Resolver, ntw mtglib.Network) bool {
-	addresses, err := resolver.LookupIPAddr(context.Background(), d.conf.Secret.Host)
+	addresses, err := resolver.LookupIPAddr(context.Background(), d.getFirstSecretHost())
 	if err != nil {
 		tplError.Execute(os.Stdout, map[string]any{ //nolint: errcheck
-			"description": fmt.Sprintf("cannot resolve DNS name of %s", d.conf.Secret.Host),
+			"description": fmt.Sprintf("cannot resolve DNS name of %s", d.getFirstSecretHost()),
 			"error":       err,
 		})
 		return false
@@ -356,7 +364,7 @@ func (d *Doctor) checkSecretHost(resolver *net.Resolver, ntw mtglib.Network) boo
 			(ourIP6 != nil && value.IP.String() == ourIP6.String()) {
 			tplODNSSNIMatch.Execute(os.Stdout, map[string]any{ //nolint: errcheck
 				"ip":       value.IP,
-				"hostname": d.conf.Secret.Host,
+				"hostname": d.getFirstSecretHost(),
 			})
 			return true
 		}
@@ -365,7 +373,7 @@ func (d *Doctor) checkSecretHost(resolver *net.Resolver, ntw mtglib.Network) boo
 	}
 
 	tplEDNSSNIMatch.Execute(os.Stdout, map[string]any{ //nolint: errcheck
-		"hostname": d.conf.Secret.Host,
+		"hostname": d.getFirstSecretHost(),
 		"resolved": strings.Join(strAddresses, ", "),
 		"ip4":      ourIP4,
 		"ip6":      ourIP6,

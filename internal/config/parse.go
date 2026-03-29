@@ -11,8 +11,9 @@ import (
 type tomlConfig struct {
 	Debug                       bool   `toml:"debug" json:"debug,omitempty"`
 	AllowFallbackOnUnknownDC    bool   `toml:"allow-fallback-on-unknown-dc" json:"allowFallbackOnUnknownDc,omitempty"`
-	Secret                      string `toml:"secret" json:"secret"`
-	BindTo                      string `toml:"bind-to" json:"bindTo"`
+	Secret                      string            `toml:"secret" json:"secret,omitempty"`
+	Secrets                     map[string]string `toml:"secrets" json:"secrets,omitempty"`
+	BindTo                      string            `toml:"bind-to" json:"bindTo"`
 	ProxyProtocolListener       bool   `toml:"proxy-protocol-listener" json:"proxyProtocolListener"`
 	PreferIP                    string `toml:"prefer-ip" json:"preferIp,omitempty"`
 	AutoUpdate                  bool   `toml:"auto-update" json:"autoUpdate,omitempty"`
@@ -63,7 +64,8 @@ type tomlConfig struct {
 		DNS     string   `toml:"dns" json:"dns,omitempty"`
 		Proxies []string `toml:"proxies" json:"proxies,omitempty"`
 	} `toml:"network" json:"network,omitempty"`
-	Stats struct {
+	APIBindTo string `toml:"api-bind-to" json:"apiBindTo,omitempty"`
+	Stats     struct {
 		StatsD struct {
 			Enabled      bool   `toml:"enabled" json:"enabled,omitempty"`
 			Address      string `toml:"address" json:"address,omitempty"`

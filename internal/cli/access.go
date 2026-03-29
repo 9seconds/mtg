@@ -6,20 +6,25 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"sort"
 	"strconv"
 	"sync"
 
 	"github.com/9seconds/mtg/v2/internal/config"
 	"github.com/9seconds/mtg/v2/internal/utils"
+	"github.com/9seconds/mtg/v2/mtglib"
 )
 
+type accessResponseSecret struct {
+	Hex    string `json:"hex"`
+	Base64 string `json:"base64"`
+}
+
 type accessResponse struct {
-	IPv4   *accessResponseURLs `json:"ipv4,omitempty"`
-	IPv6   *accessResponseURLs `json:"ipv6,omitempty"`
-	Secret struct {
-		Hex    string `json:"hex"`
-		Base64 string `json:"base64"`
-	} `json:"secret"`
+	IPv4    *accessResponseURLs             `json:"ipv4,omitempty"`
+	IPv6    *accessResponseURLs             `json:"ipv6,omitempty"`
+	Secret  accessResponseSecret            `json:"secret"`
+	Secrets map[string]accessResponseSecret `json:"secrets,omitempty"`
 }
 
 type accessResponseURLs struct {
@@ -46,8 +51,34 @@ func (a *Access) Run(cli *CLI, version string) error {
 	}
 
 	resp := &accessResponse{}
-	resp.Secret.Base64 = conf.Secret.Base64()
-	resp.Secret.Hex = conf.Secret.Hex()
+	secrets := conf.GetSecrets()
+
+	// Sort secret names for deterministic "first secret" selection.
+	sortedNames := make([]string, 0, len(secrets))
+	for name := range secrets {
+		sortedNames = append(sortedNames, name)
+	}
+
+	sort.Strings(sortedNames)
+
+	// For backward compatibility, populate the single Secret field with the
+	// first secret (sorted alphabetically).
+	if len(sortedNames) > 0 {
+		first := secrets[sortedNames[0]]
+		resp.Secret.Base64 = first.Base64()
+		resp.Secret.Hex = first.Hex()
+	}
+
+	if len(secrets) > 1 {
+		resp.Secrets = make(map[string]accessResponseSecret, len(secrets))
+
+		for name, s := range secrets {
+			resp.Secrets[name] = accessResponseSecret{
+				Hex:    s.Hex(),
+				Base64: s.Base64(),
+			}
+		}
+	}
 
 	ntw, err := makeNetwork(conf, version)
 	if err != nil {
@@ -114,10 +145,25 @@ func (a *Access) makeURLs(conf *config.Config, ip net.IP) *accessResponseURLs {
 	values.Set("server", ip.String())
 	values.Set("port", strconv.Itoa(int(portNo)))
 
+	// Use the first available secret (sorted) for URL generation.
+	secrets := conf.GetSecrets()
+	names := make([]string, 0, len(secrets))
+
+	for name := range secrets {
+		names = append(names, name)
+	}
+
+	sort.Strings(names)
+
+	var firstSecret mtglib.Secret
+	if len(names) > 0 {
+		firstSecret = secrets[names[0]]
+	}
+
 	if a.Hex {
-		values.Set("secret", conf.Secret.Hex())
+		values.Set("secret", firstSecret.Hex())
 	} else {
-		values.Set("secret", conf.Secret.Base64())
+		values.Set("secret", firstSecret.Base64())
 	}
 
 	urlQuery := values.Encode()
