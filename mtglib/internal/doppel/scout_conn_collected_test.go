@@ -68,8 +68,8 @@ func (suite *ScoutConnCollectedTestSuite) TestConcurrentAddSnapshot() {
 		defer wg.Done()
 
 		for i := 0; i < 1000; i++ {
-			data, _ := collected.Snapshot()
-			_ = len(data)
+			// call Snapshot concurrently to exercise the lock under -race
+			collected.Snapshot() //nolint:errcheck
 		}
 	}()
 

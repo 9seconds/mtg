@@ -1,6 +1,7 @@
 package doppel
 
 import (
+	"slices"
 	"sync"
 	"time"
 )
@@ -43,8 +44,7 @@ func (s *ScoutConnCollected) MarkWrite() {
 // Snapshot returns a copy of the collected data and the write index.
 func (s *ScoutConnCollected) Snapshot() ([]ScoutConnResult, int) {
 	s.mu.Lock()
-	snapshot := make([]ScoutConnResult, len(s.data))
-	copy(snapshot, s.data)
+	snapshot := slices.Clone(s.data)
 	writeIndex := s.writeIndex
 	s.mu.Unlock()
 
