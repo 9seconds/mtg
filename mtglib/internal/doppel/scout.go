@@ -61,10 +61,14 @@ func (s Scout) learn(ctx context.Context, url string) (ScoutResult, error) {
 		client.CloseIdleConnections()
 	}
 
+	if err != nil {
+		return ScoutResult{}, err
+	}
+
 	data, writeIndex := results.Snapshot()
 
-	if err != nil || len(data) == 0 {
-		return ScoutResult{}, err
+	if len(data) == 0 {
+		return ScoutResult{}, nil
 	}
 
 	var result ScoutResult
