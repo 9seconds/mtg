@@ -19,3 +19,12 @@ tests = true
 #     "thelper",
 #     "varnamelen",
 # ]
+
+# Benchmark and tool code: unchecked Close/Write/Fprintf is fine.
+[[linters.exclusions.rules]]
+path = 'benchmarks/'
+linters = ['errcheck', 'ineffassign']
+
+[[linters.exclusions.rules]]
+path = '_bench_test\.go$'
+linters = ['errcheck', 'ineffassign']
