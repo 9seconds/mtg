@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"sync/atomic"
 	"time"
 
 	"github.com/9seconds/mtg/v2/essentials"
@@ -97,20 +98,67 @@ func newConnProxyProtocol(source, target essentials.Conn) *connProxyProtocol {
 	}
 }
 
+// idleTracker is a shared idle tracker for a pair of relay connections.
+// Both directions update the same timestamp so that activity in one direction
+// prevents the other (idle) direction from timing out.
+type idleTracker struct {
+	lastActive atomic.Int64 // unix nanos
+	timeout    time.Duration
+}
+
+func newIdleTracker(timeout time.Duration) *idleTracker {
+	t := &idleTracker{timeout: timeout}
+	t.touch()
+
+	return t
+}
+
+func (t *idleTracker) touch() {
+	t.lastActive.Store(time.Now().UnixNano())
+}
+
+func (t *idleTracker) isIdle() bool {
+	last := time.Unix(0, t.lastActive.Load())
+
+	return time.Since(last) >= t.timeout
+}
+
 type connIdleTimeout struct {
 	essentials.Conn
 
-	timeout time.Duration
+	tracker *idleTracker
 }
 
 func (c connIdleTimeout) Read(b []byte) (int, error) {
-	c.SetReadDeadline(time.Now().Add(c.timeout)) //nolint: errcheck
+	for {
+		c.SetReadDeadline(time.Now().Add(c.tracker.timeout)) //nolint: errcheck
 
-	return c.Conn.Read(b) //nolint: wrapcheck
+		n, err := c.Conn.Read(b)
+		if n > 0 {
+			c.tracker.touch()
+
+			return n, err //nolint: wrapcheck
+		}
+
+		if err != nil {
+			if netErr, ok := err.(net.Error); ok && netErr.Timeout() && !c.tracker.isIdle() { //nolint: errorlint
+				continue
+			}
+
+			return 0, err //nolint: wrapcheck
+		}
+
+		return 0, nil
+	}
 }
 
 func (c connIdleTimeout) Write(b []byte) (int, error) {
-	c.SetWriteDeadline(time.Now().Add(c.timeout)) //nolint: errcheck
+	c.SetWriteDeadline(time.Now().Add(c.tracker.timeout)) //nolint: errcheck
 
-	return c.Conn.Write(b) //nolint: wrapcheck
+	n, err := c.Conn.Write(b)
+	if n > 0 {
+		c.tracker.touch()
+	}
+
+	return n, err //nolint: wrapcheck
 }
