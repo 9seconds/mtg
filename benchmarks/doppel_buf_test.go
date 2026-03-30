@@ -30,8 +30,8 @@ func stackGoroutineRealistic(done <-chan struct{}, wg *sync.WaitGroup, payload [
 		//   n, _ := c.p.writeStream.Read(buf[tls.SizeHeader : tls.SizeHeader+size])
 		//   tls.WriteRecordInPlace(c.Conn, buf[:], n)
 		copy(buf[sizeHeader:], payload)
-		sink = buf[sizeHeader]
 		<-done
+		runtime.KeepAlive(&buf)
 	}()
 
 	// goroutine 2: clock tick loop
@@ -66,9 +66,9 @@ func poolGoroutineRealistic(done <-chan struct{}, wg *sync.WaitGroup, payload []
 		bp := bufPool.Get().(*[]byte)
 		buf := *bp
 		copy(buf[sizeHeader:], payload)
-		sink = buf[sizeHeader]
 		defer bufPool.Put(bp)
 		<-done
+		runtime.KeepAlive(&buf)
 	}()
 
 	// goroutine 2: clock tick loop
@@ -123,8 +123,8 @@ func TestDoppelStackGrowthMechanism(t *testing.T) {
 				defer wg.Done()
 				var buf [maxRecordSize]byte
 				buf[0] = 1
-				sink = buf[0]
 				<-done
+				runtime.KeepAlive(&buf)
 			}()
 		}
 		time.Sleep(200 * time.Millisecond)
@@ -154,8 +154,8 @@ func TestDoppelStackGrowthMechanism(t *testing.T) {
 				defer wg.Done()
 				var buf [maxRecordSize]byte
 				copy(buf[sizeHeader:], payload)
-				sink = buf[sizeHeader]
 				<-done
+				runtime.KeepAlive(&buf)
 			}()
 		}
 		time.Sleep(200 * time.Millisecond)
@@ -186,9 +186,9 @@ func TestDoppelStackGrowthMechanism(t *testing.T) {
 				bp := bufPool.Get().(*[]byte)
 				buf := *bp
 				copy(buf[sizeHeader:], payload)
-				sink = buf[sizeHeader]
 				defer bufPool.Put(bp)
 				<-done
+				runtime.KeepAlive(&buf)
 			}()
 		}
 		time.Sleep(200 * time.Millisecond)
