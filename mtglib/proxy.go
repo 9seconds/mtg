@@ -102,11 +102,13 @@ func (p *Proxy) ServeConn(conn essentials.Conn) {
 		return
 	}
 
+	tracker := newIdleTracker(p.idleTimeout)
+
 	relay.Relay(
 		ctx,
 		ctx.logger.Named("relay"),
-		connIdleTimeout{Conn: ctx.telegramConn, timeout: p.idleTimeout},
-		connIdleTimeout{Conn: ctx.clientConn, timeout: p.idleTimeout},
+		connIdleTimeout{Conn: ctx.telegramConn, tracker: tracker},
+		connIdleTimeout{Conn: ctx.clientConn, tracker: tracker},
 	)
 }
 
@@ -305,11 +307,13 @@ func (p *Proxy) doDomainFronting(ctx *streamContext, conn *connRewind) {
 		stream:   p.eventStream,
 	}
 
+	tracker := newIdleTracker(p.idleTimeout)
+
 	relay.Relay(
 		ctx,
 		ctx.logger.Named("domain-fronting"),
-		connIdleTimeout{Conn: frontConn, timeout: p.idleTimeout},
-		connIdleTimeout{Conn: conn, timeout: p.idleTimeout},
+		connIdleTimeout{Conn: frontConn, tracker: tracker},
+		connIdleTimeout{Conn: conn, tracker: tracker},
 	)
 }
 
