@@ -21,10 +21,10 @@ tests = true
 # ]
 
 # Benchmark and tool code: unchecked Close/Write/Fprintf is fine.
-[[issues.exclude-rules]]
+[[linters.exclusions.rules]]
 path = 'benchmarks/'
 linters = ['errcheck', 'ineffassign']
 
-[[issues.exclude-rules]]
+[[linters.exclusions.rules]]
 path = '_bench_test\.go$'
 linters = ['errcheck', 'ineffassign']
