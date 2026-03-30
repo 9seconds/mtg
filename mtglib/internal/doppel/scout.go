@@ -61,7 +61,9 @@ func (s Scout) learn(ctx context.Context, url string) (ScoutResult, error) {
 		client.CloseIdleConnections()
 	}
 
-	if err != nil || len(results.data) == 0 {
+	data, writeIndex := results.Snapshot()
+
+	if err != nil || len(data) == 0 {
 		return ScoutResult{}, err
 	}
 
@@ -70,14 +72,14 @@ func (s Scout) learn(ctx context.Context, url string) (ScoutResult, error) {
 	// Compute inter-record durations (existing logic).
 	lastTimestamp := time.Time{}
 
-	for i, v := range results.data {
+	for i, v := range data {
 		if v.recordType != tls.TypeApplicationData {
 			continue
 		}
 
 		if lastTimestamp.IsZero() {
 			if i > 0 {
-				lastTimestamp = results.data[i-1].timestamp
+				lastTimestamp = data[i-1].timestamp
 			} else {
 				lastTimestamp = v.timestamp
 			}
@@ -90,12 +92,12 @@ func (s Scout) learn(ctx context.Context, url string) (ScoutResult, error) {
 	// Compute cert size: sum of ApplicationData payload between CCS and
 	// the first client Write (which marks the end of server handshake).
 	seenCCS := false
-	boundary := results.writeIndex
+	boundary := writeIndex
 	if boundary < 0 {
-		boundary = len(results.data)
+		boundary = len(data)
 	}
 
-	for i, v := range results.data {
+	for i, v := range data {
 		if i >= boundary {
 			break
 		}
