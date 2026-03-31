@@ -7,9 +7,9 @@ import (
 	"crypto/sha256"
 	"testing"
 
-	"github.com/9seconds/mtg/v2/mtglib"
-	"github.com/9seconds/mtg/v2/mtglib/internal/tls"
-	"github.com/9seconds/mtg/v2/mtglib/internal/tls/fake"
+	"github.com/dolonet/mtg-multi/mtglib"
+	"github.com/dolonet/mtg-multi/mtglib/internal/tls"
+	"github.com/dolonet/mtg-multi/mtglib/internal/tls/fake"
 	"github.com/stretchr/testify/suite"
 )
 

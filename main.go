@@ -9,7 +9,7 @@
 package main
 
 import (
-	"github.com/9seconds/mtg/v2/internal/cli"
+	"github.com/dolonet/mtg-multi/internal/cli"
 	"github.com/alecthomas/kong"
 )
 

@@ -1,4 +1,4 @@
-module github.com/9seconds/mtg/v2
+module github.com/dolonet/mtg-multi
 
 go 1.26
 

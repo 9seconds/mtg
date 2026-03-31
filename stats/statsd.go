@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/9seconds/mtg/v2/events"
-	"github.com/9seconds/mtg/v2/logger"
-	"github.com/9seconds/mtg/v2/mtglib"
+	"github.com/dolonet/mtg-multi/events"
+	"github.com/dolonet/mtg-multi/logger"
+	"github.com/dolonet/mtg-multi/mtglib"
 	statsd "github.com/smira/go-statsd"
 )
 

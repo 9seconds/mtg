@@ -3,7 +3,7 @@ package antireplay_test
 import (
 	"testing"
 
-	"github.com/9seconds/mtg/v2/antireplay"
+	"github.com/dolonet/mtg-multi/antireplay"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -12,7 +12,7 @@ type StableBloomFilterTestSuite struct {
 }
 
 func (suite *StableBloomFilterTestSuite) TestOp() {
-	filter := antireplay.NewStableBloomFilter(500, 0.001)
+	filter := antireplay.NewStableBloomFilter(100000, 0.001)
 
 	suite.False(filter.SeenBefore([]byte{1, 2, 3}))
 	suite.False(filter.SeenBefore([]byte{4, 5, 6}))

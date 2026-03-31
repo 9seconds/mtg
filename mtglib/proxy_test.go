@@ -10,13 +10,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/9seconds/mtg/v2/antireplay"
-	"github.com/9seconds/mtg/v2/events"
-	"github.com/9seconds/mtg/v2/ipblocklist"
-	"github.com/9seconds/mtg/v2/ipblocklist/files"
-	"github.com/9seconds/mtg/v2/logger"
-	"github.com/9seconds/mtg/v2/mtglib"
-	"github.com/9seconds/mtg/v2/network"
+	"github.com/dolonet/mtg-multi/antireplay"
+	"github.com/dolonet/mtg-multi/events"
+	"github.com/dolonet/mtg-multi/ipblocklist"
+	"github.com/dolonet/mtg-multi/ipblocklist/files"
+	"github.com/dolonet/mtg-multi/logger"
+	"github.com/dolonet/mtg-multi/mtglib"
+	"github.com/dolonet/mtg-multi/network"
 	"github.com/stretchr/testify/suite"
 	"github.com/yl2chen/cidranger"
 )
@@ -175,7 +175,7 @@ func (suite *ProxyTestSuite) TestHTTPSRequest() {
 	addr := fmt.Sprintf("https://%s/headers", suite.ProxyAddress())
 
 	resp, err := client.Get(addr) //nolint: noctx
-	suite.NoError(err)
+	suite.Require().NoError(err)
 
 	defer resp.Body.Close() //nolint: errcheck
 

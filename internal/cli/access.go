@@ -10,9 +10,9 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/9seconds/mtg/v2/internal/config"
-	"github.com/9seconds/mtg/v2/internal/utils"
-	"github.com/9seconds/mtg/v2/mtglib"
+	"github.com/dolonet/mtg-multi/internal/config"
+	"github.com/dolonet/mtg-multi/internal/utils"
+	"github.com/dolonet/mtg-multi/mtglib"
 )
 
 type accessResponseSecret struct {

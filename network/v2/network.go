@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/9seconds/mtg/v2/essentials"
-	"github.com/9seconds/mtg/v2/mtglib"
+	"github.com/dolonet/mtg-multi/essentials"
+	"github.com/dolonet/mtg-multi/mtglib"
 )
 
 type network struct {

@@ -10,11 +10,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/9seconds/mtg/v2/internal/testlib"
+	"github.com/dolonet/mtg-multi/internal/testlib"
 	"github.com/pires/go-proxyproto"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
+
+type netTimeoutError struct{}
+
+func (e netTimeoutError) Error() string   { return "i/o timeout" }
+func (e netTimeoutError) Timeout() bool   { return true }
+func (e netTimeoutError) Temporary() bool { return true }
 
 type ConnRewindBaseConn struct {
 	testlib.EssentialsConnMock
@@ -291,6 +297,141 @@ func (suite *ConnProxyProtocolTestSuite) TearDownTest() {
 	suite.targetConnMock.AssertExpectations(suite.T())
 }
 
+type IdleTrackerTestSuite struct {
+	suite.Suite
+}
+
+func (suite *IdleTrackerTestSuite) TestNewNotIdle() {
+	tracker := newIdleTracker(time.Second)
+	suite.False(tracker.isIdle())
+}
+
+func (suite *IdleTrackerTestSuite) TestIdleAfterTimeout() {
+	tracker := newIdleTracker(10 * time.Millisecond)
+	time.Sleep(20 * time.Millisecond)
+
+	suite.True(tracker.isIdle())
+}
+
+func (suite *IdleTrackerTestSuite) TestTouchResetsIdle() {
+	tracker := newIdleTracker(50 * time.Millisecond)
+	time.Sleep(30 * time.Millisecond)
+
+	tracker.touch()
+
+	suite.False(tracker.isIdle())
+}
+
+type ConnIdleTimeoutTestSuite struct {
+	suite.Suite
+
+	connMock *testlib.EssentialsConnMock
+	tracker  *idleTracker
+	conn     connIdleTimeout
+}
+
+func (suite *ConnIdleTimeoutTestSuite) SetupTest() {
+	suite.connMock = &testlib.EssentialsConnMock{}
+	suite.tracker = newIdleTracker(time.Second)
+	suite.conn = connIdleTimeout{
+		Conn:    suite.connMock,
+		tracker: suite.tracker,
+	}
+}
+
+func (suite *ConnIdleTimeoutTestSuite) TearDownTest() {
+	suite.connMock.AssertExpectations(suite.T())
+}
+
+func (suite *ConnIdleTimeoutTestSuite) TestReadOk() {
+	suite.connMock.On("SetReadDeadline", mock.Anything).Return(nil)
+	suite.connMock.On("Read", mock.Anything).Once().Return(5, nil)
+
+	n, err := suite.conn.Read(make([]byte, 10))
+	suite.NoError(err)
+	suite.Equal(5, n)
+}
+
+func (suite *ConnIdleTimeoutTestSuite) TestReadNonTimeoutErr() {
+	suite.connMock.On("SetReadDeadline", mock.Anything).Return(nil)
+	suite.connMock.On("Read", mock.Anything).Once().Return(0, io.EOF)
+
+	n, err := suite.conn.Read(make([]byte, 10))
+	suite.True(errors.Is(err, io.EOF))
+	suite.Equal(0, n)
+}
+
+func (suite *ConnIdleTimeoutTestSuite) TestReadTimeoutRetriesWhenNotIdle() {
+	suite.connMock.On("SetReadDeadline", mock.Anything).Return(nil)
+	suite.connMock.On("Read", mock.Anything).Once().Return(0, netTimeoutError{})
+	suite.connMock.On("Read", mock.Anything).Once().Return(5, nil)
+
+	n, err := suite.conn.Read(make([]byte, 10))
+	suite.NoError(err)
+	suite.Equal(5, n)
+}
+
+func (suite *ConnIdleTimeoutTestSuite) TestReadTimeoutClosesWhenIdle() {
+	suite.tracker = newIdleTracker(time.Millisecond)
+	suite.conn = connIdleTimeout{
+		Conn:    suite.connMock,
+		tracker: suite.tracker,
+	}
+
+	time.Sleep(5 * time.Millisecond)
+
+	suite.connMock.On("SetReadDeadline", mock.Anything).Return(nil)
+	suite.connMock.On("Read", mock.Anything).Once().Return(0, netTimeoutError{})
+
+	n, err := suite.conn.Read(make([]byte, 10))
+	suite.Equal(0, n)
+
+	netErr, ok := err.(net.Error) //nolint: errorlint
+	suite.True(ok)
+	suite.True(netErr.Timeout())
+}
+
+func (suite *ConnIdleTimeoutTestSuite) TestSharedTrackerPreventsFalseTimeout() {
+	connMock2 := &testlib.EssentialsConnMock{}
+	conn2 := connIdleTimeout{
+		Conn:    connMock2,
+		tracker: suite.tracker,
+	}
+
+	connMock2.On("SetWriteDeadline", mock.Anything).Return(nil)
+	connMock2.On("Write", mock.Anything).Once().Return(5, nil)
+
+	_, _ = conn2.Write(make([]byte, 5))
+
+	suite.connMock.On("SetReadDeadline", mock.Anything).Return(nil)
+	suite.connMock.On("Read", mock.Anything).Once().Return(0, netTimeoutError{})
+	suite.connMock.On("Read", mock.Anything).Once().Return(3, nil)
+
+	n, err := suite.conn.Read(make([]byte, 10))
+	suite.NoError(err)
+	suite.Equal(3, n)
+
+	connMock2.AssertExpectations(suite.T())
+}
+
+func (suite *ConnIdleTimeoutTestSuite) TestWriteOk() {
+	suite.connMock.On("SetWriteDeadline", mock.Anything).Return(nil)
+	suite.connMock.On("Write", mock.Anything).Once().Return(5, nil)
+
+	n, err := suite.conn.Write(make([]byte, 5))
+	suite.NoError(err)
+	suite.Equal(5, n)
+}
+
+func (suite *ConnIdleTimeoutTestSuite) TestWriteErr() {
+	suite.connMock.On("SetWriteDeadline", mock.Anything).Return(nil)
+	suite.connMock.On("Write", mock.Anything).Once().Return(0, io.EOF)
+
+	n, err := suite.conn.Write(make([]byte, 5))
+	suite.True(errors.Is(err, io.EOF))
+	suite.Equal(0, n)
+}
+
 func TestConnTraffic(t *testing.T) {
 	t.Parallel()
 	suite.Run(t, &ConnTrafficTestSuite{})
@@ -304,4 +445,14 @@ func TestConnRewind(t *testing.T) {
 func TestConnProxyProtocol(t *testing.T) {
 	t.Parallel()
 	suite.Run(t, &ConnProxyProtocolTestSuite{})
+}
+
+func TestIdleTracker(t *testing.T) {
+	t.Parallel()
+	suite.Run(t, &IdleTrackerTestSuite{})
+}
+
+func TestConnIdleTimeout(t *testing.T) {
+	t.Parallel()
+	suite.Run(t, &ConnIdleTimeoutTestSuite{})
 }

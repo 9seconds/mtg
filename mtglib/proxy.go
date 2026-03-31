@@ -10,13 +10,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/9seconds/mtg/v2/essentials"
-	"github.com/9seconds/mtg/v2/mtglib/internal/dc"
-	"github.com/9seconds/mtg/v2/mtglib/internal/doppel"
-	"github.com/9seconds/mtg/v2/mtglib/internal/obfuscation"
-	"github.com/9seconds/mtg/v2/mtglib/internal/relay"
-	"github.com/9seconds/mtg/v2/mtglib/internal/tls"
-	"github.com/9seconds/mtg/v2/mtglib/internal/tls/fake"
+	"github.com/dolonet/mtg-multi/essentials"
+	"github.com/dolonet/mtg-multi/mtglib/internal/dc"
+	"github.com/dolonet/mtg-multi/mtglib/internal/doppel"
+	"github.com/dolonet/mtg-multi/mtglib/internal/obfuscation"
+	"github.com/dolonet/mtg-multi/mtglib/internal/relay"
+	"github.com/dolonet/mtg-multi/mtglib/internal/tls"
+	"github.com/dolonet/mtg-multi/mtglib/internal/tls/fake"
 	"github.com/panjf2000/ants/v2"
 )
 
@@ -111,11 +111,13 @@ func (p *Proxy) ServeConn(conn essentials.Conn) {
 		return
 	}
 
+	tracker := newIdleTracker(p.idleTimeout)
+
 	relay.Relay(
 		ctx,
 		ctx.logger.Named("relay"),
-		connIdleTimeout{Conn: ctx.telegramConn, timeout: p.idleTimeout},
-		newCountingConn(connIdleTimeout{Conn: ctx.clientConn, timeout: p.idleTimeout}, p.stats, ctx.secretName),
+		connIdleTimeout{Conn: ctx.telegramConn, tracker: tracker},
+		newCountingConn(connIdleTimeout{Conn: ctx.clientConn, tracker: tracker}, p.stats, ctx.secretName),
 	)
 }
 
@@ -330,11 +332,13 @@ func (p *Proxy) doDomainFronting(ctx *streamContext, conn *connRewind) {
 		stream:   p.eventStream,
 	}
 
+	tracker := newIdleTracker(p.idleTimeout)
+
 	relay.Relay(
 		ctx,
 		ctx.logger.Named("domain-fronting"),
-		connIdleTimeout{Conn: frontConn, timeout: p.idleTimeout},
-		connIdleTimeout{Conn: conn, timeout: p.idleTimeout},
+		connIdleTimeout{Conn: frontConn, tracker: tracker},
+		connIdleTimeout{Conn: conn, tracker: tracker},
 	)
 }
 
