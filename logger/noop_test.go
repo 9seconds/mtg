@@ -4,8 +4,8 @@ import (
 	"io"
 	"testing"
 
-	"github.com/9seconds/mtg/v2/internal/testlib"
-	"github.com/9seconds/mtg/v2/logger"
+	"github.com/dolonet/mtg-multi/internal/testlib"
+	"github.com/dolonet/mtg-multi/logger"
 	"github.com/stretchr/testify/suite"
 )
 

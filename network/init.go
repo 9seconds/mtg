@@ -18,7 +18,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/9seconds/mtg/v2/essentials"
+	"github.com/dolonet/mtg-multi/essentials"
 )
 
 const (

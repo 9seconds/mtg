@@ -3,7 +3,7 @@ package cli
 import (
 	"fmt"
 
-	"github.com/9seconds/mtg/v2/internal/utils"
+	"github.com/dolonet/mtg-multi/internal/utils"
 )
 
 type Run struct {

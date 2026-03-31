@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/9seconds/mtg/v2/internal/testlib"
-	"github.com/9seconds/mtg/v2/mtglib"
-	"github.com/9seconds/mtg/v2/mtglib/internal/tls/fake"
+	"github.com/dolonet/mtg-multi/internal/testlib"
+	"github.com/dolonet/mtg-multi/mtglib"
+	"github.com/dolonet/mtg-multi/mtglib/internal/tls/fake"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"

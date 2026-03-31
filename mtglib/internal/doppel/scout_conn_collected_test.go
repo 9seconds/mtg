@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/9seconds/mtg/v2/mtglib/internal/tls"
+	"github.com/dolonet/mtg-multi/mtglib/internal/tls"
 	"github.com/stretchr/testify/suite"
 )
 

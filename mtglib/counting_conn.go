@@ -1,7 +1,7 @@
 package mtglib
 
 import (
-	"github.com/9seconds/mtg/v2/essentials"
+	"github.com/dolonet/mtg-multi/essentials"
 )
 
 // countingConn wraps essentials.Conn and counts bytes through a cached

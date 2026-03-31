@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/9seconds/mtg/v2/ipblocklist/files"
-	"github.com/9seconds/mtg/v2/mtglib"
+	"github.com/dolonet/mtg-multi/ipblocklist/files"
+	"github.com/dolonet/mtg-multi/mtglib"
 	"github.com/panjf2000/ants/v2"
 	"github.com/yl2chen/cidranger"
 )

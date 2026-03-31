@@ -13,11 +13,11 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/9seconds/mtg/v2/essentials"
-	"github.com/9seconds/mtg/v2/internal/config"
-	"github.com/9seconds/mtg/v2/internal/utils"
-	"github.com/9seconds/mtg/v2/mtglib"
-	"github.com/9seconds/mtg/v2/network/v2"
+	"github.com/dolonet/mtg-multi/essentials"
+	"github.com/dolonet/mtg-multi/internal/config"
+	"github.com/dolonet/mtg-multi/internal/utils"
+	"github.com/dolonet/mtg-multi/mtglib"
+	"github.com/dolonet/mtg-multi/network/v2"
 	"github.com/beevik/ntp"
 )
 
