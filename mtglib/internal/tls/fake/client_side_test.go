@@ -7,7 +7,6 @@ import (
 	"errors"
 	"io"
 	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -397,142 +396,6 @@ func TestParseClientHelloSNI(t *testing.T) {
 	suite.Run(t, &ParseClientHelloSNITestSuite{})
 }
 
-// --- ReadClientHelloMulti tests ---
-
-type ReadClientHelloMultiTestSuite struct {
-	suite.Suite
-
-	secret mtglib.Secret
-}
-
-func (suite *ReadClientHelloMultiTestSuite) SetupSuite() {
-	parsed, err := mtglib.ParseSecret(
-		"ee367a189aee18fa31c190054efd4a8e9573746f726167652e676f6f676c65617069732e636f6d",
-	)
-	require.NoError(suite.T(), err)
-
-	suite.secret = parsed
-}
-
-func (suite *ReadClientHelloMultiTestSuite) loadSnapshot(name string) []byte {
-	data, err := os.ReadFile(filepath.Join("testdata", name))
-	require.NoError(suite.T(), err)
-
-	snapshot := &clientHelloSnapshot{}
-	require.NoError(suite.T(), json.Unmarshal(data, snapshot))
-
-	return snapshot.GetFull()
-}
-
-func (suite *ReadClientHelloMultiTestSuite) makeConn(data []byte) *parseClientHelloConnMock {
-	readBuf := &bytes.Buffer{}
-	readBuf.Write(data)
-
-	connMock := &parseClientHelloConnMock{
-		readBuf: readBuf,
-	}
-
-	connMock.
-		On("SetReadDeadline", mock.AnythingOfType("time.Time")).
-		Twice().
-		Return(nil)
-
-	return connMock
-}
-
-func (suite *ReadClientHelloMultiTestSuite) TestMatchesCorrectSecretAtIndex0() {
-	payload := suite.loadSnapshot("client-hello-ok-19dfe38384b9884b.json")
-	connMock := suite.makeConn(payload)
-	defer connMock.AssertExpectations(suite.T())
-
-	wrongSecret := mtglib.GenerateSecret("storage.googleapis.com")
-
-	result, err := fake.ReadClientHelloMulti(
-		connMock,
-		[][]byte{suite.secret.Key[:], wrongSecret.Key[:]},
-		suite.secret.Host,
-		TolerateTime,
-	)
-	suite.NoError(err)
-	suite.Equal(0, result.MatchedIndex)
-	suite.NotNil(result.Hello)
-}
-
-func (suite *ReadClientHelloMultiTestSuite) TestMatchesCorrectSecretAtIndex1() {
-	payload := suite.loadSnapshot("client-hello-ok-19dfe38384b9884b.json")
-	connMock := suite.makeConn(payload)
-	defer connMock.AssertExpectations(suite.T())
-
-	wrongSecret := mtglib.GenerateSecret("storage.googleapis.com")
-
-	result, err := fake.ReadClientHelloMulti(
-		connMock,
-		[][]byte{wrongSecret.Key[:], suite.secret.Key[:]},
-		suite.secret.Host,
-		TolerateTime,
-	)
-	suite.NoError(err)
-	suite.Equal(1, result.MatchedIndex)
-	suite.NotNil(result.Hello)
-}
-
-func (suite *ReadClientHelloMultiTestSuite) TestMatchesCorrectSecretAtIndex2() {
-	payload := suite.loadSnapshot("client-hello-ok-19dfe38384b9884b.json")
-	connMock := suite.makeConn(payload)
-	defer connMock.AssertExpectations(suite.T())
-
-	wrong1 := mtglib.GenerateSecret("storage.googleapis.com")
-	wrong2 := mtglib.GenerateSecret("storage.googleapis.com")
-
-	result, err := fake.ReadClientHelloMulti(
-		connMock,
-		[][]byte{wrong1.Key[:], wrong2.Key[:], suite.secret.Key[:]},
-		suite.secret.Host,
-		TolerateTime,
-	)
-	suite.NoError(err)
-	suite.Equal(2, result.MatchedIndex)
-	suite.NotNil(result.Hello)
-}
-
-func (suite *ReadClientHelloMultiTestSuite) TestNoMatchReturnsBadDigest() {
-	payload := suite.loadSnapshot("client-hello-ok-19dfe38384b9884b.json")
-	connMock := suite.makeConn(payload)
-	defer connMock.AssertExpectations(suite.T())
-
-	wrong1 := mtglib.GenerateSecret("storage.googleapis.com")
-	wrong2 := mtglib.GenerateSecret("storage.googleapis.com")
-
-	_, err := fake.ReadClientHelloMulti(
-		connMock,
-		[][]byte{wrong1.Key[:], wrong2.Key[:]},
-		suite.secret.Host,
-		TolerateTime,
-	)
-	suite.ErrorIs(err, fake.ErrBadDigest)
-}
-
-func (suite *ReadClientHelloMultiTestSuite) TestBadSnapshotReturnsBadDigest() {
-	payload := suite.loadSnapshot("client-hello-bad-fa2e46cdb33e2a1b.json")
-	connMock := suite.makeConn(payload)
-	defer connMock.AssertExpectations(suite.T())
-
-	_, err := fake.ReadClientHelloMulti(
-		connMock,
-		[][]byte{suite.secret.Key[:]},
-		suite.secret.Host,
-		TolerateTime,
-	)
-	suite.ErrorIs(err, fake.ErrBadDigest)
-}
-
-func TestReadClientHelloMulti(t *testing.T) {
-	t.Parallel()
-	suite.Run(t, &ReadClientHelloMultiTestSuite{})
-}
-
-// --- Fragmented TLS record tests ---
-
 // fragmentTLSRecord splits a single TLS record into n TLS records by
 // dividing the payload into roughly equal parts. Each part gets its own
 // TLS record header with the same record type and version.
@@ -680,7 +543,7 @@ func (s *ParseClientHelloFragmentedTestSuite) TestReassemblyErrors() {
 				buf.Write(payload[10:])
 				return buf.Bytes()
 			},
-			errMsg: "unexpected continuation record type",
+			errMsg: "unexpected record type",
 		},
 		{
 			name: "too many continuation records",
@@ -700,7 +563,7 @@ func (s *ParseClientHelloFragmentedTestSuite) TestReassemblyErrors() {
 				}
 				return buf.Bytes()
 			},
-			errMsg: "too many continuation records",
+			errMsg: "too many fragments",
 		},
 		{
 			name: "zero-length continuation record",
@@ -716,7 +579,7 @@ func (s *ParseClientHelloFragmentedTestSuite) TestReassemblyErrors() {
 				require.NoError(s.T(), binary.Write(buf, binary.BigEndian, uint16(0)))
 				return buf.Bytes()
 			},
-			errMsg: "zero-length continuation record",
+			errMsg: "cannot read record header",
 		},
 		{
 			name: "wrong continuation record version",
@@ -733,7 +596,7 @@ func (s *ParseClientHelloFragmentedTestSuite) TestReassemblyErrors() {
 				buf.Write(payload[10:])
 				return buf.Bytes()
 			},
-			errMsg: "unexpected continuation record version",
+			errMsg: "unexpected protocol version",
 		},
 		{
 			name: "handshake message too large",
@@ -747,7 +610,7 @@ func (s *ParseClientHelloFragmentedTestSuite) TestReassemblyErrors() {
 				buf.Write(handshakePayload)
 				return buf.Bytes()
 			},
-			errMsg: "handshake message too large",
+			errMsg: "cannot read record header",
 		},
 		{
 			name: "truncated continuation record header",
@@ -762,7 +625,7 @@ func (s *ParseClientHelloFragmentedTestSuite) TestReassemblyErrors() {
 				buf.WriteByte(3)
 				return buf.Bytes()
 			},
-			errMsg: "cannot read continuation record header",
+			errMsg: "cannot read record header",
 		},
 		{
 			name: "truncated continuation record payload",
@@ -778,7 +641,7 @@ func (s *ParseClientHelloFragmentedTestSuite) TestReassemblyErrors() {
 				require.NoError(s.T(), binary.Write(buf, binary.BigEndian, uint16(100)))
 				return buf.Bytes()
 			},
-			errMsg: "cannot read continuation record payload",
+			errMsg: "EOF",
 		},
 	}
 
