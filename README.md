@@ -71,12 +71,13 @@ Minimal config:
 
 ```toml
 bind-to = "0.0.0.0:443"
+api-bind-to = "127.0.0.1:9090"
 
+# [secrets] must be the last section in the global scope —
+# in TOML, all keys after a [section] become part of that table.
 [secrets]
 alice = "ee..."
 bob   = "ee..."
-
-api-bind-to = "127.0.0.1:9090"
 ```
 
 Run:
@@ -154,12 +155,13 @@ mtg-multi generate-secret --hex storage.googleapis.com
 
 ```toml
 bind-to = "0.0.0.0:443"
+api-bind-to = "127.0.0.1:9090"
 
+# [secrets] должен быть последней секцией в глобальном scope —
+# в TOML все ключи после [section] становятся частью этой таблицы.
 [secrets]
 alice = "ee..."
 bob   = "ee..."
-
-api-bind-to = "127.0.0.1:9090"
 ```
 
 Запуск:
