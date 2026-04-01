@@ -160,7 +160,6 @@ type ProxyOpts struct {
 
 	// DoppelGangerDRS defines if TLS Dynamic Record Sizing is active.
 	DoppelGangerDRS bool
-
 }
 
 func (p ProxyOpts) valid() error {

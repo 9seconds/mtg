@@ -3,6 +3,7 @@ package mtglib
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -102,7 +103,7 @@ func newConnProxyProtocol(source, target essentials.Conn) *connProxyProtocol {
 // Both directions update the same timestamp so that activity in one direction
 // prevents the other (idle) direction from timing out.
 type idleTracker struct {
-	lastActive atomic.Int64 // unix nanos
+	lastActive atomic.Pointer[time.Time]
 	timeout    time.Duration
 }
 
@@ -114,13 +115,12 @@ func newIdleTracker(timeout time.Duration) *idleTracker {
 }
 
 func (t *idleTracker) touch() {
-	t.lastActive.Store(time.Now().UnixNano())
+	stamp := time.Now()
+	t.lastActive.Store(&stamp)
 }
 
 func (t *idleTracker) isIdle() bool {
-	last := time.Unix(0, t.lastActive.Load())
-
-	return time.Since(last) >= t.timeout
+	return time.Since(*t.lastActive.Load()) >= t.timeout
 }
 
 type connIdleTimeout struct {
@@ -130,25 +130,22 @@ type connIdleTimeout struct {
 }
 
 func (c connIdleTimeout) Read(b []byte) (int, error) {
+	var netErr net.Error
+
 	for {
 		c.SetReadDeadline(time.Now().Add(c.tracker.timeout)) //nolint: errcheck
 
 		n, err := c.Conn.Read(b)
-		if n > 0 {
+
+		switch {
+		case err == nil:
 			c.tracker.touch()
-
-			return n, err //nolint: wrapcheck
+			return n, nil
+		case errors.As(err, &netErr) && netErr.Timeout() && !c.tracker.isIdle():
+			continue
 		}
 
-		if err != nil {
-			if netErr, ok := err.(net.Error); ok && netErr.Timeout() && !c.tracker.isIdle() { //nolint: errorlint
-				continue
-			}
-
-			return 0, err //nolint: wrapcheck
-		}
-
-		return 0, nil
+		return n, err
 	}
 }
 
