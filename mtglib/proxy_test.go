@@ -175,7 +175,7 @@ func (suite *ProxyTestSuite) TestHTTPSRequest() {
 	addr := fmt.Sprintf("https://%s/headers", suite.ProxyAddress())
 
 	resp, err := client.Get(addr) //nolint: noctx
-	suite.NoError(err)
+	suite.Require().NoError(err)
 
 	defer resp.Body.Close() //nolint: errcheck
 

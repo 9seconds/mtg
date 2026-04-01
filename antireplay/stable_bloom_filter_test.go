@@ -12,7 +12,7 @@ type StableBloomFilterTestSuite struct {
 }
 
 func (suite *StableBloomFilterTestSuite) TestOp() {
-	filter := antireplay.NewStableBloomFilter(500, 0.001)
+	filter := antireplay.NewStableBloomFilter(100000, 0.001)
 
 	suite.False(filter.SeenBefore([]byte{1, 2, 3}))
 	suite.False(filter.SeenBefore([]byte{4, 5, 6}))
