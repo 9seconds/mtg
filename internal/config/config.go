@@ -70,7 +70,11 @@ type Config struct {
 		Proxies []TypeProxyURL `json:"proxies"`
 	} `json:"network"`
 	APIBindTo TypeHostPort `json:"apiBindTo"`
-	Stats     struct {
+	Throttle  struct {
+		MaxConnections TypeConcurrency `json:"maxConnections"`
+		CheckInterval  TypeDuration    `json:"checkInterval"`
+	} `json:"throttle"`
+	Stats struct {
 		StatsD struct {
 			Optional
 

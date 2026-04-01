@@ -93,6 +93,14 @@ type EventReplayAttack struct {
 	eventBase
 }
 
+// EventThrottled is emitted when a connection is rejected because the
+// per-user connection cap has been reached.
+type EventThrottled struct {
+	eventBase
+
+	SecretName string
+}
+
 // EventIPListSize is emitted when mtg updates a contents of the ip lists:
 // allowlist or blocklist.
 type EventIPListSize struct {
@@ -197,6 +205,17 @@ func NewEventReplayAttack(streamID string) EventReplayAttack {
 			timestamp: time.Now(),
 			streamID:  streamID,
 		},
+	}
+}
+
+// NewEventThrottled creates a new EventThrottled event.
+func NewEventThrottled(streamID, secretName string) EventThrottled {
+	return EventThrottled{
+		eventBase: eventBase{
+			timestamp: time.Now(),
+			streamID:  streamID,
+		},
+		SecretName: secretName,
 	}
 }
 

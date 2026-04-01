@@ -87,6 +87,13 @@ func (p *Proxy) ServeConn(conn essentials.Conn) {
 		return
 	}
 
+	if !p.stats.CanConnect(ctx.secretName) {
+		ctx.logger.Info("connection throttled")
+		p.eventStream.Send(ctx, NewEventThrottled(ctx.streamID, ctx.secretName))
+
+		return
+	}
+
 	p.stats.OnConnect(ctx.secretName)
 	p.stats.UpdateLastSeen(ctx.secretName)
 
@@ -379,6 +386,11 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 
 	if opts.APIBindTo != "" {
 		stats.StartServer(ctx, opts.APIBindTo, logger)
+	}
+
+	if opts.ThrottleMaxConnections > 0 {
+		stats.SetThrottle(int64(opts.ThrottleMaxConnections), opts.getThrottleCheckInterval())
+		stats.startThrottleLoop(ctx, logger)
 	}
 
 	proxy := &Proxy{
