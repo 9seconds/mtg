@@ -271,6 +271,9 @@ func runProxy(conf *config.Config, version string) error { //nolint: funlen
 		DoppelGangerDRS:     conf.Defense.Doppelganger.DRS.Get(false),
 
 		APIBindTo: conf.APIBindTo.Get(""),
+
+		ThrottleMaxConnections: conf.Throttle.MaxConnections.Get(0),
+		ThrottleCheckInterval:  conf.Throttle.CheckInterval.Get(5 * time.Second),
 	}
 
 	proxy, err := mtglib.NewProxy(opts)

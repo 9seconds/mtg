@@ -175,6 +175,20 @@ type ProxyOpts struct {
 	//
 	// This is an optional setting.
 	APIBindTo string
+
+	// ThrottleMaxConnections is the total connection limit. When total
+	// connections exceed this value, per-user caps are computed using
+	// a fair-share algorithm and new connections from over-cap users
+	// are rejected. 0 disables throttling.
+	//
+	// This is an optional setting.
+	ThrottleMaxConnections uint
+
+	// ThrottleCheckInterval is how often the throttle recomputes per-user
+	// caps. Defaults to 5 seconds.
+	//
+	// This is an optional setting.
+	ThrottleCheckInterval time.Duration
 }
 
 func (p ProxyOpts) valid() error {
@@ -267,6 +281,14 @@ func (p ProxyOpts) getIdleTimeout() time.Duration {
 	}
 
 	return p.IdleTimeout
+}
+
+func (p ProxyOpts) getThrottleCheckInterval() time.Duration {
+	if p.ThrottleCheckInterval == 0 {
+		return 5 * time.Second //nolint: mnd
+	}
+
+	return p.ThrottleCheckInterval
 }
 
 func (p ProxyOpts) getLogger(name string) Logger {
