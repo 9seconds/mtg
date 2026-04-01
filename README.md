@@ -29,6 +29,8 @@ are the most notable:
 * [Official](https://github.com/TelegramMessenger/MTProxy)
 * [Python](https://github.com/alexbers/mtprotoproxy)
 * [Erlang](https://github.com/seriyps/mtproto_proxy)
+* [Teleproxy (C)](https://github.com/teleproxy/teleproxy)
+* [mtproto.zig (Zig)](https://github.com/sleep3r/mtproto.zig)
 * [Telemt (Rust)](https://github.com/telemt/telemt)
 
 You can use any of these. They work great and all implementations have

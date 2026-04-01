@@ -33,7 +33,7 @@ RUN go mod download
 COPY . /app
 
 RUN set -x \
-  && version="$(git describe --exact-match HEAD 2>/dev/null || git describe --tags --always)" \
+  && version="$(git describe --exact-match HEAD 2>/dev/null || git describe --tags --always 2>/dev/null || echo dev)" \
   && go build \
       -trimpath \
       -mod=readonly \

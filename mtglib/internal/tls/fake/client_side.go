@@ -11,8 +11,6 @@ import (
 	"net"
 	"slices"
 	"time"
-
-	"github.com/9seconds/mtg/v2/mtglib/internal/tls"
 )
 
 const (
@@ -56,25 +54,17 @@ func ReadClientHello(
 	//  4. New digest should be all 0 except of last 4 bytes
 	//  5. Last 4 bytes are little endian uint32 of UNIX timestamp when
 	//     this message was created.
-	handshakeCopyBuf := &bytes.Buffer{}
-	reader := io.TeeReader(conn, handshakeCopyBuf)
-
-	reader, err := parseTLSHeader(reader)
+	clientHelloCopy, handshakeReader, err := parseClientHello(conn)
 	if err != nil {
-		return nil, fmt.Errorf("cannot parse tls header: %w", err)
+		return nil, fmt.Errorf("cannot read client hello: %w", err)
 	}
 
-	reader, err = parseHandshakeHeader(reader)
-	if err != nil {
-		return nil, fmt.Errorf("cannot parse handshake header: %w", err)
-	}
-
-	hello, err := parseHandshake(reader)
+	hello, err := parseHandshake(handshakeReader)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse handshake: %w", err)
 	}
 
-	sniHostnames, err := parseSNI(reader)
+	sniHostnames, err := parseSNI(handshakeReader)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse SNI: %w", err)
 	}
@@ -85,10 +75,10 @@ func ReadClientHello(
 
 	digest := hmac.New(sha256.New, secret)
 	// we write a copy of the handshake with client random all nullified.
-	digest.Write(handshakeCopyBuf.Next(RandomOffset))
-	handshakeCopyBuf.Next(RandomLen)
+	digest.Write(clientHelloCopy.Next(RandomOffset))
+	clientHelloCopy.Next(RandomLen)
 	digest.Write(emptyRandom[:])
-	digest.Write(handshakeCopyBuf.Bytes())
+	digest.Write(clientHelloCopy.Bytes())
 
 	computed := digest.Sum(nil)
 
@@ -108,58 +98,6 @@ func ReadClientHello(
 	}
 
 	return hello, nil
-}
-
-func parseTLSHeader(r io.Reader) (io.Reader, error) {
-	// record_type(1) + version(2) + size(2)
-	//   16 - type is 0x16 (handshake record)
-	//   03 01 - protocol version is "3,1" (also known as TLS 1.0)
-	//   00 f8 - 0xF8 (248) bytes of handshake message follows
-	header := [1 + 2 + 2]byte{}
-
-	if _, err := io.ReadFull(r, header[:]); err != nil {
-		return nil, fmt.Errorf("cannot read record header: %w", err)
-	}
-
-	if header[0] != tls.TypeHandshake {
-		return nil, fmt.Errorf("unexpected record type %#x", header[0])
-	}
-
-	if header[1] != 3 || header[2] != 1 {
-		return nil, fmt.Errorf("unexpected protocol version %#x %#x", header[1], header[2])
-	}
-
-	length := int64(binary.BigEndian.Uint16(header[3:]))
-	buf := &bytes.Buffer{}
-
-	_, err := io.CopyN(buf, r, length)
-
-	return buf, err
-}
-
-func parseHandshakeHeader(r io.Reader) (io.Reader, error) {
-	// type(1) + size(3 / uint24)
-	// 01 - handshake message type 0x01 (client hello)
-	// 00 00 f4 - 0xF4 (244) bytes of client hello data follows
-	header := [1 + 3]byte{}
-
-	if _, err := io.ReadFull(r, header[:]); err != nil {
-		return nil, fmt.Errorf("cannot read handshake header: %w", err)
-	}
-
-	if header[0] != TypeHandshakeClient {
-		return nil, fmt.Errorf("incorrect handshake type: %#x", header[0])
-	}
-
-	// unfortunately there is not uint24 in golang, so we just reust header
-	header[0] = 0
-
-	length := int64(binary.BigEndian.Uint32(header[:]))
-	buf := &bytes.Buffer{}
-
-	_, err := io.CopyN(buf, r, length)
-
-	return buf, err
 }
 
 func parseHandshake(r io.Reader) (*ClientHello, error) {
