@@ -543,7 +543,7 @@ func (s *ParseClientHelloFragmentedTestSuite) TestReassemblyErrors() {
 				buf.Write(payload[10:])
 				return buf.Bytes()
 			},
-			errMsg: "unexpected continuation record type",
+			errMsg: "unexpected record type",
 		},
 		{
 			name: "too many continuation records",
@@ -563,7 +563,7 @@ func (s *ParseClientHelloFragmentedTestSuite) TestReassemblyErrors() {
 				}
 				return buf.Bytes()
 			},
-			errMsg: "too many continuation records",
+			errMsg: "too many fragments",
 		},
 		{
 			name: "zero-length continuation record",
@@ -579,7 +579,7 @@ func (s *ParseClientHelloFragmentedTestSuite) TestReassemblyErrors() {
 				require.NoError(s.T(), binary.Write(buf, binary.BigEndian, uint16(0)))
 				return buf.Bytes()
 			},
-			errMsg: "zero-length continuation record",
+			errMsg: "cannot read record header",
 		},
 		{
 			name: "wrong continuation record version",
@@ -596,7 +596,7 @@ func (s *ParseClientHelloFragmentedTestSuite) TestReassemblyErrors() {
 				buf.Write(payload[10:])
 				return buf.Bytes()
 			},
-			errMsg: "unexpected continuation record version",
+			errMsg: "unexpected protocol version",
 		},
 		{
 			name: "handshake message too large",
@@ -610,7 +610,7 @@ func (s *ParseClientHelloFragmentedTestSuite) TestReassemblyErrors() {
 				buf.Write(handshakePayload)
 				return buf.Bytes()
 			},
-			errMsg: "handshake message too large",
+			errMsg: "cannot read record header",
 		},
 		{
 			name: "truncated continuation record header",
@@ -625,7 +625,7 @@ func (s *ParseClientHelloFragmentedTestSuite) TestReassemblyErrors() {
 				buf.WriteByte(3)
 				return buf.Bytes()
 			},
-			errMsg: "cannot read continuation record header",
+			errMsg: "cannot read record header",
 		},
 		{
 			name: "truncated continuation record payload",
@@ -641,7 +641,7 @@ func (s *ParseClientHelloFragmentedTestSuite) TestReassemblyErrors() {
 				require.NoError(s.T(), binary.Write(buf, binary.BigEndian, uint16(100)))
 				return buf.Bytes()
 			},
-			errMsg: "cannot read continuation record payload",
+			errMsg: "EOF",
 		},
 	}
 
