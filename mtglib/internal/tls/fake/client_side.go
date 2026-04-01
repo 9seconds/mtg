@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -23,6 +24,11 @@ const (
 	RandomOffset = 1 + 2 + 2 + 1 + 3 + 2
 
 	sniDNSNamesListType = 0
+
+	// maxContinuationRecords limits the number of continuation TLS records
+	// that reassembleTLSHandshake will read. This prevents resource exhaustion
+	// from adversarial fragmentation.
+	maxContinuationRecords = 10
 )
 
 var (
@@ -56,12 +62,18 @@ func ReadClientHello(
 	//  4. New digest should be all 0 except of last 4 bytes
 	//  5. Last 4 bytes are little endian uint32 of UNIX timestamp when
 	//     this message was created.
-	handshakeCopyBuf := &bytes.Buffer{}
-	reader := io.TeeReader(conn, handshakeCopyBuf)
-
-	reader, err := parseTLSHeader(reader)
+	reassembled, err := reassembleTLSHandshake(conn)
 	if err != nil {
-		return nil, fmt.Errorf("cannot parse tls header: %w", err)
+		return nil, fmt.Errorf("cannot reassemble TLS records: %w", err)
+	}
+
+	handshakeCopyBuf := &bytes.Buffer{}
+	reader := io.TeeReader(reassembled, handshakeCopyBuf)
+
+	// Skip the TLS record header (validated during reassembly).
+	// The header still flows through TeeReader into handshakeCopyBuf for HMAC.
+	if _, err = io.CopyN(io.Discard, reader, tls.SizeHeader); err != nil {
+		return nil, fmt.Errorf("cannot skip tls header: %w", err)
 	}
 
 	reader, err = parseHandshakeHeader(reader)
@@ -110,15 +122,28 @@ func ReadClientHello(
 	return hello, nil
 }
 
-func parseTLSHeader(r io.Reader) (io.Reader, error) {
-	// record_type(1) + version(2) + size(2)
-	//   16 - type is 0x16 (handshake record)
-	//   03 01 - protocol version is "3,1" (also known as TLS 1.0)
-	//   00 f8 - 0xF8 (248) bytes of handshake message follows
-	header := [1 + 2 + 2]byte{}
+// reassembleTLSHandshake reads one or more TLS records from conn,
+// validates the record type and version, and reassembles fragmented
+// handshake payloads into a single TLS record.
+//
+// Per RFC 5246 Section 6.2.1, handshake messages may be fragmented
+// across multiple TLS records. DPI bypass tools like ByeDPI use this
+// to evade censorship.
+//
+// The returned buffer contains the full TLS record (header + payload)
+// so that callers can include the header in HMAC computation.
+func reassembleTLSHandshake(conn io.Reader) (*bytes.Buffer, error) {
+	header := [tls.SizeHeader]byte{}
 
-	if _, err := io.ReadFull(r, header[:]); err != nil {
+	if _, err := io.ReadFull(conn, header[:]); err != nil {
 		return nil, fmt.Errorf("cannot read record header: %w", err)
+	}
+
+	length := int64(binary.BigEndian.Uint16(header[3:]))
+	payload := &bytes.Buffer{}
+
+	if _, err := io.CopyN(payload, conn, length); err != nil {
+		return nil, fmt.Errorf("cannot read record payload: %w", err)
 	}
 
 	if header[0] != tls.TypeHandshake {
@@ -129,12 +154,93 @@ func parseTLSHeader(r io.Reader) (io.Reader, error) {
 		return nil, fmt.Errorf("unexpected protocol version %#x %#x", header[1], header[2])
 	}
 
-	length := int64(binary.BigEndian.Uint16(header[3:]))
-	buf := &bytes.Buffer{}
+	// Reassemble fragmented payload. continuationCount caps the total
+	// number of continuation records across both phases below.
+	continuationCount := 0
 
-	_, err := io.CopyN(buf, r, length)
+	// Phase 1: read continuation records until we have at least the
+	// 4-byte handshake header (type + uint24 length) to determine the
+	// expected total size.
+	for ; payload.Len() < 4 && continuationCount < maxContinuationRecords; continuationCount++ {
+		prevLen := payload.Len()
 
-	return buf, err
+		if err := readContinuationRecord(conn, payload); err != nil {
+			payload.Truncate(prevLen) // discard partial data on error
+
+			if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
+				break // no more records — let downstream parsing handle what we have
+			}
+
+			return nil, err
+		}
+	}
+
+	// Phase 2: we know the expected handshake size — read remaining
+	// continuation records until the payload is complete.
+	if payload.Len() >= 4 {
+		p := payload.Bytes()
+		expectedTotal := 4 + (int(p[1])<<16 | int(p[2])<<8 | int(p[3]))
+
+		if expectedTotal > 0xFFFF {
+			return nil, fmt.Errorf("handshake message too large: %d bytes", expectedTotal)
+		}
+
+		for ; payload.Len() < expectedTotal && continuationCount < maxContinuationRecords; continuationCount++ {
+			if err := readContinuationRecord(conn, payload); err != nil {
+				return nil, err
+			}
+		}
+
+		if payload.Len() < expectedTotal {
+			return nil, fmt.Errorf("cannot reassemble handshake: too many continuation records")
+		}
+
+		payload.Truncate(expectedTotal)
+	}
+
+	if payload.Len() > 0xFFFF {
+		return nil, fmt.Errorf("reassembled payload too large: %d bytes", payload.Len())
+	}
+
+	// Reconstruct a single TLS record with the reassembled payload.
+	result := &bytes.Buffer{}
+	result.Grow(tls.SizeHeader + payload.Len())
+	result.Write(header[:3])
+	binary.Write(result, binary.BigEndian, uint16(payload.Len())) //nolint:errcheck // bytes.Buffer.Write never fails
+	result.Write(payload.Bytes())
+
+	return result, nil
+}
+
+// readContinuationRecord reads the next TLS record header and appends its
+// full payload to dst. It returns an error if the record is not a handshake
+// record.
+func readContinuationRecord(conn io.Reader, dst *bytes.Buffer) error {
+	nextHeader := [tls.SizeHeader]byte{}
+
+	if _, err := io.ReadFull(conn, nextHeader[:]); err != nil {
+		return fmt.Errorf("cannot read continuation record header: %w", err)
+	}
+
+	if nextHeader[0] != tls.TypeHandshake {
+		return fmt.Errorf("unexpected continuation record type %#x", nextHeader[0])
+	}
+
+	if nextHeader[1] != 3 || nextHeader[2] != 1 {
+		return fmt.Errorf("unexpected continuation record version %#x %#x", nextHeader[1], nextHeader[2])
+	}
+
+	nextLength := int64(binary.BigEndian.Uint16(nextHeader[3:]))
+
+	if nextLength == 0 {
+		return fmt.Errorf("zero-length continuation record")
+	}
+
+	if _, err := io.CopyN(dst, conn, nextLength); err != nil {
+		return fmt.Errorf("cannot read continuation record payload: %w", err)
+	}
+
+	return nil
 }
 
 func parseHandshakeHeader(r io.Reader) (io.Reader, error) {
