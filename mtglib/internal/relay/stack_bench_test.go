@@ -6,7 +6,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/9seconds/mtg/v2/mtglib/internal/tls"
+	"github.com/dolonet/mtg-multi/mtglib/internal/tls"
 )
 
 // BenchmarkStackVsPool measures memory consumption when N goroutines hold

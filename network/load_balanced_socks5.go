@@ -6,7 +6,7 @@ import (
 	"math/rand/v2"
 	"net/url"
 
-	"github.com/9seconds/mtg/v2/essentials"
+	"github.com/dolonet/mtg-multi/essentials"
 )
 
 type loadBalancedSocks5Dialer struct {

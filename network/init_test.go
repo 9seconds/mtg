@@ -8,8 +8,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/9seconds/mtg/v2/essentials"
-	"github.com/9seconds/mtg/v2/network"
+	"github.com/dolonet/mtg-multi/essentials"
+	"github.com/dolonet/mtg-multi/network"
 	socks5 "github.com/armon/go-socks5"
 	"github.com/mccutchen/go-httpbin/httpbin"
 	"github.com/stretchr/testify/mock"
