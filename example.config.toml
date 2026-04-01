@@ -20,13 +20,6 @@ debug = true
 # should either be base64-encoded or starts with ee.
 secret = "ee367a189aee18fa31c190054efd4a8e9573746f726167652e676f6f676c65617069732e636f6d"
 
-# For multi-user support, use the [secrets] section instead of "secret".
-# Each key is a user name, used for per-user stats tracking.
-# All secrets must use the same hostname.
-# [secrets]
-# alice = "ee367a189aee18fa31c190054efd4a8e9573746f726167652e676f6f676c65617069732e636f6d"
-# bob = "ee0123456789abcdef0123456789abcd9573746f726167652e676f6f676c65617069732e636f6d"
-
 # Host:port pair to bind the built-in stats HTTP API server.
 # GET /stats returns per-user connection counts and traffic.
 # If not set, the stats API is not started.
@@ -117,6 +110,16 @@ tolerate-time-skewness = "5s"
 # If this setting is disabled (default), mtg will reject a connection.
 # Otherwise, chose a new DC.
 allow-fallback-on-unknown-dc = false
+
+# For multi-user support, use the [secrets] section instead of "secret".
+# Each key is a user name, used for per-user stats tracking.
+# All secrets must use the same hostname.
+#
+# IMPORTANT: [secrets] must appear after all global keys (like bind-to,
+# api-bind-to) — in TOML, keys after a [section] belong to that table.
+# [secrets]
+# alice = "ee367a189aee18fa31c190054efd4a8e9573746f726167652e676f6f676c65617069732e636f6d"
+# bob = "ee0123456789abcdef0123456789abcd9573746f726167652e676f6f676c65617069732e636f6d"
 
 # This section is relevant to communication with fronting domain. Usually
 # you do not need to setup anything here but there are plenty of cases, especially
