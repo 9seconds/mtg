@@ -42,6 +42,29 @@ GET /stats
 }
 ```
 
+**Connection throttling.** Automatic per-user connection limits to protect the server from overload. A background goroutine recomputes caps every few seconds using a fair-share algorithm: small users keep their connections, remaining budget is split equally among heavy consumers. New connections from over-cap users are rejected; existing connections are not killed.
+
+```toml
+[throttle]
+max-connections = 5000
+check-interval = "5s"
+```
+
+Example: limit = 100, users A=1, B=1, C=90, D=110.
+A and B stay at 1. Remaining budget 98 is split: C and D are capped at 49 each.
+
+Throttle state is exposed via the Stats API:
+
+```json
+{
+  "throttle": {
+    "active": true,
+    "limit": 5000,
+    "caps": { "heavy-user": 2450 }
+  }
+}
+```
+
 **Public IP override.** Useful when auto-detection via ifconfig.co is unavailable.
 
 ```toml
@@ -72,6 +95,9 @@ Minimal config:
 ```toml
 bind-to = "0.0.0.0:443"
 api-bind-to = "127.0.0.1:9090"
+
+[throttle]
+max-connections = 5000
 
 # [secrets] must be the last section in the global scope —
 # in TOML, all keys after a [section] become part of that table.
@@ -126,6 +152,29 @@ GET /stats
 }
 ```
 
+**Троттлинг подключений.** Автоматические per-user лимиты для защиты сервера от перегрузки. Фоновая горутина каждые несколько секунд пересчитывает капы по алгоритму fair-share: маленькие пользователи сохраняют свои подключения, оставшийся бюджет делится поровну между крупными потребителями. Новые подключения сверх капа отклоняются; существующие не разрываются.
+
+```toml
+[throttle]
+max-connections = 5000
+check-interval = "5s"
+```
+
+Пример: лимит = 100, пользователи A=1, B=1, C=90, D=110.
+A и B остаются на 1. Оставшийся бюджет 98 делится: C и D получают кап 49.
+
+Состояние троттлинга доступно через Stats API:
+
+```json
+{
+  "throttle": {
+    "active": true,
+    "limit": 5000,
+    "caps": { "heavy-user": 2450 }
+  }
+}
+```
+
 **Ручное указание публичного IP.** Для случаев, когда ifconfig.co недоступен с сервера.
 
 ```toml
@@ -156,6 +205,9 @@ mtg-multi generate-secret --hex storage.googleapis.com
 ```toml
 bind-to = "0.0.0.0:443"
 api-bind-to = "127.0.0.1:9090"
+
+[throttle]
+max-connections = 5000
 
 # [secrets] должен быть последней секцией в глобальном scope —
 # в TOML все ключи после [section] становятся частью этой таблицы.
