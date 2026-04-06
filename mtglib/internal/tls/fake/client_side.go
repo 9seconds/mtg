@@ -130,17 +130,24 @@ func parseHandshake(r io.Reader) (*ClientHello, error) {
 
 	cipherSuiteLen := int64(binary.BigEndian.Uint16(header[:]))
 
-	// we do not care about picking up any cipher. we pick the first one,
-	// so it is always should be present.
-	if _, err := io.ReadFull(r, header[:]); err != nil {
-		return nil, fmt.Errorf("cannot read first cipher suite: %w", err)
+	// Pick the first non-GREASE cipher suite from the list.
+	// Real TLS servers never select GREASE values (RFC 8701, pattern 0x?a?a),
+	// so echoing them back is a trivial DPI fingerprint.
+	for remaining := cipherSuiteLen; remaining >= 2; remaining -= 2 {
+		if _, err := io.ReadFull(r, header[:]); err != nil {
+			return nil, fmt.Errorf("cannot read cipher suite: %w", err)
+		}
+
+		cs := binary.BigEndian.Uint16(header[:])
+		if hello.CipherSuite == 0 && cs&0x0f0f != 0x0a0a {
+			hello.CipherSuite = cs
+		}
 	}
 
-	hello.CipherSuite = binary.BigEndian.Uint16(header[:])
-
-	if _, err := io.CopyN(io.Discard, r, cipherSuiteLen-2); err != nil {
-		return nil, fmt.Errorf("cannot skip remaining cipher suites: %w", err)
+	if hello.CipherSuite == 0 {
+		hello.CipherSuite = 0x1301 // fallback: TLS_AES_128_GCM_SHA256
 	}
+
 
 	if _, err := io.ReadFull(r, header[:1]); err != nil {
 		return nil, fmt.Errorf("cannot read compression methods length: %w", err)
