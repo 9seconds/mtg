@@ -20,8 +20,13 @@ func SetServerSocketOptions(conn net.Conn, bufferSize int) error {
 }
 
 func setCommonSocketOptions(conn *net.TCPConn) error {
-	if err := conn.SetKeepAlivePeriod(DefaultTCPKeepAlivePeriod); err != nil {
-		return fmt.Errorf("cannot set time period of TCP keepalive probes: %w", err)
+	if err := conn.SetKeepAliveConfig(net.KeepAliveConfig{
+		Enable:   true,
+		Idle:     DefaultKeepAliveIdle,
+		Interval: DefaultKeepAliveInterval,
+		Count:    DefaultKeepAliveCount,
+	}); err != nil {
+		return fmt.Errorf("cannot configure TCP keepalive: %w", err)
 	}
 
 	if err := conn.SetLinger(tcpLingerTimeout); err != nil {
