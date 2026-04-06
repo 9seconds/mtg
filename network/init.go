@@ -36,7 +36,21 @@ const (
 
 	// DefaultTCPKeepAlivePeriod defines a time period between 2 consequitive
 	// probes.
+	//
+	// Deprecated: use DefaultKeepAliveIdle and DefaultKeepAliveInterval instead.
 	DefaultTCPKeepAlivePeriod = 10 * time.Second
+
+	// DefaultKeepAliveIdle is the time a connection must be idle before
+	// the first keepalive probe is sent.
+	DefaultKeepAliveIdle = 30 * time.Second
+
+	// DefaultKeepAliveInterval is the time between consecutive keepalive
+	// probes.
+	DefaultKeepAliveInterval = 10 * time.Second
+
+	// DefaultKeepAliveCount is the number of unacknowledged probes before
+	// the connection is considered dead.
+	DefaultKeepAliveCount = 3
 
 	// ProxyDialerOpenThreshold is used for load balancing SOCKS5 dialer only.
 	//
