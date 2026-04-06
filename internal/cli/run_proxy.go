@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"time"
 
 	"github.com/dolonet/mtg-multi/antireplay"
 	"github.com/dolonet/mtg-multi/events"
