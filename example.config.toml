@@ -226,7 +226,7 @@ proxies = [
 [network.timeout]
 tcp = "5s"
 http = "10s"
-idle = "1m"
+idle = "5m"
 
 # mtg has to mimic real websites. It does not mean domain fronting, it also
 # means that traffic characteristics should be similar to real world traffic.
