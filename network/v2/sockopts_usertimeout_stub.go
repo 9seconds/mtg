@@ -7,5 +7,4 @@ import (
 	"syscall"
 )
 
-func setCongestionControl(conn syscall.RawConn)                       {}
 func setTCPUserTimeout(conn syscall.RawConn, cfg net.KeepAliveConfig) {}
