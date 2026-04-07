@@ -11,6 +11,7 @@ package network
 
 import (
 	"errors"
+	"net"
 	"time"
 )
 
@@ -27,19 +28,25 @@ const (
 	// DefaultTCPKeepAlivePeriod defines a time period between 2 consecuitive
 	// probes.
 	//
-	// Deprecated: use DefaultKeepAliveIdle and DefaultKeepAliveInterval instead.
+	// Deprecated: use DefaultKeepAliveConfig
 	DefaultTCPKeepAlivePeriod = 10 * time.Second
 
 	// DefaultKeepAliveIdle is the time a connection must be idle before
 	// the first keepalive probe is sent.
+	//
+	// Deprecated: use DefaultKeepAliveConfig
 	DefaultKeepAliveIdle = 30 * time.Second
 
 	// DefaultKeepAliveInterval is the time between consecutive keepalive
 	// probes.
+	//
+	// Deprecated: use DefaultKeepAliveConfig
 	DefaultKeepAliveInterval = 10 * time.Second
 
 	// DefaultKeepAliveCount is the number of unacknowledged probes before
 	// the connection is considered dead.
+	//
+	// Deprecated: use DefaultKeepAliveConfig
 	DefaultKeepAliveCount = 3
 
 	// User Agent to use in HTTP client.
@@ -50,4 +57,17 @@ const (
 	tcpLingerTimeout = 1
 )
 
-var ErrCannotDial = errors.New("cannot dial to any address")
+var (
+	ErrCannotDial = errors.New("cannot dial to any address")
+
+	// DefaultKeepAliveConfig defines a default configuration for
+	// keep alive settings. As per official documentation, if keep alive
+	// is enabled, then:
+	//
+	//  Idle = 15 * time.Second
+	//  Interval = 15 * time.Second
+	//  Count = 9
+	DefaultKeepAliveConfig = net.KeepAliveConfig{
+		Enable: true,
+	}
+)

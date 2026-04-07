@@ -60,6 +60,12 @@ type tomlConfig struct {
 			Idle      string `toml:"idle" json:"idle,omitempty"`
 			Handshake string `toml:"handshake" json:"handshake,omitempty"`
 		} `toml:"timeout" json:"timeout,omitempty"`
+		KeepAlive struct {
+			Disabled bool   `toml:"disabled" json:"disabled,omitempty"`
+			Idle     string `toml:"idle" json:"idle,omitempty"`
+			Interval string `toml:"interval" json:"interval,omitempty"`
+			Count    uint   `toml:"count" json:"count,omitempty"`
+		} `toml:"keep-alive" json:"keepAlive,omitempty"`
 		DOHIP   string   `toml:"doh-ip" json:"dohIp,omitempty"`
 		DNS     string   `toml:"dns" json:"dns,omitempty"`
 		Proxies []string `toml:"proxies" json:"proxies,omitempty"`

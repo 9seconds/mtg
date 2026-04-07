@@ -5,13 +5,8 @@ import (
 	"net"
 )
 
-func setCommonSocketOptions(conn *net.TCPConn) error {
-	if err := conn.SetKeepAliveConfig(net.KeepAliveConfig{
-		Enable:   true,
-		Idle:     DefaultKeepAliveIdle,
-		Interval: DefaultKeepAliveInterval,
-		Count:    DefaultKeepAliveCount,
-	}); err != nil {
+func setCommonSocketOptions(conn *net.TCPConn, keepAliveConfig net.KeepAliveConfig) error {
+	if err := conn.SetKeepAliveConfig(keepAliveConfig); err != nil {
 		return fmt.Errorf("cannot configure TCP keepalive: %w", err)
 	}
 

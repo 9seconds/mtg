@@ -65,7 +65,7 @@ func TestSetCommonSocketOptionsKeepAlive(t *testing.T) {
 
 	tcpConn := accepted.(*net.TCPConn)
 
-	err = setCommonSocketOptions(tcpConn)
+	err = setCommonSocketOptions(tcpConn, DefaultKeepAliveConfig)
 	require.NoError(t, err)
 
 	rawConn, err := tcpConn.SyscallConn()
@@ -78,15 +78,15 @@ func TestSetCommonSocketOptionsKeepAlive(t *testing.T) {
 
 		idle, err := unix.GetsockoptInt(int(fd), syscall.IPPROTO_TCP, tcpKeepIdleOption())
 		require.NoError(t, err)
-		require.Equal(t, int(DefaultKeepAliveIdle.Seconds()), idle, "keepalive idle should match DefaultKeepAliveIdle")
+		require.Equal(t, 15, idle, "keepalive idle should match DefaultKeepAliveIdle")
 
 		interval, err := unix.GetsockoptInt(int(fd), syscall.IPPROTO_TCP, unix.TCP_KEEPINTVL)
 		require.NoError(t, err)
-		require.Equal(t, int(DefaultKeepAliveInterval.Seconds()), interval, "keepalive interval should match DefaultKeepAliveInterval")
+		require.Equal(t, 15, interval, "keepalive interval should match DefaultKeepAliveInterval")
 
 		count, err := unix.GetsockoptInt(int(fd), syscall.IPPROTO_TCP, unix.TCP_KEEPCNT)
 		require.NoError(t, err)
-		require.Equal(t, DefaultKeepAliveCount, count, "keepalive count should match DefaultKeepAliveCount")
+		require.Equal(t, 9, count, "keepalive count should match DefaultKeepAliveCount")
 	})
 	require.NoError(t, err)
 }
