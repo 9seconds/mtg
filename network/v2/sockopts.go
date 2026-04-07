@@ -28,5 +28,7 @@ func setCommonSocketOptions(conn *net.TCPConn) error {
 		return fmt.Errorf("cannot setup SO_REUSEADDR/PORT: %w", err)
 	}
 
+	setCongestionControl(rawConn)
+
 	return nil
 }
