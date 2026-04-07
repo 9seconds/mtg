@@ -60,10 +60,17 @@ type Config struct {
 	} `json:"defense"`
 	Network struct {
 		Timeout struct {
-			TCP  TypeDuration `json:"tcp"`
-			HTTP TypeDuration `json:"http"`
-			Idle TypeDuration `json:"idle"`
+			TCP       TypeDuration `json:"tcp"`
+			HTTP      TypeDuration `json:"http"`
+			Idle      TypeDuration `json:"idle"`
+			Handshake TypeDuration `json:"handshake"`
 		} `json:"timeout"`
+		KeepAlive struct {
+			Disabled TypeBool        `json:"disabled"`
+			Idle     TypeDuration    `json:"idle"`
+			Interval TypeDuration    `json:"interval"`
+			Count    TypeConcurrency `json:"count"`
+		} `json:"keepAlive"`
 		DOHIP   TypeIP         `json:"dohIp"`
 		DNS     TypeDNSURI     `json:"dns"`
 		Proxies []TypeProxyURL `json:"proxies"`

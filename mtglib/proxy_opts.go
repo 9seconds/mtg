@@ -70,6 +70,12 @@ type ProxyOpts struct {
 	// This is an optional setting.
 	IdleTimeout time.Duration
 
+	// HandshakeTimeout is a timeout during which all handshake ceremonies must
+	// be completed, otherwise this process will be aborted
+	//
+	// This is an optional setting.
+	HandshakeTimeout time.Duration
+
 	// TolerateTimeSkewness is a time boundary that defines a time range where
 	// faketls timestamp is acceptable.
 	//
@@ -215,9 +221,17 @@ func (p ProxyOpts) getPreferIP() string {
 	return p.PreferIP
 }
 
+func (p ProxyOpts) getHandshakeTimeout() time.Duration {
+	if p.HandshakeTimeout == 0 {
+		return DefaultHandshakeTimeout
+	}
+
+	return p.HandshakeTimeout
+}
+
 func (p ProxyOpts) getIdleTimeout() time.Duration {
 	if p.IdleTimeout == 0 {
-		return time.Minute
+		return DefaultIdleTimeout
 	}
 
 	return p.IdleTimeout
