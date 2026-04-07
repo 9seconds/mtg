@@ -65,6 +65,12 @@ type Config struct {
 			Idle      TypeDuration `json:"idle"`
 			Handshake TypeDuration `json:"handshake"`
 		} `json:"timeout"`
+		KeepAlive struct {
+			Disabled TypeBool        `json:"disabled"`
+			Idle     TypeDuration    `json:"idle"`
+			Interval TypeDuration    `json:"interval"`
+			Count    TypeConcurrency `json:"count"`
+		} `json:"keepAlive"`
 		DOHIP   TypeIP         `json:"dohIp"`
 		DNS     TypeDNSURI     `json:"dns"`
 		Proxies []TypeProxyURL `json:"proxies"`

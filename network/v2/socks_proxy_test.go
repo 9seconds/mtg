@@ -66,7 +66,7 @@ func (suite *SocksProxyTestSuite) SetupSuite() {
 	require.NoError(suite.T(), err)
 	suite.authURL = parsed
 
-	suite.baseNetwork = network.New(nil, "mtg", 0, 0, 0)
+	suite.baseNetwork = network.New(nil, "mtg", 0, 0, 0, network.DefaultKeepAliveConfig)
 }
 
 func (suite *SocksProxyTestSuite) TestIncorrectSchema() {
