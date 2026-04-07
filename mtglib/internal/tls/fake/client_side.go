@@ -5,6 +5,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"crypto/subtle"
+	"crypto/tls"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -19,6 +20,12 @@ const (
 	RandomLen = 32
 	// record_type(1) + version(2) + size(2) + handshake_type(1) + uint24_length(3) + client_version(2)
 	RandomOffset = 1 + 2 + 2 + 1 + 3 + 2
+
+	// https://datatracker.ietf.org/doc/html/rfc8701#name-grease-values
+	// https://medium.com/asecuritysite-when-bob-met-alice/in-cybersecurity-what-is-grease-9f8850558dea
+	GreaseMask      = 0x0f0f
+	GreaseValueType = 0x0a0a
+	DefaultCipher   = tls.TLS_AES_128_GCM_SHA256
 
 	sniDNSNamesListType = 0
 )
@@ -108,7 +115,9 @@ func parseHandshake(r io.Reader) (*ClientHello, error) {
 		return nil, fmt.Errorf("cannot read client version: %w", err)
 	}
 
-	hello := &ClientHello{}
+	hello := &ClientHello{
+		CipherSuite: DefaultCipher,
+	}
 
 	if _, err := io.ReadFull(r, hello.Random[:]); err != nil {
 		return nil, fmt.Errorf("cannot read client random: %w", err)
@@ -129,25 +138,27 @@ func parseHandshake(r io.Reader) (*ClientHello, error) {
 	}
 
 	cipherSuiteLen := int64(binary.BigEndian.Uint16(header[:]))
+	foundCipher := false
 
 	// Pick the first non-GREASE cipher suite from the list.
 	// Real TLS servers never select GREASE values (RFC 8701, pattern 0x?a?a),
 	// so echoing them back is a trivial DPI fingerprint.
-	for remaining := cipherSuiteLen; remaining >= 2; remaining -= 2 {
+	// cipherSuiteLen is in bytes; each cipher suite is 2 bytes.
+	for range cipherSuiteLen / 2 {
 		if _, err := io.ReadFull(r, header[:]); err != nil {
 			return nil, fmt.Errorf("cannot read cipher suite: %w", err)
 		}
 
-		cs := binary.BigEndian.Uint16(header[:])
-		if hello.CipherSuite == 0 && cs&0x0f0f != 0x0a0a {
+		if foundCipher {
+			continue
+		}
+
+		if cs := binary.BigEndian.Uint16(header[:]); cs&GreaseMask != GreaseValueType {
 			hello.CipherSuite = cs
+			// do not forget we have to scan until the end
+			foundCipher = true
 		}
 	}
-
-	if hello.CipherSuite == 0 {
-		hello.CipherSuite = 0x1301 // fallback: TLS_AES_128_GCM_SHA256
-	}
-
 
 	if _, err := io.ReadFull(r, header[:1]); err != nil {
 		return nil, fmt.Errorf("cannot read compression methods length: %w", err)
