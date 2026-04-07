@@ -234,12 +234,13 @@ func (suite *ParseClientHelloHandshakeBodyTestSuite) TestCannotReadCipherSuiteLe
 }
 
 func (suite *ParseClientHelloHandshakeBodyTestSuite) TestCannotReadFirstCipherSuite() {
-	body := make([]byte, 2+fake.RandomLen+1+2)
+	body := make([]byte, 2+fake.RandomLen+1+2+1) // cipherSuiteLen=2 but only 1 byte available
+	binary.BigEndian.PutUint16(body[2+fake.RandomLen+1:], 2)
 
 	suite.writeBody(body)
 
 	_, err := fake.ReadClientHello(suite.connMock, suite.secret.Key[:], suite.secret.Host, TolerateTime)
-	suite.ErrorContains(err, "cannot read first cipher suite")
+	suite.ErrorContains(err, "cannot read cipher suite")
 }
 
 func (suite *ParseClientHelloHandshakeBodyTestSuite) TestCannotSkipRemainingCipherSuites() {
@@ -249,7 +250,7 @@ func (suite *ParseClientHelloHandshakeBodyTestSuite) TestCannotSkipRemainingCiph
 	suite.writeBody(body)
 
 	_, err := fake.ReadClientHello(suite.connMock, suite.secret.Key[:], suite.secret.Host, TolerateTime)
-	suite.ErrorContains(err, "cannot skip remaining cipher suites")
+	suite.ErrorContains(err, "cannot read cipher suite")
 }
 
 func (suite *ParseClientHelloHandshakeBodyTestSuite) TestCannotReadCompressionMethodsLength() {
