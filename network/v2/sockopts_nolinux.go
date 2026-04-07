@@ -2,6 +2,10 @@
 
 package network
 
-import "syscall"
+import (
+	"net"
+	"syscall"
+)
 
-func setCongestionControl(conn syscall.RawConn) {}
+func setCongestionControl(conn syscall.RawConn)                       {}
+func setTCPUserTimeout(conn syscall.RawConn, cfg net.KeepAliveConfig) {}

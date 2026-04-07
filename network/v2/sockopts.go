@@ -24,6 +24,7 @@ func setCommonSocketOptions(conn *net.TCPConn, keepAliveConfig net.KeepAliveConf
 	}
 
 	setCongestionControl(rawConn)
+	setTCPUserTimeout(rawConn, keepAliveConfig)
 
 	return nil
 }
