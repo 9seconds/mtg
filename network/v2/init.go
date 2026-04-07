@@ -55,6 +55,14 @@ const (
 	// tcpLingerTimeout defines a number of seconds to wait for sending
 	// unacknowledged data.
 	tcpLingerTimeout = 1
+
+	// tcpNotSentLowat limits the amount of unsent data queued in the
+	// kernel write buffer per socket. When the unsent data drops below
+	// this threshold, the socket becomes writable again. This reduces
+	// per-connection memory usage and bufferbloat by applying
+	// back-pressure to the relay loop instead of piling up data in
+	// kernel buffers.
+	tcpNotSentLowat = 128 * 1024
 )
 
 var (
