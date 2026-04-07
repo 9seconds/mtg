@@ -220,13 +220,11 @@ proxies = [
 # means a timeout on pumping data between sockset when nothing is
 # happening.
 #
-# please be noticed that handshakes have no timeouts intentionally. You can
-# find a reasoning here:
-# https://www.ndss-symposium.org/wp-content/uploads/2020/02/23087-paper.pdf
 [network.timeout]
 tcp = "5s"
 http = "10s"
 idle = "5m"
+handshake = "10s"
 
 # mtg has to mimic real websites. It does not mean domain fronting, it also
 # means that traffic characteristics should be similar to real world traffic.

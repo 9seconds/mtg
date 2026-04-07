@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -20,12 +21,19 @@ const (
 	// record_type(1) + version(2) + size(2) + handshake_type(1) + uint24_length(3) + client_version(2)
 	RandomOffset = 1 + 2 + 2 + 1 + 3 + 2
 
+	// https://datatracker.ietf.org/doc/html/rfc8701#name-grease-values
+	// https://medium.com/asecuritysite-when-bob-met-alice/in-cybersecurity-what-is-grease-9f8850558dea
+	GreaseMask      = 0x0f0f
+	GreaseValueType = 0x0a0a
+
 	sniDNSNamesListType = 0
 )
 
 var (
 	emptyRandom = [RandomLen]byte{}
 	extTypeSNI  = [2]byte{}
+
+	ErrCannotFindCipher = errors.New("cannot find a cipher")
 )
 
 type ClientHello struct {
@@ -64,11 +72,6 @@ func ReadClientHelloMulti(
 	hostname string,
 	tolerateTimeSkewness time.Duration,
 ) (*ReadClientHelloResult, error) {
-	if err := conn.SetReadDeadline(time.Now().Add(ClientHelloReadTimeout)); err != nil {
-		return nil, fmt.Errorf("cannot set read deadline: %w", err)
-	}
-	defer conn.SetReadDeadline(resetDeadline) //nolint: errcheck
-
 	clientHelloCopy, handshakeReader, err := parseClientHello(conn)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read client hello: %w", err)
@@ -155,16 +158,27 @@ func parseHandshake(r io.Reader) (*ClientHello, error) {
 
 	cipherSuiteLen := int64(binary.BigEndian.Uint16(header[:]))
 
-	// we do not care about picking up any cipher. we pick the first one,
-	// so it is always should be present.
-	if _, err := io.ReadFull(r, header[:]); err != nil {
-		return nil, fmt.Errorf("cannot read first cipher suite: %w", err)
+	// Pick the first non-GREASE cipher suite from the list.
+	// Real TLS servers never select GREASE values (RFC 8701, pattern 0x?a?a),
+	// so echoing them back is a trivial DPI fingerprint.
+	// cipherSuiteLen is in bytes; each cipher suite is 2 bytes.
+	for range cipherSuiteLen / 2 {
+		if _, err := io.ReadFull(r, header[:]); err != nil {
+			return nil, fmt.Errorf("cannot read cipher suite: %w", err)
+		}
+
+		if hello.CipherSuite != 0 {
+			// do not forget we have to scan until the end
+			continue
+		}
+
+		if cs := binary.BigEndian.Uint16(header[:]); cs&GreaseMask != GreaseValueType {
+			hello.CipherSuite = cs
+		}
 	}
 
-	hello.CipherSuite = binary.BigEndian.Uint16(header[:])
-
-	if _, err := io.CopyN(io.Discard, r, cipherSuiteLen-2); err != nil {
-		return nil, fmt.Errorf("cannot skip remaining cipher suites: %w", err)
+	if hello.CipherSuite == 0 {
+		return nil, ErrCannotFindCipher
 	}
 
 	if _, err := io.ReadFull(r, header[:1]); err != nil {
