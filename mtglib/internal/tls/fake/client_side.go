@@ -47,11 +47,6 @@ func ReadClientHello(
 	hostname string,
 	tolerateTimeSkewness time.Duration,
 ) (*ClientHello, error) {
-	if err := conn.SetReadDeadline(time.Now().Add(ClientHelloReadTimeout)); err != nil {
-		return nil, fmt.Errorf("cannot set read deadline: %w", err)
-	}
-	defer conn.SetReadDeadline(resetDeadline) //nolint: errcheck
-
 	// This is how FakeTLS is organized:
 	//  1. We create sha256 HMAC with a given secret
 	//  2. We dump there a whole TLS frame except of the fact that random
