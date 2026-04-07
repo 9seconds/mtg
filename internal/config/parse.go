@@ -55,10 +55,17 @@ type tomlConfig struct {
 	} `toml:"defense" json:"defense,omitempty"`
 	Network struct {
 		Timeout struct {
-			TCP  string `toml:"tcp" json:"tcp,omitempty"`
-			HTTP string `toml:"http" json:"http,omitempty"`
-			Idle string `toml:"idle" json:"idle,omitempty"`
+			TCP       string `toml:"tcp" json:"tcp,omitempty"`
+			HTTP      string `toml:"http" json:"http,omitempty"`
+			Idle      string `toml:"idle" json:"idle,omitempty"`
+			Handshake string `toml:"handshake" json:"handshake,omitempty"`
 		} `toml:"timeout" json:"timeout,omitempty"`
+		KeepAlive struct {
+			Disabled bool   `toml:"disabled" json:"disabled,omitempty"`
+			Idle     string `toml:"idle" json:"idle,omitempty"`
+			Interval string `toml:"interval" json:"interval,omitempty"`
+			Count    uint   `toml:"count" json:"count,omitempty"`
+		} `toml:"keep-alive" json:"keepAlive,omitempty"`
 		DOHIP   string   `toml:"doh-ip" json:"dohIp,omitempty"`
 		DNS     string   `toml:"dns" json:"dns,omitempty"`
 		Proxies []string `toml:"proxies" json:"proxies,omitempty"`

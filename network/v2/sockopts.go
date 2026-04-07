@@ -5,9 +5,9 @@ import (
 	"net"
 )
 
-func setCommonSocketOptions(conn *net.TCPConn) error {
-	if err := conn.SetKeepAlivePeriod(DefaultTCPKeepAlivePeriod); err != nil {
-		return fmt.Errorf("cannot set time period of TCP keepalive probes: %w", err)
+func setCommonSocketOptions(conn *net.TCPConn, keepAliveConfig net.KeepAliveConfig) error {
+	if err := conn.SetKeepAliveConfig(keepAliveConfig); err != nil {
+		return fmt.Errorf("cannot configure TCP keepalive: %w", err)
 	}
 
 	if err := conn.SetLinger(tcpLingerTimeout); err != nil {
@@ -22,6 +22,10 @@ func setCommonSocketOptions(conn *net.TCPConn) error {
 	if err := setSocketReuseAddrPort(rawConn); err != nil {
 		return fmt.Errorf("cannot setup SO_REUSEADDR/PORT: %w", err)
 	}
+
+	setCongestionControl(rawConn)
+	setTCPUserTimeout(rawConn, keepAliveConfig)
+	setNotSentLowat(rawConn)
 
 	return nil
 }

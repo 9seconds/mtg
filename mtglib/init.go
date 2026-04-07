@@ -77,8 +77,13 @@ const (
 	// DefaultIdleTimeout is a default timeout for closing a connection in case of
 	// idling.
 	//
-	// Deprecated: no longer in use because of changed TCP relay algorithm.
-	DefaultIdleTimeout = time.Minute
+	// Set to 5 minutes to survive typical mobile sleep periods (2-5 min) and
+	// avoid racing with MTProto ping_delay_disconnect (~60s interval).
+	DefaultIdleTimeout = 5 * time.Minute
+
+	// DefaultHandshakeTimeout defines a time period during which the
+	// all handshake ceremonies must be completed.
+	DefaultHandshakeTimeout = 10 * time.Second
 
 	// DefaultTolerateTimeSkewness is a default timeout for time skewness on a
 	// faketls timeout verification.
