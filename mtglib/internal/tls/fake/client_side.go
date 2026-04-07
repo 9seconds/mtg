@@ -5,8 +5,8 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"crypto/subtle"
-	"crypto/tls"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -25,7 +25,6 @@ const (
 	// https://medium.com/asecuritysite-when-bob-met-alice/in-cybersecurity-what-is-grease-9f8850558dea
 	GreaseMask      = 0x0f0f
 	GreaseValueType = 0x0a0a
-	DefaultCipher   = tls.TLS_AES_128_GCM_SHA256
 
 	sniDNSNamesListType = 0
 )
@@ -33,6 +32,8 @@ const (
 var (
 	emptyRandom = [RandomLen]byte{}
 	extTypeSNI  = [2]byte{}
+
+	ErrCannotFindCipher = errors.New("cannot find a cipher")
 )
 
 type ClientHello struct {
@@ -110,9 +111,7 @@ func parseHandshake(r io.Reader) (*ClientHello, error) {
 		return nil, fmt.Errorf("cannot read client version: %w", err)
 	}
 
-	hello := &ClientHello{
-		CipherSuite: DefaultCipher,
-	}
+	hello := &ClientHello{}
 
 	if _, err := io.ReadFull(r, hello.Random[:]); err != nil {
 		return nil, fmt.Errorf("cannot read client random: %w", err)
@@ -133,7 +132,6 @@ func parseHandshake(r io.Reader) (*ClientHello, error) {
 	}
 
 	cipherSuiteLen := int64(binary.BigEndian.Uint16(header[:]))
-	foundCipher := false
 
 	// Pick the first non-GREASE cipher suite from the list.
 	// Real TLS servers never select GREASE values (RFC 8701, pattern 0x?a?a),
@@ -144,15 +142,18 @@ func parseHandshake(r io.Reader) (*ClientHello, error) {
 			return nil, fmt.Errorf("cannot read cipher suite: %w", err)
 		}
 
-		if foundCipher {
+		if hello.CipherSuite != 0 {
+			// do not forget we have to scan until the end
 			continue
 		}
 
 		if cs := binary.BigEndian.Uint16(header[:]); cs&GreaseMask != GreaseValueType {
 			hello.CipherSuite = cs
-			// do not forget we have to scan until the end
-			foundCipher = true
 		}
+	}
+
+	if hello.CipherSuite == 0 {
+		return nil, ErrCannotFindCipher
 	}
 
 	if _, err := io.ReadFull(r, header[:1]); err != nil {

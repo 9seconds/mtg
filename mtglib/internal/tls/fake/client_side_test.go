@@ -2,6 +2,7 @@ package fake_test
 
 import (
 	"bytes"
+	cryptotls "crypto/tls"
 	"encoding/binary"
 	"encoding/json"
 	"io"
@@ -234,9 +235,24 @@ func (suite *ParseClientHelloHandshakeBodyTestSuite) TestCannotSkipRemainingCiph
 	suite.ErrorContains(err, "cannot read cipher suite")
 }
 
+func (suite *ParseClientHelloHandshakeBodyTestSuite) TestCannotFindCipher() {
+	// All cipher suites are GREASE values — must return ErrCannotFindCipher.
+	body := make([]byte, 2+fake.RandomLen+1+2+4+1)
+	binary.BigEndian.PutUint16(body[2+fake.RandomLen+1:], 4)
+	binary.BigEndian.PutUint16(body[2+fake.RandomLen+1+2:], 0x0a0a)
+	binary.BigEndian.PutUint16(body[2+fake.RandomLen+1+2+2:], 0x1a1a)
+	body[2+fake.RandomLen+1+2+4] = 1
+
+	suite.writeBody(body)
+
+	_, err := fake.ReadClientHello(suite.connMock, suite.secret.Key[:], suite.secret.Host, TolerateTime)
+	suite.ErrorIs(err, fake.ErrCannotFindCipher)
+}
+
 func (suite *ParseClientHelloHandshakeBodyTestSuite) TestCannotReadCompressionMethodsLength() {
 	body := make([]byte, 2+fake.RandomLen+1+2+2)
 	binary.BigEndian.PutUint16(body[2+fake.RandomLen+1:], 2)
+	binary.BigEndian.PutUint16(body[2+fake.RandomLen+1+2:], cryptotls.TLS_AES_128_GCM_SHA256)
 
 	suite.writeBody(body)
 
@@ -247,6 +263,7 @@ func (suite *ParseClientHelloHandshakeBodyTestSuite) TestCannotReadCompressionMe
 func (suite *ParseClientHelloHandshakeBodyTestSuite) TestCannotSkipCompressionMethods() {
 	body := make([]byte, 2+fake.RandomLen+1+2+2+1)
 	binary.BigEndian.PutUint16(body[2+fake.RandomLen+1:], 2)
+	binary.BigEndian.PutUint16(body[2+fake.RandomLen+1+2:], cryptotls.TLS_AES_128_GCM_SHA256)
 	body[2+fake.RandomLen+1+2+2] = 1
 
 	suite.writeBody(body)
@@ -282,6 +299,7 @@ func (suite *ParseClientHelloSNITestSuite) writeExtensions(extensions []byte) {
 	// cipherSuite(2) + compressionLen(1) + compression(1) = 41
 	body := make([]byte, 41)
 	binary.BigEndian.PutUint16(body[35:], 2)
+	binary.BigEndian.PutUint16(body[37:], cryptotls.TLS_AES_128_GCM_SHA256)
 	body[39] = 1
 
 	suite.readBuf.Write(body)
