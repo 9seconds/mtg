@@ -264,6 +264,7 @@ func runProxy(conf *config.Config, version string) error { //nolint: funlen
 		AllowFallbackOnUnknownDC: conf.AllowFallbackOnUnknownDC.Get(false),
 		TolerateTimeSkewness:     conf.TolerateTimeSkewness.Value,
 		IdleTimeout:              conf.Network.Timeout.Idle.Get(mtglib.DefaultIdleTimeout),
+		HandshakeTimeout:         conf.Network.Timeout.Handshake.Get(mtglib.DefaultHandshakeTimeout),
 
 		DoppelGangerURLs:    doppelGangerURLs,
 		DoppelGangerPerRaid: conf.Defense.Doppelganger.Repeats.Get(mtglib.DoppelGangerPerRaid),

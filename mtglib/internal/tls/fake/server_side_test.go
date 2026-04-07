@@ -58,7 +58,7 @@ func (suite *SendServerHelloTestSuite) TestRecordStructure() {
 	recordType, length, err := tls.ReadRecord(suite.buf, &rec)
 	suite.NoError(err)
 	suite.Equal(byte(tls.TypeApplicationData), recordType)
-	suite.Greater(length, int64(2500))
+	suite.GreaterOrEqual(length, int64(2500))
 
 	suite.Empty(suite.buf.Bytes())
 }

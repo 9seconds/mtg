@@ -29,6 +29,7 @@ type Proxy struct {
 	allowFallbackOnUnknownDC    bool
 	tolerateTimeSkewness        time.Duration
 	idleTimeout                 time.Duration
+	handshakeTimeout            time.Duration
 	domainFrontingPort          int
 	domainFrontingIP            string
 	domainFrontingProxyProtocol bool
@@ -70,6 +71,11 @@ func (p *Proxy) ServeConn(conn essentials.Conn) {
 	ctx := newStreamContext(p.ctx, p.logger, conn)
 	defer ctx.Close()
 
+	if err := ctx.clientConn.SetDeadline(time.Now().Add(p.handshakeTimeout)); err != nil {
+		ctx.logger.WarningError("cannot set handshake timeout", err)
+		return
+	}
+
 	stop := context.AfterFunc(ctx, func() {
 		ctx.Close()
 	})
@@ -110,6 +116,11 @@ func (p *Proxy) ServeConn(conn essentials.Conn) {
 
 	if err := p.doObfuscatedHandshake(ctx); err != nil {
 		ctx.logger.InfoError("obfuscated handshake is failed", err)
+		return
+	}
+
+	if err := ctx.clientConn.SetDeadline(time.Time{}); err != nil {
+		ctx.logger.WarningError("cannot set deadline", err)
 		return
 	}
 
@@ -409,6 +420,7 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 		domainFrontingIP:         opts.DomainFrontingIP,
 		tolerateTimeSkewness:     opts.getTolerateTimeSkewness(),
 		idleTimeout:              opts.getIdleTimeout(),
+		handshakeTimeout:         opts.getHandshakeTimeout(),
 		allowFallbackOnUnknownDC: opts.AllowFallbackOnUnknownDC,
 		telegram:                 tg,
 		doppelGanger: doppel.NewGanger(
