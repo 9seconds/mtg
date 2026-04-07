@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
-	"errors"
 	"io"
 	"os"
 	"testing"
@@ -14,7 +13,6 @@ import (
 	"github.com/9seconds/mtg/v2/mtglib"
 	"github.com/9seconds/mtg/v2/mtglib/internal/tls"
 	"github.com/9seconds/mtg/v2/mtglib/internal/tls/fake"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -53,11 +51,6 @@ func (suite *ParseClientHelloTestSuite) SetupTest() {
 	suite.connMock = &parseClientHelloConnMock{
 		readBuf: suite.readBuf,
 	}
-
-	suite.connMock.
-		On("SetReadDeadline", mock.AnythingOfType("time.Time")).
-		Twice().
-		Return(nil)
 }
 
 func (suite *ParseClientHelloTestSuite) TearDownTest() {
@@ -69,23 +62,11 @@ type ParseClientHello_TLSHeaderTestSuite struct {
 }
 
 func (suite *ParseClientHello_TLSHeaderTestSuite) TestEmpty() {
-	suite.connMock.ExpectedCalls = []*mock.Call{}
-	suite.connMock.
-		On("SetReadDeadline", mock.AnythingOfType("time.Time")).
-		Once().
-		Return(errors.New("fail"))
-
 	_, err := fake.ReadClientHello(suite.connMock, suite.secret.Key[:], suite.secret.Host, TolerateTime)
-	suite.ErrorContains(err, "fail")
+	suite.ErrorContains(err, "cannot read client hello")
 }
 
 func (suite *ParseClientHello_TLSHeaderTestSuite) TestNothing() {
-	suite.connMock.ExpectedCalls = []*mock.Call{}
-	suite.connMock.
-		On("SetReadDeadline", mock.AnythingOfType("time.Time")).
-		Twice().
-		Return(nil)
-
 	_, err := fake.ReadClientHello(suite.connMock, suite.secret.Key[:], suite.secret.Host, TolerateTime)
 	suite.ErrorIs(err, io.EOF)
 }
@@ -477,11 +458,6 @@ func (s *ParseClientHelloFragmentedTestSuite) makeConn(data []byte) *parseClient
 	connMock := &parseClientHelloConnMock{
 		readBuf: readBuf,
 	}
-
-	connMock.
-		On("SetReadDeadline", mock.AnythingOfType("time.Time")).
-		Twice().
-		Return(nil)
 
 	return connMock
 }

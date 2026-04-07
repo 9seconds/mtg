@@ -60,9 +60,10 @@ type Config struct {
 	} `json:"defense"`
 	Network struct {
 		Timeout struct {
-			TCP  TypeDuration `json:"tcp"`
-			HTTP TypeDuration `json:"http"`
-			Idle TypeDuration `json:"idle"`
+			TCP       TypeDuration `json:"tcp"`
+			HTTP      TypeDuration `json:"http"`
+			Idle      TypeDuration `json:"idle"`
+			Handshake TypeDuration `json:"handshake"`
 		} `json:"timeout"`
 		DOHIP   TypeIP         `json:"dohIp"`
 		DNS     TypeDNSURI     `json:"dns"`

@@ -81,6 +81,10 @@ const (
 	// avoid racing with MTProto ping_delay_disconnect (~60s interval).
 	DefaultIdleTimeout = 5 * time.Minute
 
+	// DefaultHandshakeTimeout defines a time period during which the
+	// all handshake ceremonies must be completed.
+	DefaultHandshakeTimeout = 10 * time.Second
+
 	// DefaultTolerateTimeSkewness is a default timeout for time skewness on a
 	// faketls timeout verification.
 	DefaultTolerateTimeSkewness = 3 * time.Second

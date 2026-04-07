@@ -12,7 +12,6 @@ import (
 	"github.com/9seconds/mtg/v2/mtglib"
 	"github.com/9seconds/mtg/v2/mtglib/internal/tls/fake"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -70,11 +69,6 @@ func (suite *ParseClientHelloSnapshotTestSuite) makeConn(data []byte) *parseClie
 	connMock := &parseClientHelloConnMock{
 		readBuf: readBuf,
 	}
-
-	connMock.
-		On("SetReadDeadline", mock.AnythingOfType("time.Time")).
-		Twice().
-		Return(nil)
 
 	return connMock
 }
