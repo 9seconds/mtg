@@ -6,7 +6,7 @@ import (
 )
 
 func setCommonSocketOptions(conn *net.TCPConn, keepAliveConfig net.KeepAliveConfig) error {
-	if err := conn.SetKeepAliveConfig(keepAliveConfig); err != nil {
+	if err := applyKeepAlive(conn, keepAliveConfig); err != nil {
 		return fmt.Errorf("cannot configure TCP keepalive: %w", err)
 	}
 
