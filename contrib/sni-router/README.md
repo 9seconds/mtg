@@ -45,16 +45,9 @@ docker compose exec mtg mtg access /config/config.toml
 
 ## ACME (Let's Encrypt) notes
 
-Caddy needs to answer the ACME HTTP-01 challenge on port 80.  The
-default `haproxy.cfg` redirects all `:80` traffic to HTTPS.  If Caddy
-cannot obtain a certificate, either:
-
-1. Temporarily stop HAProxy, let Caddy bind `:80` directly for the
-   initial certificate, then start the full stack; or
-2. Use DNS-01 validation in the Caddyfile (requires a DNS provider
-   plugin); or
-3. Add an HAProxy ACL that passes `/.well-known/acme-challenge/`
-   requests to the Caddy backend instead of redirecting.
+HAProxy passes `/.well-known/acme-challenge/` requests on `:80` to
+Caddy so that HTTP-01 validation works out of the box.  Make sure your
+domain's DNS A/AAAA record points to this server before starting.
 
 ## Architecture
 

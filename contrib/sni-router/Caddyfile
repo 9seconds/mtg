@@ -1,19 +1,11 @@
 {
-	# Caddy listens on 8443 behind HAProxy, which passes raw TLS through.
-	# Caddy terminates TLS itself and auto-obtains a Let's Encrypt certificate.
-	#
-	# If your domain's DNS already points to this server, ACME HTTP-01 challenge
-	# works through the HAProxy http frontend (:80 → redirect).  For DNS-01
-	# or other ACME methods, see https://caddyserver.com/docs/automatic-https
+	# Caddy sits behind HAProxy which passes raw TLS through on :8443.
+	# ACME HTTP-01 challenges arrive on :80 via HAProxy's acl passthrough.
+	http_port 80
+	https_port 8443
 }
 
-{$DOMAIN}:8443 {
-	tls {
-		# Use the ACME HTTP-01 challenge on port 80.
-		# HAProxy forwards :80 as HTTP, so Caddy can answer the challenge
-		# if you add an acl exception in haproxy.cfg (see README), or use
-		# DNS-01 instead.
-	}
+{$DOMAIN} {
 	root * /srv
 	file_server
 }

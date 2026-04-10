@@ -44,6 +44,7 @@ services:
       - caddy_data:/data
       - ./www:/srv:ro
     expose:
+      - "80"
       - "8443"
     environment:
       DOMAIN: ${DOMAIN:-example.com}
