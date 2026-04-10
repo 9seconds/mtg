@@ -1,0 +1,53 @@
+# SNI-routing deployment: HAProxy (443) -> mtg + real web backend
+#
+# This setup puts an SNI-aware TCP router in front of mtg so that:
+#   - Telegram clients (FakeTLS with the correct SNI) are routed to mtg
+#   - All other TLS traffic (including DPI probes) reaches the real web
+#     server, which responds with a genuine certificate
+#
+# The result: active probes see a real website; passive DPI sees matching
+# SNI/IP because the domain resolves to this server's IP.
+#
+# Quick start:
+#   1. Set YOUR_DOMAIN below (and in mtg-config.toml)
+#   2. docker compose up -d
+#   3. mtg generate-secret YOUR_DOMAIN   -> put it in mtg-config.toml
+#   4. docker compose restart mtg
+#
+# See BEST_PRACTICES.md and the project wiki for background.
+
+services:
+  haproxy:
+    image: haproxy:lts-alpine
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    depends_on:
+      - mtg
+      - web
+    restart: unless-stopped
+
+  mtg:
+    image: nineseconds/mtg:2
+    volumes:
+      - ./mtg-config.toml:/config/config.toml:ro
+    expose:
+      - "3128"
+    restart: unless-stopped
+
+  web:
+    image: caddy:alpine
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - ./www:/srv:ro
+    expose:
+      - "8443"
+    environment:
+      DOMAIN: ${DOMAIN:-example.com}
+    restart: unless-stopped
+
+volumes:
+  caddy_data:

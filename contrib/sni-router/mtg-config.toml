@@ -1,0 +1,13 @@
+# Minimal mtg configuration for the SNI-router setup.
+#
+# 1. Generate a secret:  mtg generate-secret --hex example.com
+# 2. Paste it below.
+# 3. Replace example.com with your actual domain everywhere.
+
+secret = "PASTE_YOUR_SECRET_HERE"
+bind-to = "0.0.0.0:3128"
+
+[defense.anti-replay]
+enabled = true
+max-size = "1mib"
+error-rate = 0.001
