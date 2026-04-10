@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strings"
 
 	"github.com/9seconds/mtg/v2/antireplay"
 	"github.com/9seconds/mtg/v2/events"
@@ -207,7 +208,67 @@ func makeEventStream(conf *config.Config, logger mtglib.Logger) (mtglib.EventStr
 	return events.NewNoopStream(), nil
 }
 
-func runProxy(conf *config.Config, version string) error { //nolint: funlen
+func warnSNIMismatch(conf *config.Config, ntw mtglib.Network, log mtglib.Logger) {
+	host := conf.Secret.Host
+	if host == "" {
+		return
+	}
+
+	addresses, err := net.DefaultResolver.LookupIPAddr(context.Background(), host)
+	if err != nil {
+		log.BindStr("hostname", host).
+			WarningError("SNI-DNS check: cannot resolve secret hostname", err)
+		return
+	}
+
+	ourIP4 := conf.PublicIPv4.Get(nil)
+	if ourIP4 == nil {
+		ourIP4 = getIP(ntw, "tcp4")
+	}
+
+	ourIP6 := conf.PublicIPv6.Get(nil)
+	if ourIP6 == nil {
+		ourIP6 = getIP(ntw, "tcp6")
+	}
+
+	if ourIP4 == nil && ourIP6 == nil {
+		log.Warning("SNI-DNS check: cannot detect public IP address; set public-ipv4/public-ipv6 in config or run 'mtg doctor'")
+		return
+	}
+
+	for _, addr := range addresses {
+		if (ourIP4 != nil && addr.IP.String() == ourIP4.String()) ||
+			(ourIP6 != nil && addr.IP.String() == ourIP6.String()) {
+			return
+		}
+	}
+
+	resolved := make([]string, 0, len(addresses))
+	for _, addr := range addresses {
+		resolved = append(resolved, addr.IP.String())
+	}
+
+	our := ""
+	if ourIP4 != nil {
+		our = ourIP4.String()
+	}
+
+	if ourIP6 != nil {
+		if our != "" {
+			our += "/"
+		}
+
+		our += ourIP6.String()
+	}
+
+	log.BindStr("hostname", host).
+		BindStr("resolved", strings.Join(resolved, ", ")).
+		BindStr("public_ip", our).
+		Warning("SNI-DNS mismatch: secret hostname does not resolve to this server's public IP. " +
+			"DPI may detect and block the proxy. See 'mtg doctor' for details")
+}
+
+func runProxy(conf *config.Config, version string) error { //nolint: funlen, cyclop
 	logger := makeLogger(conf)
 
 	logger.BindJSON("configuration", conf.String()).Debug("configuration")
@@ -221,6 +282,8 @@ func runProxy(conf *config.Config, version string) error { //nolint: funlen
 	if err != nil {
 		return fmt.Errorf("cannot build network: %w", err)
 	}
+
+	warnSNIMismatch(conf, ntw, logger)
 
 	blocklist, err := makeIPBlocklist(
 		conf.Defense.Blocklist,
