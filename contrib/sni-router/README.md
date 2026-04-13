@@ -43,6 +43,19 @@ docker compose up -d
 docker compose exec mtg mtg access /config/config.toml
 ```
 
+## Real client IPs (PROXY protocol)
+
+HAProxy forwards TCP connections to mtg and Caddy with a PROXY protocol
+v2 header so both backends see the real client IP instead of HAProxy's
+container address.  The three pieces must stay in sync:
+
+- `haproxy.cfg` — `send-proxy-v2` on the `mtg` and `web` backend `server` lines
+- `mtg-config.toml` — `proxy-protocol-listener = true`
+- `Caddyfile` — `listener_wrappers { proxy_protocol { ... } tls }` on `:8443`
+
+If you disable one, disable all three, otherwise the backend will fail
+to parse the connection.
+
 ## ACME (Let's Encrypt) notes
 
 HAProxy passes `/.well-known/acme-challenge/` requests on `:80` to

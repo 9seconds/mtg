@@ -7,6 +7,10 @@
 secret = "PASTE_YOUR_SECRET_HERE"
 bind-to = "0.0.0.0:3128"
 
+# HAProxy in front sends PROXY protocol v2 headers so mtg can see the
+# real client IP.  Keep this in sync with haproxy.cfg (`send-proxy-v2`).
+proxy-protocol-listener = true
+
 [defense.anti-replay]
 enabled = true
 max-size = "1mib"
