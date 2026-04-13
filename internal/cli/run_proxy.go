@@ -236,11 +236,21 @@ func warnSNIMismatch(conf *config.Config, ntw mtglib.Network, log mtglib.Logger)
 		return
 	}
 
+	v4Match := ourIP4 == nil
+	v6Match := ourIP6 == nil
+
 	for _, addr := range addresses {
-		if (ourIP4 != nil && addr.IP.String() == ourIP4.String()) ||
-			(ourIP6 != nil && addr.IP.String() == ourIP6.String()) {
-			return
+		if ourIP4 != nil && addr.IP.String() == ourIP4.String() {
+			v4Match = true
 		}
+
+		if ourIP6 != nil && addr.IP.String() == ourIP6.String() {
+			v6Match = true
+		}
+	}
+
+	if v4Match && v6Match {
+		return
 	}
 
 	resolved := make([]string, 0, len(addresses))
@@ -261,11 +271,20 @@ func warnSNIMismatch(conf *config.Config, ntw mtglib.Network, log mtglib.Logger)
 		our += ourIP6.String()
 	}
 
-	log.BindStr("hostname", host).
+	entry := log.BindStr("hostname", host).
 		BindStr("resolved", strings.Join(resolved, ", ")).
-		BindStr("public_ip", our).
-		Warning("SNI-DNS mismatch: secret hostname does not resolve to this server's public IP. " +
-			"DPI may detect and block the proxy. See 'mtg doctor' for details")
+		BindStr("public_ip", our)
+
+	if ourIP4 != nil {
+		entry = entry.BindStr("ipv4_match", fmt.Sprintf("%t", v4Match))
+	}
+
+	if ourIP6 != nil {
+		entry = entry.BindStr("ipv6_match", fmt.Sprintf("%t", v6Match))
+	}
+
+	entry.Warning("SNI-DNS mismatch: secret hostname does not resolve to this server's public IP. " +
+		"DPI may detect and block the proxy. See 'mtg doctor' for details")
 }
 
 func runProxy(conf *config.Config, version string) error { //nolint: funlen, cyclop
