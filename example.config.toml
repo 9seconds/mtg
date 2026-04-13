@@ -321,8 +321,8 @@ download-concurrency = 2
 # networks, and therefore RFC1918 ranges as well (10.0.0.0/8,
 # 172.16.0.0/12, 192.168.0.0/16). If you run mtg on a home/LAN network
 # and connect from a client on the same LAN, that client will be
-# rejected with "ip was blacklisted" and silently routed to the fronting
-# domain. If you see this, you can either disable this section
+# rejected with "ip was blacklisted" and the connection dropped (TCP
+# close, no response). If you see this, you can either disable this section
 # (enabled = false), replace firehol_level1 with a narrower list that
 # does not include bogons (e.g. firehol_abusers_1d), or connect via
 # a public IP/domain with hairpin NAT on your router. See README for

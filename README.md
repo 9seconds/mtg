@@ -529,8 +529,9 @@ message like:
 The reason is that the default blocklist (`firehol_level1.netset`)
 includes bogon networks, which covers all RFC1918 ranges
 (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`). Any client
-connecting from such an address is rejected by the blocklist and
-silently routed to the fronting domain.
+connecting from such an address is rejected by the blocklist —
+the TCP connection is closed immediately with no response, so
+from the client's point of view nothing loads at all.
 
 There are three ways to resolve it:
 
