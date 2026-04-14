@@ -437,6 +437,8 @@ where _443_ is a host port (a port you want to connect to from a
 client), and _3128_ is the one you have in your config in the `bind-to`
 section.
 
+Additionally, for simple installation on [YunoHost](https://yunohost.org) you can use: https://github.com/YunoHost-Apps/mtg_ynh
+
 ### Access a proxy
 
 Now you can generate some useful links:
