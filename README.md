@@ -514,6 +514,50 @@ This is not very necessary. Keep in mind these rules:
    you can enable `drs` setting.
 9. **If you are not sure, touch nothing!**
 
+## Troubleshooting
+
+### `ip was blacklisted` for clients on the same LAN
+
+If you run mtg at home and a client on the same LAN (for example, your
+phone on the home Wi-Fi) cannot connect, check the proxy logs for a
+message like:
+
+```json
+{"level":"info","ip":"10.0.1.1","logger":"proxy","message":"ip was blacklisted"}
+```
+
+The reason is that the default blocklist (`firehol_level1.netset`)
+includes bogon networks, which covers all RFC1918 ranges
+(`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`). Any client
+connecting from such an address is rejected by the blocklist —
+the TCP connection is closed immediately with no response, so
+from the client's point of view nothing loads at all.
+
+There are three ways to resolve it:
+
+1. Disable the blocklist entirely in `config.toml`:
+
+   ```toml
+   [defense.blocklist]
+   enabled = false
+   ```
+
+   Simplest option if the proxy is used only by you and people you trust.
+
+2. Keep the blocklist but swap `firehol_level1` for a narrower list that
+   does not include bogons, for example `firehol_abusers_1d`:
+
+   ```toml
+   [defense.blocklist]
+   enabled = true
+   urls = ["https://iplists.firehol.org/files/firehol_abusers_1d.netset"]
+   ```
+
+3. Connect to the proxy through a public IP or domain name with hairpin
+   NAT (`MASQUERADE`) on your router. mtg will then see the client with
+   its public address and the blocklist will not match. This is more
+   work to set up but preserves full blocklist protection.
+
 ## Metrics
 
 Out of the box, mtg works with
