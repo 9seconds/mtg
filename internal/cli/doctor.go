@@ -52,10 +52,13 @@ var (
 	)
 
 	tplODNSSNIMatch = template.Must(
-		template.New("").Parse("  ✅ IP address {{ .ip }} matches secret hostname {{ .hostname }}\n"),
+		template.New("").Parse("  ✅ Secret hostname {{ .hostname }} matches our public IP ({{ .our }}); resolved: {{ .resolved }}\n"),
 	)
 	tplEDNSSNIMatch = template.Must(
-		template.New("").Parse("  ❌ Hostname {{ .hostname }} {{ if .resolved }}is resolved to {{ .resolved }} addresses, not {{ if .ip4 }}{{ .ip4 }}{{ else }}{{ .ip6 }}{{ end }}{{ else }}cannot be resolved to any host{{ end }}\n"),
+		template.New("").Parse("  ❌ Secret hostname {{ .hostname }} resolves to {{ .resolved }} but our public IP is {{ .our }}{{ if .families }} (mismatched families: {{ .families }}){{ end }}\n"),
+	)
+	tplEDNSSNINoResolve = template.Must(
+		template.New("").Parse("  ❌ Secret hostname {{ .hostname }} cannot be resolved to any address\n"),
 	)
 
 	tplOFrontingDomain = template.Must(
@@ -329,26 +332,17 @@ func (d *Doctor) checkFrontingDomain(ntw mtglib.Network) bool {
 }
 
 func (d *Doctor) checkSecretHost(resolver *net.Resolver, ntw mtglib.Network) bool {
-	addresses, err := resolver.LookupIPAddr(context.Background(), d.conf.Secret.Host)
-	if err != nil {
+	res := runSNICheck(context.Background(), resolver, d.conf, ntw)
+
+	if res.ResolveErr != nil {
 		tplError.Execute(os.Stdout, map[string]any{ //nolint: errcheck
-			"description": fmt.Sprintf("cannot resolve DNS name of %s", d.conf.Secret.Host),
-			"error":       err,
+			"description": fmt.Sprintf("cannot resolve DNS name of %s", res.Host),
+			"error":       res.ResolveErr,
 		})
 		return false
 	}
 
-	ourIP4 := d.conf.PublicIPv4.Get(nil)
-	if ourIP4 == nil {
-		ourIP4 = getIP(ntw, "tcp4")
-	}
-
-	ourIP6 := d.conf.PublicIPv6.Get(nil)
-	if ourIP6 == nil {
-		ourIP6 = getIP(ntw, "tcp6")
-	}
-
-	if ourIP4 == nil && ourIP6 == nil {
+	if !res.Known() {
 		tplError.Execute(os.Stdout, map[string]any{ //nolint: errcheck
 			"description": "cannot detect public IP address",
 			"error":       errors.New("cannot detect automatically and public-ipv4/public-ipv6 are not set in config"),
@@ -356,25 +350,55 @@ func (d *Doctor) checkSecretHost(resolver *net.Resolver, ntw mtglib.Network) boo
 		return false
 	}
 
-	strAddresses := []string{}
-	for _, value := range addresses {
-		if (ourIP4 != nil && value.IP.String() == ourIP4.String()) ||
-			(ourIP6 != nil && value.IP.String() == ourIP6.String()) {
-			tplODNSSNIMatch.Execute(os.Stdout, map[string]any{ //nolint: errcheck
-				"ip":       value.IP,
-				"hostname": d.conf.Secret.Host,
-			})
-			return true
+	if len(res.Resolved) == 0 {
+		tplEDNSSNINoResolve.Execute(os.Stdout, map[string]any{ //nolint: errcheck
+			"hostname": res.Host,
+		})
+		return false
+	}
+
+	resolved := make([]string, 0, len(res.Resolved))
+	for _, ip := range res.Resolved {
+		resolved = append(resolved, `"`+ip.String()+`"`)
+	}
+
+	our := ""
+	if res.OurIPv4 != nil {
+		our = res.OurIPv4.String()
+	}
+
+	if res.OurIPv6 != nil {
+		if our != "" {
+			our += "/"
 		}
 
-		strAddresses = append(strAddresses, `"`+value.IP.String()+`"`)
+		our += res.OurIPv6.String()
+	}
+
+	if res.OK() {
+		tplODNSSNIMatch.Execute(os.Stdout, map[string]any{ //nolint: errcheck
+			"hostname": res.Host,
+			"resolved": strings.Join(resolved, ", "),
+			"our":      our,
+		})
+		return true
+	}
+
+	mismatched := []string{}
+
+	if res.OurIPv4 != nil && !res.IPv4Match {
+		mismatched = append(mismatched, "IPv4")
+	}
+
+	if res.OurIPv6 != nil && !res.IPv6Match {
+		mismatched = append(mismatched, "IPv6")
 	}
 
 	tplEDNSSNIMatch.Execute(os.Stdout, map[string]any{ //nolint: errcheck
-		"hostname": d.conf.Secret.Host,
-		"resolved": strings.Join(strAddresses, ", "),
-		"ip4":      ourIP4,
-		"ip6":      ourIP6,
+		"hostname": res.Host,
+		"resolved": strings.Join(resolved, ", "),
+		"our":      our,
+		"families": strings.Join(mismatched, ", "),
 	})
 
 	return false
