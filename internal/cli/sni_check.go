@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"net"
+	"sync"
 
 	"github.com/9seconds/mtg/v2/internal/config"
 	"github.com/9seconds/mtg/v2/mtglib"
@@ -29,15 +30,25 @@ func (r sniCheckResult) Known() bool {
 	return r.OurIPv4 != nil || r.OurIPv6 != nil
 }
 
-// OK reports whether every detected public IP family matches a resolved
-// record. A partial match (one family matches, another does not) is not OK.
+// OK reports whether the check produced a clean result: the hostname was
+// resolved, at least one public IP family is known, and every known family
+// matches a resolved record.
 func (r sniCheckResult) OK() bool {
-	return r.ResolveErr == nil && r.IPv4Match && r.IPv6Match
+	if r.Host == "" {
+		return true
+	}
+
+	if r.ResolveErr != nil || !r.Known() {
+		return false
+	}
+
+	return r.IPv4Match && r.IPv6Match
 }
 
 // runSNICheck resolves conf.Secret.Host and compares the result with the
 // server's public IPv4 and IPv6. Public IPs come from config first and fall
-// back to on-the-fly detection via ntw.
+// back to on-the-fly detection via ntw. IP detection for the two families
+// runs concurrently.
 func runSNICheck(ctx context.Context,
 	resolver *net.Resolver,
 	conf *config.Config,
@@ -64,15 +75,23 @@ func runSNICheck(ctx context.Context,
 		res.Resolved = append(res.Resolved, a.IP)
 	}
 
-	res.OurIPv4 = conf.PublicIPv4.Get(nil)
-	if res.OurIPv4 == nil {
-		res.OurIPv4 = getIP(ntw, "tcp4")
-	}
+	wg := sync.WaitGroup{}
 
-	res.OurIPv6 = conf.PublicIPv6.Get(nil)
-	if res.OurIPv6 == nil {
-		res.OurIPv6 = getIP(ntw, "tcp6")
-	}
+	wg.Go(func() {
+		res.OurIPv4 = conf.PublicIPv4.Get(nil)
+		if res.OurIPv4 == nil {
+			res.OurIPv4 = getIP(ntw, "tcp4")
+		}
+	})
+
+	wg.Go(func() {
+		res.OurIPv6 = conf.PublicIPv6.Get(nil)
+		if res.OurIPv6 == nil {
+			res.OurIPv6 = getIP(ntw, "tcp6")
+		}
+	})
+
+	wg.Wait()
 
 	res.IPv4Match = res.OurIPv4 == nil
 	res.IPv6Match = res.OurIPv6 == nil
