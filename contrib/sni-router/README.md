@@ -72,9 +72,9 @@ domain's DNS A/AAAA record points to this server before starting.
     SNI match    │           │  default
                  v           v
            ┌─────────┐  ┌─────────┐
-           │   mtg    │  │  Caddy  │
-           │ :3128    │  │ :8443   │
-           │ FakeTLS  │  │ real TLS│
+           │   mtg   │  │  Caddy  │
+           │ :3128   │  │ :8443   │
+           │ FakeTLS │  │ real TLS│
            └─────────┘  └─────────┘
 ```
 
