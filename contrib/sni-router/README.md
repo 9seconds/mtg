@@ -56,6 +56,43 @@ container address.  The three pieces must stay in sync:
 If you disable one, disable all three, otherwise the backend will fail
 to parse the connection.
 
+## Fronting loop (why `[domain-fronting]` is set explicitly)
+
+When mtg sees TLS traffic that isn't valid Telegram (a probe or a
+browser hitting your domain on `:443`), it forwards that connection to
+a real web server — "domain fronting".  By default mtg uses the
+secret's hostname as the fronting target and resolves it via DNS.
+
+In this setup that hostname resolves back to **this** server, so mtg's
+fronting dial would hit HAProxy on `:443`, HAProxy would see the SNI
+matching the secret and route the connection back to mtg → loop.
+
+To break the loop, `mtg-config.toml` pins the fronting target to
+Caddy's container address directly:
+
+```toml
+[domain-fronting]
+ip = "172.28.0.10"
+port = 8443
+proxy-protocol = true
+```
+
+The IP matches `services.web.networks.sni.ipv4_address` in
+`docker-compose.yml` (mtg's `domain-fronting.ip` only accepts a literal
+IP, not a hostname, hence the static `sni` network).  `proxy-protocol =
+true` matches Caddy's `:8443` listener wrapper so the real client IP
+still propagates to Caddy's logs.
+
+If you change Caddy's pinned IP, update both files together.  If
+`172.28.0.0/24` collides with another network on this host, change the
+subnet in `docker-compose.yml` and the IP in `mtg-config.toml` to match.
+
+> Caveat for IPv6 clients: when an IPv6 probe is fronted, mtg's
+> outbound PROXY v2 header has an IPv6 source but an IPv4 destination
+> (Caddy's pinned address).  Caddy may refuse the mixed-family header
+> and log the docker-network address instead of the real client IP for
+> that connection.  Telegram traffic is unaffected.
+
 ## ACME (Let's Encrypt) notes
 
 HAProxy passes `/.well-known/acme-challenge/` requests on `:80` to

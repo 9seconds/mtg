@@ -11,6 +11,19 @@ bind-to = "0.0.0.0:3128"
 # real client IP.  Keep this in sync with haproxy.cfg (`send-proxy-v2`).
 proxy-protocol-listener = true
 
+# Domain-fronting target.  Without an explicit IP here, mtg resolves the
+# secret's hostname via DNS, which points back to this server -> lands
+# on HAProxy -> SNI matches the secret -> routed back to mtg -> loop.
+#
+# The IP below pins Caddy's container address (see docker-compose.yml
+# `networks.sni.ipv4_address`) so mtg dials Caddy directly, bypassing
+# HAProxy.  `proxy-protocol = true` matches Caddy's :8443 listener
+# wrapper so the real client IP propagates end-to-end.
+[domain-fronting]
+ip = "172.28.0.10"
+port = 8443
+proxy-protocol = true
+
 [defense.anti-replay]
 enabled = true
 max-size = "1mib"
