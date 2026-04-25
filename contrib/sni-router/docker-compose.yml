@@ -29,7 +29,7 @@ services:
       - web
     restart: unless-stopped
     networks:
-      sni:
+      - sni
 
   mtg:
     image: nineseconds/mtg:2
@@ -39,7 +39,7 @@ services:
       - "3128"
     restart: unless-stopped
     networks:
-      sni:
+      - sni
 
   web:
     image: caddy:alpine
