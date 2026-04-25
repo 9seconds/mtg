@@ -28,6 +28,8 @@ services:
       - mtg
       - web
     restart: unless-stopped
+    networks:
+      sni:
 
   mtg:
     image: nineseconds/mtg:2
@@ -36,6 +38,8 @@ services:
     expose:
       - "3128"
     restart: unless-stopped
+    networks:
+      sni:
 
   web:
     image: caddy:alpine
@@ -49,6 +53,19 @@ services:
     environment:
       DOMAIN: ${DOMAIN:-example.com}
     restart: unless-stopped
+    networks:
+      sni:
+        # Pinned IP so mtg's `domain-fronting.ip` (which only accepts a
+        # literal IP, not a hostname) can target Caddy directly and
+        # bypass HAProxy.  See README "Fronting loop" section.
+        ipv4_address: 172.28.0.10
 
 volumes:
   caddy_data:
+
+networks:
+  sni:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24
