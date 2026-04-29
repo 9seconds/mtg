@@ -69,7 +69,8 @@ var (
 type Doctor struct {
 	conf *config.Config
 
-	ConfigPath string `kong:"arg,required,type='existingfile',help='Path to the configuration file.',name='config-path'"` //nolint: lll
+	ConfigPath      string `kong:"arg,required,type='existingfile',help='Path to the configuration file.',name='config-path'"` //nolint: lll
+	SkipNativeCheck bool   `kong:"help='Skip the native network connectivity check (useful when proxy chaining is configured and direct egress is not expected to work).',name='skip-native-check'"` //nolint: lll
 }
 
 func (d *Doctor) Run(cli *CLI, version string) error {
@@ -106,7 +107,11 @@ func (d *Doctor) Run(cli *CLI, version string) error {
 	)
 
 	fmt.Println("Validate native network connectivity")
-	everythingOK = d.checkNetwork(base) && everythingOK
+	if d.SkipNativeCheck {
+		fmt.Println("  ⏭ Skipped (--skip-native-check)")
+	} else {
+		everythingOK = d.checkNetwork(base) && everythingOK
+	}
 
 	for _, url := range conf.Network.Proxies {
 		value, err := network.NewProxyNetwork(base, url.Get(nil))
