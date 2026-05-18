@@ -58,6 +58,30 @@ must stay in sync:
 If you disable one, disable all four, otherwise the backend will fail
 to parse the connection.
 
+## Why host networking for HAProxy
+
+HAProxy runs in the host network namespace (`network_mode: host` in
+`docker-compose.yml`) so it sees the real client source IP on every
+inbound connection.  With the default bridge networking + published
+ports the source IP is rewritten to the bridge gateway — by Docker's
+userland proxy (`docker-proxy`), by rootless Podman's `slirp4netns`
+or `pasta`, or by NAT on the Docker host — and the PROXY v2 header
+HAProxy then sends to mtg and Caddy carries that useless address.
+Host networking lifts HAProxy out of the rewrite path; mtg and Caddy
+stay on the compose bridge and HAProxy dials them via host loopback
+(`127.0.0.1`).
+
+Trade-off: HAProxy occupies the host's `:443` and `:80` directly, so
+nothing else on the host may listen on those ports.  For a dedicated
+mtg/SNI-router host that is the intended layout.
+
+Rootless Podman users binding the privileged ports `:80`/`:443` need
+the host-side sysctl once (rootful Docker handles this implicitly):
+
+```bash
+sudo sysctl -w net.ipv4.ip_unprivileged_port_start=80
+```
+
 ## Fronting loop (why `[domain-fronting]` is set explicitly)
 
 When mtg sees TLS that isn't valid Telegram (a probe or a browser

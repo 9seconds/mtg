@@ -24,9 +24,12 @@ x-domain-env: &domain-env
 services:
   haproxy:
     image: haproxy:lts-alpine
-    ports:
-      - "443:443"
-      - "80:80"
+    # Host networking so HAProxy sees the real client source IP on
+    # inbound (bridge networking with published ports rewrites it to
+    # the bridge gateway under both Docker's userland-proxy and
+    # rootless Podman's slirp4netns/pasta).  See "Why host networking"
+    # in README.md.
+    network_mode: host
     volumes:
       - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro,Z
     environment:
@@ -35,15 +38,14 @@ services:
       - mtg
       - web
     restart: unless-stopped
-    sysctls:
-      - net.ipv4.ip_unprivileged_port_start=80
 
   mtg:
     image: nineseconds/mtg:2
     volumes:
       - ./mtg-config.toml:/config/config.toml:ro,Z
-    expose:
-      - "3128"
+    # Publish on host loopback so the host-mode HAProxy can reach it.
+    ports:
+      - "127.0.0.1:3128:3128"
     restart: unless-stopped
     extra_hosts:
       - "host.containers.internal:host-gateway"
@@ -54,9 +56,12 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro,Z
       - caddy_data:/data
       - ./www:/srv:ro,Z
-    expose:
-      - "80"
-      - "8443"
+    # Publish on host loopback so the host-mode HAProxy can reach it.
+    # Caddy's HTTP listener is mapped off :80 (occupied by HAProxy)
+    # to :8080; haproxy.cfg dials it on 127.0.0.1:8080 for ACME.
+    ports:
+      - "127.0.0.1:8080:80"
+      - "127.0.0.1:8443:8443"
     environment:
       <<: *domain-env
     restart: unless-stopped

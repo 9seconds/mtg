@@ -10,14 +10,14 @@
 	# to Caddy's access log.  The `tls` wrapper must follow so that TLS
 	# is terminated on the unwrapped connection.
 	#
-	# `allow` lists the networks permitted to send PROXY headers.  These
-	# ranges cover docker compose's default bridge networks; tighten
-	# them if you pin a specific subnet in docker-compose.yml.
+	# `allow` lists the networks permitted to send PROXY headers.
+	# HAProxy runs in the host netns and reaches Caddy via host loopback
+	# (see docker-compose.yml), so the only legitimate peer is loopback.
 	servers :8443 {
 		listener_wrappers {
 			proxy_protocol {
 				timeout 5s
-				allow 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16
+				allow 127.0.0.0/8 ::1/128
 			}
 			tls
 		}
