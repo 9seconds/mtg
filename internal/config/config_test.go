@@ -42,6 +42,16 @@ func (suite *ConfigTestSuite) TestParseMinimalConfig() {
 	suite.Equal("0.0.0.0:3128", conf.BindTo.String())
 }
 
+func (suite *ConfigTestSuite) TestParseLogTimeFormat() {
+	conf, err := config.Parse([]byte(`
+secret = "7oe1GqLy6TBc38CV3jx7q09nb29nbGUuY29t"
+bind-to = "0.0.0.0:3128"
+log-time-format = "rfc3339"
+`))
+	suite.NoError(err)
+	suite.Equal("rfc3339", conf.LogTimeFormat)
+}
+
 func (suite *ConfigTestSuite) TestParsePublicIP() {
 	conf, err := config.Parse(suite.ReadConfig("public_ip.toml"))
 	suite.NoError(err)

@@ -23,6 +23,7 @@ type ListConfig struct {
 
 type Config struct {
 	Debug                       TypeBool        `json:"debug"`
+	LogTimeFormat               string          `json:"logTimeFormat"`
 	AllowFallbackOnUnknownDC    TypeBool        `json:"allowFallbackOnUnknownDc"`
 	Secret                      mtglib.Secret   `json:"secret"`
 	BindTo                      TypeHostPort    `json:"bindTo"`
@@ -71,10 +72,10 @@ type Config struct {
 			Interval TypeDuration    `json:"interval"`
 			Count    TypeConcurrency `json:"count"`
 		} `json:"keepAlive"`
-		DOHIP            TypeIP         `json:"dohIp"`
-		DNS              TypeDNSURI     `json:"dns"`
-		Proxies          []TypeProxyURL `json:"proxies"`
-		TCPNotSentLowat  TypeBytes      `json:"tcpNotSentLowat"`
+		DOHIP           TypeIP         `json:"dohIp"`
+		DNS             TypeDNSURI     `json:"dns"`
+		Proxies         []TypeProxyURL `json:"proxies"`
+		TCPNotSentLowat TypeBytes      `json:"tcpNotSentLowat"`
 	} `json:"network"`
 	Stats struct {
 		StatsD struct {

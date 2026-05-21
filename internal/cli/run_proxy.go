@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/9seconds/mtg/v2/antireplay"
 	"github.com/9seconds/mtg/v2/events"
@@ -24,7 +25,7 @@ import (
 )
 
 func makeLogger(conf *config.Config) mtglib.Logger {
-	zerolog.TimeFieldFormat = zerolog.TimeFormatUnixMs
+	zerolog.TimeFieldFormat = logTimeFormat(conf.LogTimeFormat)
 	zerolog.TimestampFieldName = "timestamp"
 	zerolog.LevelFieldName = "level"
 
@@ -37,6 +38,25 @@ func makeLogger(conf *config.Config) mtglib.Logger {
 	baseLogger := zerolog.New(os.Stdout).With().Timestamp().Logger()
 
 	return logger.NewZeroLogger(baseLogger)
+}
+
+func logTimeFormat(value string) string {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "", "unix-ms":
+		return zerolog.TimeFormatUnixMs
+	case "unix":
+		return zerolog.TimeFormatUnix
+	case "unix-micro":
+		return zerolog.TimeFormatUnixMicro
+	case "unix-nano":
+		return zerolog.TimeFormatUnixNano
+	case "rfc3339":
+		return time.RFC3339
+	case "rfc3339-nano":
+		return time.RFC3339Nano
+	default:
+		return value
+	}
 }
 
 func makeNetwork(conf *config.Config, version string) (mtglib.Network, error) {

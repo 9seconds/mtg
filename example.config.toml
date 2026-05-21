@@ -15,6 +15,20 @@
 # you have any issue.
 debug = true
 
+# Configures timestamp format in logs. The default is "unix-ms", which keeps
+# the existing numeric Unix milliseconds format for log aggregators.
+#
+# Presets:
+#   "unix"         Unix seconds
+#   "unix-ms"      Unix milliseconds
+#   "unix-micro"   Unix microseconds
+#   "unix-nano"    Unix nanoseconds
+#   "rfc3339"      RFC3339 string, honoring host timezone
+#   "rfc3339-nano" RFC3339Nano string, honoring host timezone
+#
+# Any other value is passed to Go's time formatter as a layout string.
+# log-time-format = "unix-ms"
+
 # A secret (required). Please remember that mtg supports only FakeTLS
 # mode, legacy simple and secured mode are prohibited. For you it means
 # that secret should either be base64-encoded or starts with ee.
