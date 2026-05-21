@@ -57,7 +57,9 @@ func (suite *NetworkTestSuite) TestRealHTTPRequest() {
 	client := ntw.MakeHTTPClient(nil)
 
 	resp, err := client.Get("https://httpbin.org/headers") //nolint: noctx
-	suite.NoError(err)
+	if err != nil {
+		suite.T().Skipf("httpbin.org is unavailable: %v", err)
+	}
 
 	defer resp.Body.Close() //nolint: errcheck
 
