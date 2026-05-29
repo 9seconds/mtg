@@ -10,6 +10,7 @@ import (
 
 type tomlConfig struct {
 	Debug                       bool   `toml:"debug" json:"debug,omitempty"`
+	LogTimeFormat               string `toml:"log-time-format" json:"logTimeFormat,omitempty"`
 	AllowFallbackOnUnknownDC    bool   `toml:"allow-fallback-on-unknown-dc" json:"allowFallbackOnUnknownDc,omitempty"`
 	Secret                      string `toml:"secret" json:"secret"`
 	BindTo                      string `toml:"bind-to" json:"bindTo"`
