@@ -24,7 +24,13 @@ import (
 )
 
 func makeLogger(conf *config.Config) mtglib.Logger {
-	zerolog.TimeFieldFormat = zerolog.TimeFormatUnixMs
+	// An unset log time format keeps mtg's historical default
+	// (Unix milliseconds), so the existing output does not change.
+	logTimeFormat := config.TypeLogTimeFormat{
+		Value: conf.LogTimeFormat.Get(config.TypeLogTimeFormatUnixMs),
+	}
+
+	zerolog.TimeFieldFormat = logTimeFormat.ZerologFormat()
 	zerolog.TimestampFieldName = "timestamp"
 	zerolog.LevelFieldName = "level"
 

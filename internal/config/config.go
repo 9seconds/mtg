@@ -22,20 +22,21 @@ type ListConfig struct {
 }
 
 type Config struct {
-	Debug                       TypeBool        `json:"debug"`
-	AllowFallbackOnUnknownDC    TypeBool        `json:"allowFallbackOnUnknownDc"`
-	Secret                      mtglib.Secret   `json:"secret"`
-	BindTo                      TypeHostPort    `json:"bindTo"`
-	ProxyProtocolListener       TypeBool        `json:"proxyProtocolListener"`
-	PreferIP                    TypePreferIP    `json:"preferIp"`
-	AutoUpdate                  TypeBool        `json:"autoUpdate"`
-	DomainFrontingPort          TypePort        `json:"domainFrontingPort"`
-	DomainFrontingIP            TypeIP          `json:"domainFrontingIp"`
-	DomainFrontingProxyProtocol TypeBool        `json:"domainFrontingProxyProtocol"`
-	TolerateTimeSkewness        TypeDuration    `json:"tolerateTimeSkewness"`
-	Concurrency                 TypeConcurrency `json:"concurrency"`
-	PublicIPv4                  TypeIP          `json:"publicIpv4"`
-	PublicIPv6                  TypeIP          `json:"publicIpv6"`
+	Debug                       TypeBool          `json:"debug"`
+	LogTimeFormat               TypeLogTimeFormat `json:"logTimeFormat"`
+	AllowFallbackOnUnknownDC    TypeBool          `json:"allowFallbackOnUnknownDc"`
+	Secret                      mtglib.Secret     `json:"secret"`
+	BindTo                      TypeHostPort      `json:"bindTo"`
+	ProxyProtocolListener       TypeBool          `json:"proxyProtocolListener"`
+	PreferIP                    TypePreferIP      `json:"preferIp"`
+	AutoUpdate                  TypeBool          `json:"autoUpdate"`
+	DomainFrontingPort          TypePort          `json:"domainFrontingPort"`
+	DomainFrontingIP            TypeIP            `json:"domainFrontingIp"`
+	DomainFrontingProxyProtocol TypeBool          `json:"domainFrontingProxyProtocol"`
+	TolerateTimeSkewness        TypeDuration      `json:"tolerateTimeSkewness"`
+	Concurrency                 TypeConcurrency   `json:"concurrency"`
+	PublicIPv4                  TypeIP            `json:"publicIpv4"`
+	PublicIPv6                  TypeIP            `json:"publicIpv6"`
 	DomainFronting              struct {
 		Host          TypeHost `json:"host"`
 		IP            TypeIP   `json:"ip"`
@@ -71,10 +72,10 @@ type Config struct {
 			Interval TypeDuration    `json:"interval"`
 			Count    TypeConcurrency `json:"count"`
 		} `json:"keepAlive"`
-		DOHIP            TypeIP         `json:"dohIp"`
-		DNS              TypeDNSURI     `json:"dns"`
-		Proxies          []TypeProxyURL `json:"proxies"`
-		TCPNotSentLowat  TypeBytes      `json:"tcpNotSentLowat"`
+		DOHIP           TypeIP         `json:"dohIp"`
+		DNS             TypeDNSURI     `json:"dns"`
+		Proxies         []TypeProxyURL `json:"proxies"`
+		TCPNotSentLowat TypeBytes      `json:"tcpNotSentLowat"`
 	} `json:"network"`
 	Stats struct {
 		StatsD struct {

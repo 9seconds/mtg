@@ -42,6 +42,49 @@ func (suite *ConfigTestSuite) TestParseMinimalConfig() {
 	suite.Equal("0.0.0.0:3128", conf.BindTo.String())
 }
 
+func (suite *ConfigTestSuite) TestParseLogTimeFormatDefault() {
+	conf, err := config.Parse(suite.ReadConfig("minimal.toml"))
+	suite.NoError(err)
+	suite.Equal("unix-ms", conf.LogTimeFormat.Get("unix-ms"))
+}
+
+func (suite *ConfigTestSuite) TestParseLogTimeFormatPresets() {
+	presets := []string{
+		"unix", "unix-ms", "unix-micro", "unix-nano",
+		"rfc3339", "rfc3339-nano",
+		"2006-01-02 15:04:05",
+	}
+
+	for _, preset := range presets {
+		preset := preset
+
+		suite.Run(preset, func() {
+			conf, err := config.Parse([]byte(`
+secret = "7oe1GqLy6TBc38CV3jx7q09nb29nbGUuY29t"
+bind-to = "0.0.0.0:3128"
+log-time-format = "` + preset + `"
+`))
+			suite.NoError(err)
+			suite.Equal(preset, conf.LogTimeFormat.Get("unix-ms"))
+		})
+	}
+}
+
+func (suite *ConfigTestSuite) TestParseLogTimeFormatEmptyIsUnset() {
+	// An explicitly empty log-time-format is dropped by the TOML->JSON
+	// omitempty step (the same as prefer-ip and every other optional
+	// string field), so it is treated as unset and falls back to the
+	// default. Rejection of a genuinely empty value is enforced by
+	// TypeLogTimeFormat.Set, exercised in type_log_time_format_test.go.
+	conf, err := config.Parse([]byte(`
+secret = "7oe1GqLy6TBc38CV3jx7q09nb29nbGUuY29t"
+bind-to = "0.0.0.0:3128"
+log-time-format = ""
+`))
+	suite.NoError(err)
+	suite.Equal("unix-ms", conf.LogTimeFormat.Get("unix-ms"))
+}
+
 func (suite *ConfigTestSuite) TestParsePublicIP() {
 	conf, err := config.Parse(suite.ReadConfig("public_ip.toml"))
 	suite.NoError(err)
