@@ -19,6 +19,21 @@ flagged.  With this setup:
 Because your domain's DNS points to this server, the SNI/IP match is
 natural and passive DPI has nothing to flag.
 
+## Do you need HAProxy at all?
+
+For a single domain you can run just two services: mtg itself owns
+`:443` and relays non-Telegram TLS to Caddy through its built-in
+domain fronting — the same job HAProxy does here, decided by secret
+validation instead of SNI.  See
+[Setup Without SNI Router](https://github.com/9seconds/mtg/wiki/Setup-Without-SNI-Router)
+in the wiki for a ready-made compose.
+
+Keep the HAProxy variant when you need either of:
+
+- several domains/backends multiplexed on the same `:443` — mtg has a
+  single fronting target;
+- the website to stay up while mtg is down or restarting.
+
 ## Quick start
 
 ```bash
