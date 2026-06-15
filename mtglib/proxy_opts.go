@@ -177,6 +177,10 @@ type ProxyOpts struct {
 
 	// DoppelGangerDRS defines if TLS Dynamic Record Sizing is active.
 	DoppelGangerDRS bool
+
+	// DPIDesync enables post-handshake TCP window restore. Callers that set it
+	// must also apply the pre-handshake window clamp on accepted client sockets.
+	DPIDesync bool
 }
 
 func (p ProxyOpts) valid() error {

@@ -1,6 +1,11 @@
 package proxyprotocol
 
-import "github.com/pires/go-proxyproto"
+import (
+	"errors"
+	"syscall"
+
+	"github.com/pires/go-proxyproto"
+)
 
 type connWrapper struct {
 	*proxyproto.Conn
@@ -22,4 +27,13 @@ func (c connWrapper) CloseWrite() error {
 	}
 
 	return tcpConn.CloseWrite()
+}
+
+func (c connWrapper) SyscallConn() (syscall.RawConn, error) {
+	tcpConn, ok := c.TCPConn()
+	if !ok {
+		return nil, errors.New("proxy protocol connection is not TCP")
+	}
+
+	return tcpConn.SyscallConn()
 }

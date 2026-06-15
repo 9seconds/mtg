@@ -11,6 +11,7 @@ import (
 	"github.com/9seconds/mtg/v2/antireplay"
 	"github.com/9seconds/mtg/v2/events"
 	"github.com/9seconds/mtg/v2/internal/config"
+	"github.com/9seconds/mtg/v2/internal/desync"
 	"github.com/9seconds/mtg/v2/internal/proxyprotocol"
 	"github.com/9seconds/mtg/v2/internal/utils"
 	"github.com/9seconds/mtg/v2/ipblocklist"
@@ -179,7 +180,8 @@ func makeEventStream(conf *config.Config, logger mtglib.Logger) (mtglib.EventStr
 			conf.Stats.StatsD.Address.Get(""),
 			logger.Named("statsd"),
 			conf.Stats.StatsD.MetricPrefix.Get(stats.DefaultStatsdMetricPrefix),
-			conf.Stats.StatsD.TagFormat.Get(stats.DefaultStatsdTagFormat))
+			conf.Stats.StatsD.TagFormat.Get(stats.DefaultStatsdTagFormat),
+		)
 		if err != nil {
 			return nil, fmt.Errorf("cannot build statsd observer: %w", err)
 		}
@@ -254,6 +256,8 @@ func warnDeprecatedDomainFronting(conf *config.Config, log mtglib.Logger) {
 	}
 }
 
+const dpiDesyncHandshakeWindowClamp = 256
+
 func runProxy(conf *config.Config, version string) error { //nolint: funlen, cyclop
 	logger := makeLogger(conf)
 
@@ -279,7 +283,8 @@ func runProxy(conf *config.Config, version string) error { //nolint: funlen, cyc
 		ntw,
 		func(ctx context.Context, size int) {
 			eventStream.Send(ctx, mtglib.NewEventIPListSize(size, true))
-		})
+		},
+	)
 	if err != nil {
 		return fmt.Errorf("cannot build ip blocklist: %w", err)
 	}
@@ -294,6 +299,13 @@ func runProxy(conf *config.Config, version string) error { //nolint: funlen, cyc
 	)
 	if err != nil {
 		return fmt.Errorf("cannot build ip allowlist: %w", err)
+	}
+
+	windowClamp := 0
+	if conf.DPIDesync.Get(false) {
+		// Empirically chosen: small enough for Linux IPv4 DPI desync, but still
+		// large enough for Telegram media after the post-handshake clamp restore.
+		windowClamp = dpiDesyncHandshakeWindowClamp
 	}
 
 	doppelGangerURLs := make([]string, len(conf.Defense.Doppelganger.URLs))
@@ -326,6 +338,8 @@ func runProxy(conf *config.Config, version string) error { //nolint: funlen, cyc
 		DoppelGangerPerRaid: conf.Defense.Doppelganger.Repeats.Get(mtglib.DoppelGangerPerRaid),
 		DoppelGangerEach:    conf.Defense.Doppelganger.UpdateEach.Get(mtglib.DoppelGangerEach),
 		DoppelGangerDRS:     conf.Defense.Doppelganger.DRS.Get(false),
+
+		DPIDesync: windowClamp > 0,
 	}
 
 	proxy, err := mtglib.NewProxy(opts)
@@ -333,7 +347,7 @@ func runProxy(conf *config.Config, version string) error { //nolint: funlen, cyc
 		return fmt.Errorf("cannot create a proxy: %w", err)
 	}
 
-	listener, err := utils.NewListener(conf.BindTo.Get(""), 0)
+	listener, err := utils.NewListener(conf.BindTo.Get(""), windowClamp)
 	if err != nil {
 		return fmt.Errorf("cannot start proxy: %w", err)
 	}
@@ -347,6 +361,14 @@ func runProxy(conf *config.Config, version string) error { //nolint: funlen, cyc
 	}
 
 	ctx := utils.RootContext()
+
+	if windowClamp > 0 {
+		desyncSvc, err := desync.Start(int(conf.BindTo.Port))
+		if err != nil {
+			return fmt.Errorf("cannot start raw desync: %w", err)
+		}
+		defer desyncSvc.Close() //nolint: errcheck
+	}
 
 	go proxy.Serve(listener) //nolint: errcheck
 

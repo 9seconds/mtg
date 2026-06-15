@@ -1,9 +1,12 @@
 package utils
 
 import (
+	"context"
 	"fmt"
 	"net"
+	"syscall"
 
+	"github.com/9seconds/mtg/v2/essentials"
 	"github.com/9seconds/mtg/v2/network"
 )
 
@@ -26,13 +29,22 @@ func (l Listener) Accept() (net.Conn, error) {
 	return conn, nil
 }
 
-func NewListener(bindTo string, bufferSize int) (net.Listener, error) {
-	base, err := net.Listen("tcp", bindTo)
+func NewListener(bindTo string, windowClamp int) (net.Listener, error) {
+	var control func(string, string, syscall.RawConn) error
+	if windowClamp > 0 {
+		control = func(_, _ string, conn syscall.RawConn) error {
+			return essentials.SetRawTCPWindowClamp(conn, windowClamp)
+		}
+	}
+
+	listenConfig := net.ListenConfig{
+		Control: control,
+	}
+
+	base, err := listenConfig.Listen(context.Background(), "tcp", bindTo)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build a base listener: %w", err)
 	}
 
-	return Listener{
-		Listener: base,
-	}, nil
+	return Listener{Listener: base}, nil
 }

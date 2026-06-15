@@ -12,12 +12,15 @@ import (
 	"github.com/9seconds/mtg/v2/essentials"
 	"github.com/9seconds/mtg/v2/mtglib/internal/dc"
 	"github.com/9seconds/mtg/v2/mtglib/internal/doppel"
-	"github.com/9seconds/mtg/v2/mtglib/obfuscation"
 	"github.com/9seconds/mtg/v2/mtglib/internal/relay"
 	"github.com/9seconds/mtg/v2/mtglib/internal/tls"
 	"github.com/9seconds/mtg/v2/mtglib/internal/tls/fake"
+	"github.com/9seconds/mtg/v2/mtglib/obfuscation"
 	"github.com/panjf2000/ants/v2"
 )
+
+// Restore a large receive window after the tiny pre-handshake DPI desync clamp.
+const dpiDesyncPostHandshakeWindowClamp = 1 << 30
 
 // Proxy is an MTPROTO proxy structure.
 type Proxy struct {
@@ -32,6 +35,7 @@ type Proxy struct {
 	domainFrontingPort          int
 	domainFrontingHost          string
 	domainFrontingProxyProtocol bool
+	dpiDesync                   bool
 	workerPool                  *ants.PoolWithFunc
 	telegram                    *dc.Telegram
 	configUpdater               *dc.PublicConfigUpdater
@@ -216,6 +220,12 @@ func (p *Proxy) doFakeTLSHandshake(ctx *streamContext) bool {
 		return false
 	}
 
+	if p.dpiDesync {
+		if err := essentials.SetTCPWindowClamp(ctx.clientConn, dpiDesyncPostHandshakeWindowClamp); err != nil {
+			ctx.logger.DebugError("cannot restore TCP window clamp after handshake", err)
+		}
+	}
+
 	ctx.clientConn = tls.New(ctx.clientConn, true, false)
 
 	return true
@@ -285,7 +295,8 @@ func (p *Proxy) doTelegramCall(ctx *streamContext) error {
 		return fmt.Errorf("cannot parse telegram address %s: %w", foundAddr.Address, err)
 	}
 
-	p.eventStream.Send(ctx,
+	p.eventStream.Send(
+		ctx,
 		NewEventConnectedToDC(ctx.streamID,
 			net.ParseIP(telegramHost),
 			ctx.dc),
@@ -360,6 +371,7 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 		logger:                   logger,
 		domainFrontingPort:       opts.getDomainFrontingPort(),
 		domainFrontingHost:       opts.DomainFrontingHost,
+		dpiDesync:                opts.DPIDesync,
 		tolerateTimeSkewness:     opts.getTolerateTimeSkewness(),
 		idleTimeout:              opts.getIdleTimeout(),
 		handshakeTimeout:         opts.getHandshakeTimeout(),

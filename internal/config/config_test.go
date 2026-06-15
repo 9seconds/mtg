@@ -68,6 +68,12 @@ func (suite *ConfigTestSuite) TestParsePublicIPNotSet() {
 	suite.Nil(conf.PublicIPv6.Get(nil))
 }
 
+func (suite *ConfigTestSuite) TestParseDPIDesync() {
+	conf, err := config.Parse(suite.ReadConfig("dpi_desync.toml"))
+	suite.NoError(err)
+	suite.True(conf.DPIDesync.Get(false))
+}
+
 func (suite *ConfigTestSuite) TestString() {
 	conf, err := config.Parse(suite.ReadConfig("minimal.toml"))
 	suite.NoError(err)

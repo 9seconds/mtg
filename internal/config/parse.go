@@ -14,6 +14,7 @@ type tomlConfig struct {
 	Secret                      string `toml:"secret" json:"secret"`
 	BindTo                      string `toml:"bind-to" json:"bindTo"`
 	ProxyProtocolListener       bool   `toml:"proxy-protocol-listener" json:"proxyProtocolListener"`
+	DPIDesync                   bool   `toml:"dpi-desync" json:"dpiDesync,omitempty"`
 	PreferIP                    string `toml:"prefer-ip" json:"preferIp,omitempty"`
 	AutoUpdate                  bool   `toml:"auto-update" json:"autoUpdate,omitempty"`
 	DomainFrontingPort          uint   `toml:"domain-fronting-port" json:"domainFrontingPort,omitempty"`

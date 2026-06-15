@@ -13,17 +13,19 @@ type SimpleRun struct {
 	BindTo string `kong:"arg,required,name='bind-to',help='A host:port to bind proxy to.'"`
 	Secret string `kong:"arg,required,name='secret',help='Proxy secret.'"`
 
-	Debug               bool          `kong:"name='debug',short='d',help='Run in debug mode.'"`                                                                        //nolint: lll
-	Concurrency         uint64        `kong:"name='concurrency',short='c',default='8192',help='Max number of concurrent connection to proxy.'"`                        //nolint: lll
-	TCPBuffer           string        `kong:"name='tcp-buffer',short='b',default='4KB',help='Deprecated and ignored'"`                                                 //nolint: lll
-	PreferIP            string        `kong:"name='prefer-ip',short='i',default='prefer-ipv6',help='IP preference. By default we prefer IPv6 with fallback to IPv4.'"` //nolint: lll
-	DomainFrontingPort  uint64        `kong:"name='domain-fronting-port',short='p',default='443',help='A port to access for domain fronting.'"`                                                                  //nolint: lll
-	DomainFrontingHost  string        `kong:"name='domain-fronting-host',help='Hostname or IP to dial for domain fronting instead of resolving the secret hostname.'"`                                           //nolint: lll
-	DomainFrontingIP    string        `kong:"name='domain-fronting-ip',help='Deprecated: use --domain-fronting-host. Setting this flag logs a warning at startup and the value is ignored.'"`                    //nolint: lll
-	DOHIP               net.IP        `kong:"name='doh-ip',short='n',default='1.1.1.1',help='IP address of DNS-over-HTTP to use.'"`                                    //nolint: lll
-	Timeout             time.Duration `kong:"name='timeout',short='t',default='10s',help='Network timeout to use'"`                                                    //nolint: lll
-	Socks5Proxies       []string      `kong:"name='socks5-proxy',short='s',help='Socks5 proxies to use for network access.'"`                                          //nolint: lll
-	AntiReplayCacheSize string        `kong:"name='antireplay-cache-size',short='a',default='1MB',help='A size of anti-replay cache to use.'"`                         //nolint: lll
+	Debug               bool          `kong:"name='debug',short='d',help='Run in debug mode.'"`                                                                                               //nolint: lll
+	Concurrency         uint64        `kong:"name='concurrency',short='c',default='8192',help='Max number of concurrent connection to proxy.'"`                                               //nolint: lll
+	TCPBuffer           string        `kong:"name='tcp-buffer',short='b',default='4KB',help='Deprecated and ignored'"`                                                                        //nolint: lll
+	PreferIP            string        `kong:"name='prefer-ip',short='i',default='prefer-ipv6',help='IP preference. By default we prefer IPv6 with fallback to IPv4.'"`                        //nolint: lll
+	DomainFrontingPort  uint64        `kong:"name='domain-fronting-port',short='p',default='443',help='A port to access for domain fronting.'"`                                               //nolint: lll
+	DomainFrontingHost  string        `kong:"name='domain-fronting-host',help='Hostname or IP to dial for domain fronting instead of resolving the secret hostname.'"`                        //nolint: lll
+	DomainFrontingIP    string        `kong:"name='domain-fronting-ip',help='Deprecated: use --domain-fronting-host. Setting this flag logs a warning at startup and the value is ignored.'"` //nolint: lll
+	DOHIP               net.IP        `kong:"name='doh-ip',short='n',default='1.1.1.1',help='IP address of DNS-over-HTTP to use.'"`                                                           //nolint: lll
+	Timeout             time.Duration `kong:"name='timeout',short='t',default='10s',help='Network timeout to use'"`                                                                           //nolint: lll
+	Socks5Proxies       []string      `kong:"name='socks5-proxy',short='s',help='Socks5 proxies to use for network access.'"`                                                                 //nolint: lll
+	AntiReplayCacheSize string        `kong:"name='antireplay-cache-size',short='a',default='1MB',help='A size of anti-replay cache to use.'"`                                                //nolint: lll
+
+	DPIDesync bool `kong:"name='dpi-desync',help='Enable Linux IPv4 DPI desync for fake TLS handshakes.'"` //nolint: lll
 
 	ProxyProtocolListener bool `kong:"name='proxy-protocol-listener',help='Expect PROXY protocol (v1 or v2) headers on the listener. Use when mtg sits behind HAProxy, nginx stream, or similar.'"` //nolint: lll
 }
@@ -99,6 +101,7 @@ func (s *SimpleRun) Run(cli *CLI, version string) error { //nolint: cyclop,funle
 	conf.Debug.Value = s.Debug
 	conf.AllowFallbackOnUnknownDC.Value = true
 	conf.Defense.AntiReplay.Enabled.Value = true
+	conf.DPIDesync.Value = s.DPIDesync
 	conf.ProxyProtocolListener.Value = s.ProxyProtocolListener
 
 	if err := conf.Validate(); err != nil {

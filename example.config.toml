@@ -37,6 +37,12 @@ bind-to = "0.0.0.0:3128"
 # default value is false.
 # proxy-protocol-listener = false
 
+# Enable Linux IPv4 DPI desync for FakeTLS handshakes. This opens a raw packet
+# socket, so the process needs root or CAP_NET_RAW. The option is ignored on
+# non-Linux builds.
+# default value is false.
+# dpi-desync = false
+
 # Defines how many concurrent connections are allowed to this proxy.
 # All other incoming connections are going to be dropped.
 concurrency = 8192

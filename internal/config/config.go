@@ -27,6 +27,7 @@ type Config struct {
 	Secret                      mtglib.Secret   `json:"secret"`
 	BindTo                      TypeHostPort    `json:"bindTo"`
 	ProxyProtocolListener       TypeBool        `json:"proxyProtocolListener"`
+	DPIDesync                   TypeBool        `json:"dpiDesync"`
 	PreferIP                    TypePreferIP    `json:"preferIp"`
 	AutoUpdate                  TypeBool        `json:"autoUpdate"`
 	DomainFrontingPort          TypePort        `json:"domainFrontingPort"`
@@ -71,10 +72,10 @@ type Config struct {
 			Interval TypeDuration    `json:"interval"`
 			Count    TypeConcurrency `json:"count"`
 		} `json:"keepAlive"`
-		DOHIP            TypeIP         `json:"dohIp"`
-		DNS              TypeDNSURI     `json:"dns"`
-		Proxies          []TypeProxyURL `json:"proxies"`
-		TCPNotSentLowat  TypeBytes      `json:"tcpNotSentLowat"`
+		DOHIP           TypeIP         `json:"dohIp"`
+		DNS             TypeDNSURI     `json:"dns"`
+		Proxies         []TypeProxyURL `json:"proxies"`
+		TCPNotSentLowat TypeBytes      `json:"tcpNotSentLowat"`
 	} `json:"network"`
 	Stats struct {
 		StatsD struct {

@@ -1,8 +1,10 @@
 package essentials
 
 import (
+	"fmt"
 	"io"
 	"net"
+	"syscall"
 )
 
 // CloseableReader is an [io.Reader] interface that can close its reading end.
@@ -48,4 +50,18 @@ func (n netConnWrapper) CloseWrite() error {
 // WrapConn wraps a generic [net.Conn] into Conn.
 func WrapNetConn(conn net.Conn) Conn {
 	return netConnWrapper{conn}
+}
+
+func SetTCPWindowClamp(conn net.Conn, value int) error {
+	sysConn, ok := conn.(syscall.Conn)
+	if !ok {
+		return nil
+	}
+
+	rawConn, err := sysConn.SyscallConn()
+	if err != nil {
+		return fmt.Errorf("cannot get raw connection: %w", err)
+	}
+
+	return SetRawTCPWindowClamp(rawConn, value)
 }

@@ -369,6 +369,7 @@ Flags:
   -n, --doh-ip=1.1.1.1                 IP address of DNS-over-HTTP to use.
   -t, --timeout=10s                    Network timeout to use
   -a, --antireplay-cache-size="1MB"    A size of anti-replay cache to use.
+      --dpi-desync                     Enable Linux IPv4 DPI desync for fake TLS handshakes.
 ```
 
 So, if you want to startup a proxy with CLI only, you can do something like
@@ -401,6 +402,10 @@ bind-to = "0.0.0.0:443"
 This is enough to run the whole application. All other
 options already have sensible defaults for the app at almost any scale.
 
+`dpi-desync = true` enables Linux IPv4-only DPI desync for FakeTLS
+handshakes. It opens a raw packet socket, so run mtg as root or grant
+`CAP_NET_RAW`.
+
 ### Run a proxy
 
 Put a binary and a config into your webserver. Just for example,
@@ -422,6 +427,8 @@ RestartSec=3
 DynamicUser=true
 LimitNOFILE=65536
 AmbientCapabilities=CAP_NET_BIND_SERVICE
+# If dpi-desync = true, also add CAP_NET_RAW:
+# AmbientCapabilities=CAP_NET_BIND_SERVICE CAP_NET_RAW
 
 [Install]
 WantedBy=multi-user.target
