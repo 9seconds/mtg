@@ -2,6 +2,8 @@ package cli
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"maps"
@@ -87,6 +89,16 @@ var (
 		template.New("").
 			Funcs(funcs).
 			Parse("  ❌ {{ .address }}: {{ .error }}\n"),
+	)
+
+	tplOFrontingTLS = template.Must(
+		template.New("").Parse("  ✅ TLS certificate for {{ .host }} is valid\n"),
+	)
+	tplEFrontingTLS = template.Must(
+		template.New("").Parse("  ❌ TLS certificate for {{ .host }} is invalid: {{ .error }}\n"),
+	)
+	tplSFrontingTLS = template.Must(
+		template.New("").Parse("  ⏭ TLS certificate check skipped: proxy-protocol is enabled (the listener expects a PROXY header that mtg doctor does not send yet)\n"),
 	)
 )
 
@@ -361,13 +373,19 @@ func (d *Doctor) checkNetworkAddresses(ntw mtglib.Network, dc int, addresses []s
 }
 
 func (d *Doctor) checkFrontingDomain(ntw mtglib.Network) bool {
-	host := d.conf.Secret.Host
+	// SNI must always be the secret host: that is what domain fronting puts on
+	// the wire and what the certificate is issued for. The TCP target may be a
+	// different address when domain-fronting.host overrides it (in the
+	// sni-router setup it is an internal name like "web").
+	sniHost := d.conf.Secret.Host
+
+	dialHost := sniHost
 	if override := d.conf.GetDomainFrontingHost(); override != "" {
-		host = override
+		dialHost = override
 	}
 
 	port := d.conf.GetDomainFrontingPort(mtglib.DefaultDomainFrontingPort)
-	address := net.JoinHostPort(host, strconv.Itoa(int(port)))
+	address := net.JoinHostPort(dialHost, strconv.Itoa(int(port)))
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -389,7 +407,69 @@ func (d *Doctor) checkFrontingDomain(ntw mtglib.Network) bool {
 		"address": address,
 	})
 
+	// With proxy-protocol enabled the fronting listener expects a PROXY header
+	// before the TLS ClientHello, so a bare TLS handshake would hang or be
+	// rejected and report a misleading failure. mtg doctor does not emit that
+	// header yet, so skip the certificate probe rather than print a false
+	// negative. See issue #518.
+	if d.conf.GetDomainFrontingProxyProtocol(false) {
+		tplSFrontingTLS.Execute(os.Stdout, nil) //nolint: errcheck
+		return true
+	}
+
+	// A default crypto/tls client handshake against the fronting endpoint with
+	// ServerName = secret host validates the whole certificate in one shot:
+	// chain against the system roots, leaf SAN against the secret host, and
+	// validity period. An expired / untrusted / wrong-host certificate all
+	// surface as descriptive x509 errors.
+	if err := probeFrontingTLS(ctx, dialer, address, sniHost, nil); err != nil {
+		tplEFrontingTLS.Execute(os.Stdout, map[string]any{ //nolint: errcheck
+			"host":  sniHost,
+			"error": err,
+		})
+		return false
+	}
+
+	tplOFrontingTLS.Execute(os.Stdout, map[string]any{ //nolint: errcheck
+		"host": sniHost,
+	})
+
 	return true
+}
+
+// probeFrontingTLS dials dialAddress over TCP and performs a TLS handshake
+// presenting sniHost as the SNI / ServerName. Verification is left at the
+// crypto/tls default (InsecureSkipVerify=false), so the handshake fails with a
+// descriptive x509 error if the certificate chain is untrusted, the leaf SAN
+// does not cover sniHost, or the certificate is expired/not-yet-valid.
+//
+// rootCAs overrides the trust anchors; it is nil in production (system roots)
+// and is only set by tests that need a self-signed anchor.
+func probeFrontingTLS(
+	ctx context.Context,
+	dialer *net.Dialer,
+	dialAddress string,
+	sniHost string,
+	rootCAs *x509.CertPool,
+) error {
+	conn, err := dialer.DialContext(ctx, "tcp", dialAddress)
+	if err != nil {
+		return fmt.Errorf("cannot dial %s: %w", dialAddress, err)
+	}
+	defer conn.Close() //nolint: errcheck
+
+	if deadline, ok := ctx.Deadline(); ok {
+		conn.SetDeadline(deadline) //nolint: errcheck
+	}
+
+	tlsConn := tls.Client(conn, &tls.Config{
+		ServerName: sniHost,
+		RootCAs:    rootCAs,
+		MinVersion: tls.VersionTLS12,
+	})
+	defer tlsConn.Close() //nolint: errcheck
+
+	return tlsConn.HandshakeContext(ctx)
 }
 
 func (d *Doctor) checkSecretHost(resolver *net.Resolver, ntw mtglib.Network) bool {
