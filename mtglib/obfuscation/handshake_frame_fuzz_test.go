@@ -29,9 +29,8 @@ func FuzzGenerateHandshakeFrame(f *testing.F) {
 
 		assert.Equal(t, hfConnectionType[:], frame.connectionType())
 
-		if arg < 0 {
-			arg = -arg
-		} else if arg == 0 {
+		// The sign is kept: a negative id requests the media DC.
+		if arg == 0 {
 			arg = defaultDC
 		}
 
