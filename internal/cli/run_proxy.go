@@ -360,16 +360,32 @@ func runProxy(conf *config.Config, version string) error { //nolint: funlen, cyc
 		cancel()
 	}()
 
+	return waitAndShutdown(ctx, serveErr, func() {
+		listener.Close() //nolint: errcheck
+		proxy.Shutdown()
+	})
+}
+
+// waitAndShutdown waits for shutdown, stops the proxy and decides whether the
+// accept loop has failed. A Serve that failed on its own puts its error into
+// the channel before calling cancel(), so the error is already there when ctx
+// is done. On an ordinary stop (SIGTERM) Serve is still running; the error it
+// returns because stop() closes the listener is not a failure, otherwise every
+// stop or restart would exit with code 1.
+func waitAndShutdown(ctx context.Context, serveErr <-chan error, stop func()) error {
 	<-ctx.Done()
-	listener.Close() //nolint: errcheck
-	proxy.Shutdown()
+
+	var serveFailure error
 
 	select {
-	case err := <-serveErr:
-		if err != nil {
-			return fmt.Errorf("proxy stopped accepting connections: %w", err)
-		}
+	case serveFailure = <-serveErr:
 	default:
+	}
+
+	stop()
+
+	if serveFailure != nil {
+		return fmt.Errorf("proxy stopped accepting connections: %w", serveFailure)
 	}
 
 	return nil
