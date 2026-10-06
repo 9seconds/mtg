@@ -313,6 +313,21 @@ raid-each = "6h"
 #      https://github.com/cloudflare/sslconfig/blob/master/patches/nginx__dynamic_tls_records.patch
 drs = false
 
+# Limit on concurrent unauthenticated handshakes from one client IP. A
+# connection that never completes the handshake holds a worker until the
+# handshake timeout; one address that opens hundreds of them can starve
+# everyone else. Only connections that have not proven a secret yet are
+# counted: the slot is released as soon as the secret is verified or the
+# connection goes to the fronting domain, so authenticated sessions and
+# bursts of short media connections are not affected. Excess connections are
+# closed. Clients behind a carrier-grade NAT share an address: measure with
+# dry-run first. Reported as the pending_handshake_limit metric.
+[defense.pending-handshakes]
+# 0 (default) disables the limit.
+max-per-ip = 0
+# Only count connections over the limit, do not close them.
+dry-run = false
+
 # Some countries do active probing on Telegram connections. This technique
 # allows to protect from such effort.
 #

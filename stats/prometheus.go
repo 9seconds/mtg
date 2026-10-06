@@ -123,6 +123,10 @@ func (p prometheusProcessor) EventReplayAttack(_ mtglib.EventReplayAttack) {
 	p.factory.metricReplayAttacks.Inc()
 }
 
+func (p prometheusProcessor) EventPendingHandshakeLimit(evt mtglib.EventPendingHandshakeLimit) {
+	p.factory.metricPendingHandshakeLimit.WithLabelValues(evt.Action).Inc()
+}
+
 func (p prometheusProcessor) EventIPListSize(evt mtglib.EventIPListSize) {
 	tag := TagIPListBlock
 	if !evt.IsBlockList {
@@ -155,6 +159,7 @@ type PrometheusFactory struct {
 	metricTelegramTraffic       *prometheus.CounterVec
 	metricDomainFrontingTraffic *prometheus.CounterVec
 	metricIPBlocklisted         *prometheus.CounterVec
+	metricPendingHandshakeLimit *prometheus.CounterVec
 
 	metricDomainFronting     prometheus.Counter
 	metricConcurrencyLimited prometheus.Counter
@@ -232,6 +237,11 @@ func NewPrometheus(metricPrefix, httpPath string) *PrometheusFactory { //nolint:
 			Name:      MetricIPBlocklisted,
 			Help:      "A number of rejected sessions due to ip blocklisting.",
 		}, []string{TagIPList}),
+		metricPendingHandshakeLimit: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: metricPrefix,
+			Name:      MetricPendingHandshakeLimit,
+			Help:      "Connections over the per-IP limit on pending handshakes: rejected or observed (dry run).",
+		}, []string{TagAction}),
 
 		metricDomainFronting: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: metricPrefix,
@@ -258,6 +268,7 @@ func NewPrometheus(metricPrefix, httpPath string) *PrometheusFactory { //nolint:
 	registry.MustRegister(factory.metricTelegramTraffic)
 	registry.MustRegister(factory.metricDomainFrontingTraffic)
 	registry.MustRegister(factory.metricIPBlocklisted)
+	registry.MustRegister(factory.metricPendingHandshakeLimit)
 
 	registry.MustRegister(factory.metricDomainFronting)
 	registry.MustRegister(factory.metricConcurrencyLimited)

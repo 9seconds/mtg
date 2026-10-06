@@ -3,6 +3,7 @@ package mtglib_test
 import (
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -197,4 +198,128 @@ func (suite *ProxyTestSuite) TestHTTPSRequest() {
 func TestProxy(t *testing.T) {
 	t.Parallel()
 	suite.Run(t, &ProxyTestSuite{})
+}
+
+// A second silent connection from the same IP is closed right away when the
+// pending-handshake limit is 1; once the first one goes away, a new connection
+// is admitted (it stays open waiting for its handshake).
+func TestProxyPendingHandshakeLimit(t *testing.T) {
+	t.Parallel()
+
+	dialer, err := network.NewDefaultDialer(0, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ntw, err := network.NewNetwork(dialer, "mtgtest", "1.1.1.1", 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	allowlist, _ := ipblocklist.NewFireholFromFiles(
+		logger.NewNoopLogger(),
+		1,
+		[]files.File{files.NewMem([]*net.IPNet{cidranger.AllIPv4, cidranger.AllIPv6})},
+		nil,
+	)
+
+	go allowlist.Run(time.Second)
+
+	// The allowlist loads asynchronously; until then every connection is
+	// rejected by it, which would look like a rejection by the limit.
+	for !allowlist.Contains(net.ParseIP("127.0.0.1")) {
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	proxy, err := mtglib.NewProxy(mtglib.ProxyOpts{
+		Secret:                 mtglib.GenerateSecret("httpbin.org"),
+		Network:                ntw,
+		AntiReplayCache:        antireplay.NewNoop(),
+		IPBlocklist:            ipblocklist.NewNoop(),
+		IPAllowlist:            allowlist,
+		EventStream:            events.NewNoopStream(),
+		Logger:                 logger.NewNoopLogger(),
+		UseTestDCs:             true,
+		PendingHandshakesPerIP: 1,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	go proxy.Serve(listener) //nolint: errcheck
+
+	defer func() {
+		listener.Close() //nolint: errcheck
+		proxy.Shutdown()
+	}()
+
+	closedQuickly := func(conn net.Conn) bool {
+		conn.SetReadDeadline(time.Now().Add(500 * time.Millisecond)) //nolint: errcheck
+
+		_, err := conn.Read(make([]byte, 1))
+
+		var netErr net.Error
+
+		return err != nil && (!errors.As(err, &netErr) || !netErr.Timeout())
+	}
+
+	dial := func() net.Conn {
+		conn, err := net.Dial("tcp", listener.Addr().String())
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		return conn
+	}
+
+	// Open silent connections one by one until one is closed: with the limit
+	// of 1 exactly one must stay pending. No fixed sleeps - the proxy may pick
+	// a connection up with a delay under load.
+	var admitted []net.Conn
+
+	rejected := false
+
+	for range 10 {
+		conn := dial()
+		if closedQuickly(conn) {
+			conn.Close() //nolint: errcheck
+
+			rejected = true
+
+			break
+		}
+
+		admitted = append(admitted, conn)
+	}
+
+	if !rejected {
+		t.Fatal("connections over the pending-handshake limit must be closed")
+	}
+
+	if len(admitted) != 1 {
+		t.Fatalf("exactly one pending handshake must be admitted with limit 1, got %d", len(admitted))
+	}
+
+	// When the pending connection goes away, its slot is released.
+	admitted[0].Close() //nolint: errcheck
+
+	for attempt := range 10 {
+		conn := dial()
+		ok := !closedQuickly(conn)
+
+		conn.Close() //nolint: errcheck
+
+		if ok {
+			return
+		}
+
+		if attempt == 9 {
+			t.Fatal("after the pending connection is gone, a new one must be admitted")
+		}
+	}
 }
