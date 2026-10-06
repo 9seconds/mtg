@@ -225,6 +225,12 @@ func TestProxyPendingHandshakeLimit(t *testing.T) {
 
 	go allowlist.Run(time.Second)
 
+	// The allowlist loads asynchronously; until then every connection is
+	// rejected by it, which would look like a rejection by the limit.
+	for !allowlist.Contains(net.ParseIP("127.0.0.1")) {
+		time.Sleep(10 * time.Millisecond)
+	}
+
 	proxy, err := mtglib.NewProxy(mtglib.ProxyOpts{
 		Secret:                 mtglib.GenerateSecret("httpbin.org"),
 		Network:                ntw,
@@ -259,7 +265,7 @@ func TestProxyPendingHandshakeLimit(t *testing.T) {
 
 		var netErr net.Error
 
-		return err != nil && !(errors.As(err, &netErr) && netErr.Timeout())
+		return err != nil && (!errors.As(err, &netErr) || !netErr.Timeout())
 	}
 
 	dial := func() net.Conn {
