@@ -13,9 +13,10 @@ import (
 
 func FuzzClientServerHandshakes(f *testing.F) {
 	f.Add(int16(1), make([]byte, mtglib.SecretKeyLength))
+	f.Add(int16(-2), make([]byte, mtglib.SecretKeyLength))
 
 	f.Fuzz(func(t *testing.T, dc int16, data []byte) {
-		if dc <= 0 {
+		if dc == 0 {
 			dc = 1
 		}
 
