@@ -346,13 +346,31 @@ func runProxy(conf *config.Config, version string) error { //nolint: funlen, cyc
 		}
 	}
 
-	ctx := utils.RootContext()
+	ctx, cancel := context.WithCancel(utils.RootContext())
+	defer cancel()
 
-	go proxy.Serve(listener) //nolint: errcheck
+	// If the accept loop stops for any reason other than shutdown, the process
+	// must not stay alive without accepting connections: stop and report the
+	// error, so a supervisor (systemd, docker) restarts it.
+	serveErr := make(chan error, 1)
+
+	go func() {
+		serveErr <- proxy.Serve(listener)
+
+		cancel()
+	}()
 
 	<-ctx.Done()
 	listener.Close() //nolint: errcheck
 	proxy.Shutdown()
+
+	select {
+	case err := <-serveErr:
+		if err != nil {
+			return fmt.Errorf("proxy stopped accepting connections: %w", err)
+		}
+	default:
+	}
 
 	return nil
 }
