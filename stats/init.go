@@ -76,6 +76,12 @@ const (
 	//     Type: counter
 	MetricConcurrencyLimited = "concurrency_limited"
 
+	// MetricPendingHandshakeLimit defines a metric for connections over the
+	// per-IP limit on pending handshakes.
+	//
+	// Type: counter, tags: TagAction.
+	MetricPendingHandshakeLimit = "pending_handshake_limit"
+
 	// MetricIPBlocklisted defines a metric for a count of events, when
 	// client was blocked because her IP address was found in blocklists.
 	//
@@ -110,6 +116,9 @@ const (
 
 	// TagDC defines a name of the 'dc' tag.
 	TagDC = "dc"
+
+	// TagAction defines a name of the 'action' tag of MetricPendingHandshakeLimit.
+	TagAction = "action"
 
 	// TagDirection defines a name of the 'direction' tag.
 	TagDirection = "direction"

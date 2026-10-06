@@ -70,6 +70,18 @@ func (m multiObserver) EventFinish(evt mtglib.EventFinish) {
 	wg.Wait()
 }
 
+func (m multiObserver) EventPendingHandshakeLimit(evt mtglib.EventPendingHandshakeLimit) {
+	wg := &sync.WaitGroup{}
+
+	for _, v := range m.observers {
+		wg.Go(func() {
+			v.EventPendingHandshakeLimit(evt)
+		})
+	}
+
+	wg.Wait()
+}
+
 func (m multiObserver) EventConcurrencyLimited(evt mtglib.EventConcurrencyLimited) {
 	wg := &sync.WaitGroup{}
 

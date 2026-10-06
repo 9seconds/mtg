@@ -43,6 +43,10 @@ type Config struct {
 		ProxyProtocol TypeBool `json:"proxyProtocol"`
 	} `json:"domainFronting"`
 	Defense struct {
+		PendingHandshakes struct {
+			MaxPerIP TypeConcurrency `json:"maxPerIp"`
+			DryRun   TypeBool        `json:"dryRun"`
+		} `json:"pendingHandshakes"`
 		AntiReplay struct {
 			Optional
 

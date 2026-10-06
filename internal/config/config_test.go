@@ -115,6 +115,21 @@ func (suite *ConfigTestSuite) TestDomainFrontingNotSet() {
 	suite.Equal("", conf.GetDomainFrontingHost())
 }
 
+func (suite *ConfigTestSuite) TestPendingHandshakesDisabledByDefault() {
+	conf, err := config.Parse(suite.ReadConfig("minimal.toml"))
+	suite.NoError(err)
+	suite.EqualValues(0, conf.Defense.PendingHandshakes.MaxPerIP.Get(0))
+	suite.False(conf.Defense.PendingHandshakes.DryRun.Get(false))
+}
+
+func (suite *ConfigTestSuite) TestPendingHandshakes() {
+	conf, err := config.Parse(suite.ReadConfig("pending_handshakes.toml"))
+	suite.NoError(err)
+	suite.NoError(conf.Validate())
+	suite.EqualValues(32, conf.Defense.PendingHandshakes.MaxPerIP.Get(0))
+	suite.True(conf.Defense.PendingHandshakes.DryRun.Get(false))
+}
+
 func TestConfig(t *testing.T) {
 	t.Parallel()
 	suite.Run(t, &ConfigTestSuite{})

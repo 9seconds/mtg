@@ -30,6 +30,10 @@ type tomlConfig struct {
 		ProxyProtocol bool   `toml:"proxy-protocol" json:"proxyProtocol,omitempty"`
 	} `toml:"domain-fronting" json:"domainFronting,omitempty"`
 	Defense struct {
+		PendingHandshakes struct {
+			MaxPerIP uint `toml:"max-per-ip" json:"maxPerIp,omitempty"`
+			DryRun   bool `toml:"dry-run" json:"dryRun,omitempty"`
+		} `toml:"pending-handshakes" json:"pendingHandshakes,omitempty"`
 		AntiReplay struct {
 			Enabled   bool    `toml:"enabled" json:"enabled,omitempty"`
 			MaxSize   string  `toml:"max-size" json:"maxSize,omitempty"`
