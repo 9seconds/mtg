@@ -163,6 +163,27 @@ func (suite *EventStreamTestSuite) TestEventConcurrencyLimited() {
 	time.Sleep(100 * time.Millisecond)
 }
 
+func (suite *EventStreamTestSuite) TestEventPendingHandshakeLimit() {
+	evt := mtglib.NewEventPendingHandshakeLimit("CONNID", mtglib.PendingHandshakeRejected)
+
+	for _, v := range []*ObserverMock{suite.observerMock1, suite.observerMock2} {
+		v.
+			On("EventPendingHandshakeLimit", mock.Anything).
+			Once().
+			Run(func(args mock.Arguments) {
+				caught, ok := args.Get(0).(mtglib.EventPendingHandshakeLimit)
+
+				suite.True(ok)
+				suite.Equal(evt.StreamID(), caught.StreamID())
+				suite.Equal(evt.Timestamp(), caught.Timestamp())
+				suite.Equal(evt.Action, caught.Action)
+			})
+	}
+
+	suite.stream.Send(suite.ctx, evt)
+	time.Sleep(100 * time.Millisecond)
+}
+
 func (suite *EventStreamTestSuite) TestEventIPBlocklisted() {
 	evt := mtglib.NewEventIPBlocklisted(net.ParseIP("10.0.0.10"))
 

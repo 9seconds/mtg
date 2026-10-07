@@ -25,6 +25,7 @@ func (suite *NoopTestSuite) SetupSuite() {
 		"traffic":             mtglib.NewEventTraffic("connID", 1000, true),
 		"finish":              mtglib.NewEventFinish("connID"),
 		"concurrency-limited": mtglib.NewEventConcurrencyLimited(),
+		"pending-handshake":   mtglib.NewEventPendingHandshakeLimit("connID", mtglib.PendingHandshakeRejected),
 		"ip-blacklisted":      mtglib.NewEventIPBlocklisted(net.ParseIP("10.0.0.10")),
 		"replay-attack":       mtglib.NewEventReplayAttack("connID"),
 		"ip-list-size":        mtglib.NewEventIPListSize(10, true),
@@ -62,6 +63,8 @@ func (suite *NoopTestSuite) TestObserver() {
 				observer.EventFinish(typedEvt)
 			case mtglib.EventConcurrencyLimited:
 				observer.EventConcurrencyLimited(typedEvt)
+			case mtglib.EventPendingHandshakeLimit:
+				observer.EventPendingHandshakeLimit(typedEvt)
 			case mtglib.EventIPBlocklisted:
 				observer.EventIPBlocklisted(typedEvt)
 			case mtglib.EventReplayAttack:
