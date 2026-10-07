@@ -200,11 +200,37 @@ func TestProxy(t *testing.T) {
 	suite.Run(t, &ProxyTestSuite{})
 }
 
-// A second silent connection from the same IP is closed right away when the
-// pending-handshake limit is 1; once the first one goes away, a new connection
-// is admitted (it stays open waiting for its handshake).
-func TestProxyPendingHandshakeLimit(t *testing.T) {
-	t.Parallel()
+// startLocalFronting starts a fronting server on 127.0.0.1 that closes every
+// connection, so that tests never reach the real fronting domain. It returns
+// the port.
+func startLocalFronting(t *testing.T) uint {
+	t.Helper()
+
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Cleanup(func() { listener.Close() }) //nolint: errcheck
+
+	go func() {
+		for {
+			conn, err := listener.Accept()
+			if err != nil {
+				return
+			}
+
+			conn.Close() //nolint: errcheck
+		}
+	}()
+
+	return uint(listener.Addr().(*net.TCPAddr).Port) //nolint: forcetypeassert, gosec
+}
+
+// startPendingHandshakeProxy starts a proxy with a pending-handshake limit of
+// 1 per IP that fronts to a local server and returns its address.
+func startPendingHandshakeProxy(t *testing.T, log mtglib.Logger, stream mtglib.EventStream) string {
+	t.Helper()
 
 	dialer, err := network.NewDefaultDialer(0, 0)
 	if err != nil {
@@ -227,7 +253,13 @@ func TestProxyPendingHandshakeLimit(t *testing.T) {
 
 	// The allowlist loads asynchronously; until then every connection is
 	// rejected by it, which would look like a rejection by the limit.
+	deadline := time.Now().Add(5 * time.Second)
+
 	for !allowlist.Contains(net.ParseIP("127.0.0.1")) {
+		if time.Now().After(deadline) {
+			t.Fatal("the allowlist was not loaded in time")
+		}
+
 		time.Sleep(10 * time.Millisecond)
 	}
 
@@ -237,9 +269,11 @@ func TestProxyPendingHandshakeLimit(t *testing.T) {
 		AntiReplayCache:        antireplay.NewNoop(),
 		IPBlocklist:            ipblocklist.NewNoop(),
 		IPAllowlist:            allowlist,
-		EventStream:            events.NewNoopStream(),
-		Logger:                 logger.NewNoopLogger(),
+		EventStream:            stream,
+		Logger:                 log,
 		UseTestDCs:             true,
+		DomainFrontingHost:     "127.0.0.1",
+		DomainFrontingPort:     startLocalFronting(t),
 		PendingHandshakesPerIP: 1,
 	})
 	if err != nil {
@@ -253,63 +287,81 @@ func TestProxyPendingHandshakeLimit(t *testing.T) {
 
 	go proxy.Serve(listener) //nolint: errcheck
 
-	defer func() {
+	t.Cleanup(func() {
 		listener.Close() //nolint: errcheck
 		proxy.Shutdown()
-	}()
+	})
 
-	closedQuickly := func(conn net.Conn) bool {
-		conn.SetReadDeadline(time.Now().Add(500 * time.Millisecond)) //nolint: errcheck
+	return listener.Addr().String()
+}
 
-		_, err := conn.Read(make([]byte, 1))
+// closedQuickly reports whether the proxy closes conn without waiting for the
+// handshake timeout.
+func closedQuickly(conn net.Conn) bool {
+	conn.SetReadDeadline(time.Now().Add(500 * time.Millisecond)) //nolint: errcheck
 
-		var netErr net.Error
+	_, err := conn.Read(make([]byte, 1))
 
-		return err != nil && (!errors.As(err, &netErr) || !netErr.Timeout())
+	var netErr net.Error
+
+	return err != nil && (!errors.As(err, &netErr) || !netErr.Timeout())
+}
+
+func dialProxy(t *testing.T, addr string) net.Conn {
+	t.Helper()
+
+	conn, err := net.Dial("tcp", addr)
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	dial := func() net.Conn {
-		conn, err := net.Dial("tcp", listener.Addr().String())
-		if err != nil {
-			t.Fatal(err)
-		}
+	return conn
+}
 
-		return conn
-	}
+// openUntilRejected opens silent connections one by one until one is closed
+// and returns the admitted ones. No fixed sleeps - the proxy may pick a
+// connection up with a delay under load.
+func openUntilRejected(t *testing.T, addr string) []net.Conn {
+	t.Helper()
 
-	// Open silent connections one by one until one is closed: with the limit
-	// of 1 exactly one must stay pending. No fixed sleeps - the proxy may pick
-	// a connection up with a delay under load.
 	var admitted []net.Conn
 
-	rejected := false
-
 	for range 10 {
-		conn := dial()
+		conn := dialProxy(t, addr)
 		if closedQuickly(conn) {
 			conn.Close() //nolint: errcheck
 
-			rejected = true
-
-			break
+			return admitted
 		}
 
 		admitted = append(admitted, conn)
 	}
 
-	if !rejected {
-		t.Fatal("connections over the pending-handshake limit must be closed")
-	}
+	t.Fatal("connections over the pending-handshake limit must be closed")
 
+	return nil
+}
+
+// A second silent connection from the same IP is closed right away when the
+// pending-handshake limit is 1; once the first one goes away, a new connection
+// is admitted (it stays open waiting for its handshake).
+func TestProxyPendingHandshakeLimit(t *testing.T) {
+	t.Parallel()
+
+	addr := startPendingHandshakeProxy(t, logger.NewNoopLogger(), events.NewNoopStream())
+
+	// With the limit of 1 exactly one silent connection must stay pending.
+	admitted := openUntilRejected(t, addr)
 	if len(admitted) != 1 {
 		t.Fatalf("exactly one pending handshake must be admitted with limit 1, got %d", len(admitted))
 	}
 
-	// When the pending connection goes away, its slot is released.
+	// When the pending connection goes away, its slot is released. The proxy
+	// notices the EOF asynchronously, so retry with a short pause.
 	admitted[0].Close() //nolint: errcheck
 
-	for attempt := range 10 {
-		conn := dial()
+	for range 10 {
+		conn := dialProxy(t, addr)
 		ok := !closedQuickly(conn)
 
 		conn.Close() //nolint: errcheck
@@ -318,8 +370,8 @@ func TestProxyPendingHandshakeLimit(t *testing.T) {
 			return
 		}
 
-		if attempt == 9 {
-			t.Fatal("after the pending connection is gone, a new one must be admitted")
-		}
+		time.Sleep(50 * time.Millisecond)
 	}
+
+	t.Fatal("after the pending connection is gone, a new one must be admitted")
 }
