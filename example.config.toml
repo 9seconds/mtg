@@ -15,6 +15,31 @@
 # you have any issue.
 debug = true
 
+# logTimeFormat configures the timestamp format in logs. The default is
+# "unix-ms", which keeps the historical integer Unix-milliseconds output,
+# so nothing that parses the current logs breaks.
+#
+# All example values below render the same instant:
+# 2026-05-20T12:23:45.123Z, i.e. 2026-05-20T15:23:45.123 at +03:00.
+#
+# Numeric presets (good for log aggregators, always UTC by definition):
+#   "unix-ms"      Unix milliseconds.  DEFAULT. 1779279825123
+#   "unix"         Unix seconds.       1779279825
+#   "unix-micro"   Unix microseconds.  1779279825123456
+#   "unix-nano"    Unix nanoseconds.   1779279825123456789
+#
+# Human-readable presets (honor the host timezone):
+#   "rfc3339"      2026-05-20T15:23:45+03:00
+#   "rfc3339-nano" 2026-05-20T15:23:45.123456789+03:00
+#
+# Or any Go time layout. Reference moment: Mon Jan 2 15:04:05 MST 2006.
+# Examples:
+#   log-time-format = "2006-01-02 15:04:05"            # 2026-05-20 15:23:45
+#   log-time-format = "2006-01-02 15:04:05.000 -0700"  # with ms and offset
+#   log-time-format = "02 Jan 2006 15:04:05 MST"       # 20 May 2026 15:23:45 MSK
+#
+# log-time-format = "unix-ms"
+
 # A secret (required). Please remember that mtg supports only FakeTLS
 # mode, legacy simple and secured mode are prohibited. For you it means
 # that secret should either be base64-encoded or starts with ee.
