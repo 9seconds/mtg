@@ -23,6 +23,12 @@ const (
 // secret is verified or the connection goes to the fronting domain, so
 // authenticated sessions and bursts of short media connections are not
 // affected. Entries exist only while an address has pending handshakes.
+//
+// The limit stops silent and slow connections, not every flood: a connection
+// that sends garbage goes to the fronting domain at once, releases its slot
+// and then holds a worker under the idle timeout. Addresses are counted as is,
+// so IPv6 is limited per /128, and clients behind one shared address (CGNAT)
+// share the limit.
 type pendingHandshakes struct {
 	mu      sync.Mutex
 	pending map[netip.Addr]uint32

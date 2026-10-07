@@ -315,13 +315,27 @@ drs = false
 
 # Limit on concurrent unauthenticated handshakes from one client IP. A
 # connection that never completes the handshake holds a worker until the
-# handshake timeout; one address that opens hundreds of them can starve
-# everyone else. Only connections that have not proven a secret yet are
-# counted: the slot is released as soon as the secret is verified or the
-# connection goes to the fronting domain, so authenticated sessions and
-# bursts of short media connections are not affected. Excess connections are
-# closed. Clients behind a carrier-grade NAT share an address: measure with
-# dry-run first. Reported as the pending_handshake_limit metric.
+# handshake timeout; one address that keeps hundreds of them open can take
+# up the workers other clients need. Only connections that have not proven
+# a secret yet are counted: the slot is released as soon as the secret is
+# verified or the connection goes to the fronting domain, so authenticated
+# sessions and bursts of short media connections are not affected. Excess
+# connections are closed. Reported as the pending_handshake_limit metric.
+#
+# Scope and caveats:
+#
+#   - It stops silent and slow connections, not every flood. A connection
+#     that sends garbage as its first bytes goes to the fronting domain right
+#     away, releases its slot and then lives under the idle timeout
+#     ([network.timeout] idle), still holding a worker; only the global
+#     concurrency limit bounds those.
+#   - Addresses are counted one by one, IPv6 too (per /128): a client with
+#     a whole /64 can open a handshake from each address and is effectively
+#     not limited.
+#   - Clients behind a shared address (carrier-grade NAT, a corporate
+#     gateway) share the limit: one abusive client can take all max-per-ip
+#     slots and block its neighbours for up to the handshake timeout. Run
+#     with dry-run first and pick the limit from the observed metric.
 [defense.pending-handshakes]
 # 0 (default) disables the limit.
 max-per-ip = 0
