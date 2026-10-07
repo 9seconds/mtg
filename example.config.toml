@@ -242,6 +242,19 @@ handshake = "10s"
 # Only applies to Linux and Darwin; ignored on other platforms.
 # tcp-not-sent-lowat = "128kib"
 
+# Small-segment ServerHello (Linux only). Some DPI boxes recognise the FakeTLS
+# ServerHello when it is sent in full-size TCP segments, but not when it is
+# split into small ones. client-mss splits only the ServerHello into segments
+# as if the MSS were client-mss; the rest of the session uses client-mss-bulk,
+# which is set as TCP_MAXSEG on the listening socket (Linux cannot raise the
+# MSS of an established connection, so the order cannot be reversed).
+# client-mss: 0 (default, disabled) or 48..1460.
+# client-mss-bulk: 0 or 536..65495, 1400 by default when client-mss is set;
+# 0 keeps the whole session at client-mss (client-mss must then be >= 88).
+# Read at start only.
+# client-mss = 92
+# client-mss-bulk = 1400
+
 # this defines a configuration for TCP keep alives. Default values are taken
 # from Golang default behavior.
 [network.keep-alive]
