@@ -333,7 +333,7 @@ func runProxy(conf *config.Config, version string) error { //nolint: funlen, cyc
 		return fmt.Errorf("cannot create a proxy: %w", err)
 	}
 
-	listener, err := utils.NewListener(conf.BindTo.Get(""), 0)
+	listener, err := utils.NewListener(conf.BindTo.Get(""), 0, logger.Named("listener"))
 	if err != nil {
 		return fmt.Errorf("cannot start proxy: %w", err)
 	}
