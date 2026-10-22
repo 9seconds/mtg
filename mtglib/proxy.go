@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"net"
 	"strconv"
 	"sync"
 	"time"
 
 	"github.com/9seconds/mtg/v2/essentials"
+	"github.com/9seconds/mtg/v2/internal/logthrottle"
 	"github.com/9seconds/mtg/v2/mtglib/internal/dc"
 	"github.com/9seconds/mtg/v2/mtglib/internal/doppel"
 	"github.com/9seconds/mtg/v2/mtglib/obfuscation"
@@ -19,6 +21,11 @@ import (
 	"github.com/panjf2000/ants/v2"
 )
 
+// pendingHandshakesLogInterval limits the log line about connections rejected
+// by the per-IP pending-handshake limit: one line per interval, with the number
+// of suppressed ones.
+const pendingHandshakesLogInterval = 10 * time.Second
+
 // Proxy is an MTPROTO proxy structure.
 type Proxy struct {
 	ctx             context.Context
@@ -26,6 +33,10 @@ type Proxy struct {
 	streamWaitGroup sync.WaitGroup
 
 	allowFallbackOnUnknownDC    bool
+	pendingHandshakes           *pendingHandshakes
+	pendingHandshakesPerIP      uint32
+	pendingHandshakesDryRun     bool
+	pendingHandshakesLog        *logthrottle.Throttle
 	tolerateTimeSkewness        time.Duration
 	idleTimeout                 time.Duration
 	handshakeTimeout            time.Duration
@@ -86,9 +97,36 @@ func (p *Proxy) ServeConn(conn essentials.Conn) {
 		ctx.logger.Info("Stream has been finished")
 	}()
 
+	// Per-IP limit on pending (unauthenticated) handshakes. The slot is
+	// released as soon as the secret is verified or the connection goes to the
+	// fronting domain, so authenticated sessions never hold it.
+	release, action, admitted := p.pendingHandshakes.acquire(
+		ctx.ClientIP(), p.pendingHandshakesPerIP, p.pendingHandshakesDryRun)
+	if action != "" {
+		p.eventStream.Send(ctx, NewEventPendingHandshakeLimit(ctx.streamID, action))
+	}
+
+	if !admitted {
+		// Under a flood every connection is rejected here: the event above
+		// counts each of them, the log line is rate limited.
+		if ok, suppressed := p.pendingHandshakesLog.Allow(); ok {
+			ctx.logger.BindInt("suppressed", suppressed).Info("too many pending handshakes from this ip")
+		}
+
+		return
+	}
+
+	if release != nil {
+		defer release()
+
+		ctx.releasePendingHandshake = release
+	}
+
 	if !p.doFakeTLSHandshake(ctx) {
 		return
 	}
+
+	ctx.finishPendingHandshake()
 
 	clientConn, err := p.doppelGanger.NewConn(ctx.clientConn)
 	if err != nil {
@@ -295,6 +333,9 @@ func (p *Proxy) doTelegramCall(ctx *streamContext) error {
 }
 
 func (p *Proxy) doDomainFronting(ctx *streamContext, conn *connRewind) {
+	// The handshake is over: a fronted connection must not hold a pending slot.
+	ctx.finishPendingHandshake()
+
 	p.eventStream.Send(p.ctx, NewEventDomainFronting(ctx.streamID))
 	conn.Rewind()
 
@@ -364,6 +405,10 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 		idleTimeout:              opts.getIdleTimeout(),
 		handshakeTimeout:         opts.getHandshakeTimeout(),
 		allowFallbackOnUnknownDC: opts.AllowFallbackOnUnknownDC,
+		pendingHandshakes:        newPendingHandshakes(),
+		pendingHandshakesPerIP:   uint32(min(opts.PendingHandshakesPerIP, math.MaxUint32)), //nolint: gosec
+		pendingHandshakesDryRun:  opts.PendingHandshakesDryRun,
+		pendingHandshakesLog:     logthrottle.New(pendingHandshakesLogInterval),
 		telegram:                 tg,
 		doppelGanger: doppel.NewGanger(
 			ctx,

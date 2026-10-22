@@ -148,6 +148,19 @@ func (suite *PrometheusTestSuite) TestEventConcurrencyLimited() {
 	suite.Contains(data, `mtg_concurrency_limited 1`)
 }
 
+func (suite *PrometheusTestSuite) TestEventPendingHandshakeLimit() {
+	suite.prometheus.EventPendingHandshakeLimit(mtglib.NewEventPendingHandshakeLimit("s1", mtglib.PendingHandshakeRejected))
+	suite.prometheus.EventPendingHandshakeLimit(mtglib.NewEventPendingHandshakeLimit("s2", mtglib.PendingHandshakeRejected))
+	suite.prometheus.EventPendingHandshakeLimit(mtglib.NewEventPendingHandshakeLimit("s3", mtglib.PendingHandshakeObserved))
+
+	time.Sleep(100 * time.Millisecond)
+
+	data, err := suite.Get()
+	suite.NoError(err)
+	suite.Contains(data, `mtg_pending_handshake_limit{action="rejected"} 2`)
+	suite.Contains(data, `mtg_pending_handshake_limit{action="observed"} 1`)
+}
+
 func (suite *PrometheusTestSuite) TestEventIPBlocklisted() {
 	suite.prometheus.EventIPBlocklisted(
 		mtglib.NewEventIPBlocklisted(net.ParseIP("2001:db8::68")))

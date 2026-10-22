@@ -126,6 +126,10 @@ func (s statsdProcessor) EventReplayAttack(_ mtglib.EventReplayAttack) {
 	s.client.Incr(MetricReplayAttacks, 1)
 }
 
+func (s statsdProcessor) EventPendingHandshakeLimit(evt mtglib.EventPendingHandshakeLimit) {
+	s.client.Incr(MetricPendingHandshakeLimit, 1, statsd.StringTag(TagAction, evt.Action))
+}
+
 func (s statsdProcessor) EventIPListSize(evt mtglib.EventIPListSize) {
 	tag := TagIPListBlock
 	if !evt.IsBlockList {

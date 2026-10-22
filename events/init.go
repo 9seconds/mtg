@@ -47,6 +47,10 @@ type Observer interface {
 	// mtglib.EventConcurrencyLimited event.
 	EventConcurrencyLimited(mtglib.EventConcurrencyLimited)
 
+	// EventPendingHandshakeLimit reacts on incoming
+	// mtglib.EventPendingHandshakeLimit event.
+	EventPendingHandshakeLimit(mtglib.EventPendingHandshakeLimit)
+
 	// EventIPBlocklisted reacts on incoming mtglib.EventIPBlocklisted event.
 	EventIPBlocklisted(mtglib.EventIPBlocklisted)
 

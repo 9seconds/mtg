@@ -157,6 +157,27 @@ func NewEventDomainFronting(streamID string) EventDomainFronting {
 	}
 }
 
+// EventPendingHandshakeLimit is emitted when a connection exceeds the per-IP
+// limit on pending (unauthenticated) handshakes: it is either rejected or, in
+// dry-run mode, observed and admitted.
+type EventPendingHandshakeLimit struct {
+	eventBase
+
+	// Action is PendingHandshakeRejected or PendingHandshakeObserved.
+	Action string
+}
+
+// NewEventPendingHandshakeLimit creates a new EventPendingHandshakeLimit.
+func NewEventPendingHandshakeLimit(streamID, action string) EventPendingHandshakeLimit {
+	return EventPendingHandshakeLimit{
+		eventBase: eventBase{
+			timestamp: time.Now(),
+			streamID:  streamID,
+		},
+		Action: action,
+	}
+}
+
 // NewEventConcurrencyLimited creates a new EventConcurrencyLimited
 // event.
 func NewEventConcurrencyLimited() EventConcurrencyLimited {
