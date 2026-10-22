@@ -13,12 +13,12 @@ const (
 	acceptRetryDelayMax = time.Second
 )
 
-// IsTemporaryAcceptError reports whether an Accept error is transient: the
+// isTemporaryAcceptError reports whether an Accept error is transient: the
 // listener is still usable and accepting should be retried after a pause.
 // Running out of file descriptors under a connection flood (EMFILE/ENFILE) is
 // the important case: returning from the accept loop on such an error leaves
 // the process alive but deaf until it is restarted.
-func IsTemporaryAcceptError(err error) bool {
+func isTemporaryAcceptError(err error) bool {
 	if err == nil || errors.Is(err, net.ErrClosed) {
 		return false
 	}
@@ -36,9 +36,9 @@ func IsTemporaryAcceptError(err error) bool {
 		errors.Is(err, syscall.ECONNRESET)
 }
 
-// AcceptRetryDelay returns the pause before the next Accept attempt after a
+// acceptRetryDelay returns the pause before the next Accept attempt after a
 // temporary error: it starts at 5ms and doubles up to 1s, like net/http.
-func AcceptRetryDelay(previous time.Duration) time.Duration {
+func acceptRetryDelay(previous time.Duration) time.Duration {
 	if previous == 0 {
 		return acceptRetryDelayMin
 	}
@@ -58,11 +58,11 @@ func acceptWithRetry(ctx context.Context, listener net.Listener, logger Logger) 
 			return conn, nil
 		}
 
-		if ctx.Err() != nil || !IsTemporaryAcceptError(err) {
+		if ctx.Err() != nil || !isTemporaryAcceptError(err) {
 			return nil, err
 		}
 
-		delay = AcceptRetryDelay(delay)
+		delay = acceptRetryDelay(delay)
 		logger.BindStr("retry_in", delay.String()).WarningError("temporary accept error", err)
 
 		timer := time.NewTimer(delay)

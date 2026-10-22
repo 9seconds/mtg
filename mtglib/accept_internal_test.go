@@ -55,14 +55,14 @@ func TestIsTemporaryAcceptError(t *testing.T) {
 		syscall.ENOBUFS,
 	}
 	for _, err := range temporary {
-		if !IsTemporaryAcceptError(err) {
+		if !isTemporaryAcceptError(err) {
 			t.Errorf("%v must be temporary", err)
 		}
 	}
 
 	permanent := []error{nil, net.ErrClosed, fmt.Errorf("wrapped: %w", net.ErrClosed), errors.New("boom")}
 	for _, err := range permanent {
-		if IsTemporaryAcceptError(err) {
+		if isTemporaryAcceptError(err) {
 			t.Errorf("%v must not be temporary", err)
 		}
 	}
@@ -71,13 +71,13 @@ func TestIsTemporaryAcceptError(t *testing.T) {
 func TestAcceptRetryDelayGrowsUpToOneSecond(t *testing.T) {
 	t.Parallel()
 
-	delay := AcceptRetryDelay(0)
+	delay := acceptRetryDelay(0)
 	if delay != acceptRetryDelayMin {
 		t.Fatalf("first delay: got %v", delay)
 	}
 
 	for range 20 {
-		delay = AcceptRetryDelay(delay)
+		delay = acceptRetryDelay(delay)
 	}
 
 	if delay != acceptRetryDelayMax {
