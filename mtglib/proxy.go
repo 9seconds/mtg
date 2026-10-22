@@ -130,7 +130,7 @@ func (p *Proxy) Serve(listener net.Listener) error {
 	defer p.streamWaitGroup.Done()
 
 	for {
-		conn, err := listener.Accept()
+		conn, err := acceptWithRetry(p.ctx, listener, p.logger)
 		if err != nil {
 			select {
 			case <-p.ctx.Done():
