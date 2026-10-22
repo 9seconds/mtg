@@ -1,6 +1,7 @@
 package mtglib_test
 
 import (
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"errors"
@@ -8,6 +9,8 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -374,4 +377,90 @@ func TestProxyPendingHandshakeLimit(t *testing.T) {
 	}
 
 	t.Fatal("after the pending connection is gone, a new one must be admitted")
+}
+
+// infoRecorder records Info messages.
+type infoRecorder struct {
+	mu   sync.Mutex
+	msgs []string
+}
+
+func (l *infoRecorder) Named(_ string) mtglib.Logger          { return l }
+func (l *infoRecorder) BindInt(_ string, _ int) mtglib.Logger { return l }
+func (l *infoRecorder) BindStr(_, _ string) mtglib.Logger     { return l }
+func (l *infoRecorder) BindJSON(_, _ string) mtglib.Logger    { return l }
+func (l *infoRecorder) Printf(_ string, _ ...any)             {}
+func (l *infoRecorder) InfoError(_ string, _ error)           {}
+func (l *infoRecorder) Warning(_ string)                      {}
+func (l *infoRecorder) WarningError(_ string, _ error)        {}
+func (l *infoRecorder) Debug(_ string)                        {}
+func (l *infoRecorder) DebugError(_ string, _ error)          {}
+
+func (l *infoRecorder) Info(msg string) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	l.msgs = append(l.msgs, msg)
+}
+
+func (l *infoRecorder) count(msg string) int {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	n := 0
+
+	for _, v := range l.msgs {
+		if v == msg {
+			n++
+		}
+	}
+
+	return n
+}
+
+// rejectionCounter counts pending-handshake rejections.
+type rejectionCounter struct {
+	rejected atomic.Int32
+}
+
+func (r *rejectionCounter) Send(_ context.Context, evt mtglib.Event) {
+	if typed, ok := evt.(mtglib.EventPendingHandshakeLimit); ok && typed.Action == mtglib.PendingHandshakeRejected {
+		r.rejected.Add(1)
+	}
+}
+
+// Under a flood every rejected connection must still be counted by the event
+// (it is the metric), but the log line must be rate limited.
+func TestProxyPendingHandshakeRejectionLogIsRateLimited(t *testing.T) {
+	t.Parallel()
+
+	log := &infoRecorder{}
+	stream := &rejectionCounter{}
+	addr := startPendingHandshakeProxy(t, log, stream)
+
+	admitted := openUntilRejected(t, addr)
+	defer func() {
+		for _, conn := range admitted {
+			conn.Close() //nolint: errcheck
+		}
+	}()
+
+	const extra = 5
+
+	for range extra {
+		conn := dialProxy(t, addr)
+		if !closedQuickly(conn) {
+			t.Fatal("a connection over the limit must be closed")
+		}
+
+		conn.Close() //nolint: errcheck
+	}
+
+	if got := stream.rejected.Load(); got != extra+1 {
+		t.Fatalf("every rejection must be reported as an event: want %d, got %d", extra+1, got)
+	}
+
+	if got := log.count("too many pending handshakes from this ip"); got != 1 {
+		t.Fatalf("the rejection log line must be rate limited: want 1, got %d", got)
+	}
 }
