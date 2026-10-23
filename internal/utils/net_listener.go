@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"context"
 	"fmt"
 	"net"
 
@@ -26,8 +27,13 @@ func (l Listener) Accept() (net.Conn, error) {
 	return conn, nil
 }
 
-func NewListener(bindTo string, bufferSize int) (net.Listener, error) {
-	base, err := net.Listen("tcp", bindTo)
+// NewListener opens a listening socket. listenerMSS > 0 sets TCP_MAXSEG on it
+// (Linux only): this MSS is advertised to the client in the SYN-ACK and caps
+// the size of segments sent to the client for the whole connection.
+func NewListener(bindTo string, bufferSize int, listenerMSS int) (net.Listener, error) {
+	lc := net.ListenConfig{Control: network.ListenControlMSS(listenerMSS)}
+
+	base, err := lc.Listen(context.Background(), "tcp", bindTo)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build a base listener: %w", err)
 	}

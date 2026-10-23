@@ -71,6 +71,10 @@ type tomlConfig struct {
 		DNS             string   `toml:"dns" json:"dns,omitempty"`
 		Proxies         []string `toml:"proxies" json:"proxies,omitempty"`
 		TCPNotSentLowat string   `toml:"tcp-not-sent-lowat" json:"tcpNotSentLowat,omitempty"`
+		ClientMSS       uint     `toml:"client-mss" json:"clientMss,omitempty"`
+		// A pointer tells an explicit 0 ("do not raise the MSS after the
+		// ServerHello") from a missing key (default 1400).
+		ClientMSSBulk *uint `toml:"client-mss-bulk" json:"clientMssBulk,omitempty"`
 	} `toml:"network" json:"network,omitempty"`
 	Stats struct {
 		StatsD struct {

@@ -71,10 +71,16 @@ type Config struct {
 			Interval TypeDuration    `json:"interval"`
 			Count    TypeConcurrency `json:"count"`
 		} `json:"keepAlive"`
-		DOHIP            TypeIP         `json:"dohIp"`
-		DNS              TypeDNSURI     `json:"dns"`
-		Proxies          []TypeProxyURL `json:"proxies"`
-		TCPNotSentLowat  TypeBytes      `json:"tcpNotSentLowat"`
+		DOHIP           TypeIP         `json:"dohIp"`
+		DNS             TypeDNSURI     `json:"dns"`
+		Proxies         []TypeProxyURL `json:"proxies"`
+		TCPNotSentLowat TypeBytes      `json:"tcpNotSentLowat"`
+		// ClientMSS is the MSS the FakeTLS ServerHello is split by (0 disables).
+		ClientMSS TypeTCPMSS `json:"clientMss"`
+		// ClientMSSBulk is the MSS of the rest of the session; nil means the
+		// key is absent (default), an explicit 0 keeps the whole session at
+		// ClientMSS.
+		ClientMSSBulk *TypeTCPMSS `json:"clientMssBulk"`
 	} `json:"network"`
 	Stats struct {
 		StatsD struct {
@@ -135,7 +141,72 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("incorrect bind-to parameter %s", c.BindTo.String())
 	}
 
+	return c.validateClientMSS()
+}
+
+// Bounds of client-mss and client-mss-bulk. client-mss goes up to 1460 (the
+// Ethernet MSS); the ServerHello is split in user space, so values below the
+// kernel minimum are fine too. But with client-mss-bulk = 0 client-mss is set
+// on the socket itself, and the kernel rejects TCP_MAXSEG below TCP_MIN_MSS
+// (88). bulk is no less than the classic 536 and no more than the kernel limit
+// (MAX_TCP_WINDOW).
+const (
+	ClientMSSMin       = 48
+	ClientMSSMax       = 1460
+	ClientMSSKernelMin = 88
+	ClientMSSBulkMin   = 536
+	ClientMSSBulkMax   = 65495
+
+	// DefaultClientMSSBulk is the MSS of the session after the ServerHello
+	// when client-mss is set and client-mss-bulk is not.
+	DefaultClientMSSBulk = 1400
+)
+
+func (c *Config) validateClientMSS() error {
+	mss := c.Network.ClientMSS.Get(0)
+	if mss != 0 && (mss < ClientMSSMin || mss > ClientMSSMax) {
+		return fmt.Errorf("network.client-mss must be 0 or %d..%d, got %d",
+			ClientMSSMin, ClientMSSMax, mss)
+	}
+
+	if c.Network.ClientMSSBulk == nil {
+		return nil
+	}
+
+	bulk := c.Network.ClientMSSBulk.Get(0)
+	if bulk != 0 && (bulk < ClientMSSBulkMin || bulk > ClientMSSBulkMax) {
+		return fmt.Errorf("network.client-mss-bulk must be 0 or %d..%d, got %d",
+			ClientMSSBulkMin, ClientMSSBulkMax, bulk)
+	}
+
+	if mss != 0 && bulk == 0 && mss < ClientMSSKernelMin {
+		return fmt.Errorf("network.client-mss must be at least %d when network.client-mss-bulk = 0, got %d",
+			ClientMSSKernelMin, mss)
+	}
+
+	if mss != 0 && bulk != 0 && bulk <= mss {
+		return fmt.Errorf("network.client-mss-bulk (%d) must be greater than network.client-mss (%d)",
+			bulk, mss)
+	}
+
 	return nil
+}
+
+// GetClientMSS returns the MSS for the ServerHello and the MSS of the rest of
+// the session. client-mss = 0 disables everything (0, 0); client-mss-bulk
+// without client-mss has no effect. bulk = 0 keeps the whole session at
+// client-mss, as iptables TCPMSS on the client SYN would.
+func (c *Config) GetClientMSS() (handshake, bulk uint) {
+	handshake = c.Network.ClientMSS.Get(0)
+	if handshake == 0 {
+		return 0, 0
+	}
+
+	if c.Network.ClientMSSBulk == nil {
+		return handshake, DefaultClientMSSBulk
+	}
+
+	return handshake, c.Network.ClientMSSBulk.Get(0)
 }
 
 func (c *Config) String() string {
