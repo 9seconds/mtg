@@ -13,6 +13,9 @@ import (
 // is what ends up in zerolog's global TimeFieldFormat — including the
 // historical default when the field is unset.
 func TestMakeLoggerTimeFieldFormat(t *testing.T) {
+	previousFormat := zerolog.TimeFieldFormat
+	t.Cleanup(func() { zerolog.TimeFieldFormat = previousFormat })
+
 	cases := []struct {
 		name  string
 		value string
