@@ -2,77 +2,75 @@ package cli
 
 import (
 	"context"
+	"fmt"
 	"net"
+	"sync"
 
 	"github.com/9seconds/mtg/v2/internal/config"
 	"github.com/9seconds/mtg/v2/mtglib"
 )
 
-// sniCheckResult holds the data gathered while comparing the secret
-// hostname's DNS records against this server's public IP addresses.
-//
-// IPv4Match / IPv6Match report whether a resolved record actually equals the
-// corresponding public IP. They are false when that family's public IP could
-// not be determined — there is nothing to compare against. Callers decide
-// what counts as a clean result from these fields: `mtg doctor` and the
-// startup warning apply different rules.
 type sniCheckResult struct {
-	Resolved   []net.IP
-	OurIPv4    net.IP
-	OurIPv6    net.IP
-	IPv4Match  bool
-	IPv6Match  bool
-	ResolveErr error
+	ResolvedIP4 []string
+	ResolvedIP6 []string
+	OurIP4      string
+	OurIP6      string
 }
 
-// PublicIPKnown reports whether at least one public IP family was detected.
-func (r sniCheckResult) PublicIPKnown() bool {
-	return r.OurIPv4 != nil || r.OurIPv6 != nil
-}
-
-// runSNICheck resolves conf.Secret.Host and compares the records with this
-// server's public IPv4 and IPv6. Public IPs come from config first and fall
-// back to on-the-fly detection via ntw. It gathers data only — it does not
-// decide success; see sniCheckResult.
 func runSNICheck(
 	ctx context.Context,
-	resolver *net.Resolver,
 	conf *config.Config,
+	resolver *net.Resolver,
 	ntw mtglib.Network,
-) sniCheckResult {
+) (sniCheckResult, error) {
 	res := sniCheckResult{}
 
 	addrs, err := resolver.LookupIPAddr(ctx, conf.Secret.Host)
 	if err != nil {
-		res.ResolveErr = err
-
-		return res
+		return res, fmt.Errorf("cannot resolve addresses of %s: %w", conf.Secret.Host, err)
 	}
 
-	res.Resolved = make([]net.IP, 0, len(addrs))
-	for _, a := range addrs {
-		res.Resolved = append(res.Resolved, a.IP)
+	if len(addrs) == 0 {
+		return res, fmt.Errorf("no known addresses for %s", conf.Secret.Host)
 	}
 
-	res.OurIPv4 = conf.PublicIPv4.Get(nil)
-	if res.OurIPv4 == nil {
-		res.OurIPv4 = getIP(ntw, "tcp4")
-	}
-
-	res.OurIPv6 = conf.PublicIPv6.Get(nil)
-	if res.OurIPv6 == nil {
-		res.OurIPv6 = getIP(ntw, "tcp6")
-	}
-
-	for _, ip := range res.Resolved {
-		if res.OurIPv4 != nil && ip.String() == res.OurIPv4.String() {
-			res.IPv4Match = true
-		}
-
-		if res.OurIPv6 != nil && ip.String() == res.OurIPv6.String() {
-			res.IPv6Match = true
+	for _, addr := range addrs {
+		if ip := addr.IP.To4(); ip == nil {
+			res.ResolvedIP6 = append(res.ResolvedIP6, addr.IP.To16().String())
+		} else {
+			res.ResolvedIP4 = append(res.ResolvedIP4, ip.String())
 		}
 	}
 
-	return res
+	wg := &sync.WaitGroup{}
+
+	if len(res.ResolvedIP4) > 0 {
+		wg.Go(func() {
+			ip := conf.PublicIPv4.Get(nil)
+			if ip == nil {
+				ip, _ = getIP(ctx, ntw, "tcp4")
+			}
+
+			if ip != nil {
+				res.OurIP4 = ip.To4().String()
+			}
+		})
+	}
+
+	if len(res.ResolvedIP6) > 0 {
+		wg.Go(func() {
+			ip := conf.PublicIPv6.Get(nil)
+			if ip == nil {
+				ip, _ = getIP(ctx, ntw, "tcp6")
+			}
+
+			if ip != nil {
+				res.OurIP6 = ip.To16().String()
+			}
+		})
+	}
+
+	wg.Wait()
+
+	return res, nil
 }

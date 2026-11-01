@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -54,39 +55,40 @@ func (a *Access) Run(cli *CLI, version string) error {
 		return fmt.Errorf("cannot init network: %w", err)
 	}
 
-	wg := &sync.WaitGroup{}
+	ctx, cancel := context.WithTimeout(context.Background(), getIPTimeout)
+	defer cancel()
 
+	wg := &sync.WaitGroup{}
 	wg.Go(func() {
 		ip := a.PublicIPv4
+
 		if ip == nil {
 			ip = conf.PublicIPv4.Get(nil)
 		}
+
 		if ip == nil {
-			ip = getIP(ntw, "tcp4")
+			ip, _ = getIP(ctx, ntw, "tcp4")
 		}
 
 		if ip != nil {
-			ip = ip.To4()
+			resp.IPv4 = a.makeURLs(conf, ip.To4())
 		}
-
-		resp.IPv4 = a.makeURLs(conf, ip)
 	})
 	wg.Go(func() {
 		ip := a.PublicIPv6
+
 		if ip == nil {
 			ip = conf.PublicIPv6.Get(nil)
 		}
+
 		if ip == nil {
-			ip = getIP(ntw, "tcp6")
+			ip, _ = getIP(ctx, ntw, "tcp6")
 		}
 
 		if ip != nil {
-			ip = ip.To16()
+			resp.IPv6 = a.makeURLs(conf, ip.To16())
 		}
-
-		resp.IPv6 = a.makeURLs(conf, ip)
 	})
-
 	wg.Wait()
 
 	encoder := json.NewEncoder(os.Stdout)
