@@ -5,6 +5,7 @@ import (
 	"math"
 	"net"
 	"testing"
+	"time"
 
 	"github.com/9seconds/mtg/v2/essentials"
 	"github.com/9seconds/mtg/v2/internal/testlib"
@@ -13,6 +14,13 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
+
+const telegramCallTestTimeout = 5 * time.Second
+
+type telegramHandshakeResult struct {
+	dc  int
+	err error
+}
 
 type ProxyTelegramCallTestSuite struct {
 	suite.Suite
@@ -25,7 +33,7 @@ type ProxyTelegramCallTestSuite struct {
 
 	telegramSide  net.Conn
 	dialedAddress string
-	telegramDC    chan int
+	telegramDC    chan telegramHandshakeResult
 	connectedDC   chan int
 }
 
@@ -36,12 +44,18 @@ func (suite *ProxyTelegramCallTestSuite) SetupTest() {
 	suite.networkMock = &testlib.MtglibNetworkMock{}
 	suite.eventStreamMock = &EventStreamMock{}
 	suite.dialedAddress = ""
-	suite.telegramDC = make(chan int, 1)
+	suite.telegramDC = make(chan telegramHandshakeResult, 1)
 	suite.connectedDC = make(chan int, 1)
 
 	// Pretend to be Telegram: accept the dial over an in-memory pipe and
 	// decode the obfuscated handshake mtg sends there.
 	proxySide, telegramSide := net.Pipe()
+	deadline := time.Now().Add(telegramCallTestTimeout)
+	suite.Require().NoError(proxySide.SetDeadline(deadline))
+	suite.Require().NoError(telegramSide.SetDeadline(deadline))
+	suite.T().Cleanup(func() {
+		proxySide.Close() //nolint: errcheck
+	})
 	suite.telegramSide = telegramSide
 
 	suite.networkMock.
@@ -54,9 +68,7 @@ func (suite *ProxyTelegramCallTestSuite) SetupTest() {
 			go func() {
 				dcid, _, err := obfuscation.Obfuscator{}.ReadHandshake(
 					essentials.WrapNetConn(telegramSide))
-				if err == nil {
-					suite.telegramDC <- dcid
-				}
+				suite.telegramDC <- telegramHandshakeResult{dc: dcid, err: err}
 			}()
 		})
 
@@ -103,8 +115,20 @@ func (suite *ProxyTelegramCallTestSuite) assertCall(requestedDC, expectedDC int)
 	// address lookup goes by the absolute DC number
 	suite.Contains(essentials.TelegramCoreAddresses[2], suite.dialedAddress)
 	// the outgoing handshake and the connected-DC event keep the sign
-	suite.Equal(expectedDC, <-suite.telegramDC)
-	suite.Equal(expectedDC, <-suite.connectedDC)
+	select {
+	case result := <-suite.telegramDC:
+		suite.Require().NoError(result.err, "decode outgoing Telegram handshake")
+		suite.Equal(expectedDC, result.dc)
+	case <-time.After(telegramCallTestTimeout):
+		suite.FailNow("timed out waiting for outgoing Telegram handshake")
+	}
+
+	select {
+	case connectedDC := <-suite.connectedDC:
+		suite.Equal(expectedDC, connectedDC)
+	case <-time.After(telegramCallTestTimeout):
+		suite.FailNow("timed out waiting for connected-DC event")
+	}
 	suite.Equal(expectedDC, suite.ctx.dc)
 }
 
