@@ -301,6 +301,8 @@ func runProxy(conf *config.Config, version string) error { //nolint: funlen, cyc
 		doppelGangerURLs[i] = v.String()
 	}
 
+	serverHelloMSS, listenerMSS := clientMSSPlan(conf, logger)
+
 	opts := mtglib.ProxyOpts{
 		Logger:          logger,
 		Network:         ntw,
@@ -326,6 +328,7 @@ func runProxy(conf *config.Config, version string) error { //nolint: funlen, cyc
 		DoppelGangerPerRaid: conf.Defense.Doppelganger.Repeats.Get(mtglib.DoppelGangerPerRaid),
 		DoppelGangerEach:    conf.Defense.Doppelganger.UpdateEach.Get(mtglib.DoppelGangerEach),
 		DoppelGangerDRS:     conf.Defense.Doppelganger.DRS.Get(false),
+		ServerHelloMSS:      serverHelloMSS,
 	}
 
 	proxy, err := mtglib.NewProxy(opts)
@@ -335,6 +338,12 @@ func runProxy(conf *config.Config, version string) error { //nolint: funlen, cyc
 
 	listener, err := utils.NewListener(conf.BindTo.Get(""), 0, logger.Named("listener"))
 	if err != nil {
+		return fmt.Errorf("cannot start proxy: %w", err)
+	}
+
+	if err := utils.SetListenerMSS(listener, listenerMSS); err != nil {
+		listener.Close() //nolint: errcheck
+
 		return fmt.Errorf("cannot start proxy: %w", err)
 	}
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"strconv"
 	"sync"
@@ -45,6 +46,10 @@ type Proxy struct {
 	allowlist       IPBlocklist
 	eventStream     EventStream
 	logger          Logger
+
+	// serverHelloMSS > 0 splits the FakeTLS ServerHello (see
+	// server_hello_mss.go).
+	serverHelloMSS int
 }
 
 // DomainFrontingAddress returns a host:port pair for a fronting domain.
@@ -68,7 +73,9 @@ func (p *Proxy) ServeConn(conn essentials.Conn) {
 	ctx := newStreamContext(p.ctx, p.logger, conn)
 	defer ctx.Close()
 
-	if err := ctx.clientConn.SetDeadline(time.Now().Add(p.handshakeTimeout)); err != nil {
+	handshakeDeadline := time.Now().Add(p.handshakeTimeout)
+
+	if err := ctx.clientConn.SetDeadline(handshakeDeadline); err != nil {
 		ctx.logger.WarningError("cannot set handshake timeout", err)
 		return
 	}
@@ -86,7 +93,7 @@ func (p *Proxy) ServeConn(conn essentials.Conn) {
 		ctx.logger.Info("Stream has been finished")
 	}()
 
-	if !p.doFakeTLSHandshake(ctx) {
+	if !p.doFakeTLSHandshake(ctx, handshakeDeadline) {
 		return
 	}
 
@@ -186,7 +193,7 @@ func (p *Proxy) Shutdown() {
 	p.blocklist.Shutdown()
 }
 
-func (p *Proxy) doFakeTLSHandshake(ctx *streamContext) bool {
+func (p *Proxy) doFakeTLSHandshake(ctx *streamContext, handshakeDeadline time.Time) bool {
 	rewind := newConnRewind(ctx.clientConn)
 
 	clientHello, err := fake.ReadClientHello(
@@ -211,7 +218,21 @@ func (p *Proxy) doFakeTLSHandshake(ctx *streamContext) bool {
 	gangerNoise := p.doppelGanger.NoiseParams()
 	noiseParams := fake.NoiseParams{Mean: gangerNoise.Mean, Jitter: gangerNoise.Jitter}
 
-	if err := fake.SendServerHello(ctx.clientConn, p.secret.Key[:], clientHello, noiseParams); err != nil {
+	// The ServerHello is the only server response in the FakeTLS handshake,
+	// and that is what DPI looks at. With client-mss it leaves in small
+	// segments; the rest of the session is not affected. Waiting for the
+	// segments to leave is bounded by the same handshake deadline as the
+	// socket, so a client that does not read cannot hold the stream longer.
+	var helloWriter io.Writer = ctx.clientConn
+	if p.serverHelloMSS > 0 {
+		helloWriter = fragmentedWriter{
+			conn:     ctx.clientConn,
+			mss:      p.serverHelloMSS,
+			deadline: handshakeDeadline,
+		}
+	}
+
+	if err := fake.SendServerHello(helloWriter, p.secret.Key[:], clientHello, noiseParams); err != nil {
 		p.logger.InfoError("cannot send welcome packet", err)
 		return false
 	}
@@ -373,6 +394,7 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 		tolerateTimeSkewness:     opts.getTolerateTimeSkewness(),
 		idleTimeout:              opts.getIdleTimeout(),
 		handshakeTimeout:         opts.getHandshakeTimeout(),
+		serverHelloMSS:           opts.ServerHelloMSS,
 		allowFallbackOnUnknownDC: opts.AllowFallbackOnUnknownDC,
 		telegram:                 tg,
 		doppelGanger: doppel.NewGanger(
