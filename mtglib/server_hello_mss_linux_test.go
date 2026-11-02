@@ -8,6 +8,7 @@ import (
 	"crypto/rand"
 	"io"
 	"net"
+	"os"
 	"syscall"
 	"testing"
 	"time"
@@ -299,4 +300,25 @@ func getsockoptMSS(conn *net.TCPConn) (int, error) {
 	}
 
 	return mss, sysErr //nolint: wrapcheck
+}
+
+// A client that never reads, with a receive window much smaller than the
+// data: once the window is full, waiting for the queue to drain must stop at
+// the deadline with os.ErrDeadlineExceeded instead of hanging.
+func TestWriteFragmentedRespectsDeadlineWhenClientDoesNotRead(t *testing.T) {
+	server, _ := mssTestPair(t, 1400, 2048)
+
+	data := make([]byte, 64*1024)
+	deadline := time.Now().Add(300 * time.Millisecond)
+	started := time.Now()
+
+	n, err := writeFragmented(server, data, 92, deadline)
+	elapsed := time.Since(started)
+
+	require.ErrorIs(t, err, os.ErrDeadlineExceeded)
+	assert.Less(t, n, len(data))
+	assert.GreaterOrEqual(t, elapsed, 250*time.Millisecond)
+	assert.Less(t, elapsed, time.Second, "the write must return at the deadline")
+
+	t.Logf("non-reading client: %d of %d bytes written, returned after %v", n, len(data), elapsed)
 }
