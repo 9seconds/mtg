@@ -36,6 +36,19 @@ func isTemporaryAcceptError(err error) bool {
 		errors.Is(err, syscall.ECONNRESET)
 }
 
+// isAcceptedConnError reports whether an Accept error belongs to the new
+// connection and not to the listener (see acceptedConnErrnos). That
+// connection is already gone, so accepting continues at once.
+func isAcceptedConnError(err error) bool {
+	for _, errno := range acceptedConnErrnos {
+		if errors.Is(err, errno) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // acceptRetryDelay returns the pause before the next Accept attempt after a
 // temporary error: it starts at 5ms and doubles up to 1s, like net/http.
 func acceptRetryDelay(previous time.Duration) time.Duration {
@@ -58,7 +71,17 @@ func acceptWithRetry(ctx context.Context, listener net.Listener, logger Logger) 
 			return conn, nil
 		}
 
-		if ctx.Err() != nil || !isTemporaryAcceptError(err) {
+		if ctx.Err() != nil {
+			return nil, err
+		}
+
+		if isAcceptedConnError(err) {
+			logger.DebugError("accepted connection failed before use", err)
+
+			continue
+		}
+
+		if !isTemporaryAcceptError(err) {
 			return nil, err
 		}
 
