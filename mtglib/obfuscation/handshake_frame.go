@@ -60,11 +60,11 @@ func (h *handshakeFrame) dcSlice() []byte {
 func (h *handshakeFrame) dc() int {
 	idx := int16(binary.LittleEndian.Uint16(h.dcSlice()))
 
-	switch {
-	case idx > 0:
+	// Keep the sign: a negative DC id is how a client asks for the media
+	// counterpart of that DC (-2 is DC 2 media). Dropping it sends media
+	// requests to the regular DC.
+	if idx != 0 {
 		return int(idx)
-	case idx < 0:
-		return -int(idx)
 	}
 
 	return defaultDC

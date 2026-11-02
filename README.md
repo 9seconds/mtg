@@ -589,7 +589,12 @@ Tag meaning:
 | Name        | Values                     | Description                                   |
 |-------------|----------------------------|-----------------------------------------------|
 | ip_family   | `ipv4`, `ipv6`             | A version of the IP protocol.                 |
-| dc          |                            | A number of the Telegram DC for a connection. |
+| dc          |                            | A number of the Telegram DC for a connection. Negative for media DCs (`-2`, `-4`, ...), as the client requested it. |
 | telegram_ip |                            | IP address of the Telegram server.            |
 | direction   | `to_client`, `from_client` | A direction of the traffic flow.              |
 | ip_list     | `allowlist`, `blocklist`   | A type of the IP list.                        |
+
+Note on `dc`: earlier versions reported media DC connections with the
+positive number of the DC (`2` for `-2`). Dashboards or alerts that keep only
+positive `dc` values, or match a fixed set like `1..5`, should be updated to
+include the negative ones.
