@@ -46,7 +46,7 @@ func makeNetwork(conf *config.Config, version string) (mtglib.Network, error) {
 		return nil, fmt.Errorf("cannot create DNS resolver: %w", err)
 	}
 
-	base := network.New(
+	base := network.NewWithTCPNotSentLowat(
 		resolver,
 		"",
 		conf.Network.Timeout.TCP.Get(0),

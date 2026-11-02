@@ -128,7 +128,7 @@ func (d *Doctor) Run(cli *CLI, version string) error {
 		return fmt.Errorf("cannot create DNS resolver: %w", err)
 	}
 
-	base := network.New(
+	base := network.NewWithTCPNotSentLowat(
 		resolver,
 		"",
 		conf.Network.Timeout.TCP.Get(10*time.Second),
