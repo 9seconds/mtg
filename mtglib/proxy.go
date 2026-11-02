@@ -137,7 +137,7 @@ func (p *Proxy) Serve(listener net.Listener) error {
 	defer p.streamWaitGroup.Done()
 
 	for {
-		conn, err := listener.Accept()
+		conn, err := acceptWithRetry(p.ctx, listener, p.logger)
 		if err != nil {
 			select {
 			case <-p.ctx.Done():
@@ -258,11 +258,21 @@ func (p *Proxy) doObfuscatedHandshake(ctx *streamContext) error {
 func (p *Proxy) doTelegramCall(ctx *streamContext) error {
 	dcid := ctx.dc
 
-	addresses := p.telegram.GetAddresses(dcid)
+	// Media DCs come with a negative id. Addresses are kept per absolute DC
+	// number, but the sign must survive into the handshake with Telegram.
+	lookupDC := dcid
+	if lookupDC < 0 {
+		lookupDC = -lookupDC
+	}
+
+	addresses := p.telegram.GetAddresses(lookupDC)
 	if len(addresses) == 0 && p.allowFallbackOnUnknownDC {
 		ctx.logger = ctx.logger.BindInt("original_dc", dcid)
 		ctx.logger.Warning("unknown DC, fallbacks")
 		ctx.dc = dc.DefaultDC
+		if dcid < 0 {
+			ctx.dc = -dc.DefaultDC
+		}
 		addresses = p.telegram.GetAddresses(dc.DefaultDC)
 	}
 
