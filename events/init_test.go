@@ -52,3 +52,50 @@ func (o *ObserverMock) EventIPListSize(evt mtglib.EventIPListSize) {
 func (o *ObserverMock) Shutdown() {
 	o.Called()
 }
+
+// LegacyObserverMock implements only the required events.Observer methods,
+// like an external observer written before the optional
+// events.PendingHandshakeLimitObserver interface was introduced.
+type LegacyObserverMock struct {
+	mock.Mock
+}
+
+func (o *LegacyObserverMock) EventStart(evt mtglib.EventStart) {
+	o.Called(evt)
+}
+
+func (o *LegacyObserverMock) EventConnectedToDC(evt mtglib.EventConnectedToDC) {
+	o.Called(evt)
+}
+
+func (o *LegacyObserverMock) EventDomainFronting(evt mtglib.EventDomainFronting) {
+	o.Called(evt)
+}
+
+func (o *LegacyObserverMock) EventTraffic(evt mtglib.EventTraffic) {
+	o.Called(evt)
+}
+
+func (o *LegacyObserverMock) EventFinish(evt mtglib.EventFinish) {
+	o.Called(evt)
+}
+
+func (o *LegacyObserverMock) EventConcurrencyLimited(evt mtglib.EventConcurrencyLimited) {
+	o.Called(evt)
+}
+
+func (o *LegacyObserverMock) EventIPBlocklisted(evt mtglib.EventIPBlocklisted) {
+	o.Called(evt)
+}
+
+func (o *LegacyObserverMock) EventReplayAttack(evt mtglib.EventReplayAttack) {
+	o.Called(evt)
+}
+
+func (o *LegacyObserverMock) EventIPListSize(evt mtglib.EventIPListSize) {
+	o.Called(evt)
+}
+
+func (o *LegacyObserverMock) Shutdown() {
+	o.Called()
+}

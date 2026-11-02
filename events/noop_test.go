@@ -64,7 +64,9 @@ func (suite *NoopTestSuite) TestObserver() {
 			case mtglib.EventConcurrencyLimited:
 				observer.EventConcurrencyLimited(typedEvt)
 			case mtglib.EventPendingHandshakeLimit:
-				observer.EventPendingHandshakeLimit(typedEvt)
+				typed, ok := observer.(events.PendingHandshakeLimitObserver)
+				suite.True(ok)
+				typed.EventPendingHandshakeLimit(typedEvt)
 			case mtglib.EventIPBlocklisted:
 				observer.EventIPBlocklisted(typedEvt)
 			case mtglib.EventReplayAttack:

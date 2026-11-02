@@ -11,6 +11,8 @@ import (
 	statsd "github.com/smira/go-statsd"
 )
 
+var _ events.PendingHandshakeLimitObserver = statsdProcessor{}
+
 type statsdProcessor struct {
 	streams map[string]*streamInfo
 	client  *statsd.Client

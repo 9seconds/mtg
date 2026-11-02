@@ -47,10 +47,6 @@ type Observer interface {
 	// mtglib.EventConcurrencyLimited event.
 	EventConcurrencyLimited(mtglib.EventConcurrencyLimited)
 
-	// EventPendingHandshakeLimit reacts on incoming
-	// mtglib.EventPendingHandshakeLimit event.
-	EventPendingHandshakeLimit(mtglib.EventPendingHandshakeLimit)
-
 	// EventIPBlocklisted reacts on incoming mtglib.EventIPBlocklisted event.
 	EventIPBlocklisted(mtglib.EventIPBlocklisted)
 
@@ -65,6 +61,17 @@ type Observer interface {
 	//   2. Observer won't receieve any new message after this
 	//      function call.
 	Shutdown()
+}
+
+// PendingHandshakeLimitObserver is an optional extension of [Observer]. The
+// default event stream delivers mtglib.EventPendingHandshakeLimit only to
+// observers that implement it; other observers silently skip this event. It
+// is kept out of [Observer] so that existing external observers continue to
+// compile.
+type PendingHandshakeLimitObserver interface {
+	// EventPendingHandshakeLimit reacts on incoming
+	// mtglib.EventPendingHandshakeLimit event.
+	EventPendingHandshakeLimit(mtglib.EventPendingHandshakeLimit)
 }
 
 // ObserverFactory creates a new instance of the observer.

@@ -6,6 +6,8 @@ import (
 	"github.com/9seconds/mtg/v2/mtglib"
 )
 
+var _ PendingHandshakeLimitObserver = multiObserver{}
+
 type multiObserver struct {
 	observers []Observer
 }
@@ -74,9 +76,11 @@ func (m multiObserver) EventPendingHandshakeLimit(evt mtglib.EventPendingHandsha
 	wg := &sync.WaitGroup{}
 
 	for _, v := range m.observers {
-		wg.Go(func() {
-			v.EventPendingHandshakeLimit(evt)
-		})
+		if o, ok := v.(PendingHandshakeLimitObserver); ok {
+			wg.Go(func() {
+				o.EventPendingHandshakeLimit(evt)
+			})
+		}
 	}
 
 	wg.Wait()

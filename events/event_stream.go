@@ -101,7 +101,9 @@ func eventStreamProcessor(ctx context.Context, eventChan <-chan mtglib.Event, ob
 			case mtglib.EventConcurrencyLimited:
 				observer.EventConcurrencyLimited(typedEvt)
 			case mtglib.EventPendingHandshakeLimit:
-				observer.EventPendingHandshakeLimit(typedEvt)
+				if o, ok := observer.(PendingHandshakeLimitObserver); ok {
+					o.EventPendingHandshakeLimit(typedEvt)
+				}
 			case mtglib.EventReplayAttack:
 				observer.EventReplayAttack(typedEvt)
 			case mtglib.EventIPListSize:

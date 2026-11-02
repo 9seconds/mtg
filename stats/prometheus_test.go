@@ -149,9 +149,12 @@ func (suite *PrometheusTestSuite) TestEventConcurrencyLimited() {
 }
 
 func (suite *PrometheusTestSuite) TestEventPendingHandshakeLimit() {
-	suite.prometheus.EventPendingHandshakeLimit(mtglib.NewEventPendingHandshakeLimit("s1", mtglib.PendingHandshakeRejected))
-	suite.prometheus.EventPendingHandshakeLimit(mtglib.NewEventPendingHandshakeLimit("s2", mtglib.PendingHandshakeRejected))
-	suite.prometheus.EventPendingHandshakeLimit(mtglib.NewEventPendingHandshakeLimit("s3", mtglib.PendingHandshakeObserved))
+	observer, ok := suite.prometheus.(events.PendingHandshakeLimitObserver)
+	suite.Require().True(ok)
+
+	observer.EventPendingHandshakeLimit(mtglib.NewEventPendingHandshakeLimit("s1", mtglib.PendingHandshakeRejected))
+	observer.EventPendingHandshakeLimit(mtglib.NewEventPendingHandshakeLimit("s2", mtglib.PendingHandshakeRejected))
+	observer.EventPendingHandshakeLimit(mtglib.NewEventPendingHandshakeLimit("s3", mtglib.PendingHandshakeObserved))
 
 	time.Sleep(100 * time.Millisecond)
 

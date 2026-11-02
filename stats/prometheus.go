@@ -12,6 +12,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
+var _ events.PendingHandshakeLimitObserver = prometheusProcessor{}
+
 type prometheusProcessor struct {
 	streams map[string]*streamInfo
 	factory *PrometheusFactory

@@ -15,6 +15,8 @@ func NewNoopStream() mtglib.EventStream {
 	return noop{}
 }
 
+var _ PendingHandshakeLimitObserver = noopObserver{}
+
 type noopObserver struct{}
 
 func (n noopObserver) EventStart(_ mtglib.EventStart)                                 {}
