@@ -177,6 +177,28 @@ type ProxyOpts struct {
 
 	// DoppelGangerDRS defines if TLS Dynamic Record Sizing is active.
 	DoppelGangerDRS bool
+
+	// PendingHandshakesPerIP limits concurrent unauthenticated handshakes from
+	// one client IP. A slot is released as soon as the secret is verified or
+	// the connection goes to the fronting domain, so authenticated sessions are
+	// never counted. Excess connections are closed. 0 disables the limit.
+	//
+	// It stops silent and slow connections only: a connection that sends
+	// garbage goes to the fronting domain at once, releases its slot and
+	// holds a worker under IdleTimeout. Addresses are counted one by one, IPv6
+	// per /128, so a client with a /64 is effectively not limited. Clients
+	// behind a shared address (CGNAT) share the limit, so one of them can
+	// block the others for up to the handshake timeout; measure with
+	// PendingHandshakesDryRun first.
+	//
+	// This is an optional setting.
+	PendingHandshakesPerIP uint
+
+	// PendingHandshakesDryRun observes PendingHandshakesPerIP without
+	// enforcing it: excess connections are admitted and only reported.
+	//
+	// This is an optional setting.
+	PendingHandshakesDryRun bool
 }
 
 func (p ProxyOpts) valid() error {

@@ -63,6 +63,17 @@ type Observer interface {
 	Shutdown()
 }
 
+// PendingHandshakeLimitObserver is an optional extension of [Observer]. The
+// default event stream delivers mtglib.EventPendingHandshakeLimit only to
+// observers that implement it; other observers silently skip this event. It
+// is kept out of [Observer] so that existing external observers continue to
+// compile.
+type PendingHandshakeLimitObserver interface {
+	// EventPendingHandshakeLimit reacts on incoming
+	// mtglib.EventPendingHandshakeLimit event.
+	EventPendingHandshakeLimit(mtglib.EventPendingHandshakeLimit)
+}
+
 // ObserverFactory creates a new instance of the observer.
 //
 // Default event stream creates a small set of goroutines to manage incoming

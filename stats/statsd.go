@@ -11,6 +11,8 @@ import (
 	statsd "github.com/smira/go-statsd"
 )
 
+var _ events.PendingHandshakeLimitObserver = statsdProcessor{}
+
 type statsdProcessor struct {
 	streams map[string]*streamInfo
 	client  *statsd.Client
@@ -124,6 +126,10 @@ func (s statsdProcessor) EventIPBlocklisted(evt mtglib.EventIPBlocklisted) {
 
 func (s statsdProcessor) EventReplayAttack(_ mtglib.EventReplayAttack) {
 	s.client.Incr(MetricReplayAttacks, 1)
+}
+
+func (s statsdProcessor) EventPendingHandshakeLimit(evt mtglib.EventPendingHandshakeLimit) {
+	s.client.Incr(MetricPendingHandshakeLimit, 1, statsd.StringTag(TagAction, evt.Action))
 }
 
 func (s statsdProcessor) EventIPListSize(evt mtglib.EventIPListSize) {

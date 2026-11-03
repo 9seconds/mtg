@@ -181,6 +181,17 @@ func (suite *StatsdTestSuite) TestEventConcurrencyLimited() {
 	suite.Equal("mtg.concurrency_limited:1|c", suite.statsdServer.String())
 }
 
+func (suite *StatsdTestSuite) TestEventPendingHandshakeLimit() {
+	observer, ok := suite.statsd.(events.PendingHandshakeLimitObserver)
+	suite.Require().True(ok)
+
+	observer.EventPendingHandshakeLimit(
+		mtglib.NewEventPendingHandshakeLimit("connID", mtglib.PendingHandshakeRejected))
+
+	time.Sleep(statsdSleepTime)
+	suite.Equal("mtg.pending_handshake_limit:1|c|#action:rejected", suite.statsdServer.String())
+}
+
 func (suite *StatsdTestSuite) TestEventIPBlocklisted() {
 	suite.statsd.EventIPBlocklisted(
 		mtglib.NewEventIPBlocklisted(net.ParseIP("10.0.0.10")))
