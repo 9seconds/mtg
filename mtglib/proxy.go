@@ -74,7 +74,10 @@ func (p *Proxy) ServeConn(conn essentials.Conn) {
 	}
 
 	stop := context.AfterFunc(ctx, func() {
-		ctx.Close()
+		// ServeConn replaces ctx.clientConn and ctx.telegramConn during setup.
+		// Only close the original connection from this goroutine; the deferred
+		// ctx.Close handles the wrappers and Telegram connection in ServeConn.
+		conn.Close() //nolint: errcheck
 	})
 	defer stop()
 
