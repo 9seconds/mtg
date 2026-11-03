@@ -20,7 +20,7 @@ func TestProxyServerDialerDropsCustomResolver(t *testing.T) {
 		},
 	}
 
-	base := New(
+	base := NewWithTCPNotSentLowat(
 		customResolver,
 		"mtg-test",
 		7*time.Second,
