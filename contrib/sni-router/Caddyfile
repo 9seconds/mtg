@@ -1,0 +1,32 @@
+{
+	# Caddy sits behind HAProxy which passes raw TLS through on :8443.
+	# ACME HTTP-01 challenges arrive on :80 via HAProxy's acl passthrough.
+	http_port 80
+	https_port 8443
+
+	# HAProxy forwards connections to :8443 with a PROXY protocol v2
+	# header (see haproxy.cfg `send-proxy-v2`).  The proxy_protocol
+	# listener wrapper strips the header and exposes the real client IP
+	# to Caddy's access log.  The `tls` wrapper must follow so that TLS
+	# is terminated on the unwrapped connection.
+	#
+	# `allow` lists the networks permitted to send PROXY headers.
+	# 127.0.0.1/32 covers HAProxy reaching Caddy over host loopback (HAProxy
+	# runs in network_mode: host and connects to the published 127.0.0.1
+	# port).  The RFC1918 ranges cover mtg → Caddy on the compose bridge
+	# (fronting path; see "Fronting loop" in README.md).
+	servers :8443 {
+		listener_wrappers {
+			proxy_protocol {
+				timeout 5s
+				allow 127.0.0.1/32 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16
+			}
+			tls
+		}
+	}
+}
+
+{$DOMAIN} {
+	root * /srv
+	file_server
+}

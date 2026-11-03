@@ -13,10 +13,17 @@ import (
 	"github.com/9seconds/mtg/v2/essentials"
 )
 
+// Obfuscator implements the obfuscated2 handshake
+// (https://core.telegram.org/mtproto/mtproto-transports#transport-obfuscation).
+// Set Secret to the MTProxy secret for key-mixed handshakes; leave nil for
+// direct DC connections.
 type Obfuscator struct {
 	Secret []byte
 }
 
+// ReadHandshake reads the 64-byte obfuscated2 client handshake from r,
+// validates it, and returns the DC the client requested along with a
+// transparent en/decrypting wrapper over r.
 func (o Obfuscator) ReadHandshake(r essentials.Conn) (int, essentials.Conn, error) {
 	frame := handshakeFrame{}
 
@@ -46,6 +53,8 @@ func (o Obfuscator) ReadHandshake(r essentials.Conn) (int, essentials.Conn, erro
 	return frame.dc(), cn, nil
 }
 
+// SendHandshake writes a fresh 64-byte obfuscated2 handshake for the given
+// DC to w and returns a transparent en/decrypting wrapper over w.
 func (o Obfuscator) SendHandshake(w essentials.Conn, dc int) (essentials.Conn, error) {
 	frame := generateHandshake(dc)
 	copyFrame := frame

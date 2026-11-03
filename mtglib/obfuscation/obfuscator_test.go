@@ -6,7 +6,7 @@ import (
 
 	"github.com/9seconds/mtg/v2/internal/testlib"
 	"github.com/9seconds/mtg/v2/mtglib"
-	"github.com/9seconds/mtg/v2/mtglib/internal/obfuscation"
+	"github.com/9seconds/mtg/v2/mtglib/obfuscation"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"

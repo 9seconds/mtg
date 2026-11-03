@@ -58,11 +58,11 @@ run = "go test -v {{ vars.fuzzflags }} -fuzz=FuzzReadClientHello ./mtglib/intern
 
 [tasks."test:fuzz:client-handshake"]
 description = "Run fuzzy test for ClientHandshake"
-run = "go test -v {{ vars.fuzzflags }} -fuzz=FuzzClientServerHandshake ./mtglib/internal/obfuscation"
+run = "go test -v {{ vars.fuzzflags }} -fuzz=FuzzClientServerHandshake ./mtglib/obfuscation"
 
 [tasks."test:fuzz:server-handshake-frame"]
 description = "Run fuzzy test for GenerateHandshakeFrame"
-run = "go test -v {{ vars.fuzzflags }} -fuzz=FuzzGenerateHandshakeFrame ./mtglib/internal/obfuscation"
+run = "go test -v {{ vars.fuzzflags }} -fuzz=FuzzGenerateHandshakeFrame ./mtglib/obfuscation"
 
 [tasks.static]
 description = "Build static binary"

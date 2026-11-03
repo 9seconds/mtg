@@ -384,9 +384,14 @@ files.
 
 ### Prepare a configuration file
 
-Please checkout an example configuration file. All options except of
-`secret` and `bind-to` are optional. You can safely have this minimal
-configuration file:
+mtg is configured via a [TOML](https://toml.io/en/) file. The full
+reference is [`example.config.toml`](./example.config.toml) in this
+repository — every option is listed there with its default value and
+an inline comment explaining what it does. Treat that file as the
+configuration documentation.
+
+All options except `secret` and `bind-to` are optional, so the minimal
+working configuration is:
 
 ```toml
 secret = "ee473ce5d4958eb5f968c87680a23854a0676f6f676c652e636f6d"
@@ -395,8 +400,6 @@ bind-to = "0.0.0.0:443"
 
 This is enough to run the whole application. All other
 options already have sensible defaults for the app at almost any scale.
-
-Oh, the configuration is done in [TOML format](https://toml.io/en/).
 
 ### Run a proxy
 
@@ -467,8 +470,8 @@ $ docker exec mtg-proxy /mtg access /config.toml
 
 ## Doppelganger
 
-mtg can mimic real websites, please take a look at relevant section in example
-config file.
+mtg can mimic real websites — see the `[defense.doppelganger]` section
+in [`example.config.toml`](./example.config.toml).
 
 mtg comes with some very good precollected statistics coming from
 [ok.ru](https://ok.ru/). It does not mean that you have to cover yourself
@@ -514,12 +517,57 @@ This is not very necessary. Keep in mind these rules:
    you can enable `drs` setting.
 9. **If you are not sure, touch nothing!**
 
+## Troubleshooting
+
+### `ip was blacklisted` for clients on the same LAN
+
+If you run mtg at home and a client on the same LAN (for example, your
+phone on the home Wi-Fi) cannot connect, check the proxy logs for a
+message like:
+
+```json
+{"level":"info","ip":"10.0.1.1","logger":"proxy","message":"ip was blacklisted"}
+```
+
+The reason is that the default blocklist (`firehol_level1.netset`)
+includes bogon networks, which covers all RFC1918 ranges
+(`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`). Any client
+connecting from such an address is rejected by the blocklist —
+the TCP connection is closed immediately with no response, so
+from the client's point of view nothing loads at all.
+
+There are three ways to resolve it:
+
+1. Disable the blocklist entirely in `config.toml`:
+
+   ```toml
+   [defense.blocklist]
+   enabled = false
+   ```
+
+   Simplest option if the proxy is used only by you and people you trust.
+
+2. Keep the blocklist but swap `firehol_level1` for a narrower list that
+   does not include bogons, for example `firehol_abusers_1d`:
+
+   ```toml
+   [defense.blocklist]
+   enabled = true
+   urls = ["https://iplists.firehol.org/files/firehol_abusers_1d.netset"]
+   ```
+
+3. Connect to the proxy through a public IP or domain name with hairpin
+   NAT (`MASQUERADE`) on your router. mtg will then see the client with
+   its public address and the blocklist will not match. This is more
+   work to set up but preserves full blocklist protection.
+
 ## Metrics
 
 Out of the box, mtg works with
 [statsd](https://github.com/statsd/statsd) and
-[Prometheus](https://prometheus.io/). Please check configuration file
-example to get how to set this integration up.
+[Prometheus](https://prometheus.io/). See the `[stats.statsd]` and
+`[stats.prometheus]` sections in
+[`example.config.toml`](./example.config.toml) for setup.
 
 Here goes a list of metrics with their types but without a prefix.
 
@@ -541,7 +589,12 @@ Tag meaning:
 | Name        | Values                     | Description                                   |
 |-------------|----------------------------|-----------------------------------------------|
 | ip_family   | `ipv4`, `ipv6`             | A version of the IP protocol.                 |
-| dc          |                            | A number of the Telegram DC for a connection. |
+| dc          |                            | A number of the Telegram DC for a connection. Negative for media DCs (`-2`, `-4`, ...), as the client requested it. |
 | telegram_ip |                            | IP address of the Telegram server.            |
 | direction   | `to_client`, `from_client` | A direction of the traffic flow.              |
 | ip_list     | `allowlist`, `blocklist`   | A type of the IP list.                        |
+
+Note on `dc`: earlier versions reported media DC connections with the
+positive number of the DC (`2` for `-2`). Dashboards or alerts that keep only
+positive `dc` values, or match a fixed set like `1..5`, should be updated to
+include the negative ones.

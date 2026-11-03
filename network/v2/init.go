@@ -56,14 +56,20 @@ const (
 	// unacknowledged data.
 	tcpLingerTimeout = 1
 
-	// tcpNotSentLowat limits the amount of unsent data queued in the
-	// kernel write buffer per socket. When the unsent data drops below
-	// this threshold, the socket becomes writable again. This reduces
-	// per-connection memory usage and bufferbloat by applying
-	// back-pressure to the relay loop instead of piling up data in
-	// kernel buffers.
-	tcpNotSentLowat = 128 * 1024
 )
+
+// DefaultTCPNotSentLowat is the default value applied to TCP_NOTSENT_LOWAT
+// on outbound sockets. It limits the amount of unsent data queued in the
+// kernel write buffer per socket. When the unsent data drops below this
+// threshold, the socket becomes writable again. This reduces per-connection
+// memory usage and bufferbloat by applying back-pressure to the relay loop
+// instead of piling up data in kernel buffers.
+//
+// The default is conservative and biased towards interactive latency. On
+// high-BDP links (fast pipe × high RTT) it can cap single-flow upload
+// throughput at roughly DefaultTCPNotSentLowat / RTT. Raise it via the
+// [network.tcp-not-sent-lowat] config option if uploads feel slow.
+const DefaultTCPNotSentLowat = 128 * 1024
 
 var (
 	ErrCannotDial = errors.New("cannot dial to any address")

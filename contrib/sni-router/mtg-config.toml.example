@@ -1,0 +1,35 @@
+# Minimal mtg configuration template for the SNI-router setup.
+#
+# This is the tracked template; `docker compose` mounts `mtg-config.toml`
+# (gitignored), so render or copy this file before `docker compose up -d`:
+#
+#   1. Set DOMAIN=<your.domain> in .env (HAProxy + Caddy pick it up).
+#   2. Generate the secret:  mtg generate-secret --hex <your.domain>
+#   3. Produce mtg-config.toml — pick one:
+#        export MTG_SECRET=...     # paste the hex secret
+#        envsubst < mtg-config.toml.example > mtg-config.toml
+#      or just copy and hand-edit `${MTG_SECRET}`:
+#        cp mtg-config.toml.example mtg-config.toml && $EDITOR mtg-config.toml
+
+secret = "${MTG_SECRET}"
+bind-to = "[::]:3128"
+
+# HAProxy in front sends PROXY protocol v2 headers so mtg can see the
+# real client IP.  Keep this in sync with haproxy.cfg (`send-proxy-v2`).
+proxy-protocol-listener = true
+
+# Fronting target: point mtg at the Caddy container directly so its
+# fallback dial (for non-Telegram TLS) bypasses HAProxy and doesn't
+# loop back here.  Without this, mtg resolves the secret's hostname
+# via DNS, which in this setup resolves to this server -> HAProxy ->
+# mtg again.  See README's "Fronting loop" section for the long form.
+# Requires mtg >= 2.4 (#480 added hostname acceptance for the target).
+[domain-fronting]
+host = "web"
+port = 8443
+proxy-protocol = true
+
+[defense.anti-replay]
+enabled = true
+max-size = "1mib"
+error-rate = 0.001

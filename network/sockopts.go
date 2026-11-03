@@ -20,7 +20,7 @@ func SetServerSocketOptions(conn net.Conn, bufferSize int) error {
 }
 
 func setCommonSocketOptions(conn *net.TCPConn) error {
-	if err := conn.SetKeepAliveConfig(net.KeepAliveConfig{
+	if err := applyKeepAlive(conn, net.KeepAliveConfig{
 		Enable:   true,
 		Idle:     DefaultKeepAliveIdle,
 		Interval: DefaultKeepAliveInterval,

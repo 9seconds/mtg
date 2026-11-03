@@ -15,12 +15,17 @@
 # you have any issue.
 debug = true
 
-# A secret. Please remember that mtg supports only FakeTLS mode, legacy
-# simple and secured mode are prohibited. For you it means that secret
-# should either be base64-encoded or starts with ee.
+# A secret (required). Please remember that mtg supports only FakeTLS
+# mode, legacy simple and secured mode are prohibited. For you it means
+# that secret should either be base64-encoded or starts with ee.
 secret = "ee367a189aee18fa31c190054efd4a8e9573746f726167652e676f6f676c65617069732e636f6d"
 
-# Host:port pair to run proxy on.
+# Host:port pair to run proxy on (required).
+# The host part must be a literal IP address; hostnames and "*" are rejected.
+#   - IPv4 only:
+#     "0.0.0.0:3128"
+#   - dual-stack (IPv4 + IPv6) on Linux, macOS, FreeBSD, Windows:
+#     "[::]:3128"
 bind-to = "0.0.0.0:3128"
 
 # This defines what types of traffic mtg listens to. If you are not sure,
@@ -39,7 +44,7 @@ concurrency = 8192
 # Sometimes you want to enforce mtg to use some types of
 # IP connectivity to Telegram. We have 4 modes:
 #   - prefer-ipv6:
-#     We can use both ipv4 and ipv6 but ipv6 has a preference
+#     We can use both ipv4 and ipv6 but ipv6 has a preference (default)
 #   - prefer-ipv4:
 #     We can use both ipv4 and ipv6 but ipv4 has a preference
 #   - only-ipv6:
@@ -91,6 +96,8 @@ auto-update = false
 #
 # Sometimes time can be skewed so we accept all messages within a
 # time range of this parameter.
+#
+# Default value is 3s
 tolerate-time-skewness = "5s"
 
 # Telegram has a concept of DC. You can think about DC as a number of a cluster
@@ -112,11 +119,22 @@ allow-fallback-on-unknown-dc = false
 # required.
 [domain-fronting]
 # By default, mtg resolves the fronting hostname (from the secret) via DNS
-# to establish a TCP connection. If DNS resolution of that hostname is blocked,
-# you can specify an IP address to connect to directly. The hostname is still
-# used for SNI in the TLS handshake.
+# to establish a TCP connection. If that resolution is blocked, or loops
+# back to this server (e.g. mtg sits behind an SNI router whose DNS points
+# at itself), override the destination here.
 #
-# default value is not set (DNS resolution is used).
+# Use `host` — accepts a hostname or a literal IP. Hostnames are resolved
+# at dial time, so a dual-stack DNS record can reach the right backend
+# address family for IPv4 or IPv6 clients.
+#
+# The hostname from the secret is still used for SNI in the TLS handshake.
+#
+# default value is not set (the secret's hostname is used).
+# host = "fronting-backend"
+
+# Deprecated: use `host`. If `ip` is set, mtg logs a warning at startup
+# and ignores the value (domain-fronting falls back to the secret's
+# hostname unless `host` is also set).
 # ip = "10.10.10.11"
 
 # FakeTLS uses domain fronting protection. So it needs to know a port to
@@ -209,6 +227,20 @@ tcp = "5s"
 http = "10s"
 idle = "5m"
 handshake = "10s"
+
+# TCP_NOTSENT_LOWAT (bytes) caps the amount of *unsent* data that the
+# kernel buffers per outbound socket. When the not-yet-sent backlog drops
+# below this threshold the socket becomes writable again, which applies
+# back-pressure to mtg's relay loop instead of letting kernel buffers
+# bloat. This reduces per-connection memory and bufferbloat, but on
+# high-BDP links (fast pipe × high RTT) it can cap single-flow upload
+# throughput at roughly value / RTT.
+#
+# Default is 128kib (good for interactive latency). If uploads through
+# the proxy feel slow on a fast link, raise this to 1mib–4mib. Suffixes
+# follow the same scheme as anti-replay max-size (kib, mib, gib).
+# Only applies to Linux and Darwin; ignored on other platforms.
+# tcp-not-sent-lowat = "128kib"
 
 # this defines a configuration for TCP keep alives. Default values are taken
 # from Golang default behavior.
@@ -316,6 +348,17 @@ download-concurrency = 2
 # A list of URLs in FireHOL format (https://iplists.firehol.org/)
 # You can provider links here (starts with https:// or http://) or
 # path to a local file, but in this case it should be absolute.
+#
+# NOTE: the default list below (firehol_level1.netset) includes bogon
+# networks, and therefore RFC1918 ranges as well (10.0.0.0/8,
+# 172.16.0.0/12, 192.168.0.0/16). If you run mtg on a home/LAN network
+# and connect from a client on the same LAN, that client will be
+# rejected with "ip was blacklisted" and the connection dropped (TCP
+# close, no response). If you see this, you can either disable this section
+# (enabled = false), replace firehol_level1 with a narrower list that
+# does not include bogons (e.g. firehol_abusers_1d), or connect via
+# a public IP/domain with hairpin NAT on your router. See README for
+# details.
 urls = [
     "https://iplists.firehol.org/files/firehol_level1.netset",
     # "/local.file"
