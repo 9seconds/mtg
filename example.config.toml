@@ -97,7 +97,7 @@ auto-update = false
 # Sometimes time can be skewed so we accept all messages within a
 # time range of this parameter.
 #
-# Default value is 3s
+# Default value is 15s
 tolerate-time-skewness = "5s"
 
 # Telegram has a concept of DC. You can think about DC as a number of a cluster

@@ -87,7 +87,7 @@ const (
 
 	// DefaultTolerateTimeSkewness is a default timeout for time skewness on a
 	// faketls timeout verification.
-	DefaultTolerateTimeSkewness = 3 * time.Second
+	DefaultTolerateTimeSkewness = 15 * time.Second
 
 	// DefaultPreferIP is a default value for Telegram IP connectivity preference.
 	DefaultPreferIP = "prefer-ipv6"
