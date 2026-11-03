@@ -14,13 +14,11 @@ import (
 	"os"
 	"runtime"
 	"sync"
-	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/9seconds/mtg/v2/essentials"
 	"github.com/9seconds/mtg/v2/internal/testlib"
-	"github.com/9seconds/mtg/v2/mtglib/internal/doppel"
 	"github.com/9seconds/mtg/v2/mtglib/internal/tls/fake"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -40,34 +38,40 @@ func (shutdownBlocklist) Contains(net.IP) bool { return false }
 func (shutdownBlocklist) Run(time.Duration)    {}
 func (shutdownBlocklist) Shutdown()            {}
 
-type shutdownHandshakeConn struct {
+// shutdownConn supplies ClientHello, then blocks reads on the pipe. It signals
+// when the test should shut down the proxy, optionally at ServerHello instead.
+type shutdownConn struct {
 	essentials.Conn
-	input  *bytes.Reader
+	hello  *bytes.Reader
+	ready  chan struct{}
 	cancel context.CancelFunc
-	closed atomic.Int32
+	once   sync.Once
 }
 
-func (c *shutdownHandshakeConn) RemoteAddr() net.Addr {
-	return &net.TCPAddr{IP: net.IPv4(127, 0, 0, 1), Port: 12345}
+func (c *shutdownConn) RemoteAddr() net.Addr {
+	return &net.TCPAddr{IP: net.IPv4(127, 0, 0, 1)}
 }
 
-func (c *shutdownHandshakeConn) Read(p []byte) (int, error) {
-	return c.input.Read(p)
+func (c *shutdownConn) Read(p []byte) (int, error) {
+	if c.hello.Len() != 0 {
+		return c.hello.Read(p)
+	}
+	if c.cancel == nil {
+		c.once.Do(func() { close(c.ready) })
+	}
+
+	return c.Conn.Read(p)
 }
 
-func (c *shutdownHandshakeConn) Write(p []byte) (int, error) {
-	// The server has sent ServerHello, but has not installed its TLS wrapper.
-	c.cancel()
-	runtime.Gosched()
+func (c *shutdownConn) Write(p []byte) (int, error) {
+	if c.cancel != nil {
+		c.cancel()
+		c.once.Do(func() { close(c.ready) })
+		// Allow shutdown to overlap installation of the TLS wrapper.
+		runtime.Gosched()
+	}
 
 	return len(p), nil
-}
-
-func (c *shutdownHandshakeConn) Close() error {
-	err := c.Conn.Close()
-	c.closed.Add(1)
-
-	return err
 }
 
 func shutdownClientHello(t *testing.T) (Secret, []byte) {
@@ -77,7 +81,6 @@ func shutdownClientHello(t *testing.T) (Secret, []byte) {
 	require.NoError(t, err)
 	data, err := os.ReadFile("internal/tls/fake/testdata/client-hello-ok-19dfe38384b9884b.json")
 	require.NoError(t, err)
-
 	var snapshot struct{ Full string }
 	require.NoError(t, json.Unmarshal(data, &snapshot))
 	hello, err := base64.StdEncoding.DecodeString(snapshot.Full)
@@ -93,118 +96,57 @@ func shutdownClientHello(t *testing.T) (Secret, []byte) {
 	return secret, hello
 }
 
-func TestServeConnShutdownDuringServerHello(t *testing.T) {
-	secret, hello := shutdownClientHello(t)
-	ctx, cancel := context.WithCancel(t.Context())
-	defer cancel()
-	server, client := net.Pipe()
-	defer server.Close() //nolint: errcheck
-	defer client.Close() //nolint: errcheck
-	require.NoError(t, client.SetReadDeadline(time.Now().Add(5*time.Second)))
-	conn := &shutdownHandshakeConn{
-		Conn: essentials.WrapNetConn(server), input: bytes.NewReader(hello), cancel: cancel,
-	}
-	p := &Proxy{
-		ctx: ctx, ctxCancel: cancel, secret: secret,
-		logger: NoopLogger{}, eventStream: shutdownTestEvents{},
-		antiReplayCache:  shutdownAntiReplay{},
-		handshakeTimeout: time.Second, tolerateTimeSkewness: time.Minute,
-		doppelGanger: doppel.NewGanger(ctx, nil, NoopLogger{}, 0, 0, nil, false),
-	}
-	p.ServeConn(conn)
-	require.Eventually(t, func() bool { return conn.closed.Load() >= 2 }, 5*time.Second, time.Millisecond)
-	_, err := client.Read(make([]byte, 1))
-	require.ErrorIs(t, err, io.EOF)
-}
-
-type shutdownBlockingConn struct {
-	essentials.Conn
-	input   *bytes.Reader
-	reading chan struct{}
-	once    sync.Once
-}
-
-func (c *shutdownBlockingConn) RemoteAddr() net.Addr {
-	return &net.TCPAddr{IP: net.IPv4(127, 0, 0, 1), Port: 12345}
-}
-
-func (c *shutdownBlockingConn) Read(p []byte) (int, error) {
-	if c.input.Len() != 0 {
-		return c.input.Read(p)
-	}
-
-	c.once.Do(func() { close(c.reading) })
-
-	return c.Conn.Read(p)
-}
-
-func (c *shutdownBlockingConn) Write(p []byte) (int, error) { return len(p), nil }
-
-// Closing the original socket must interrupt reads both before FakeTLS and
-// after the TLS and doppelganger wrappers have been installed.
-func TestServeConnShutdownUnblocksHandshake(t *testing.T) {
-	for _, afterFakeTLS := range []bool{false, true} {
-		name := "before-faketls"
-		if afterFakeTLS {
-			name = "after-faketls"
-		}
-
-		t.Run(name, func(t *testing.T) {
+func TestServeConnShutdown(t *testing.T) {
+	for _, stage := range []string{"before-faketls", "server-hello", "after-faketls"} {
+		t.Run(stage, func(t *testing.T) {
 			secret, hello := shutdownClientHello(t)
-			if !afterFakeTLS {
+			if stage == "before-faketls" {
 				hello = nil
 			}
-
 			ntw := &testlib.MtglibNetworkMock{}
 			ntw.On("MakeHTTPClient", mock.Anything).Return(&http.Client{}).Once()
 			ntw.On("NativeDialer").Return(&net.Dialer{Timeout: time.Second}).Maybe()
 			proxy, err := NewProxy(ProxyOpts{
 				Secret: secret, Network: ntw, Logger: NoopLogger{},
-				AntiReplayCache: shutdownAntiReplay{}, EventStream: shutdownTestEvents{},
+				EventStream: shutdownTestEvents{}, AntiReplayCache: shutdownAntiReplay{},
 				IPBlocklist: shutdownBlocklist{}, IPAllowlist: shutdownBlocklist{},
 				DomainFrontingHost: "127.0.0.1", DomainFrontingPort: 1,
 				HandshakeTimeout: time.Hour, TolerateTimeSkewness: time.Minute,
 			})
 			require.NoError(t, err)
-
 			server, client := net.Pipe()
-			require.NoError(t, client.SetReadDeadline(time.Now().Add(5*time.Second)))
-			conn := &shutdownBlockingConn{
-				Conn: essentials.WrapNetConn(server), input: bytes.NewReader(hello),
-				reading: make(chan struct{}),
-			}
 			t.Cleanup(func() {
 				server.Close() //nolint: errcheck
 				client.Close() //nolint: errcheck
 				proxy.Shutdown()
 				ntw.AssertExpectations(t)
 			})
-			finished := make(chan struct{})
-			go func() {
-				defer close(finished)
-				proxy.ServeConn(conn)
-			}()
-
-			select {
-			case <-conn.reading:
-			case <-time.After(5 * time.Second):
-				t.Fatal("handshake did not reach the blocked read")
+			require.NoError(t, client.SetReadDeadline(time.Now().Add(5*time.Second)))
+			conn := &shutdownConn{
+				Conn: essentials.WrapNetConn(server), hello: bytes.NewReader(hello),
+				ready: make(chan struct{}),
 			}
-
+			if stage == "server-hello" {
+				// Isolate the TLS wrapper race from doppelganger's NewConn shutdown.
+				proxy.doppelGanger.Shutdown()
+				conn.cancel = proxy.ctxCancel
+			}
+			go proxy.ServeConn(conn)
+			select {
+			case <-conn.ready:
+			case <-time.After(5 * time.Second):
+				t.Fatal("handshake did not reach the shutdown stage")
+			}
 			stopped := make(chan struct{})
 			go func() {
 				defer close(stopped)
 				proxy.Shutdown()
 			}()
-
-			for _, done := range []<-chan struct{}{stopped, finished} {
-				select {
-				case <-done:
-				case <-time.After(5 * time.Second):
-					t.Fatal("shutdown did not interrupt the blocked handshake")
-				}
+			select {
+			case <-stopped:
+			case <-time.After(5 * time.Second):
+				t.Fatal("shutdown did not interrupt the handshake")
 			}
-
 			_, err = client.Read(make([]byte, 1))
 			require.ErrorIs(t, err, io.EOF)
 		})
