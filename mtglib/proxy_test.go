@@ -2,11 +2,12 @@ package mtglib_test
 
 import (
 	"crypto/tls"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
+	"net/http/httptest"
+	"strconv"
 	"testing"
 	"time"
 
@@ -27,6 +28,7 @@ type ProxyTestSuite struct {
 	opts     *mtglib.ProxyOpts
 	p        *mtglib.Proxy
 	listener net.Listener
+	fronting *httptest.Server
 }
 
 func (suite *ProxyTestSuite) ProxyAddress() string {
@@ -40,6 +42,14 @@ func (suite *ProxyTestSuite) ProxySecret() string {
 }
 
 func (suite *ProxyTestSuite) SetupSuite() {
+	suite.fronting = httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.WriteString(w, r.Method+" "+r.URL.RequestURI()+" "+r.Header.Get("X-Mtg-Test"))
+	}))
+	host, port, err := net.SplitHostPort(suite.fronting.Listener.Addr().String())
+	suite.Require().NoError(err)
+	frontingPort, err := strconv.ParseUint(port, 10, 16)
+	suite.Require().NoError(err)
+
 	dialer, err := network.NewDefaultDialer(0, 0)
 	suite.NoError(err)
 
@@ -59,16 +69,22 @@ func (suite *ProxyTestSuite) SetupSuite() {
 	)
 
 	go allowlist.Run(time.Second)
+	suite.T().Cleanup(allowlist.Shutdown)
+	suite.Require().Eventually(func() bool {
+		return allowlist.Contains(net.IPv4(127, 0, 0, 1))
+	}, time.Second, time.Millisecond)
 
 	suite.opts = &mtglib.ProxyOpts{
-		Secret:          mtglib.GenerateSecret("httpbin.org"),
-		Network:         ntw,
-		AntiReplayCache: antireplay.NewNoop(),
-		IPBlocklist:     ipblocklist.NewNoop(),
-		IPAllowlist:     allowlist,
-		EventStream:     events.NewNoopStream(),
-		Logger:          logger.NewNoopLogger(),
-		UseTestDCs:      true,
+		Secret:             mtglib.GenerateSecret("fronting.example.test"),
+		Network:            ntw,
+		AntiReplayCache:    antireplay.NewNoop(),
+		IPBlocklist:        ipblocklist.NewNoop(),
+		IPAllowlist:        allowlist,
+		EventStream:        events.NewNoopStream(),
+		Logger:             logger.NewNoopLogger(),
+		UseTestDCs:         true,
+		DomainFrontingHost: host,
+		DomainFrontingPort: uint(frontingPort),
 	}
 
 	proxy, err := mtglib.NewProxy(*suite.opts)
@@ -91,6 +107,10 @@ func (suite *ProxyTestSuite) TearDownSuite() {
 
 	if suite.p != nil {
 		suite.p.Shutdown()
+	}
+
+	if suite.fronting != nil {
+		suite.fronting.Close()
 	}
 }
 
@@ -159,7 +179,7 @@ func (suite *ProxyTestSuite) TestCannotInitIncorrectPreferIP() {
 }
 
 func (suite *ProxyTestSuite) TestDomainFrontingAddress() {
-	suite.Equal("httpbin.org:443", suite.p.DomainFrontingAddress())
+	suite.Equal(suite.fronting.Listener.Addr().String(), suite.p.DomainFrontingAddress())
 }
 
 func (suite *ProxyTestSuite) TestHTTPSRequest() {
@@ -173,8 +193,11 @@ func (suite *ProxyTestSuite) TestHTTPSRequest() {
 	}
 
 	addr := fmt.Sprintf("https://%s/headers", suite.ProxyAddress())
+	req, err := http.NewRequestWithContext(suite.T().Context(), http.MethodGet, addr, nil)
+	suite.Require().NoError(err)
+	req.Header.Set("X-Mtg-Test", "fronting-request")
 
-	resp, err := client.Get(addr) //nolint: noctx
+	resp, err := client.Do(req)
 	suite.Require().NoError(err)
 
 	defer resp.Body.Close() //nolint: errcheck
@@ -184,14 +207,7 @@ func (suite *ProxyTestSuite) TestHTTPSRequest() {
 	data, err := io.ReadAll(resp.Body)
 	suite.NoError(err)
 
-	jsonStruct := struct {
-		Headers struct {
-			TraceID string `json:"X-Amzn-Trace-Id"` //nolint: tagliatelle
-		} `json:"headers"`
-	}{}
-
-	suite.NoError(json.Unmarshal(data, &jsonStruct))
-	suite.NotEmpty(jsonStruct.Headers.TraceID)
+	suite.Equal("GET /headers fronting-request", string(data))
 }
 
 func TestProxy(t *testing.T) {

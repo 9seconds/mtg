@@ -6,16 +6,17 @@ import (
 
 	"github.com/9seconds/mtg/v2/internal/testlib"
 	"github.com/9seconds/mtg/v2/mtglib"
-	"github.com/9seconds/mtg/v2/mtglib/internal/obfuscation"
+	"github.com/9seconds/mtg/v2/mtglib/obfuscation"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
 func FuzzClientServerHandshakes(f *testing.F) {
 	f.Add(int16(1), make([]byte, mtglib.SecretKeyLength))
+	f.Add(int16(-2), make([]byte, mtglib.SecretKeyLength))
 
 	f.Fuzz(func(t *testing.T, dc int16, data []byte) {
-		if dc <= 0 {
+		if dc == 0 {
 			dc = 1
 		}
 

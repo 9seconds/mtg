@@ -52,6 +52,22 @@ func (h *HandshakeFrameTestSuite) TestDC() {
 	h.Equal(15933, h.frame.dc())
 }
 
+func (h *HandshakeFrameTestSuite) TestNegativeDC() {
+	frame := h.frame
+	frame.dcSlice()[0] = 0xfe
+	frame.dcSlice()[1] = 0xff
+
+	h.Equal(-2, frame.dc())
+}
+
+func (h *HandshakeFrameTestSuite) TestInt16MinimumDC() {
+	frame := h.frame
+	frame.dcSlice()[0] = 0x00
+	frame.dcSlice()[1] = 0x80
+
+	h.Equal(-32768, frame.dc())
+}
+
 func (h *HandshakeFrameTestSuite) TestRevert() {
 	fr := h.frame
 	fr.revert()

@@ -1,0 +1,72 @@
+# SNI-routing deployment: HAProxy (443) -> mtg + real web backend
+#
+# This setup puts an SNI-aware TCP router in front of mtg so that:
+#   - Telegram clients (FakeTLS with the correct SNI) are routed to mtg
+#   - All other TLS traffic (including DPI probes) reaches the real web
+#     server, which responds with a genuine certificate
+#
+# The result: active probes see a real website; passive DPI sees matching
+# SNI/IP because the domain resolves to this server's IP.
+#
+# Quick start:
+#   1. Set DOMAIN in a .env file next to this one (or export it)
+#   2. mtg generate-secret YOUR_DOMAIN   -> render mtg-config.toml:
+#        export MTG_SECRET=...     # paste the hex secret
+#        envsubst < mtg-config.toml.example > mtg-config.toml
+#      (the rendered file is gitignored). See README.md for the cp+edit variant.
+#   3. docker compose up -d
+#
+# DOMAIN is forwarded to both Caddy (TLS cert) and HAProxy (SNI ACL),
+# so the SNI/cert/secret all line up from a single source.
+#
+# See BEST_PRACTICES.md and the project wiki for background.
+
+x-domain-env: &domain-env
+  DOMAIN: ${DOMAIN:-example.com}
+
+services:
+  haproxy:
+    image: haproxy:lts-alpine
+    # Host netns so HAProxy sees real client IPs (v4/v6) instead of the
+    # bridge gateway address.  Linux host only; see README → "Why HAProxy
+    # uses network_mode: host" for the rationale and trade-off.
+    network_mode: host
+    volumes:
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro,Z
+    environment:
+      <<: *domain-env
+    depends_on:
+      - mtg
+      - web
+    restart: unless-stopped
+
+  mtg:
+    # FIXME: :master until #480 lands in a tagged release; switch back to :2/:3 after release
+    image: nineseconds/mtg:master
+    volumes:
+      - ./mtg-config.toml:/config/config.toml:ro,Z
+    # Published on host loopback only — HAProxy (host netns) reaches it via
+    # 127.0.0.1.
+    ports:
+      - "127.0.0.1:3128:3128"
+    restart: unless-stopped
+    extra_hosts:
+      - "host.containers.internal:host-gateway"
+
+  web:
+    image: caddy:alpine
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro,Z
+      - caddy_data:/data
+      - ./www:/srv:ro,Z
+    # Published on host loopback only — HAProxy reaches Caddy on 127.0.0.1.
+    # Port 8080 (not 80) on the host because HAProxy already owns host :80.
+    ports:
+      - "127.0.0.1:8080:80"
+      - "127.0.0.1:8443:8443"
+    environment:
+      <<: *domain-env
+    restart: unless-stopped
+
+volumes:
+  caddy_data:

@@ -74,6 +74,47 @@ func (suite *ConfigTestSuite) TestString() {
 	suite.NotEmpty(conf.String())
 }
 
+func (suite *ConfigTestSuite) TestDomainFrontingIPIgnoredWhenHostSet() {
+	conf, err := config.Parse(suite.ReadConfig("minimal.toml"))
+	suite.NoError(err)
+
+	suite.NoError(conf.DomainFronting.Host.Set("fronting-backend"))
+	suite.NoError(conf.DomainFronting.IP.Set("10.0.0.10"))
+	suite.NoError(conf.Validate())
+	suite.Equal("fronting-backend", conf.GetDomainFrontingHost())
+}
+
+func (suite *ConfigTestSuite) TestDomainFrontingHostFromTOML() {
+	conf, err := config.Parse(suite.ReadConfig("domain_fronting_host.toml"))
+	suite.NoError(err)
+	suite.NoError(conf.Validate())
+	suite.Equal("fronting-backend", conf.GetDomainFrontingHost())
+}
+
+func (suite *ConfigTestSuite) TestDomainFrontingHostAcceptsLiteralIP() {
+	conf, err := config.Parse(suite.ReadConfig("domain_fronting_host_ip.toml"))
+	suite.NoError(err)
+	suite.NoError(conf.Validate())
+	suite.Equal("10.0.0.1", conf.GetDomainFrontingHost())
+}
+
+func (suite *ConfigTestSuite) TestDomainFrontingIPIgnoredFromTOML() {
+	conf, err := config.Parse(suite.ReadConfig("domain_fronting_ip.toml"))
+	suite.NoError(err)
+	suite.NoError(conf.Validate())
+	// Deprecated [domain-fronting].ip is parsed but never used to derive
+	// the dial target — the user must migrate to [domain-fronting].host.
+	suite.NotNil(conf.DomainFronting.IP.Get(nil))
+	suite.Equal("", conf.GetDomainFrontingHost())
+}
+
+func (suite *ConfigTestSuite) TestDomainFrontingNotSet() {
+	conf, err := config.Parse(suite.ReadConfig("minimal.toml"))
+	suite.NoError(err)
+	suite.NoError(conf.Validate())
+	suite.Equal("", conf.GetDomainFrontingHost())
+}
+
 func TestConfig(t *testing.T) {
 	t.Parallel()
 	suite.Run(t, &ConfigTestSuite{})

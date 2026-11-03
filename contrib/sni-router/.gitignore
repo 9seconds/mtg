@@ -1,0 +1,5 @@
+# Rendered from mtg-config.toml.example; contains the live secret.
+mtg-config.toml
+
+# Local environment overrides (DOMAIN, MTG_SECRET, ...)
+.env

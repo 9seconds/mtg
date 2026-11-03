@@ -1,0 +1,5 @@
+secret = "7oe1GqLy6TBc38CV3jx7q09nb29nbGUuY29t"
+bind-to = "0.0.0.0:3128"
+
+[domain-fronting]
+ip = "10.0.0.10"

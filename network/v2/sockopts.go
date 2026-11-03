@@ -5,8 +5,8 @@ import (
 	"net"
 )
 
-func setCommonSocketOptions(conn *net.TCPConn, keepAliveConfig net.KeepAliveConfig) error {
-	if err := conn.SetKeepAliveConfig(keepAliveConfig); err != nil {
+func setCommonSocketOptions(conn *net.TCPConn, keepAliveConfig net.KeepAliveConfig, tcpNotSentLowat int) error {
+	if err := applyKeepAlive(conn, keepAliveConfig); err != nil {
 		return fmt.Errorf("cannot configure TCP keepalive: %w", err)
 	}
 
@@ -25,7 +25,7 @@ func setCommonSocketOptions(conn *net.TCPConn, keepAliveConfig net.KeepAliveConf
 
 	setCongestionControl(rawConn)
 	setTCPUserTimeout(rawConn, keepAliveConfig)
-	setNotSentLowat(rawConn)
+	setNotSentLowat(rawConn, tcpNotSentLowat)
 
 	return nil
 }

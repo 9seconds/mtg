@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"slices"
+	"strings"
 
 	"github.com/9seconds/mtg/v2/antireplay"
 	"github.com/9seconds/mtg/v2/events"
@@ -44,7 +46,7 @@ func makeNetwork(conf *config.Config, version string) (mtglib.Network, error) {
 		return nil, fmt.Errorf("cannot create DNS resolver: %w", err)
 	}
 
-	base := network.New(
+	base := network.NewWithTCPNotSentLowat(
 		resolver,
 		"",
 		conf.Network.Timeout.TCP.Get(0),
@@ -56,6 +58,7 @@ func makeNetwork(conf *config.Config, version string) (mtglib.Network, error) {
 			Interval: conf.Network.KeepAlive.Interval.Get(0),
 			Count:    int(conf.Network.KeepAlive.Count.Get(0)),
 		},
+		int(conf.Network.TCPNotSentLowat.Get(network.DefaultTCPNotSentLowat)),
 	)
 
 	proxyDialers := make([]mtglib.Network, len(conf.Network.Proxies))
@@ -207,10 +210,56 @@ func makeEventStream(conf *config.Config, logger mtglib.Logger) (mtglib.EventStr
 	return events.NewNoopStream(), nil
 }
 
-func runProxy(conf *config.Config, version string) error { //nolint: funlen
+func warnSNIMismatch(conf *config.Config, ntw mtglib.Network, log mtglib.Logger) {
+	host := conf.Secret.Host
+	if host == "" {
+		return
+	}
+
+	log = log.BindStr("hostname", host)
+
+	res, err := runSNICheck(context.Background(), conf, net.DefaultResolver, ntw)
+	if err != nil {
+		log.WarningError("SNI-DNS check: cannot resolve secret hostname", err)
+		return
+	}
+
+	if res.OurIP4 == "" && res.OurIP6 == "" {
+		log.Warning("SNI-DNS check: cannot detect public IP address; set public-ipv4/public-ipv6 in config or run 'mtg doctor'")
+		return
+	}
+
+	if len(res.ResolvedIP4) > 0 && !slices.Contains(res.ResolvedIP4, res.OurIP4) {
+		log.
+			BindStr("public_ip", res.OurIP4).
+			BindStr("resolved", strings.Join(res.ResolvedIP4, ",")).
+			Warning("SNI-DNS check: address mismatch")
+	}
+
+	if len(res.ResolvedIP6) > 0 && !slices.Contains(res.ResolvedIP6, res.OurIP6) {
+		log.
+			BindStr("public_ip", res.OurIP6).
+			BindStr("resolved", strings.Join(res.ResolvedIP6, ",")).
+			Warning("SNI-DNS check: address mismatch")
+	}
+}
+
+func warnDeprecatedDomainFronting(conf *config.Config, log mtglib.Logger) {
+	if conf.DomainFrontingIP.Value != nil {
+		log.Warning(`config option "domain-fronting-ip" is deprecated and ignored; use "host" in [domain-fronting] instead`)
+	}
+
+	if conf.DomainFronting.IP.Value != nil {
+		log.Warning(`config option "ip" in [domain-fronting] is deprecated and ignored; use "host" instead`)
+	}
+}
+
+func runProxy(conf *config.Config, version string) error { //nolint: funlen, cyclop
 	logger := makeLogger(conf)
 
 	logger.BindJSON("configuration", conf.String()).Debug("configuration")
+
+	warnDeprecatedDomainFronting(conf, logger)
 
 	eventStream, err := makeEventStream(conf, logger)
 	if err != nil {
@@ -221,6 +270,8 @@ func runProxy(conf *config.Config, version string) error { //nolint: funlen
 	if err != nil {
 		return fmt.Errorf("cannot build network: %w", err)
 	}
+
+	warnSNIMismatch(conf, ntw, logger)
 
 	blocklist, err := makeIPBlocklist(
 		conf.Defense.Blocklist,
@@ -261,7 +312,7 @@ func runProxy(conf *config.Config, version string) error { //nolint: funlen
 		Secret:                      conf.Secret,
 		Concurrency:                 conf.GetConcurrency(mtglib.DefaultConcurrency),
 		DomainFrontingPort:          conf.GetDomainFrontingPort(mtglib.DefaultDomainFrontingPort),
-		DomainFrontingIP:            conf.GetDomainFrontingIP(nil),
+		DomainFrontingHost:          conf.GetDomainFrontingHost(),
 		DomainFrontingProxyProtocol: conf.GetDomainFrontingProxyProtocol(false),
 		PreferIP:                    conf.PreferIP.Get(mtglib.DefaultPreferIP),
 		AutoUpdate:                  conf.AutoUpdate.Get(false),
@@ -282,7 +333,7 @@ func runProxy(conf *config.Config, version string) error { //nolint: funlen
 		return fmt.Errorf("cannot create a proxy: %w", err)
 	}
 
-	listener, err := utils.NewListener(conf.BindTo.Get(""), 0)
+	listener, err := utils.NewListener(conf.BindTo.Get(""), 0, logger.Named("listener"))
 	if err != nil {
 		return fmt.Errorf("cannot start proxy: %w", err)
 	}
@@ -295,13 +346,47 @@ func runProxy(conf *config.Config, version string) error { //nolint: funlen
 		}
 	}
 
-	ctx := utils.RootContext()
+	ctx, cancel := context.WithCancel(utils.RootContext())
+	defer cancel()
 
-	go proxy.Serve(listener) //nolint: errcheck
+	// If the accept loop stops for any reason other than shutdown, the process
+	// must not stay alive without accepting connections: stop and report the
+	// error, so a supervisor (systemd, docker) restarts it.
+	serveErr := make(chan error, 1)
 
+	go func() {
+		serveErr <- proxy.Serve(listener)
+
+		cancel()
+	}()
+
+	return waitAndShutdown(ctx, serveErr, func() {
+		listener.Close() //nolint: errcheck
+		proxy.Shutdown()
+	})
+}
+
+// waitAndShutdown waits for shutdown, stops the proxy and decides whether the
+// accept loop has failed. A Serve that failed on its own puts its error into
+// the channel before calling cancel(), so the error is already there when ctx
+// is done. On an ordinary stop (SIGTERM) Serve is still running; the error it
+// returns because stop() closes the listener is not a failure, otherwise every
+// stop or restart would exit with code 1.
+func waitAndShutdown(ctx context.Context, serveErr <-chan error, stop func()) error {
 	<-ctx.Done()
-	listener.Close() //nolint: errcheck
-	proxy.Shutdown()
+
+	var serveFailure error
+
+	select {
+	case serveFailure = <-serveErr:
+	default:
+	}
+
+	stop()
+
+	if serveFailure != nil {
+		return fmt.Errorf("proxy stopped accepting connections: %w", serveFailure)
+	}
 
 	return nil
 }

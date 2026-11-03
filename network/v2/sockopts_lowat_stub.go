@@ -4,4 +4,4 @@ package network
 
 import "syscall"
 
-func setNotSentLowat(conn syscall.RawConn) {}
+func setNotSentLowat(conn syscall.RawConn, value int) {}

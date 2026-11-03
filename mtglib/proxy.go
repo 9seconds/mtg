@@ -12,7 +12,7 @@ import (
 	"github.com/9seconds/mtg/v2/essentials"
 	"github.com/9seconds/mtg/v2/mtglib/internal/dc"
 	"github.com/9seconds/mtg/v2/mtglib/internal/doppel"
-	"github.com/9seconds/mtg/v2/mtglib/internal/obfuscation"
+	"github.com/9seconds/mtg/v2/mtglib/obfuscation"
 	"github.com/9seconds/mtg/v2/mtglib/internal/relay"
 	"github.com/9seconds/mtg/v2/mtglib/internal/tls"
 	"github.com/9seconds/mtg/v2/mtglib/internal/tls/fake"
@@ -30,7 +30,7 @@ type Proxy struct {
 	idleTimeout                 time.Duration
 	handshakeTimeout            time.Duration
 	domainFrontingPort          int
-	domainFrontingIP            string
+	domainFrontingHost          string
 	domainFrontingProxyProtocol bool
 	workerPool                  *ants.PoolWithFunc
 	telegram                    *dc.Telegram
@@ -48,11 +48,12 @@ type Proxy struct {
 }
 
 // DomainFrontingAddress returns a host:port pair for a fronting domain.
-// If DomainFrontingIP is set, it is used instead of resolving the hostname.
+// If a fronting host (literal IP or hostname) is configured, it is used
+// instead of resolving the secret's hostname.
 func (p *Proxy) DomainFrontingAddress() string {
 	host := p.secret.Host
-	if p.domainFrontingIP != "" {
-		host = p.domainFrontingIP
+	if p.domainFrontingHost != "" {
+		host = p.domainFrontingHost
 	}
 
 	return net.JoinHostPort(host, strconv.Itoa(p.domainFrontingPort))
@@ -129,7 +130,7 @@ func (p *Proxy) Serve(listener net.Listener) error {
 	defer p.streamWaitGroup.Done()
 
 	for {
-		conn, err := listener.Accept()
+		conn, err := acceptWithRetry(p.ctx, listener, p.logger)
 		if err != nil {
 			select {
 			case <-p.ctx.Done():
@@ -236,11 +237,21 @@ func (p *Proxy) doObfuscatedHandshake(ctx *streamContext) error {
 func (p *Proxy) doTelegramCall(ctx *streamContext) error {
 	dcid := ctx.dc
 
-	addresses := p.telegram.GetAddresses(dcid)
+	// Media DCs come with a negative id. Addresses are kept per absolute DC
+	// number, but the sign must survive into the handshake with Telegram.
+	lookupDC := dcid
+	if lookupDC < 0 {
+		lookupDC = -lookupDC
+	}
+
+	addresses := p.telegram.GetAddresses(lookupDC)
 	if len(addresses) == 0 && p.allowFallbackOnUnknownDC {
 		ctx.logger = ctx.logger.BindInt("original_dc", dcid)
 		ctx.logger.Warning("unknown DC, fallbacks")
 		ctx.dc = dc.DefaultDC
+		if dcid < 0 {
+			ctx.dc = -dc.DefaultDC
+		}
 		addresses = p.telegram.GetAddresses(dc.DefaultDC)
 	}
 
@@ -343,6 +354,10 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 	logger := opts.getLogger("proxy")
 	updatersLogger := logger.Named("telegram-updaters")
 
+	if opts.DomainFrontingIP != "" {
+		logger.Warning("mtglib.ProxyOpts.DomainFrontingIP is deprecated and ignored; use DomainFrontingHost instead")
+	}
+
 	proxy := &Proxy{
 		ctx:                      ctx,
 		ctxCancel:                cancel,
@@ -354,7 +369,7 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 		eventStream:              opts.EventStream,
 		logger:                   logger,
 		domainFrontingPort:       opts.getDomainFrontingPort(),
-		domainFrontingIP:         opts.DomainFrontingIP,
+		domainFrontingHost:       opts.DomainFrontingHost,
 		tolerateTimeSkewness:     opts.getTolerateTimeSkewness(),
 		idleTimeout:              opts.getIdleTimeout(),
 		handshakeTimeout:         opts.getHandshakeTimeout(),
