@@ -132,7 +132,7 @@ service (Caddy), bypassing HAProxy.  `proxy-protocol = true` matches
 Caddy's `:8443` listener wrapper so the real client IP still
 propagates to Caddy's logs.
 
-Requires mtg ≥ 2.4 — hostname acceptance for the fronting target was
+Requires mtg ≥ 2.3.0 — hostname acceptance for the fronting target was
 added in #480.
 
 ## ACME (Let's Encrypt) notes
