@@ -2,12 +2,14 @@ package doppel
 
 import (
 	"bytes"
+	"context"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/9seconds/mtg/v2/internal/testlib"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -104,4 +106,43 @@ func TestGanger(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &GangerTestSuite{})
+}
+
+func TestGangerNewConnCancelledBeforeReply(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	g := &Ganger{ctx: ctx, connRequests: make(chan gangerConnRequest)}
+	result := make(chan error, 1)
+
+	go func() {
+		_, err := g.NewConn(nil)
+		result <- err
+	}()
+
+	var req gangerConnRequest
+
+	select {
+	case req = <-g.connRequests:
+	case <-time.After(time.Second):
+		t.Fatal("NewConn did not submit its request")
+	}
+
+	cancel()
+
+	select {
+	case err := <-result:
+		require.ErrorIs(t, err, context.Canceled)
+	case <-time.After(time.Second):
+		t.Fatal("NewConn did not return after cancellation")
+	}
+
+	// The worker can still attempt a reply after the caller returns.
+	select {
+	case req.ret <- Conn{}:
+		t.Fatal("reply was accepted after NewConn returned")
+	default:
+	}
 }
