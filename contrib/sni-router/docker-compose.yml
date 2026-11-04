@@ -41,8 +41,7 @@ services:
     restart: unless-stopped
 
   mtg:
-    # FIXME: :master until #480 lands in a tagged release; switch back to :2/:3 after release
-    image: nineseconds/mtg:master
+    image: nineseconds/mtg:2
     volumes:
       - ./mtg-config.toml:/config/config.toml:ro,Z
     # Published on host loopback only — HAProxy (host netns) reaches it via

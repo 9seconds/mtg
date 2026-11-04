@@ -23,7 +23,7 @@ proxy-protocol-listener = true
 # loop back here.  Without this, mtg resolves the secret's hostname
 # via DNS, which in this setup resolves to this server -> HAProxy ->
 # mtg again.  See README's "Fronting loop" section for the long form.
-# Requires mtg >= 2.4 (#480 added hostname acceptance for the target).
+# Requires mtg >= 2.3.0 (#480 added hostname acceptance for the target).
 [domain-fronting]
 host = "web"
 port = 8443
