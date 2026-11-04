@@ -83,8 +83,6 @@ func (g *Ganger) NewConn(conn essentials.Conn) (Conn, error) {
 		ret:     rvChan,
 		payload: conn,
 	}
-	defer close(req.ret)
-
 	select {
 	case <-g.ctx.Done():
 		return Conn{}, context.Cause(g.ctx)
