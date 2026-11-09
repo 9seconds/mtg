@@ -81,6 +81,10 @@ type Config struct {
 		// key is absent (default), an explicit 0 keeps the whole session at
 		// ClientMSS.
 		ClientMSSBulk *TypeTCPMSS `json:"clientMssBulk"`
+		// ClientMSSBytes is how many first bytes of the server response are
+		// split by ClientMSS; 0 means the ServerHello record alone. It is a
+		// byte count, not an MSS, but has the same uint16 range.
+		ClientMSSBytes TypeTCPMSS `json:"clientMssBytes"`
 	} `json:"network"`
 	Stats struct {
 		StatsD struct {
@@ -207,6 +211,17 @@ func (c *Config) GetClientMSS() (handshake, bulk uint) {
 	}
 
 	return handshake, c.Network.ClientMSSBulk.Get(0)
+}
+
+// GetClientMSSBytes returns how many first bytes of the server response are
+// split by client-mss: 0 means the ServerHello record alone. It is 0 when
+// nothing is split in user space (client-mss = 0 or client-mss-bulk = 0).
+func (c *Config) GetClientMSSBytes() uint {
+	if handshake, bulk := c.GetClientMSS(); handshake == 0 || bulk == 0 {
+		return 0
+	}
+
+	return c.Network.ClientMSSBytes.Get(0)
 }
 
 func (c *Config) String() string {

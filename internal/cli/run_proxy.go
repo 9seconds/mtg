@@ -301,7 +301,7 @@ func runProxy(conf *config.Config, version string) error { //nolint: funlen, cyc
 		doppelGangerURLs[i] = v.String()
 	}
 
-	serverHelloMSS, listenerMSS := clientMSSPlan(conf, logger)
+	serverHelloMSS, serverHelloMSSBytes, listenerMSS := clientMSSPlan(conf, logger)
 
 	opts := mtglib.ProxyOpts{
 		Logger:          logger,
@@ -329,6 +329,7 @@ func runProxy(conf *config.Config, version string) error { //nolint: funlen, cyc
 		DoppelGangerEach:    conf.Defense.Doppelganger.UpdateEach.Get(mtglib.DoppelGangerEach),
 		DoppelGangerDRS:     conf.Defense.Doppelganger.DRS.Get(false),
 		ServerHelloMSS:      serverHelloMSS,
+		ServerHelloMSSBytes: serverHelloMSSBytes,
 	}
 
 	proxy, err := mtglib.NewProxy(opts)

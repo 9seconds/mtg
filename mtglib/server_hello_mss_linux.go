@@ -27,9 +27,10 @@ const tcpiOptTimestamps = 1
 // argument so that tests can check the flags and the bounds of every call.
 type sendmsgFunc func(fd int, p, oob []byte, to unix.Sockaddr, flags int) (int, error)
 
-// writeFragmented writes data to a TCP connection in chunks, each of which
-// leaves in its own segment with a payload no larger than at MSS = mss. If the
-// connection is not TCP or mss <= 0, data is written in one go.
+// writeFragmented writes the first split bytes of data to a TCP connection in
+// chunks, each of which leaves in its own segment with a payload no larger
+// than at MSS = mss, and the rest of data in one go, in regular segments. If
+// the connection is not TCP or mss <= 0, data is written in one go.
 //
 // Each chunk is sent with sendmsg(MSG_EOR). The kernel never appends data to
 // an skb marked EOR and never collapses it with the next one on
@@ -43,7 +44,7 @@ type sendmsgFunc func(fd int, p, oob []byte, to unix.Sockaddr, flags int) (int, 
 // then it waits for the socket to become writable. The wait is bounded by
 // deadline, which becomes the write deadline of the connection; a zero
 // deadline keeps the write deadline the connection already has.
-func writeFragmented(conn net.Conn, data []byte, mss int, deadline time.Time) (int, error) {
+func writeFragmented(conn net.Conn, data []byte, mss, split int, deadline time.Time) (int, error) {
 	tcp := tcpConnOf(conn)
 	if tcp == nil || mss <= 0 {
 		return conn.Write(data) //nolint: wrapcheck
@@ -71,17 +72,19 @@ func writeFragmented(conn net.Conn, data []byte, mss int, deadline time.Time) (i
 		return 0, err
 	}
 
-	return sendChunks(rawConn, data, segmentPayload(mss, info), unix.SendmsgN)
+	return sendChunks(rawConn, data, segmentPayload(mss, info), split, unix.SendmsgN)
 }
 
-// sendChunks sends data in chunks of chunk bytes, each one with MSG_EOR.
+// sendChunks sends the first split bytes of data in chunks of chunk bytes and
+// the rest as one more chunk, each one with MSG_EOR (the EOR of the last small
+// chunk keeps the rest from being appended to it).
 //
 // A partial send (the send buffer filled up in the middle of a chunk) is not
 // marked EOR by the kernel, so the rest of the same chunk, sent next with
 // MSG_EOR, joins it in the same skb and the chunk still leaves as one
 // segment. Chunk boundaries are therefore counted from the start of data, not
 // from the last write.
-func sendChunks(rawConn syscall.RawConn, data []byte, chunk int, sendmsg sendmsgFunc) (int, error) {
+func sendChunks(rawConn syscall.RawConn, data []byte, chunk, split int, sendmsg sendmsgFunc) (int, error) {
 	var (
 		written int
 		sendErr error
@@ -89,7 +92,10 @@ func sendChunks(rawConn syscall.RawConn, data []byte, chunk int, sendmsg sendmsg
 
 	err := rawConn.Write(func(fd uintptr) bool {
 		for written < len(data) {
-			end := min((written/chunk+1)*chunk, len(data))
+			end := len(data)
+			if written < split {
+				end = min((written/chunk+1)*chunk, split, len(data))
+			}
 
 			n, err := sendmsg(int(fd), data[written:end], nil, nil, unix.MSG_EOR|unix.MSG_NOSIGNAL)
 

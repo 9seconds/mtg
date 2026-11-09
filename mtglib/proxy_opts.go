@@ -178,12 +178,20 @@ type ProxyOpts struct {
 	// DoppelGangerDRS defines if TLS Dynamic Record Sizing is active.
 	DoppelGangerDRS bool
 
-	// ServerHelloMSS > 0 sends the FakeTLS ServerHello to the client in
-	// segments with a payload as at MSS = ServerHelloMSS (Linux only); the rest
-	// of the connection uses the regular MSS. 0 disables it.
+	// ServerHelloMSS > 0 sends the beginning of the FakeTLS server response to
+	// the client in segments with a payload as at MSS = ServerHelloMSS (Linux
+	// only); the rest of the response and of the connection uses the regular
+	// MSS. 0 disables it.
 	//
 	// This is an optional setting.
 	ServerHelloMSS int
+
+	// ServerHelloMSSBytes is how many first bytes of the server response are
+	// split by ServerHelloMSS. 0 means the ServerHello record alone (about 130
+	// bytes); a value above the response size splits all of it.
+	//
+	// This is an optional setting.
+	ServerHelloMSSBytes int
 }
 
 func (p ProxyOpts) valid() error {

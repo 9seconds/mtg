@@ -83,3 +83,36 @@ client-mss = "small"
 `))
 	assert.Error(t, err)
 }
+
+func TestClientMSSBytes(t *testing.T) {
+	cases := []struct {
+		name    string
+		network string
+		want    uint
+	}{
+		{name: "not set is the ServerHello record", network: "client-mss = 92", want: 0},
+		{name: "explicit", network: "client-mss = 92\nclient-mss-bytes = 500", want: 500},
+		{name: "upper bound", network: "client-mss = 92\nclient-mss-bytes = 65535", want: 65535},
+		{name: "no effect without client-mss", network: "client-mss-bytes = 500", want: 0},
+		{name: "no effect with bulk 0", network: "client-mss = 92\nclient-mss-bulk = 0\nclient-mss-bytes = 500", want: 0},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			conf, err := parseClientMSS(t, tc.network)
+			require.NoError(t, err)
+			assert.Equal(t, tc.want, conf.GetClientMSSBytes())
+		})
+	}
+}
+
+func TestClientMSSBytesAboveUint16(t *testing.T) {
+	_, err := config.Parse([]byte(`bind-to = "0.0.0.0:443"
+secret = "7mqFMMq3P2Tvvt_rPx5qhmFnb29nbGUuY29t"
+
+[network]
+client-mss = 92
+client-mss-bytes = 65536
+`))
+	assert.Error(t, err)
+}

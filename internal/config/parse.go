@@ -74,7 +74,8 @@ type tomlConfig struct {
 		ClientMSS       uint     `toml:"client-mss" json:"clientMss,omitempty"`
 		// A pointer tells an explicit 0 ("do not raise the MSS after the
 		// ServerHello") from a missing key (default 1400).
-		ClientMSSBulk *uint `toml:"client-mss-bulk" json:"clientMssBulk,omitempty"`
+		ClientMSSBulk  *uint `toml:"client-mss-bulk" json:"clientMssBulk,omitempty"`
+		ClientMSSBytes uint  `toml:"client-mss-bytes" json:"clientMssBytes,omitempty"`
 	} `toml:"network" json:"network,omitempty"`
 	Stats struct {
 		StatsD struct {

@@ -55,8 +55,9 @@ func snapshotClientHello(t *testing.T) []byte {
 
 // handshakeSetup tunes one test handshake through the proxy.
 type handshakeSetup struct {
-	serverHelloMSS   int
-	handshakeTimeout time.Duration
+	serverHelloMSS      int
+	serverHelloMSSBytes int
+	handshakeTimeout    time.Duration
 
 	// proxyProtocol > 0 puts the listener behind the PROXY protocol adapter
 	// (as proxy-protocol-listener = true does) and sends a header of this
@@ -110,6 +111,7 @@ func startHandshake(t *testing.T, setup handshakeSetup) (*net.TCPConn, <-chan st
 		TolerateTimeSkewness: 100 * 365 * 24 * time.Hour,
 		HandshakeTimeout:     setup.handshakeTimeout,
 		ServerHelloMSS:       setup.serverHelloMSS,
+		ServerHelloMSSBytes:  setup.serverHelloMSSBytes,
 	})
 	require.NoError(t, err)
 
@@ -264,11 +266,16 @@ func clientTCPInfo(t *testing.T, conn *net.TCPConn) *unix.TCPInfo {
 // exact per-segment check is TestProxyServerHelloMSSCapturedSegments.
 const rcvMSSDefault = 536
 
-// With ServerHelloMSS the proxy sends the ServerHello in small segments (80
-// bytes of payload here), without it - in a few large ones.
+// wholeResponse as ServerHelloMSSBytes splits the whole FakeTLS server
+// response, not only the ServerHello record.
+const wholeResponse = 1 << 16
+
+// With ServerHelloMSS and a prefix above the response size the proxy sends
+// the whole server response in small segments (80 bytes of payload here),
+// without it - in a few large ones.
 func TestProxyServerHelloMSS(t *testing.T) {
 	plainSegs, plainRcvMSS, plainSize := serverHelloSegments(t, handshakeSetup{})
-	shapedSegs, shapedRcvMSS, shapedSize := serverHelloSegments(t, handshakeSetup{serverHelloMSS: 92})
+	shapedSegs, shapedRcvMSS, shapedSize := serverHelloSegments(t, handshakeSetup{serverHelloMSS: 92, serverHelloMSSBytes: wholeResponse})
 
 	assert.LessOrEqual(t, plainSegs, plainSize/1000+3)
 	assert.Greater(t, plainRcvMSS, rcvMSSDefault)
@@ -281,6 +288,17 @@ func TestProxyServerHelloMSS(t *testing.T) {
 		plainSize, plainSegs, plainRcvMSS, shapedSize, shapedSegs, shapedRcvMSS)
 }
 
+// By default only the ServerHello record (about 130 bytes) is split: a couple
+// of small segments, then the rest of the response in large ones.
+func TestProxyServerHelloMSSDefaultSplitsOnlyServerHello(t *testing.T) {
+	segs, rcvMSS, size := serverHelloSegments(t, handshakeSetup{serverHelloMSS: 92})
+
+	assert.Less(t, segs, size/80/4, "the whole response is split")
+	assert.Greater(t, rcvMSS, rcvMSSDefault, "no large segment after the ServerHello")
+
+	t.Logf("client-mss 92, default prefix: %d bytes, %d segments, tcpi_rcv_mss %d", size, segs, rcvMSS)
+}
+
 // Behind the PROXY protocol listener (proxy-protocol-listener = true) the
 // accepted connection is a wrapper, not *net.TCPConn. The ServerHello must
 // still be split, for both header versions, and the handshake must succeed.
@@ -288,8 +306,9 @@ func TestProxyServerHelloMSSBehindProxyProtocol(t *testing.T) {
 	for _, version := range []byte{1, 2} {
 		t.Run(fmt.Sprintf("v%d", version), func(t *testing.T) {
 			segs, rcvMSS, size := serverHelloSegments(t, handshakeSetup{
-				serverHelloMSS: 92,
-				proxyProtocol:  version,
+				serverHelloMSS:      92,
+				serverHelloMSSBytes: wholeResponse,
+				proxyProtocol:       version,
 			})
 
 			assert.GreaterOrEqual(t, segs, size/80)
@@ -309,9 +328,10 @@ func TestProxyServerHelloMSSNonReadingClientRespectsDeadline(t *testing.T) {
 	started := time.Now()
 
 	client, finished := startHandshake(t, handshakeSetup{
-		serverHelloMSS:   92,
-		handshakeTimeout: handshakeTimeout,
-		clientRcvBuf:     1024, // the kernel rounds it up to its minimum
+		serverHelloMSS:      92,
+		serverHelloMSSBytes: wholeResponse,
+		handshakeTimeout:    handshakeTimeout,
+		clientRcvBuf:        1024, // the kernel rounds it up to its minimum
 	})
 	sendClientHello(t, client)
 
@@ -391,8 +411,8 @@ func TestProxyServerHelloMSSCapturedSegments(t *testing.T) {
 		name  string
 		setup handshakeSetup
 	}{
-		{name: "direct", setup: handshakeSetup{serverHelloMSS: 92}},
-		{name: "PROXY v2", setup: handshakeSetup{serverHelloMSS: 92, proxyProtocol: 2}},
+		{name: "direct", setup: handshakeSetup{serverHelloMSS: 92, serverHelloMSSBytes: wholeResponse}},
+		{name: "PROXY v2", setup: handshakeSetup{serverHelloMSS: 92, serverHelloMSSBytes: wholeResponse, proxyProtocol: 2}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			capture := startLoopbackCapture(t)
@@ -444,4 +464,75 @@ func (s streamFinished) Send(_ context.Context, evt mtglib.Event) {
 		default:
 		}
 	}
+}
+
+// The exact check of the prefix mode: segments that carry the first prefix
+// bytes of the response are at most client-mss with options and end exactly
+// at the prefix, the rest of the response goes in large segments.
+func TestProxyServerHelloMSSPrefixCapturedSegments(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		prefix int // 0 is the ServerHello record
+	}{
+		{name: "ServerHello record", prefix: 0},
+		{name: "first 500 bytes", prefix: 500},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			capture := startLoopbackCapture(t)
+
+			client, _ := startHandshake(t, handshakeSetup{serverHelloMSS: 92, serverHelloMSSBytes: tc.prefix})
+			sendClientHello(t, client)
+			helloRecord, size := readServerHelloRecords(t, client)
+			segments := capture.serverSegments(t, client.RemoteAddr().(*net.TCPAddr).Port) //nolint: forcetypeassert
+
+			prefix := tc.prefix
+			if prefix == 0 {
+				prefix = helloRecord
+			}
+
+			offset, small, largestRest := 0, 0, 0
+
+			for _, seg := range segments {
+				if offset < prefix {
+					small++
+
+					assert.LessOrEqual(t, seg.payload+seg.options, 92, "segment at %d: %d bytes + %d of options",
+						offset, seg.payload, seg.options)
+					assert.LessOrEqual(t, offset+seg.payload, prefix, "segment at %d crosses the prefix", offset)
+				} else {
+					largestRest = max(largestRest, seg.payload)
+				}
+
+				offset += seg.payload
+			}
+
+			assert.GreaterOrEqual(t, offset, size, "not all segments were captured")
+			assert.Greater(t, largestRest, 1000, "the rest of the response must go in large segments")
+
+			t.Logf("%s: %d bytes split in %d segments, the rest %d bytes, its largest segment %d",
+				tc.name, prefix, small, size-prefix, largestRest)
+		})
+	}
+}
+
+// readServerHelloRecords reads the FakeTLS server response and returns the
+// size of the ServerHello record and of the whole response.
+func readServerHelloRecords(t *testing.T, client net.Conn) (int, int) {
+	t.Helper()
+
+	sizes := []int{}
+
+	for range 3 {
+		header := make([]byte, 5)
+		_, err := io.ReadFull(client, header)
+		require.NoError(t, err)
+
+		body := make([]byte, binary.BigEndian.Uint16(header[3:]))
+		_, err = io.ReadFull(client, body)
+		require.NoError(t, err)
+
+		sizes = append(sizes, len(header)+len(body))
+	}
+
+	return sizes[0], sizes[0] + sizes[1] + sizes[2]
 }

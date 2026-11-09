@@ -47,9 +47,11 @@ type Proxy struct {
 	eventStream     EventStream
 	logger          Logger
 
-	// serverHelloMSS > 0 splits the FakeTLS ServerHello (see
-	// server_hello_mss.go).
-	serverHelloMSS int
+	// serverHelloMSS > 0 splits the beginning of the FakeTLS server response:
+	// the first serverHelloMSSBytes bytes, or the ServerHello record if it is
+	// 0 (see server_hello_mss.go).
+	serverHelloMSS      int
+	serverHelloMSSBytes int
 }
 
 // DomainFrontingAddress returns a host:port pair for a fronting domain.
@@ -219,8 +221,8 @@ func (p *Proxy) doFakeTLSHandshake(ctx *streamContext, handshakeDeadline time.Ti
 	noiseParams := fake.NoiseParams{Mean: gangerNoise.Mean, Jitter: gangerNoise.Jitter}
 
 	// The ServerHello is the only server response in the FakeTLS handshake,
-	// and that is what DPI looks at. With client-mss it leaves in small
-	// segments; the rest of the session is not affected. Waiting for a full
+	// and that is what DPI looks at. With client-mss its beginning leaves in
+	// small segments; the rest of the session is not affected. Waiting for a full
 	// send buffer is bounded by the same handshake deadline as the socket, so
 	// a client that does not read cannot hold the stream longer.
 	var helloWriter io.Writer = ctx.clientConn
@@ -228,6 +230,7 @@ func (p *Proxy) doFakeTLSHandshake(ctx *streamContext, handshakeDeadline time.Ti
 		helloWriter = fragmentedWriter{
 			conn:     ctx.clientConn,
 			mss:      p.serverHelloMSS,
+			prefix:   p.serverHelloMSSBytes,
 			deadline: handshakeDeadline,
 		}
 	}
@@ -395,6 +398,7 @@ func NewProxy(opts ProxyOpts) (*Proxy, error) {
 		idleTimeout:              opts.getIdleTimeout(),
 		handshakeTimeout:         opts.getHandshakeTimeout(),
 		serverHelloMSS:           opts.ServerHelloMSS,
+		serverHelloMSSBytes:      opts.ServerHelloMSSBytes,
 		allowFallbackOnUnknownDC: opts.AllowFallbackOnUnknownDC,
 		telegram:                 tg,
 		doppelGanger: doppel.NewGanger(

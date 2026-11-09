@@ -141,7 +141,7 @@ func TestWriteFragmentedSmallHelloThenBulk(t *testing.T) {
 	chunk := segmentPayload(92, before)
 	assert.LessOrEqual(t, chunk, 80+12)
 
-	n, err := writeFragmented(server, hello, 92, time.Now().Add(5*time.Second))
+	n, err := writeFragmented(server, hello, 92, len(hello), time.Now().Add(5*time.Second))
 	require.NoError(t, err)
 	assert.Equal(t, len(hello), n)
 
@@ -194,7 +194,7 @@ func TestWriteFragmentedDoesNotCoalesceWhenWindowLimited(t *testing.T) {
 		got <- buf[:n]
 	}()
 
-	_, err = writeFragmented(server, hello, 92, time.Now().Add(5*time.Second))
+	_, err = writeFragmented(server, hello, 92, len(hello), time.Now().Add(5*time.Second))
 	require.NoError(t, err)
 
 	assert.Equal(t, hello, <-got)
@@ -207,8 +207,9 @@ func TestWriteFragmentedDoesNotCoalesceWhenWindowLimited(t *testing.T) {
 	t.Logf("receive window 2 KB: ServerHello of %d bytes left in %d segments (%d chunks)", len(hello), segs, wantSegs)
 }
 
-// A real ServerHello written through fragmentedWriter is parsed by the client
-// as three TLS records: splitting does not corrupt the stream.
+// A real ServerHello written through fragmentedWriter with a prefix above the
+// response size is split whole and parsed by the client as three TLS records:
+// splitting does not corrupt the stream.
 func TestSendServerHelloThroughFragmentedWriter(t *testing.T) {
 	server, client := mssTestPair(t, 1400, 0)
 
@@ -217,7 +218,7 @@ func TestSendServerHelloThroughFragmentedWriter(t *testing.T) {
 	require.NoError(t, err)
 
 	secret := GenerateSecret("example.com")
-	writer := fragmentedWriter{conn: server, mss: 92, deadline: time.Now().Add(5 * time.Second)}
+	writer := fragmentedWriter{conn: server, mss: 92, prefix: 1 << 16, deadline: time.Now().Add(5 * time.Second)}
 
 	before := waitAllAcked(t, server)
 
@@ -277,7 +278,7 @@ func TestWriteFragmentedFallsBackForNonTCP(t *testing.T) {
 
 	got := readAllAsync(right, 3)
 
-	n, err := writeFragmented(left, []byte("abc"), 92, time.Time{})
+	n, err := writeFragmented(left, []byte("abc"), 92, 3, time.Time{})
 	require.NoError(t, err)
 	assert.Equal(t, 3, n)
 	assert.Equal(t, []byte("abc"), <-got)
@@ -313,7 +314,7 @@ func TestWriteFragmentedRespectsDeadlineWhenClientDoesNotRead(t *testing.T) {
 	deadline := time.Now().Add(300 * time.Millisecond)
 	started := time.Now()
 
-	n, err := writeFragmented(server, data, 92, deadline)
+	n, err := writeFragmented(server, data, 92, len(data), deadline)
 	elapsed := time.Since(started)
 
 	require.ErrorIs(t, err, os.ErrDeadlineExceeded)
@@ -364,7 +365,7 @@ func TestWriteFragmentedSendBufferFull(t *testing.T) {
 		got <- buf[:n]
 	}()
 
-	n, err := writeFragmented(server, hello, 92, time.Now().Add(5*time.Second))
+	n, err := writeFragmented(server, hello, 92, len(hello), time.Now().Add(5*time.Second))
 	require.NoError(t, err)
 	assert.Equal(t, len(hello), n)
 	assert.Equal(t, hello, <-got)
@@ -387,7 +388,7 @@ func TestWriteFragmentedZeroDeadlineKeepsConnDeadline(t *testing.T) {
 	require.NoError(t, server.SetWriteDeadline(time.Now().Add(300*time.Millisecond)))
 
 	started := time.Now()
-	_, err := writeFragmented(server, make([]byte, 1<<20), 92, time.Time{})
+	_, err := writeFragmented(server, make([]byte, 1<<20), 92, 1<<20, time.Time{})
 
 	require.ErrorIs(t, err, os.ErrDeadlineExceeded)
 	assert.Less(t, time.Since(started), 3*time.Second)
@@ -477,7 +478,7 @@ func TestSendChunksMarksEveryChunkEOR(t *testing.T) {
 	data := patternData(250)
 	rawConn, fake := fakeSendmsgConn(t, nil)
 
-	n, err := sendChunks(rawConn, data, 80, fake.sendmsg)
+	n, err := sendChunks(rawConn, data, 80, len(data), fake.sendmsg)
 	require.NoError(t, err)
 	assert.Equal(t, len(data), n)
 
@@ -505,7 +506,7 @@ func TestSendChunksPartialSendAndEAGAIN(t *testing.T) {
 		{n: 30},
 	})
 
-	n, err := sendChunks(rawConn, data, 80, fake.sendmsg)
+	n, err := sendChunks(rawConn, data, 80, len(data), fake.sendmsg)
 	require.NoError(t, err)
 	assert.Equal(t, len(data), n)
 
@@ -530,7 +531,7 @@ func TestSendChunksPartialSendAndEAGAIN(t *testing.T) {
 func TestSendChunksReportsSendError(t *testing.T) {
 	rawConn, fake := fakeSendmsgConn(t, []fakeSendmsgResult{{n: 80}, {err: unix.EPIPE}})
 
-	n, err := sendChunks(rawConn, patternData(200), 80, fake.sendmsg)
+	n, err := sendChunks(rawConn, patternData(200), 80, 200, fake.sendmsg)
 
 	require.ErrorIs(t, err, unix.EPIPE)
 	assert.Equal(t, 80, n)
@@ -590,7 +591,7 @@ func TestWriteFragmentedRetransmissionIsNotCollapsed(t *testing.T) {
 
 	setDropAll(t, client, true)
 
-	_, err = writeFragmented(server, hello, 92, time.Now().Add(5*time.Second))
+	_, err = writeFragmented(server, hello, 92, len(hello), time.Now().Add(5*time.Second))
 	require.NoError(t, err)
 
 	var lost *unix.TCPInfo
@@ -617,4 +618,93 @@ func TestWriteFragmentedRetransmissionIsNotCollapsed(t *testing.T) {
 
 	t.Logf("ServerHello of %d bytes in chunks of %d: %d bytes retransmitted in %d segments",
 		len(hello), chunk, retransBytes, retransSegs)
+}
+
+// Only the first split bytes go in chunks; the rest is one more sendmsg, also
+// with MSG_EOR. A split that is not a multiple of the chunk ends with a short
+// chunk, so that the boundary is exact.
+func TestSendChunksSplitsOnlyPrefix(t *testing.T) {
+	data := patternData(1000)
+	rawConn, fake := fakeSendmsgConn(t, nil)
+
+	n, err := sendChunks(rawConn, data, 80, 127, fake.sendmsg)
+	require.NoError(t, err)
+	assert.Equal(t, len(data), n)
+
+	want := [][]byte{data[0:80], data[80:127], data[127:]}
+	require.Len(t, fake.calls, len(want))
+
+	for i, call := range fake.calls {
+		assert.Equal(t, want[i], call.data, "call %d", i)
+		assert.NotZero(t, call.flags&unix.MSG_EOR, "call %d has no MSG_EOR", i)
+	}
+}
+
+// A partial send of the large rest continues the rest, it is not cut into
+// chunks.
+func TestSendChunksPartialSendOfRest(t *testing.T) {
+	data := patternData(1000)
+	rawConn, fake := fakeSendmsgConn(t, []fakeSendmsgResult{{n: 80}, {n: 300}, {err: unix.EAGAIN}})
+
+	n, err := sendChunks(rawConn, data, 80, 80, fake.sendmsg)
+	require.NoError(t, err)
+	assert.Equal(t, len(data), n)
+
+	want := [][]byte{data[0:80], data[80:], data[380:], data[380:]}
+	require.Len(t, fake.calls, len(want))
+
+	for i, call := range fake.calls {
+		assert.Equal(t, want[i], call.data, "call %d", i)
+	}
+}
+
+// The default split is the ServerHello record of a real server response;
+// with the ServerHello split into segments of at most chunk bytes and the
+// rest in large ones, the client still reads three valid TLS records.
+func TestFragmentedWriterSplitsServerHelloRecordByDefault(t *testing.T) {
+	server, client := mssTestPair(t, 1400, 0)
+
+	hello := &fake.ClientHello{CipherSuite: 4867, SessionID: make([]byte, 32)}
+	_, err := rand.Read(hello.SessionID)
+	require.NoError(t, err)
+
+	secret := GenerateSecret("example.com")
+	writer := fragmentedWriter{conn: server, mss: 92, deadline: time.Now().Add(5 * time.Second)}
+
+	before := waitAllAcked(t, server)
+	chunk := segmentPayload(92, before)
+
+	errCh := make(chan error, 1)
+
+	go func() {
+		errCh <- fake.SendServerHello(writer, secret.Key[:], hello, fake.NoiseParams{})
+	}()
+
+	reader := bufio.NewReader(client)
+	sizes := []int{}
+
+	for _, want := range []byte{tls.TypeHandshake, tls.TypeChangeCipherSpec, tls.TypeApplicationData} {
+		rec := &bytes.Buffer{}
+
+		recordType, length, err := tls.ReadRecord(reader, rec)
+		require.NoError(t, err)
+		assert.Equal(t, want, recordType)
+
+		sizes = append(sizes, tls.SizeHeader+int(length))
+	}
+
+	require.NoError(t, <-errCh)
+
+	after := waitAllAcked(t, server)
+	segs := int(after.Segs_out - before.Segs_out)
+	helloSegs := (sizes[0] + chunk - 1) / chunk
+	rest := sizes[1] + sizes[2]
+
+	// The ServerHello record in its chunks, the rest in full-size segments
+	// (at most a few more than rest / tcpi_snd_mss).
+	assert.GreaterOrEqual(t, segs, helloSegs+1)
+	assert.LessOrEqual(t, segs, helloSegs+rest/int(after.Snd_mss)+2)
+
+	t.Logf("ServerHello record %d bytes in %d chunks of %d, the rest %d bytes: %d segments in total",
+		sizes[0], helloSegs, chunk, rest, segs)
 }
