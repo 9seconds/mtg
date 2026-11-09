@@ -560,6 +560,13 @@ func setDropAll(t *testing.T, conn *net.TCPConn, drop bool) {
 			Filter: &filter[0],
 		})
 	}))
+
+	// Some CI sandboxes do not allow socket filters for unprivileged
+	// processes; the test needs one to stop acknowledgements.
+	if drop && (errors.Is(opErr, unix.EPERM) || errors.Is(opErr, unix.EACCES)) {
+		t.Skipf("attaching a socket filter is not permitted here: %v", opErr)
+	}
+
 	require.NoError(t, opErr)
 }
 
