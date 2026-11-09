@@ -22,14 +22,15 @@ import (
 // lowered temporarily either.
 //
 // So the ServerHello is written in chunks that fit one segment at client-mss,
-// and each next chunk is written only after the previous one has left the
-// socket queue (tcpi_notsent_bytes = 0). Otherwise chunks that hit the
-// congestion window or autocorking are merged by the kernel into one large
-// segment: at 100 ms RTT 4 KB written in 80-byte chunks without waiting leave
-// in 13 segments, with waiting - in 52.
+// each sent with MSG_EOR, so that the kernel does not merge chunks that wait
+// in the socket queue (congestion window, receive window, autocorking) into
+// one large segment, and does not collapse them on retransmission either: at
+// 100 ms RTT 4 KB written in 80-byte chunks leave in 11-13 segments without it
+// and in 52 with it (kernel 6.12, netem).
 
 // fragmentedWriter writes the ServerHello in chunks of mss (see
-// writeFragmented).
+// writeFragmented). A full send buffer is waited for no longer than deadline
+// (the handshake deadline).
 type fragmentedWriter struct {
 	conn     net.Conn
 	mss      int

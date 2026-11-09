@@ -220,9 +220,9 @@ func (p *Proxy) doFakeTLSHandshake(ctx *streamContext, handshakeDeadline time.Ti
 
 	// The ServerHello is the only server response in the FakeTLS handshake,
 	// and that is what DPI looks at. With client-mss it leaves in small
-	// segments; the rest of the session is not affected. Waiting for the
-	// segments to leave is bounded by the same handshake deadline as the
-	// socket, so a client that does not read cannot hold the stream longer.
+	// segments; the rest of the session is not affected. Waiting for a full
+	// send buffer is bounded by the same handshake deadline as the socket, so
+	// a client that does not read cannot hold the stream longer.
 	var helloWriter io.Writer = ctx.clientConn
 	if p.serverHelloMSS > 0 {
 		helloWriter = fragmentedWriter{

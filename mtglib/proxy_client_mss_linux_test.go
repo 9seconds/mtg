@@ -302,7 +302,7 @@ func TestProxyServerHelloMSSBehindProxyProtocol(t *testing.T) {
 // A client that sends the ClientHello and never reads, with a receive window
 // smaller than the ServerHello: the small-segment writer has to wait for the
 // window, and that wait must end at the handshake deadline, not hang the
-// stream (and not go on for its own 10 s fallback either).
+// stream.
 func TestProxyServerHelloMSSNonReadingClientRespectsDeadline(t *testing.T) {
 	const handshakeTimeout = 500 * time.Millisecond
 

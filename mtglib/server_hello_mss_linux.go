@@ -3,9 +3,12 @@
 package mtglib
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"net"
 	"os"
+	"syscall"
 	"time"
 
 	"golang.org/x/sys/unix"
@@ -20,18 +23,26 @@ const tcpTimestampsOverhead = 12
 // golang.org/x/sys/unix does not define it.
 const tcpiOptTimestamps = 1
 
-// serverHelloWaitMax caps the wait for one ServerHello to be sent when no
-// handshake deadline is given.
-const serverHelloWaitMax = 10 * time.Second
-
-const (
-	notsentPollMin = 100 * time.Microsecond
-	notsentPollMax = 5 * time.Millisecond
-)
+// sendmsgFunc is the signature of unix.SendmsgN. sendChunks takes it as an
+// argument so that tests can check the flags and the bounds of every call.
+type sendmsgFunc func(fd int, p, oob []byte, to unix.Sockaddr, flags int) (int, error)
 
 // writeFragmented writes data to a TCP connection in chunks, each of which
 // leaves in its own segment with a payload no larger than at MSS = mss. If the
 // connection is not TCP or mss <= 0, data is written in one go.
+//
+// Each chunk is sent with sendmsg(MSG_EOR). The kernel never appends data to
+// an skb marked EOR and never collapses it with the next one on
+// retransmission (tcp_retrans_collapse), so chunks are not merged when they
+// wait in the queue for the congestion window, the receive window or
+// autocorking, and a retransmitted ServerHello still leaves in small
+// segments. Without it, 4 KB written in 80-byte chunks at 100 ms RTT leave in
+// 11-13 segments instead of 52 (kernel 6.12, netem).
+//
+// There is no polling: a write blocks only when the send buffer is full, and
+// then it waits for the socket to become writable. The wait is bounded by
+// deadline, which becomes the write deadline of the connection; a zero
+// deadline keeps the write deadline the connection already has.
 func writeFragmented(conn net.Conn, data []byte, mss int, deadline time.Time) (int, error) {
 	tcp := tcpConnOf(conn)
 	if tcp == nil || mss <= 0 {
@@ -49,37 +60,66 @@ func writeFragmented(conn net.Conn, data []byte, mss int, deadline time.Time) (i
 		return 0, fmt.Errorf("cannot set TCP_NODELAY: %w", err)
 	}
 
+	if !deadline.IsZero() {
+		if err := tcp.SetWriteDeadline(deadline); err != nil {
+			return 0, fmt.Errorf("cannot set write deadline: %w", err)
+		}
+	}
+
 	info, err := getTCPInfo(rawConn)
 	if err != nil {
 		return 0, err
 	}
 
-	chunk := segmentPayload(mss, info)
+	return sendChunks(rawConn, data, segmentPayload(mss, info), unix.SendmsgN)
+}
 
-	if deadline.IsZero() {
-		deadline = time.Now().Add(serverHelloWaitMax)
-	}
+// sendChunks sends data in chunks of chunk bytes, each one with MSG_EOR.
+//
+// A partial send (the send buffer filled up in the middle of a chunk) is not
+// marked EOR by the kernel, so the rest of the same chunk, sent next with
+// MSG_EOR, joins it in the same skb and the chunk still leaves as one
+// segment. Chunk boundaries are therefore counted from the start of data, not
+// from the last write.
+func sendChunks(rawConn syscall.RawConn, data []byte, chunk int, sendmsg sendmsgFunc) (int, error) {
+	var (
+		written int
+		sendErr error
+	)
 
-	written := 0
+	err := rawConn.Write(func(fd uintptr) bool {
+		for written < len(data) {
+			end := min((written/chunk+1)*chunk, len(data))
 
-	for written < len(data) {
-		if err := waitNotSent(rawConn, deadline); err != nil {
-			return written, err
+			n, err := sendmsg(int(fd), data[written:end], nil, nil, unix.MSG_EOR|unix.MSG_NOSIGNAL)
+
+			switch {
+			case errors.Is(err, unix.EINTR):
+				continue
+			case errors.Is(err, unix.EAGAIN):
+				// The send buffer is full: wait until the socket is
+				// writable (or the write deadline passes).
+				return false
+			case err != nil:
+				sendErr = os.NewSyscallError("sendmsg", err)
+
+				return true
+			case n <= 0:
+				sendErr = io.ErrShortWrite
+
+				return true
+			}
+
+			written += n
 		}
 
-		end := min(written+chunk, len(data))
-
-		n, err := tcp.Write(data[written:end])
-		written += n
-
-		if err != nil {
-			return written, err //nolint: wrapcheck
-		}
+		return true
+	})
+	if err != nil {
+		return written, fmt.Errorf("cannot send server hello: %w", err)
 	}
 
-	// Wait for the last chunk as well, otherwise the next write may be glued
-	// to it.
-	return written, waitNotSent(rawConn, deadline)
+	return written, sendErr
 }
 
 // segmentPayload is the segment payload at MSS = mss: minus the timestamps
@@ -119,33 +159,6 @@ func getTCPInfo(rawConn rawControl) (*unix.TCPInfo, error) {
 	}
 
 	return info, nil
-}
-
-// waitNotSent waits until the socket queue has no unsent bytes (bytes already
-// sent but not yet acknowledged do not count). It polls with a growing pause:
-// waiting is needed only when the congestion window is full, which costs a
-// few RTTs per handshake.
-func waitNotSent(rawConn rawControl, deadline time.Time) error {
-	pause := notsentPollMin
-
-	for {
-		info, err := getTCPInfo(rawConn)
-		if err != nil {
-			return err
-		}
-
-		if info.Notsent_bytes == 0 {
-			return nil
-		}
-
-		if !time.Now().Before(deadline) {
-			return fmt.Errorf("server hello is not sent in time: %w", os.ErrDeadlineExceeded)
-		}
-
-		time.Sleep(pause)
-
-		pause = min(pause*2, notsentPollMax)
-	}
 }
 
 // tcpConnOf returns the underlying TCP connection of the client: directly or
