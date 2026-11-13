@@ -556,6 +556,15 @@ There are three ways to resolve it:
    urls = ["https://iplists.firehol.org/files/firehol_abusers_1d.netset"]
    ```
 
+   Another list without bogons is the [NetAPI](https://netapi.com/compromised-ips/)
+   list of addresses that attacked its honeypot sensors in the last 48 hours
+   (rebuilt hourly, CC BY 4.0). It can be used on its own or next to a
+   FireHOL list:
+
+   ```toml
+   urls = ["https://netapi.com/api2/?method=compromised&dataset_type=ip"]
+   ```
+
 3. Connect to the proxy through a public IP or domain name with hairpin
    NAT (`MASQUERADE`) on your router. mtg will then see the client with
    its public address and the blocklist will not match. This is more
