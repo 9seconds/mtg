@@ -361,6 +361,7 @@ download-concurrency = 2
 # details.
 urls = [
     "https://iplists.firehol.org/files/firehol_level1.netset",
+    # "https://netapi.com/api2/?method=compromised&dataset_type=ip",
     # "/local.file"
 ]
 # How often do we need to update a blocklist set.
